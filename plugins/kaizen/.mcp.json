@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ymer": {
+      "type": "http",
+      "url": "https://ymer.ax/mcp"
+    }
+  }
+}

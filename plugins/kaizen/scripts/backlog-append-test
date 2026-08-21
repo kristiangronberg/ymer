@@ -1,0 +1,102 @@
+#!/bin/sh
+# backlog-append-test — self-test for backlog-append. Run it after any
+# edit to the writer: it works in a temp directory and touches no real
+# backlog.
+#
+#   <plugin root>/scripts/backlog-append-test
+#
+# Exit 0 = every case passed.
+
+set -u
+
+append="$(dirname "$0")/backlog-append"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+pass=0
+fail=0
+
+check() { # check <name> <expected> <actual>
+	if [ "$2" = "$3" ]; then
+		pass=$((pass + 1))
+		echo "ok   — $1"
+	else
+		fail=$((fail + 1))
+		echo "FAIL — $1"
+		echo "       expected: $2"
+		echo "       actual:   $3"
+	fi
+}
+
+# 1 — a row survives backticks, $, !, apostrophes and double quotes.
+printf '# Backlog\n\n' >"$tmp/a.md"
+row='- 2026-07-30 · implement@meta/x — the header'"'"'s own `## Archive` costs $5 and !bang — "quoted"'
+printf '%s\n' "$row" | "$append" "$tmp/a.md" >/dev/null
+check "row survives verbatim" "$row" "$(tail -n 1 "$tmp/a.md")"
+
+# 2 — a batch appends in order, one line per row.
+printf '# Backlog\n\n' >"$tmp/b.md"
+out=$("$append" "$tmp/b.md" <<'ROW'
+- row one
+- row two
+- row three
+ROW
+)
+check "success line names the writer and the count" \
+	"backlog-append: 3 row(s) appended to $tmp/b.md" "$out"
+check "batch line count" "5" "$(wc -l <"$tmp/b.md" | tr -d ' ')"
+check "batch order preserved" "- row one|- row two|- row three" \
+	"$(tail -n 3 "$tmp/b.md" | tr '\n' '|' | sed 's/|$//')"
+
+# 3 — a file missing its trailing newline is repaired, not glued.
+printf -- '- old row' >"$tmp/c.md"
+printf -- '- new row\n' | "$append" "$tmp/c.md" >/dev/null
+check "newline repaired" "2" "$(wc -l <"$tmp/c.md" | tr -d ' ')"
+check "old row intact" "- old row" "$(head -n 1 "$tmp/c.md")"
+
+# 4 — a file that already ends with a newline gains no blank line.
+printf -- '- old row\n' >"$tmp/d.md"
+printf -- '- new row\n' | "$append" "$tmp/d.md" >/dev/null
+check "no spurious blank" "0" "$(grep -c '^$' "$tmp/d.md")"
+
+# 5 — a line that is not a row is rejected and the file is untouched.
+printf '# Backlog\n' >"$tmp/e.md"
+before=$(cksum <"$tmp/e.md")
+printf 'not a row\n' | "$append" "$tmp/e.md" >/dev/null 2>&1
+check "bad row exit code" "4" "$?"
+check "bad row left file untouched" "$before" "$(cksum <"$tmp/e.md")"
+
+# 6 — empty stdin is rejected.
+printf '# Backlog\n' >"$tmp/f.md"
+"$append" "$tmp/f.md" </dev/null >/dev/null 2>&1
+check "empty stdin exit code" "4" "$?"
+
+# 7 — a missing target is rejected.
+printf -- '- row\n' | "$append" "$tmp/nope.md" >/dev/null 2>&1
+check "missing target exit code" "3" "$?"
+
+# 8 — wrong argument count is a usage error.
+printf -- '- row\n' | "$append" >/dev/null 2>&1
+check "usage exit code" "2" "$?"
+
+# 9 — concurrent writers never interleave a row.
+printf '# Backlog\n\n' >"$tmp/g.md"
+rounds=150
+writer() {
+	i=1
+	while [ $i -le $rounds ]; do
+		printf -- '- 2026-07-30 · w%s@meta — row %s\n' "$1" "$i" | "$append" "$tmp/g.md" >/dev/null
+		i=$((i + 1))
+	done
+}
+writer A &
+writer B &
+writer C &
+wait
+check "concurrent rows all well-formed" "$((rounds * 3))" \
+	"$(grep -c '^- 2026-07-30 · w[ABC]@meta — row [0-9]*$' "$tmp/g.md")"
+check "concurrent run adds no blank line" "1" "$(grep -c '^$' "$tmp/g.md")"
+
+echo
+echo "backlog-append-test: $pass passed, $fail failed"
+[ "$fail" -eq 0 ]

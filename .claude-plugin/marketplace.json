@@ -1,0 +1,16 @@
+{
+  "name": "ymer",
+  "owner": {
+    "name": "Kristian Grönberg"
+  },
+  "metadata": {
+    "description": "Practice plugins for working with ymer.ax — one plugin per practice, its skills the practice's moves. Using any plugin requires a ymer.ax account and one folder for state, under version control."
+  },
+  "plugins": [
+    {
+      "name": "kaizen",
+      "source": "./plugins/kaizen",
+      "description": "Continuous improvement over your working process — capture frictions as you work, drain them into improvement work."
+    }
+  ]
+}

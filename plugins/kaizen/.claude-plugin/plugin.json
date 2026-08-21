@@ -1,0 +1,16 @@
+{
+  "name": "kaizen",
+  "description": "Continuous improvement over your working process — capture frictions as you work, drain them into improvement work.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Kristian Grönberg"
+  },
+  "userConfig": {
+    "plans_dir": {
+      "type": "directory",
+      "title": "State folder",
+      "description": "One folder for your kaizen state, under version control. The backlog lives at <folder>/backlog.md and drained topics get folders beneath it.",
+      "required": true
+    }
+  }
+}

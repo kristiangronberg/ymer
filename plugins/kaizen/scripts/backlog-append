@@ -1,0 +1,75 @@
+#!/bin/sh
+# backlog-append — append kaizen rows to the backlog.
+#
+#   backlog-append <file>      rows on stdin, one per line
+#
+# Why a script rather than a bare redirection:
+#
+#   * The append is O_APPEND (>>). The kernel places every write at
+#     end-of-file atomically, so two sessions appending at the same
+#     instant cannot clobber each other, and no reader is ever needed to
+#     find a position.
+#   * Rows arrive on stdin so a quoted heredoc (<<'ROW') can carry
+#     backticks, $, ! and apostrophes verbatim with no escaping at all.
+#   * The trailing-newline invariant lives here, in one place.
+#
+# Everything is validated before the file is touched, and the append is
+# a single write — a rejected batch leaves the target byte-identical.
+#
+# Exit: 0 appended · 2 usage · 3 target unusable · 4 rows rejected.
+
+set -eu
+
+if [ $# -ne 1 ]; then
+	echo "usage: backlog-append <file>   (rows on stdin, one per line)" >&2
+	exit 2
+fi
+
+file=$1
+
+if [ ! -f "$file" ]; then
+	echo "backlog-append: not a file: $file" >&2
+	exit 3
+fi
+if [ ! -w "$file" ]; then
+	echo "backlog-append: not writable: $file" >&2
+	exit 3
+fi
+if ! command -v python3 >/dev/null 2>&1; then
+	echo "backlog-append: python3 not on PATH; cannot check the newline invariant" >&2
+	exit 3
+fi
+
+rows=$(cat)
+
+if [ -z "$rows" ]; then
+	echo "backlog-append: no rows on stdin" >&2
+	exit 4
+fi
+
+bad=$(printf '%s\n' "$rows" | grep -c -v '^- ' || true)
+if [ "$bad" -ne 0 ]; then
+	echo "backlog-append: $bad line(s) do not start with '- '; nothing appended" >&2
+	exit 4
+fi
+
+n=$(printf '%s\n' "$rows" | wc -l | tr -d ' ')
+
+# Trailing-newline invariant. The check must read the true last byte at
+# the instant it looks: a stat-then-seek reader (tail -c 1) can misread
+# a file another session is appending to and insert a spurious blank
+# line. python3 seeks relative to SEEK_END and reads immediately.
+# Exit 0 = the file needs a newline before the rows.
+if python3 -c 'import sys
+with open(sys.argv[1], "rb") as fh:
+    fh.seek(0, 2)
+    if fh.tell() == 0:
+        sys.exit(1)
+    fh.seek(-1, 2)
+    sys.exit(0 if fh.read(1) != b"\n" else 1)' "$file"; then
+	printf '\n%s\n' "$rows" >>"$file"
+else
+	printf '%s\n' "$rows" >>"$file"
+fi
+
+printf 'backlog-append: %s row(s) appended to %s\n' "$n" "$file"
