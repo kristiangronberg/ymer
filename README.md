@@ -1,8 +1,8 @@
-# ymer — a marketplace of practice plugins
+# ymer — plugins for working with ymer.ax
 
 This repository is the `ymer` Claude Code plugin marketplace. Each
-plugin under `plugins/` is a **[practice plugin](glossary.md#practice-plugin)** —
-one practice, packaged, its skills the practice's moves.
+plugin under `plugins/` packages **one practice** — its skills the
+practice's moves.
 
 Using any plugin requires two things, and they are stated in the
 marketplace description because they are real requirements:

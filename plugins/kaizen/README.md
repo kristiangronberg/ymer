@@ -1,6 +1,6 @@
 # kaizen — continuous improvement over your working process
 
-Kaizen is a practice plugin: two skills that turn the friction you feel
+Kaizen is a plugin with two skills that turn the friction you feel
 while working into improvement work you actually do.
 
 The loop is small on purpose.

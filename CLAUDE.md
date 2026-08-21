@@ -1,6 +1,6 @@
 # ymer-marketplace
 
-The `ymer` Claude Code plugin marketplace and its practice plugins. See
+The `ymer` Claude Code plugin marketplace and its plugins. See
 `README.md` for the layout, the local install commands, and the
 validation rules.
 

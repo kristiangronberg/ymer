@@ -3,7 +3,7 @@
 Canonical domain terms for this repository — the marketplace and every
 plugin in it; this is the repo's one glossary. Prose and manifests use
 these terms; `_Avoid_` synonyms are banned in new names. Marketplace-level
-terms are defined here. A plugin's practice terms are defined in its
+terms are defined here. A plugin's own terms are defined in its
 shipped skill prose — an installed plugin stands alone, so the definition
 ships with the plugin — and carry pointer entries here holding only
 glossary-native metadata (`_Avoid_` lists, cross-refs). Other documents
@@ -16,12 +16,6 @@ what stands below it is still the current one.
 
 ## Marketplace
 
-### practice plugin
-One plugin in the ymer marketplace packaging one practice; its skills are
-the practice's moves. Declared in the marketplace manifest's `plugins`
-list and installed by name (`kaizen@ymer`).
-_Avoid_: pack, practice pack, bundle, module, extension
-
 ### plans_dir
 A plugin's one `userConfig` key (type `directory`): the user's
 git-controlled folder for state. It is the only machine-local value a
@@ -29,7 +23,7 @@ plugin takes as configuration — everything else routes by name convention.
 _Avoid_: workspace, data dir, state path
 
 ### MCP door
-The `.mcp.json` a practice plugin ships at its root, registering the
+The `.mcp.json` a plugin ships at its root, registering the
 ymer.ax MCP server for a session that has the plugin installed and no ymer
 connection of its own — installing a plugin is connecting to ymer. A
 session that already has a server for the same URL keeps its own, and
