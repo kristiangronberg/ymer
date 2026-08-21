@@ -41,6 +41,10 @@ guess.
 - _Avoid_: resolver, registry, lookup table
 
 ### directed way of working
+Redefinition in flight — 2026-08-21 → 2026-08-21-setup-split: gains the Meta Roadmap
+floor (process work routes to a project named `Meta Roadmap`; setup creates it if
+missing) and the setup boundary (a `setup` plugin owns environment and start
+position).
 The opinionated ymer practice the plugins direct: one product = one ymer
 project named `<Product> Roadmap`, product vision in its description,
 tasks as what-to-do-next, and one git-controlled folder for state laid
@@ -51,6 +55,13 @@ Each plugin states the conventions it routes by in its own shipped prose
 second definition.
 
 - _Avoid_: the workflow, the methodology, best practices
+
+### battery
+A skill's fixed, ordered sequence of probes or checks, run whole — each with a
+defined outcome. Always named qualified by its skill (capture's six-probe
+battery); a skill has at most one.
+
+- _Avoid_: checklist, probe list, check suite
 
 ## kaizen
 
