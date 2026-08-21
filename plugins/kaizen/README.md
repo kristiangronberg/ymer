@@ -24,22 +24,24 @@ moment the picture is most accurate.
 
 ## Setup
 
-Kaizen needs two things.
-
-**A ymer.ax account.** The plugin ships an `.mcp.json`, so installing it
-connects your sessions to ymer — the first call signs you in. Summary
-mints its picks as ymer tasks, so they show up in the same place as the
-rest of your work.
-
-**One folder for state, under version control.** That is the plugin's
-single setting:
+Kaizen needs a **ymer.ax** account and **one folder for state, under
+version control** — the plugin's single `plans_dir` setting. You bring
+both; `setup` is what checks them and fills in the rest:
 
 ```
+claude plugin install setup@ymer
 claude plugin install kaizen@ymer --config plans_dir=<your folder>
 ```
 
-or `/plugin configure kaizen@ymer` later. Until it is set, both skills
-stop and say so rather than guessing a path.
+Then, in a fresh session, run `/setup:env`. It checks the state folder,
+creates the store skeleton, checks that ymer answers, and reports what
+it found. You can also set the folder later with
+`/plugin configure kaizen@ymer` — the platform's own door to the same
+setting.
+
+Both skills assume that environment rather than re-proving it: on an
+environment failure they stop and send you to `/setup:env`, and they
+never guess a path or start a second store.
 
 The folder holds `backlog.md` — the whole store, one row per line — and
 a folder per drained topic. Version control matters because kaizen
@@ -56,10 +58,16 @@ conventions to route by:
 - **One product = one ymer project named `<Product> Roadmap`.** Its
   tasks are what to do next. Summary finds it by that name, and if no
   such project exists it stops and tells you to create one rather than
-  inventing somewhere to put your work.
+  inventing somewhere to put your work — `Meta Roadmap` matches that
+  name shape too, and is never a candidate for a product's pick.
+- **Work about how you work goes to `Meta Roadmap`** — one project for
+  the process itself, which belongs to no product. `/setup:env` creates
+  it, so it is a floor rather than a naming decision, and a
+  process-level pick never has to hunt for a home.
 - **Your state folder is laid out `<area>/YYYY/MM-DD-<topic>/`** — one
   folder per topic, `<area>` being the repo or product it belongs to.
-  **`meta` is reserved** for work about how you work.
+  **`meta` is reserved** for work about how you work, and it is the area
+  that routes to `Meta Roadmap`.
 - **A project named `Learning`** is optional. With one, learning gaps
   drain there as their own tasks; without one, they become ordinary
   tasks in the product's roadmap.
@@ -86,3 +94,5 @@ exact wording; a block never copies the battery or the row grammar.
   staging area. A row leaves the backlog only by being drained, and the
   file's own length is the debt gauge — when it feels long, that is the
   signal to run a summary.
+- **It does not set itself up.** The environment is `setup`'s, and a
+  kaizen skill that meets an environment failure names that one door.

@@ -41,20 +41,29 @@ guess.
 - _Avoid_: resolver, registry, lookup table
 
 ### directed way of working
-Redefinition in flight — 2026-08-21 → 2026-08-21-setup-split: gains the Meta Roadmap
-floor (process work routes to a project named `Meta Roadmap`; setup creates it if
-missing) and the setup boundary (a `setup` plugin owns environment and start
-position).
 The opinionated ymer practice the plugins direct: one product = one ymer
 project named `<Product> Roadmap`, product vision in its description,
-tasks as what-to-do-next, and one git-controlled folder for state laid
-out `<area>/YYYY/MM-DD-<topic>/` with `meta` reserved for process work.
-It is what makes routing by convention possible.
+tasks as what-to-do-next, work about the process itself in a project
+named `Meta Roadmap`, and one git-controlled folder for state laid
+out `<area>/YYYY/MM-DD-<topic>/` with `meta` reserved for process work —
+the area that routes to `Meta Roadmap`. It is what makes routing by
+convention possible. The `setup` plugin puts what this practice assumes
+in place, `Meta Roadmap` included; the practices themselves stay the
+plugins'.
 Each plugin states the conventions it routes by in its own shipped prose
 (an installed plugin stands alone) — operative use of this term, never a
 second definition.
 
 - _Avoid_: the workflow, the methodology, best practices
+
+### setup boundary
+The two-directional rule dividing the plugins: setup owns the environment
+and start position skills work from — configuration wired, store
+skeletons present, the connection alive, universal floors in place; a
+skill owns its domain and never routes to setup for domain state. A store
+file's skeleton is start position, its content domain.
+
+- _Avoid_: setup's scope, env's charter
 
 ### battery
 A skill's fixed, ordered sequence of probes or checks, run whole — each with a
