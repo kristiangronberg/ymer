@@ -1,21 +1,16 @@
 ---
 name: capture
-description: Use at the tail of a piece of work — standalone, or invoked by a kaizen block at your own skill's tail — to reflect with hindsight and append one friction to your backlog. The capture half of the kaizen practice; /kaizen:summary drains the backlog.
+description: Use at the tail of a piece of work to reflect with hindsight and append one friction to your backlog.
 ---
 
 # Kaizen — Capture
-
-Continuous improvement over your working process. The sensor is
-self-report with hindsight at the moment a piece of work closes; the
-store is the backlog; the actuator is `/kaizen:summary`, which drains
-the backlog into improvement work.
 
 Capture is one move: reflect on the work just finished, and append
 **one** friction to the backlog. It runs standalone at the end of any
 session, or at a covered skill's tail when that skill carries a kaizen
 block (→ The kaizen block).
 
-**Announce at start:** "Kaizen — capture (source `<source>`)."
+**Announce at start:** "Kaizen capture: (source `<source>`)"
 
 **The design rests on one claim: queueing a friction is what makes it
 recur.** So kaizen holds one store and no other, moves nothing between
