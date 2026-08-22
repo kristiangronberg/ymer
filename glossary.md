@@ -24,10 +24,13 @@ plugin takes as configuration — everything else routes by name convention.
 The `.mcp.json` a plugin ships at its root, registering the
 ymer.ax MCP server for a session that has the plugin installed and no ymer
 connection of its own — installing a plugin is connecting to ymer. A
-session that already has a server for the same URL keeps its own, and
-the door is skipped (the client deduplicates on command/URL). The
-endpoint is fixed, not configuration; the session authenticates through
-the platform's MCP sign-in the first time it calls.
+session that already has a matching server keeps its own and the door is
+skipped — measured 2026-08-22, with two installed plugins each shipping
+this door alongside a user-level `ymer` server, all three agreeing on both
+name and URL: `/mcp` listed one. Which of the two the client keys on is
+unprobed, so a door differing in either is untested ground. The endpoint
+is fixed, not configuration; the session authenticates through the
+platform's MCP sign-in the first time it calls.
 
 - _Avoid_: connector, integration, ymer client
 

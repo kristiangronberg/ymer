@@ -26,7 +26,7 @@ Add the marketplace, install `setup` and the plugins you want, then run
 `/setup:env` in a fresh session:
 
 ```
-claude plugin marketplace add <repository-url>
+claude plugin marketplace add kristiangronberg/ymer
 claude plugin install setup@ymer
 claude plugin install kaizen@ymer --config plans_dir=<your state folder>
 ```
