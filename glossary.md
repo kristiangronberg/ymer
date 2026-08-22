@@ -21,6 +21,7 @@ plugin takes as configuration — everything else routes by name convention.
 - _Avoid_: workspace, data dir, state path
 
 ### MCP door
+Redefinition in flight — 2026-08-22 → 2026-08-22-no-plugin-door: entry retires with the plugin-shipped door; removed when the files are deleted.
 The `.mcp.json` a plugin ships at its root, registering the
 ymer.ax MCP server for a session that has the plugin installed and no ymer
 connection of its own — installing a plugin is connecting to ymer. A
@@ -36,7 +37,7 @@ platform's MCP sign-in the first time it calls.
 
 ### router
 How a plugin's skills find machine-local state and ymer objects: one
-`userConfig` key (`plans_dir`) plus name conventions — the connection is
+`userConfig` key (`plans_dir`) plus name conventions — the folder is
 configuration, the objects are convention. Nothing richer is config; a
 convention with no match makes the skill say what to create rather than
 guess.
