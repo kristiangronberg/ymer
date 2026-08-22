@@ -26,16 +26,13 @@ moment the picture is most accurate.
 
 Kaizen needs a **ymer.ax** account and **one folder for state, under
 version control** — the plugin's single `plans_dir` setting. You bring
-both; `setup` is what checks them and fills in the rest:
+both; `setup` is what checks them and fills in the rest.
 
-```
-claude plugin install setup@ymer
-claude plugin install kaizen@ymer --config plans_dir=<your folder>
-```
-
-Then, in a fresh session, run `/setup:env`. It checks the state folder,
-creates the store skeleton, checks that ymer answers, and reports what
-it found. You can also set the folder later with
+The install block is in the [marketplace README](../../README.md#installing):
+it brings the ymer connection, adds the marketplace, and installs both
+plugins. Then, in a fresh session, run `/setup:env`. It checks the state
+folder, creates the store skeleton, checks that ymer answers, and reports
+what it found. You can also set the folder later with
 `/plugin configure kaizen@ymer` — the platform's own door to the same
 setting.
 

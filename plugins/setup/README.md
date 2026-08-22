@@ -35,5 +35,8 @@ having the door there when a skill points at it.
 
 It is **convergent**: verify, create what is missing, never touch what
 already exists. So the battery is also the upgrade path — when the
-standard moves, re-running `/setup:env` brings an old install up to it,
-and there is no migration to write and no version to track.
+standard moves, re-running `/setup:env` brings an old install up to it
+for everything setup owns, with no migration to write and no version to
+track. Your ymer.ax connection is the exception, because it is not
+setup's to write: setup checks it and, when it is missing, tells you the
+two commands that bring it.

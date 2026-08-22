@@ -17,9 +17,11 @@ here for domain state.
 
 **The battery below is the desired state.** Every check verifies, creates
 what is missing, and never mutates what already exists. So a healthy
-machine reports all-pass and changes nothing, and an old install converges
-to the current standard simply by re-running this skill. There is no
-migration step and nothing to version.
+machine reports all-pass and changes nothing, and re-running this skill
+converges everything setup owns — settings, skeletons, floors — with no
+migration step and nothing to version. The ymer connection is not among
+them: it is yours, it lives outside any plugin, and re-running can only
+report on it.
 
 ## The battery
 
@@ -40,19 +42,21 @@ never from a project's own settings.
 
 Read every `@ymer` entry and resolve one value:
 
-- **Nothing carries `plans_dir`** — no other check can run. Stop and say
-  so, naming the file that was read:
+- **Nothing carries `plans_dir`** — checks 2 and 4 both hold off: a run
+  that never resolved a state folder has no business writing anything.
+  Fail this check, naming the file that was read:
 
   > No ymer plugin has its state folder set in `<the settings file read>`.
   > It is one folder for your state, under version control. Set it with
   > `/plugin configure kaizen@ymer`, or reinstall with
   > `claude plugin install kaizen@ymer --config plans_dir=<your folder>`.
 
-  This is the one branch that stops the whole run, and the one thing
-  setup never writes for you: which folder it is, is yours to say. The
-  two failures below stop no other check by themselves — checks 2 and 4
-  each say what they need, and report `not checked` when they do not
-  have it.
+  This branch stops checks 2 and 4, not the run: check 3 waits on nothing
+  here, so it still runs and still reports. Which folder it is, is yours
+  to say — the folder and the connection are the two things setup never
+  writes for you. The two failures below stop no other check by
+  themselves; checks 2 and 4 each say what they need, and report
+  `not checked` when they do not have it.
 
 - **Two plugins disagree** — fail the check and change nothing. Which one
   is right is a question only you can answer.
@@ -106,25 +110,41 @@ the guard's one door back to a green report.
 
 ### 3. The ymer connection
 
-One call proves the account, the door and the sign-in together, and its
-result is what check 4 reads:
+One call proves the account, the connection and the sign-in together, and
+its result is what check 4 reads:
 
 ```
 projects list {q: "Roadmap", fields: ["id","name"]}
 ```
 
 Any result passes, an empty one included. A failure fails the check and
-says so plainly — setup can neither repair an outage nor sign you in, and
-claiming otherwise would send you looking in the wrong place. No such call
-available at all means no plugin's `.mcp.json` loaded in this session:
-reinstall, then start a fresh session.
+says so plainly — setup can neither repair an outage nor sign you in.
+`/mcp` is where to look: a connection that needs sign-in says so there and
+takes it; an outage you can only wait out.
+
+No such call available at all means this session has no ymer connection —
+either none was ever added, or one was added but never signed in to; from
+in here the two look the same. The connection is yours to bring, and no
+plugin ships one. Both cases end the same way:
+
+```
+claude mcp add --transport http --scope user ymer https://ymer.ax/mcp
+claude mcp login ymer
+```
+
+Adding one that already exists changes nothing, so run both either way,
+then start a fresh session.
 
 ### 4. The `Meta Roadmap` project
 
-**This check runs only when check 3 passed.** Its result is the project
-list this check reads, so a failed connection leaves nothing to read in:
-report this check as not checked, naming check 3, rather than calling
-back into a door that just refused.
+**This check runs only when check 1 resolved a single value that passed
+the work-tree probe, and check 3 passed.** Check 3's result is the
+project list this check reads, so a failed connection leaves nothing to
+read in — and creating `Meta Roadmap` is a write, which a run that never
+resolved a state folder has no business doing. On either miss, report
+this check as not checked: name check 1 when the folder is what is
+missing, check 3 when the connection is. Do not call back into a
+connection that just refused.
 
 Work about how you work belongs to no product, so it gets a project of its
 own, named exactly `Meta Roadmap`. Every machine has one — a floor, not a
@@ -175,12 +195,13 @@ exactly one next action, so the report carries nothing else.
 ## Remember
 
 - Verify, create what is missing, never mutate what exists — re-running
-  this skill is the whole upgrade story
+  this skill is the whole upgrade story for everything setup owns
 - One state folder, shared by every ymer plugin that takes one; setup
   reports a disagreement and never picks a winner
 - Setup writes skeletons and floors, never content: rows in the backlog
   and per-product Roadmap projects belong to the skills and to you
-- An unset `plans_dir` stops the run — setup instructs, and leaves the
-  value for you to set
+- The folder and the connection are yours to bring — an unset `plans_dir`
+  stops checks 2 and 4, a missing connection fails check 3, and setup
+  instructs in both cases rather than writing either
 - A check whose input never resolved reports `not checked` and writes
   nothing — setup repairs on facts, never on a guess

@@ -20,21 +20,6 @@ plugin takes as configuration — everything else routes by name convention.
 
 - _Avoid_: workspace, data dir, state path
 
-### MCP door
-Redefinition in flight — 2026-08-22 → 2026-08-22-no-plugin-door: entry retires with the plugin-shipped door; removed when the files are deleted.
-The `.mcp.json` a plugin ships at its root, registering the
-ymer.ax MCP server for a session that has the plugin installed and no ymer
-connection of its own — installing a plugin is connecting to ymer. A
-session that already has a matching server keeps its own and the door is
-skipped — measured 2026-08-22, with two installed plugins each shipping
-this door alongside a user-level `ymer` server, all three agreeing on both
-name and URL: `/mcp` listed one. Which of the two the client keys on is
-unprobed, so a door differing in either is untested ground. The endpoint
-is fixed, not configuration; the session authenticates through the
-platform's MCP sign-in the first time it calls.
-
-- _Avoid_: connector, integration, ymer client
-
 ### router
 How a plugin's skills find machine-local state and ymer objects: one
 `userConfig` key (`plans_dir`) plus name conventions — the folder is
