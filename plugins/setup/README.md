@@ -16,8 +16,6 @@ this one door rather than repairing anything itself.
 
 ## Why it is a separate plugin
 
-Two reasons, and they are the same reason twice.
-
 **The checks belong in one place.** Every plugin here needs the same
 environment — a ymer.ax account and one version-controlled folder for
 state. Written into each plugin, that knowledge drifts apart; written
@@ -30,8 +28,7 @@ of a working session is a single line telling you where to go.
 ## Safe to ignore once it passes
 
 Setup does no work of its own and holds no state. An installed plugin
-that never runs costs a line of context, which is the honest price of
-having the door there when a skill points at it.
+that never runs costs a line of context.
 
 It is **convergent**: verify, create what is missing, never touch what
 already exists. So the battery is also the upgrade path — when the

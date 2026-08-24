@@ -7,8 +7,7 @@ practice's moves.
 Using any plugin requires two things, and they are stated in the
 marketplace description because they are real requirements:
 
-- a **ymer.ax** account, connected to Claude Code as your own MCP
-  server, and
+- a **ymer.ax** account, connected to Claude Code as your own MCP server, and
 - **one folder for state, under version control** — the plugin's single
   `plans_dir` setting.
 

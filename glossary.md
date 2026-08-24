@@ -14,8 +14,8 @@ what stands below it is still the current one.
 ## B
 
 ### backlog
-Defined by the kaizen plugin — `plugins/kaizen/skills/capture/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: improvements pool, staging
 
@@ -30,14 +30,14 @@ battery); a skill has at most one.
 ## C
 
 ### carve topic
-Defined by the kaizen plugin — `plugins/kaizen/skills/summary/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/summary/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: carving session, lift-out, digest, drain (that is `/kaizen:summary`'s act, not the topic)
 
 ### cluster
-Defined by the kaizen plugin — `plugins/kaizen/skills/summary/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/summary/SKILL.md`
 - _Used in_: kaizen
 
 ## D
@@ -62,22 +62,22 @@ second definition.
 ## F
 
 ### friction
-Defined by the kaizen plugin — `plugins/kaizen/skills/capture/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: finding, improvement (the fix, not the observed waste)
 
 ### friction-batch
-Defined by the kaizen plugin — `plugins/kaizen/skills/summary/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/summary/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: fix-now topic, the batch
 
 ## K
 
 ### kaizen block
-Defined by the kaizen plugin — `plugins/kaizen/skills/capture/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 
 ## P
@@ -93,8 +93,8 @@ plugin takes as configuration — everything else routes by name convention.
 ## R
 
 ### recurrence row
-Defined by the kaizen plugin — `plugins/kaizen/skills/capture/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 
 ### router
@@ -122,7 +122,7 @@ file's skeleton is start position, its content domain.
 ## V
 
 ### vision row
-Defined by the kaizen plugin — `plugins/kaizen/skills/capture/SKILL.md` is its home.
 
+- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: vision candidate, vision friction
