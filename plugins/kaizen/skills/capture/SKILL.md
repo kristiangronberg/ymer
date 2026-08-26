@@ -5,18 +5,10 @@ description: Use at the tail of a piece of work to reflect with hindsight and ap
 
 # Kaizen — Capture
 
-Capture is one move: reflect on the work just finished, and append
-**one** friction to the backlog. It runs standalone at the end of any
-session, or at a covered skill's tail when that skill carries a kaizen
-block (→ The kaizen block).
+Reflect on the work just finished, and append **one** friction to the
+backlog. Run standalone, or as a kaizen block (→ The kaizen block).
 
-**Announce at start:** "Kaizen capture: (source `<source>`)"
-
-**The design rests on one claim: queueing a friction is what makes it
-recur.** So kaizen holds one store and no other, moves nothing between
-containers at rest, and keeps no ranking between runs. Priority binds at
-drain time — the moment just before work is taken is when the picture of
-where the pain is is most accurate.
+**Announce at start:** "Kaizen capture from: `<source>`"
 
 A **friction** is one hindsight observation of process waste. The
 **backlog** is where frictions queue — kaizen's own store, not your
@@ -30,9 +22,8 @@ including outside any project checkout:
 
 - `${user_config.plans_dir}/backlog.md` — a short usage header, then
   every row capture has appended and summary has not yet drained, ∅ rows
-  included. Nothing else, and no heading below the header: position
-  carries no meaning but arrival order, so an append never has to find a
-  place.
+  included. No heading below the header: position carries no meaning,
+  so an append never has to find a place.
 
 **Guard — environment failures have one door.** Anything this skill needs
 that setup owns and finds broken — a `plans_dir` still reading as an
@@ -47,15 +38,14 @@ guess a path.
 There is no second store — no archive, no clusters file, no staging — and
 nothing moves between containers at rest: a row leaves the backlog only
 by being deleted at a drain, and every drain deposits a durable artifact
-elsewhere. The file's own length is the debt gauge.
+elsewhere. Priority binds at drain time — the moment just before work is
+taken is when the picture of where the pain is is most accurate. The
+file's own length is the debt gauge.
 
 **Write it only through the backlog writer,**
 `${CLAUDE_PLUGIN_ROOT}/scripts/backlog-append`, at the absolute path
-above. Its `O_APPEND` write lands at end-of-file atomically, so
-concurrent sessions cannot clobber each other and nothing has to read the
-file to find a position; any other way of writing gives that up. The
-absolute path is not a style choice either — capture fires from any
-directory at all, so nothing here may depend on the current one.
+above. Its `O_APPEND` write lands at end-of-file atomically. The
+absolute path is not a style choice: capture can fire from any directory.
 
 One row per friction:
 
@@ -156,11 +146,10 @@ no transcript files, no cost data, no tooling.
       Constructive feedback toward the user is explicitly welcome,
       "X is worth learning properly" included: a learning-gap friction is
       one summary can drain into a learning task.
-3. **Keep the single highest-value friction.** One per capture, not
-   three: the top friction is a better signal than the third-best, and
-   the backlog is a queue to drain rather than a log to grow. 5-Whys it
-   to its root cause — the row records the cause, not the symptom.
-   Blameless: name the artifact or system, never the actor.
+3. **Keep the single highest-value friction.** One per capture: the top
+   friction is the strongest signal. 5-Whys it to its root cause — the
+   row records the cause, not the symptom. Blameless: name the artifact
+   or system, or give constructive feedback to the actor.
 4. **Recurrence check — a grep, never a read.** After root-causing, take
    2–4 distinctive terms from the friction — a literal token it would
    share with its anchor: an option name, a path fragment, a slug — and
@@ -227,19 +216,3 @@ session, and every block you add turns another tail into a sensor. The
 battery, the row grammar and the commit live here and are never copied
 into a block — a block that restates them drifts the first time one of
 them changes.
-
-## Remember
-
-- One capture per tail — a session that closes several pieces of work
-  captures at each; kaizen declines a double-record
-- One friction per capture — the single highest-value one
-- The row records the root cause, not the symptom; blameless — name the
-  artifact or system, never the actor
-- A recurrence appends a pointer row at its anchor, never a re-derived
-  story — and only when the anchor is still in the backlog
-- Queueing a friction is what makes it recur: one store, nothing moved
-  between containers at rest, no ranking kept between runs
-- The backlog is written only through the writer, and kaizen commits its
-  own write — pathspec-scoped — after the work's own commit
-- "friction", never "finding"; the backlog is kaizen's store of
-  observations, not a queue of committed work

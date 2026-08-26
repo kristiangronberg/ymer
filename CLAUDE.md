@@ -1,6 +1,6 @@
 # ymer-marketplace
 
-The `ymer` Claude Code plugin marketplace. See `README.md` for the layout, the local install commands, and the validation rules.
+The `ymer` Claude Code plugin marketplace. See `README.md` for what using the plugins requires and the install commands.
 
 ## Conventions
 
@@ -8,3 +8,4 @@ The `ymer` Claude Code plugin marketplace. See `README.md` for the layout, the l
 - Edit a plugin in place and it is live in every session that has the marketplace added by path — no update step, no version bump. Keep the working tree runnable.
 - Run `claude plugin validate .` and `claude plugin validate plugins/<plugin>` after touching any manifest.
 - Skill prose is intent-first: state what is protected and why, and let the executor derive edge handling — enumeration ages worse than intent. Reserve hard MUST wording for spots where failure is silent and expensive.
+- The personal-layer principle: nothing personal to the maintainer may be necessary to run the plugins — not directly as a requirement, and not indirectly as personal config papering over friction other users would hit. Anything a plugin needs beyond what its prose states and the user brings is a defect. The standing check is a hermetic probe: a throwaway `CLAUDE_CONFIG_DIR` with only this marketplace installed and a scratch state folder — skills must load, resolve their references, and stop with setup guidance where the environment is missing.

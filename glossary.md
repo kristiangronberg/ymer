@@ -82,7 +82,13 @@ second definition.
 
 ## P
 
+### personal-layer principle
+Defined in the repo `CLAUDE.md` — the Conventions bullet stating it.
+
+- _Used in_: marketplace
+
 ### plans_dir
+Redefinition in flight — 2026-08-26 → 2026-08-26-development-plugin-kaizen-setup: the key gives way to a repositories-root key plus an optional plans-repo name defaulting to `plans`; the state folder derives as `<root>/<name>`.
 A plugin's one `userConfig` key (type `directory`): the user's
 git-controlled folder for state. It is the only machine-local value a
 plugin takes as configuration — everything else routes by name convention.
@@ -98,6 +104,7 @@ plugin takes as configuration — everything else routes by name convention.
 - _Used in_: kaizen
 
 ### router
+Redefinition in flight — 2026-08-26 → 2026-08-26-development-plugin-kaizen-setup: the configuration half changes — the one `userConfig` key becomes the repositories root (state folder derived `<root>/<name>`); routing by name convention is unchanged.
 How a plugin's skills find machine-local state and ymer objects: one
 `userConfig` key (`plans_dir`) plus name conventions — the folder is
 configuration, the objects are convention. Nothing richer is config; a

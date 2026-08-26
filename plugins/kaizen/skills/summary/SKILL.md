@@ -1,14 +1,12 @@
 ---
 name: summary
-description: Use to run a kaizen summary session — read the backlog whole and drain exactly one thing out of it into durable improvement work: a topic folder in your state folder plus a task in the product's Roadmap project, the friction-batch, or a learning task. The drain half of the kaizen practice; /kaizen:capture fills the backlog.
+description: Use to run a kaizen summary session — read the backlog whole and drain exactly one thing out of it into durable improvement work: a topic folder in your state folder plus a task in the product's Roadmap project, the friction-batch, or a learning task.
 ---
 
 # Kaizen — Summary
 
 A summary session over the whole backlog, run with fresh context. It
-drains **exactly one thing** — picking two is deciding a future drain
-early, and every decision this design makes is deferred to the moment
-work is actually taken.
+drains **exactly one thing** from the backlog.
 
 **Announce at start:** "Kaizen — summary session."
 
@@ -86,9 +84,9 @@ skill says so and names what to create; it never guesses.
    The scan is also what step 3's "one open batch at a time" rule needs.
 
 2. **Determine the run's shape.** Count the rows below the bar for their
-   own topic (→ Three exits). **Five or more ⇒ this run's pick is the
+   own topic (→ Three exits). **Ten or more ⇒ this run's pick is the
    friction-batch**; fewer ⇒ the normal pick. Moot rows ride along in a
-   batch but never count toward the five; vision rows do neither; ∅ rows
+   batch but never count toward the ten; vision rows do neither; ∅ rows
    belong to no cluster and take no exit, so they stay. The threshold
    exists so the run's shape is deterministic rather than a question you
    answer each time.
@@ -259,7 +257,7 @@ always routes to `Meta Roadmap`. It takes exactly two kinds of row:
 
 **Vision rows are neither kind** — a product's direction is not the
 batch's edit surface — so they never ride a batch and never count toward
-the five. A product's vision rows drain as exit 1 above, as a **carve
+the ten. A product's vision rows drain as exit 1 above, as a **carve
 topic**: an ordinary topic in that product's area whose `request.md` names
 the product and carries the rows verbatim, and whose work writes them into
 the product's own description. That is the one door through which vision
