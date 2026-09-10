@@ -40,7 +40,7 @@ that way's name conventions rather than by configuration:
 
 - **One product = one ymer project named `<Product> Roadmap`.** Its tasks
   are what to do next; its description is the product's page. Finding
-  one: `projects list {q: "Roadmap", fields: ["id","name"]}`.
+  one: a `projects list` name search for `Roadmap`.
 - **Work about how you work belongs to no product**, so it goes to
   `Meta Roadmap` — the one Roadmap every machine has, created by
   `/setup:env` rather than named by you.
@@ -55,6 +55,14 @@ that way's name conventions rather than by configuration:
 Nothing richer is configuration. Where a convention has no match, the
 skill says so and names what to create; it never guesses.
 
+**Ymer calls are named, never spelled.** This skill names the tool and
+the action a step needs, the transition or group as a word, and what
+proves the call landed. It never writes the parameter shape: that is the
+server's, read from its own `help` for the action at the moment of the
+call, or from the hint a response carries. A shape copied into a skill
+goes stale the next time the server moves, and works against only the
+one version it was copied from.
+
 ## The run
 
 1. **Orient.** Read `backlog.md` whole — never a recent tail: a friction
@@ -62,12 +70,13 @@ skill says so and names what to create; it never guesses.
    one worth doing. Then find the picks nobody has started, three ways,
    because they answer different questions:
 
-   - `tasks list {project_id, status: "todo"}` on **each** Roadmap
-     project (`projects list {q: "Roadmap", fields: ["id","name"]}`).
-     Summary mints every pick at `todo` and nothing remembers where
+   - `tasks list` on **each** Roadmap project, narrowed to the tasks
+     nobody has started — the group a freshly minted task lands in
+     (`projects list`, a name search for `Roadmap`, finds the projects).
+     Summary mints every pick there and nothing remembers where
      earlier runs minted; the name convention is what finds them again.
-   - `tasks list {project_id, status: "todo"}` on `Learning`
-     (`projects list {q: "Learning", fields: ["id","name"]}`) when one
+   - The same listing on `Learning` (`projects list`, a name search for
+     `Learning`) when one
      exists — exit 3 writes no folder, so this is the only listing that
      can see those.
    - The folder scan, which finds the paths a task name does not carry:
@@ -192,17 +201,18 @@ scans the folder tree for it.
 
 **Order: route (below), then mint, then write `request.md`** — the file
 carries the task's id, and a halt at routing then leaves nothing on disk.
-The mint is three calls, then a read-back, because neither of the first
-two shows the postcondition:
+The mint is three calls, because neither of the first two shows the
+postcondition:
 
-```
-tasks create {name: "<topic name>", description: "<one line: what this is, plus the folder path>"}
-projects link_task {id: <the Roadmap project the area routes to>, task_id: <the new id>}
-tasks list {project_id: <the same project>, q: "<topic name>", fields: ["id","name","status","project_names"]}
-```
+1. `tasks create` — the task's name, and a description that is one line:
+   what this is, plus the folder path.
+2. `projects link_task` — link the new task to the Roadmap project the
+   area routes to.
+3. `tasks list` on that same project, narrowed by a name search for the
+   task's name — the read-back.
 
-Expect `count: 1` with `project_names` naming the target project. The
-description **points at the folder, never copies it**: `request.md`
+Expect exactly one task, and the projects it names to include the target.
+The description **points at the folder, never copies it**: `request.md`
 already carries the root cause and the verbatim frictions, and a copy
 would be the second store this whole arrangement exists to remove.
 

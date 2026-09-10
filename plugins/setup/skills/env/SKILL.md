@@ -111,11 +111,9 @@ the guard's one door back to a green report.
 ### 3. The ymer connection
 
 One call proves the account, the connection and the sign-in together, and
-its result is what check 4 reads:
-
-```
-projects list {q: "Roadmap", fields: ["id","name"]}
-```
+its result is what check 4 reads: a `projects list` name search for
+`Roadmap`, asking for each project's id and name. The parameter shape is
+the server's — ask its `help` for the action if you do not have it.
 
 Any result passes, an empty one included. A failure fails the check and
 says so plainly — setup can neither repair an outage nor sign you in.
@@ -150,11 +148,9 @@ Work about how you work belongs to no product, so it gets a project of its
 own, named exactly `Meta Roadmap`. Every machine has one — a floor, not a
 naming decision, which is why setup creates it instead of asking.
 
-Check 3's result already lists it. Absent, create it:
-
-```
-projects create {name: "Meta Roadmap", description: "<the description below>"}
-```
+Check 3's result already lists it. Absent, create it with
+`projects create` — named exactly `Meta Roadmap`, its description the
+markdown below:
 
 ```markdown
 # Meta Roadmap
