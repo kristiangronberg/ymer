@@ -70,10 +70,10 @@ one version it was copied from.
    one worth doing. Then find the picks nobody has started, three ways,
    because they answer different questions:
 
-   - `tasks list` on **each** Roadmap project, narrowed to the tasks
-     nobody has started — the group a freshly minted task lands in
-     (`projects list`, a name search for `Roadmap`, finds the projects).
-     Summary mints every pick there and nothing remembers where
+   - `tasks list` on **each** Roadmap project, narrowed to the **open**
+     group — the tasks nobody has started, where a freshly minted task
+     lands (`projects list`, a name search for `Roadmap`, finds the
+     projects). Summary mints every pick there and nothing remembers where
      earlier runs minted; the name convention is what finds them again.
    - The same listing on `Learning` (`projects list`, a name search for
      `Learning`) when one
