@@ -1,6 +1,6 @@
 ---
 name: summary
-description: Use to run a kaizen summary session — read the backlog whole and drain exactly one thing out of it into durable improvement work: a topic folder in your state folder plus a task in the product's Roadmap project, the friction-batch, or a learning task.
+description: Use to run a kaizen summary session — survey the whole backlog and drain exactly one thing out of it into durable improvement work: a topic folder in your state folder plus a task in the product's Roadmap project, the friction-batch, or a learning task.
 ---
 
 # Kaizen — Summary
@@ -10,28 +10,31 @@ drains **exactly one thing** from the backlog.
 
 **Announce at start:** "Kaizen — summary session."
 
-The store is `${user_config.plans_dir}/backlog.md`. Friction rows, ∅ rows
-and recurrence pointer rows are appended by the `kaizen:capture` skill;
-vision rows go through the same writer from wherever product-direction
-material surfaces. Capture is the home of every row grammar — read that
-file when you need it; this one never restates it.
+The backlog is the `frictions` table in the notebook of a Ymer Node,
+reached through the node's `notebook` tool. Friction rows, empty rows and
+recurrence rows are recorded by the `kaizen:capture` skill; vision rows go
+in the same way from wherever product-direction material surfaces. Capture
+is the home of every row grammar, of the table's definition and of the
+line a row is quoted as — read that file when you need it; this one never
+restates them.
 
-**Guard — environment failures have one door.** Anything this skill needs
-that setup owns and finds broken — a `plans_dir` still reading as an
-unsubstituted `user_config` placeholder rather than a real folder, a
-state folder missing or not a git work tree, a `backlog.md` absent or
-unwritable, a failing ymer call — stops the run with one instruction:
-**run `/setup:env`** (install it first with
+**Guard — environment failures have two doors.** The backlog's door is
+capture's: its guard names the node-side stops and the fix for each,
+restoring the node first. Anything else this skill needs that setup owns
+and finds broken — a `plans_dir` still reading as an unsubstituted
+`user_config` placeholder rather than a real folder, a state folder
+missing or not a git work tree, a failing ymer call — stops the run with
+one instruction: **run `/setup:env`** (install it first with
 `claude plugin install setup@ymer`, then start a fresh session — a
 plugin's skills load at session start). Repair nothing here, and never
 guess a path.
 
-**Guard — nothing to drain.** If `backlog.md` holds nothing below its
-usage header, or nothing but rows no exit can take — ∅ rows, and vision
-rows for a product with no Roadmap project — there is no run to make. Say
-so and stop, naming `/kaizen:capture` as the way to put a row there: no
-rewrite, no commit, no mint. Both states are ordinary, a drained store
-and an accumulation of rows nothing ever drains.
+**Guard — nothing to drain.** If the backlog holds no open row, or none
+but rows no exit can take — empty rows, and vision rows for a product with
+no Roadmap project — there is no run to make. Say so and stop, naming
+`/kaizen:capture` as the way to put a row there: no drain, no commit, no
+mint. Both states are ordinary, a drained store and an accumulation of
+rows nothing ever drains.
 
 ## The directed way of working
 
@@ -63,12 +66,84 @@ call, or from the hint a response carries. A shape copied into a skill
 goes stale the next time the server moves, and works against only the
 one version it was copied from.
 
+**Notebook calls are named the same way, and their SQL is written out.**
+The tool and the action are the node's; the SQL is this plugin's own, over
+its own table, so the statements below are the skill's to carry.
+
 ## The run
 
-1. **Orient.** Read `backlog.md` whole — never a recent tail: a friction
-   that recurs slowly would fall out of view exactly as it matures into
-   one worth doing. Then find the picks nobody has started, three ways,
-   because they answer different questions:
+1. **Back up, then orient.** Take a notebook backup first — `notebook`
+   `create` — and note its id: the drain in step 4 changes rows no commit
+   records. The backup is the whole-notebook safety net, not the drain's
+   undo — `restore` puts back everything as it was and discards every row
+   any client inserted after it. A wrong drain is undone by its exact
+   inverse instead, which touches nothing else:
+
+   ```sql
+   UPDATE frictions
+   SET status = 'open', drained_to = NULL, drained_at = NULL
+   WHERE id IN (<the same ids>)
+   ```
+
+   Then survey the backlog whole — never a recent tail: a friction that
+   recurs slowly would fall out of view exactly as it matures into one
+   worth doing. Whole means every open row is in view, the aggregates
+   first and then the rows, each through `notebook` `query`:
+
+   ```sql
+   -- what is open: rows per kind and source, oldest and newest
+   SELECT kind, source, count(*) AS rows, min(captured_on) AS oldest, max(captured_on) AS newest
+   FROM frictions
+   WHERE status = 'open'
+   GROUP BY kind, source
+   ORDER BY kind, rows DESC
+   ```
+
+   ```sql
+   -- frequency: every anchor, its rows and how many are still open, drained ones counted
+   SELECT COALESCE('#' || anchor_id, anchor_text) AS anchor, count(*) AS rows,
+          sum(status = 'open') AS open, max(captured_on) AS latest
+   FROM frictions
+   WHERE kind = 'recurrence'
+   GROUP BY anchor
+   ORDER BY rows DESC
+   ```
+
+   ```sql
+   -- the sharpest signal: open recurrences whose anchor was drained
+   SELECT r.id, r.captured_on, r.context, r.body, a.id AS anchor, a.drained_to
+   FROM frictions r JOIN frictions a ON a.id = r.anchor_id
+   WHERE r.status = 'open' AND a.status = 'drained'
+   ORDER BY r.id
+   ```
+
+   ```sql
+   -- vision rows per product
+   SELECT lower(product) AS product, count(*) AS rows
+   FROM frictions
+   WHERE kind = 'vision' AND status = 'open'
+   GROUP BY lower(product)
+   ORDER BY rows DESC
+   ```
+
+   Then the rows: every open friction and vision row as a lead, oldest
+   first, a hundred per page until a page comes back short.
+
+   ```sql
+   SELECT id, captured_on, source, context, kind, product, substr(body, 1, 200) AS lead
+   FROM frictions
+   WHERE status = 'open' AND kind IN ('friction', 'vision')
+   ORDER BY id
+   LIMIT 100 OFFSET <n>
+   ```
+
+   A row that becomes a candidate for the pick is read whole, together
+   with the rows anchored on it — `WHERE id = <id> OR anchor_id = <id>`,
+   or `WHERE anchor_text = '<text>'` for a named cause. The aggregates
+   count; clustering is still a judgement made by reading.
+
+   Then find the picks nobody has started, three ways, because they
+   answer different questions:
 
    - `tasks list` on **each** Roadmap project, narrowed to the **open**
      group — the tasks nobody has started, where a freshly minted task
@@ -90,44 +165,63 @@ one version it was copied from.
      marker; other artifacts may quote it.)
 
    All three are a reminder at the moment it is relevant, never a gate.
-   The scan is also what step 3's "one open batch at a time" rule needs.
+   The scan is also what step 3's "one open friction-batch at a time" rule
+   needs.
 
 2. **Determine the run's shape.** Count the rows below the bar for their
    own topic (→ Three exits). **Ten or more ⇒ this run's pick is the
-   friction-batch**; fewer ⇒ the normal pick. Moot rows ride along in a
-   batch but never count toward the ten; vision rows do neither; ∅ rows
-   belong to no cluster and take no exit, so they stay. The threshold
-   exists so the run's shape is deterministic rather than a question you
-   answer each time.
+   friction-batch**; fewer ⇒ the normal pick. Moot rows ride along in the
+   friction-batch but never count toward the ten; vision rows do neither;
+   empty rows belong to no cluster and take no exit, so they stay open. The
+   threshold exists so the run's shape is deterministic rather than a
+   question you answer each time.
 
 3. **Pick one thing** (→ The pick rule) and create or append its
    artifact — a topic folder, the friction-batch folder, or a learning
    task. Summary applies no diff itself and discards nothing: every exit
    deposits a durable artifact.
 
-4. **Delete the drained rows** from `backlog.md` — the one place the file
-   is written other than by appending, and the store's one lost-update
-   hazard, since a capture in another session may have appended since
-   step 1. So **re-read the file immediately before editing, and remove
-   the drained rows by targeted edits** — never rewrite the whole file
-   from the copy step 1 read. Every other row stays: a friction left to
-   accumulate produces a *better* root cause when its turn comes.
+4. **Drain the rows the pick took** — every one of them, in one
+   `notebook` `execute`:
+
+   ```sql
+   UPDATE frictions
+   SET status = 'drained', drained_to = '<where they went>',
+       drained_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+   WHERE status = 'open' AND id IN (<ids>)
+   ```
+
+   The ids are the cluster's, never the anchor's alone: the anchor and
+   every open row anchored on it — by `anchor_id`, or by the same
+   `anchor_text` for a named cause — the rows step 1 read together. A
+   pointer left open on a drained anchor would read as the sharpest
+   signal next run, so after a drain an open pointer on a drained anchor
+   means exactly one thing: captured after it.
+
+   `drained_to` names where the rows went: the folder the pick wrote, as
+   `<area>/YYYY/MM-DD-<topic>/` under the state folder — the
+   friction-batch's folder included — or the learning task's id. The
+   call's `affected_rows` must equal the number of ids; fewer means an id
+   is wrong or a row was already drained, so find out which before
+   closing. The update names its rows, so a capture landing meanwhile in
+   another session is never touched. Rows are never deleted, and every
+   other row stays open: a friction left to accumulate produces a *better*
+   root cause when its turn comes.
 
 5. **Commit** — state changes before announcements, so the close
    announces what is already durable:
 
    ```
-   git -C ${user_config.plans_dir} add backlog.md <area>/YYYY/MM-DD-<topic>/
-   git -C ${user_config.plans_dir} commit -m "kaizen: summary" -- backlog.md <area>/YYYY/MM-DD-<topic>/
+   git -C ${user_config.plans_dir} add <area>/YYYY/MM-DD-<topic>/
+   git -C ${user_config.plans_dir} commit -m "kaizen: summary" -- <area>/YYYY/MM-DD-<topic>/
    ```
 
-   Stage the drained rows' new artifact beside the backlog; a
-   learning-task pick writes no file, so it stages `backlog.md` alone.
+   Stage the folder the pick wrote; a learning-task pick writes no file
+   and commits nothing — its drain is already durable in the table.
    **Pathspec-scope the commit**: the state folder can be written by
    concurrent sessions and a bare commit sweeps in their staged work.
    Verify scoped: `git -C ${user_config.plans_dir} status` no longer
-   lists `backlog.md` or the topic folder; foreign dirty paths may
-   remain — leave them.
+   lists the topic folder; foreign dirty paths may remain — leave them.
 
 6. **Close with the runnable reminder** (→ The close).
 
@@ -146,8 +240,10 @@ product's vision rows are one cluster however unrelated their contents,
 and they never join a friction cluster.
 
 Clustering is something summary *does while reading*, and names in a
-`request.md` when several rows share a cause — never written to disk as a
-structure, so nothing persists between runs to drift.
+`request.md` when several rows share a cause — never written to disk or
+to the table as a structure, so nothing persists between runs to drift.
+The anchors capture records are evidence for a cluster, not the cluster:
+rows with different anchors can terminate at one root cause.
 
 ### The pick rule
 
@@ -174,17 +270,18 @@ judgement over content rather than a count comparison.
 **A row anchored to a topic folder that already exists** — two rules:
 
 - **Folder created but nobody has started it** → fold the row into its
-  `request.md`. The same append the batch uses; it costs nothing because
-  nobody has read the file yet, and the intake gets strictly better.
-- **Anything else** → leave the row in `backlog.md`. If the topic shipped
-  and the friction is gone, a later run carries the row to the batch as
+  `request.md` and drain it to that folder. The same append the
+  friction-batch uses; it costs nothing because nobody has read the file
+  yet, and the intake gets strictly better.
+- **Anything else** → leave the row open. If the topic shipped and the
+  friction is gone, a later run carries the row to the friction-batch as
   moot. If it shipped and the friction persists, **that
   recurrence-after-ship is the sharpest signal kaizen produces** — a
   shipped change did not solve what it claimed — and it earns its own
   topic.
 
-Everything wider than `backlog.md` is summary's, never capture's: the
-folder scan above, and an ad-hoc
+Everything wider than capture's bounded query is summary's, never
+capture's: the folder scan above, drained rows read in full, and an ad-hoc
 `grep -r '<term>' ${user_config.plans_dir}` when a row looks like a
 recurrence of something already drained. Narrow by time if that gets
 unwieldy, but set no default window — the valuable catch is a friction
@@ -236,14 +333,14 @@ the projects step 1 already listed — no second call:
 > Kaizen drains into a project named `<Product> Roadmap` — one per
 > product, its tasks what to do next. Create one in ymer for the product
 > this improvement belongs to, then run `/kaizen:summary` again. The
-> drained rows are still in the backlog; nothing was lost.
+> rows are still open in the backlog; nothing was lost.
 
 For `Meta Roadmap`, which is a floor rather than one of your products:
 
 > Kaizen drains work about your own process into a project named
 > `Meta Roadmap`, and this machine has none. Run `/setup:env`, which
 > creates it, or create it in ymer yourself — then run `/kaizen:summary`
-> again. The drained rows are still in the backlog; nothing was lost.
+> again. The rows are still open in the backlog; nothing was lost.
 
 Both halts are deliberate: a Roadmap project is the load-bearing floor of
 this way of working, and inventing a substitute would hide its absence.
@@ -261,34 +358,35 @@ always routes to `Meta Roadmap`. It takes exactly two kinds of row:
   itself plus a locating grep, no design choices left, and the edit
   surface is your process prose or config, never a project's code.
 - **Moot or not worth doing** — the cause is gone, was handled elsewhere,
-  or is judged not worth acting on. Never delete such a row silently: the
+  or is judged not worth acting on. Never drain such a row silently: the
   work that follows gets the final say on whether it is done, including
   that it is not.
 
 **Vision rows are neither kind** — a product's direction is not the
-batch's edit surface — so they never ride a batch and never count toward
-the ten. A product's vision rows drain as exit 1 above, as a **carve
-topic**: an ordinary topic in that product's area whose `request.md` names
-the product and carries the rows verbatim, and whose work writes them into
-the product's own description. That is the one door through which vision
-material reaches a product page.
+friction-batch's edit surface — so they never ride it and never count
+toward the ten. A product's vision rows drain as exit 1 above, as a
+**carve topic**: an ordinary topic in that product's area whose
+`request.md` names the product and carries the rows verbatim, and whose
+work writes them into the product's own description. That is the one door
+through which vision material reaches a product page.
 
-**Every other row stays in `backlog.md`, accumulating.** If the batch
+**Every other row stays open, accumulating.** If the friction-batch
 swallowed everything, the backlog would empty at every run and the
 frequency signal the pick rule rests on would be gone.
 
-**One open batch at a time.** If step 1's scan found a `friction-batch`
-folder nobody has started, **append** this run's rows to its `request.md`
-under the right heading; otherwise create a new one and mint its task like
-any other pick. Once a batch has been started the next run opens a fresh
-one, and an appended-to batch keeps its *opening* date — every row carries
-its own.
+**One open friction-batch at a time.** If step 1's scan found a
+`friction-batch` folder nobody has started, **append** this run's rows to
+its `request.md` under the right heading; otherwise create a new one and
+mint its task like any other pick. Once a friction-batch has been started
+the next run opens a fresh one, and an appended-to friction-batch keeps
+its *opening* date — every row carries its own.
 
 **3. A learning task.** A learning-gap friction — probe 6 of the capture
 battery explicitly invites them — exits here. Summary **never opens the
 learning in-session**, exactly as it never runs the topic: it mints a task
 in a project named `Learning` (the one step 1 already listed, then the
-same create/link/read-back as exit 1), deletes the rows, and closes.
+same create/link/read-back as exit 1), drains the rows to that task, and
+closes.
 
 The task's name is the gap **as a goal-contract-shaped statement**, not a
 bare subject name — "enough Postgres query planning to read an EXPLAIN and
@@ -308,7 +406,9 @@ working's floor, a Learning project is optional practice.
 
 `source: kaizen-summary` marks where the folder came from, `task:` is the
 reverse pointer to the task minted beside it, and `created:` rather than
-`started:` because the folder predates anyone working the topic.
+`started:` because the folder predates anyone working the topic. Every
+row is quoted as capture's line — the rendering query lives there — so
+its id travels with it.
 
 A normal pick:
 
@@ -325,8 +425,8 @@ created: <YYYY-MM-DD>
 
 Frictions, verbatim from the backlog:
 
-- <row>
-- <row>
+<row as a line>
+<row as a line>
 ```
 
 The `inferred:` mark is the default on that line: summary synthesizes with
@@ -344,16 +444,16 @@ created: <YYYY-MM-DD>
 
 # friction-batch
 
-Frictions collected by `/kaizen:summary` to triage as one batch. The
-triage decides which are done — including that some are not.
+Frictions collected by `/kaizen:summary` to triage as one friction-batch.
+The triage decides which are done — including that some are not.
 
 ## Below the bar for their own topic
 
-- <row>
+<row as a line>
 
 ## Moot, or judged not worth doing
 
-- <row>
+<row as a line>
 ```
 
 The two headings carry summary's judgement into the folder — real input
@@ -389,12 +489,12 @@ guard.
 - The task summary mints is a node for the topic, not a queue of
   frictions: the description points at the folder and never copies it
 - Cluster by root cause, never by symptom; vision rows cluster per
-  product and never ride a batch
+  product and never ride the friction-batch
 - The folder's area picks the Roadmap: `meta/` → `Meta Roadmap`, anything
   else → that product's, with `Meta Roadmap` excluded from the candidates
 - A missing Roadmap project halts the run and says what to create; no
   `Learning` project degrades into an ordinary Roadmap task
-- The drain removes drained rows by targeted edit, re-read immediately
-  beforehand — never a whole-file rewrite from step 1's copy
-- Summary commits its own backlog rewrite together with the artifact it
-  wrote, pathspec-scoped
+- Every run opens with a notebook backup, and the drain is one `UPDATE`
+  by id to `drained` — rows are never deleted
+- Summary commits the folder it wrote, pathspec-scoped; the backlog itself
+  lives in no git tree

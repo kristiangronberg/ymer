@@ -9,7 +9,7 @@
     "plans_dir": {
       "type": "directory",
       "title": "State folder",
-      "description": "One folder for your kaizen state, under version control. The backlog lives at <folder>/backlog.md and drained topics get folders beneath it.",
+      "description": "One folder for your kaizen state, under version control: drained topics get folders beneath it.",
       "required": true
     }
   }

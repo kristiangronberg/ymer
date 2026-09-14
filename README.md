@@ -15,8 +15,8 @@ Both are yours to bring — no plugin ships a connection or names your
 folder for you. `setup` is the plugin that checks both and creates the
 rest. Its one skill, `/setup:env`, verifies the environment the other
 plugins work from and reports it; each of their skills stops at an
-environment failure and names that one door rather than repairing
-anything itself.
+environment failure and names the door that fixes it rather than
+repairing anything itself.
 
 ## Installing
 

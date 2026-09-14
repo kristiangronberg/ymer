@@ -4,15 +4,15 @@ Setup is a plugin with one skill. `/setup:env` wires the environment
 every plugin in this marketplace assumes, and then verifies it whenever
 you ask.
 
-- **`/setup:env`** checks four things in order — your state folder is set
-  and under version control, the store skeletons exist, ymer answers, and
-  a `Meta Roadmap` project exists — creating whatever is missing and
-  reporting each one with a fix you can follow.
+- **`/setup:env`** checks three things in order — your state folder is set
+  and under version control, ymer answers, and a `Meta Roadmap` project
+  exists — creating whatever is missing and reporting each one with a fix
+  you can follow.
 
 Run it once after installing, in a fresh session — a plugin's skills
 load at session start. After that, run it whenever another plugin's
 skill sends you here: a skill stops on an environment failure and names
-this one door rather than repairing anything itself.
+the door that fixes it rather than repairing anything itself.
 
 ## Why it is a separate plugin
 

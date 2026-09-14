@@ -1,6 +1,6 @@
 ---
 name: env
-description: Use to set up and verify the environment every ymer-marketplace plugin works from — the state folder, its store skeletons, the ymer connection, and the Meta Roadmap project. Run it after installing, and whenever a skill's guard sends you here.
+description: Use to set up and verify the environment every ymer-marketplace plugin works from — the state folder, the ymer connection, and the Meta Roadmap project. Run it after installing, and whenever a skill's guard sends you here.
 ---
 
 # Setup — Env
@@ -11,17 +11,15 @@ assume, and reports what it found.
 **Announce at start:** "Setup: checking the ymer environment."
 
 Setup owns the environment and the start position those skills work from —
-configuration wired, store skeletons present, the ymer connection alive,
-universal floors in place. A skill owns its own domain and never sends you
-here for domain state.
+configuration wired, the ymer connection alive, universal floors in place.
+A skill owns its own domain and never sends you here for domain state.
 
 **The battery below is the desired state.** Every check verifies, creates
 what is missing, and never mutates what already exists. So a healthy
 machine reports all-pass and changes nothing, and re-running this skill
-converges everything setup owns — settings, skeletons, floors — with no
-migration step and nothing to version. The ymer connection is not among
-them: it is yours, it lives outside any plugin, and re-running can only
-report on it.
+converges everything setup owns — settings and floors — with no migration
+step and nothing to version. The ymer connection is not among them: it is
+yours, it lives outside any plugin, and re-running can only report on it.
 
 ## The battery
 
@@ -42,21 +40,21 @@ never from a project's own settings.
 
 Read every `@ymer` entry and resolve one value:
 
-- **Nothing carries `plans_dir`** — checks 2 and 4 both hold off: a run
-  that never resolved a state folder has no business writing anything.
-  Fail this check, naming the file that was read:
+- **Nothing carries `plans_dir`** — check 3 holds off: a run that never
+  resolved a state folder has no business writing anything. Fail this
+  check, naming the file that was read:
 
   > No ymer plugin has its state folder set in `<the settings file read>`.
   > It is one folder for your state, under version control. Set it with
   > `/plugin configure kaizen@ymer`, or reinstall with
   > `claude plugin install kaizen@ymer --config plans_dir=<your folder>`.
 
-  This branch stops checks 2 and 4, not the run: check 3 waits on nothing
-  here, so it still runs and still reports. Which folder it is, is yours
-  to say — the folder and the connection are the two things setup never
+  This branch stops check 3, not the run: check 2 waits on nothing here,
+  so it still runs and still reports. Which folder it is, is yours to
+  say — the folder and the connection are the two things setup never
   writes for you. The two failures below stop no other check by
-  themselves; checks 2 and 4 each say what they need, and report
-  `not checked` when they do not have it.
+  themselves; check 3 says what it needs, and reports `not checked` when
+  it does not have it.
 
 - **Two plugins disagree** — fail the check and change nothing. Which one
   is right is a question only you can answer.
@@ -80,38 +78,10 @@ and *wrong* passes every mechanical check there is. The printed path, read
 by the person who is standing right here, is the only thing that finds it —
 which is why this runs with you present rather than inside every later run.
 
-### 2. The store skeletons
-
-**This check runs only when check 1 resolved a single value that passed
-the work-tree probe.** On any other outcome — two plugins disagree, or
-the probe failed — there is no folder to trust: report this check as not
-checked, name check 1 as what it waits on, and create nothing. Writing a
-file under an unresolved path drags the directory into existence behind
-it, which is the silent second store check 1 refuses to create.
-
-`<plans_dir>/backlog.md` is the kaizen backlog. Absent, create it with
-this header and nothing else:
-
-```markdown
-# Backlog
-
-Frictions captured by kaizen at session tails, one row per line in
-arrival order — this file is the whole store. `/kaizen:summary` reads it
-whole and drains exactly one thing per run, deleting the drained rows.
-The file's length is the debt gauge. Grammar: the `kaizen:capture` skill.
-```
-
-Present, leave it exactly as it is: the skeleton is setup's, every row in
-it is the skill's. Present but not something the backlog writer can append
-to — a directory sitting at that path, or a file it cannot write — fails
-the check and names the path. Reporting that is setup's job; repairing it
-is not, and a check that passed a store no skill can write to would send
-the guard's one door back to a green report.
-
-### 3. The ymer connection
+### 2. The ymer connection
 
 One call proves the account, the connection and the sign-in together, and
-its result is what check 4 reads: a `projects list` name search for
+its result is what check 3 reads: a `projects list` name search for
 `Roadmap`, asking for each project's id and name. The parameter shape is
 the server's — ask its `help` for the action if you do not have it.
 
@@ -133,22 +103,22 @@ claude mcp login ymer
 Adding one that already exists changes nothing, so run both either way,
 then start a fresh session.
 
-### 4. The `Meta Roadmap` project
+### 3. The `Meta Roadmap` project
 
 **This check runs only when check 1 resolved a single value that passed
-the work-tree probe, and check 3 passed.** Check 3's result is the
+the work-tree probe, and check 2 passed.** Check 2's result is the
 project list this check reads, so a failed connection leaves nothing to
 read in — and creating `Meta Roadmap` is a write, which a run that never
 resolved a state folder has no business doing. On either miss, report
 this check as not checked: name check 1 when the folder is what is
-missing, check 3 when the connection is. Do not call back into a
+missing, check 2 when the connection is. Do not call back into a
 connection that just refused.
 
 Work about how you work belongs to no product, so it gets a project of its
 own, named exactly `Meta Roadmap`. Every machine has one — a floor, not a
 naming decision, which is why setup creates it instead of asking.
 
-Check 3's result already lists it. Absent, create it with
+Check 2's result already lists it. Absent, create it with
 `projects create` — named exactly `Meta Roadmap`, its description the
 markdown below:
 
@@ -177,7 +147,6 @@ carries both values and the plugins holding them instead.
 Setup — ymer environment
 
   ✔ plans_dir     /Users/you/state (kaizen@ymer) — git work tree
-  ✔ backlog.md    created
   ✔ ymer          reachable
   ✔ Meta Roadmap  exists
 
@@ -194,10 +163,10 @@ exactly one next action, so the report carries nothing else.
   this skill is the whole upgrade story for everything setup owns
 - One state folder, shared by every ymer plugin that takes one; setup
   reports a disagreement and never picks a winner
-- Setup writes skeletons and floors, never content: rows in the backlog
-  and per-product Roadmap projects belong to the skills and to you
+- Setup writes floors, never content: per-product Roadmap projects belong
+  to the skills and to you
 - The folder and the connection are yours to bring — an unset `plans_dir`
-  stops checks 2 and 4, a missing connection fails check 3, and setup
-  instructs in both cases rather than writing either
+  stops check 3, a missing connection fails check 2, and setup instructs
+  in both cases rather than writing either
 - A check whose input never resolved reports `not checked` and writes
   nothing — setup repairs on facts, never on a guess

@@ -7,9 +7,9 @@ The loop is small on purpose.
 
 - **`/kaizen:capture`** runs at the tail of a piece of work. It asks six
   questions about what just happened, keeps the single highest-value
-  answer, 5-Whys it to a root cause, and appends **one line** to your
+  answer, 5-Whys it to a root cause, and records **one row** in your
   backlog. Seconds, not minutes.
-- **`/kaizen:summary`** runs occasionally, in a fresh session. It reads
+- **`/kaizen:summary`** runs occasionally, in a fresh session. It surveys
   the whole backlog and drains **exactly one thing** out of it into
   durable work: a topic folder plus a task in the product's roadmap, a
   batch of small fixes, or a learning task.
@@ -31,21 +31,21 @@ both; `setup` is what checks them and fills in the rest.
 The install block is in the [marketplace README](../../README.md#installing):
 it brings the ymer connection, adds the marketplace, and installs both
 plugins. Then, in a fresh session, run `/setup:env`. It checks the state
-folder, creates the store skeleton, checks that ymer answers, and reports
-what it found. You can also set the folder later with
-`/plugin configure kaizen@ymer` — the platform's own door to the same
-setting.
+folder, checks that ymer answers, and reports what it found. You can
+also set the folder later with `/plugin configure kaizen@ymer` — the
+platform's own door to the same setting.
 
 Both skills assume that environment rather than re-proving it: on an
-environment failure they stop and send you to `/setup:env`, and they
+environment failure they stop and name the door that fixes it, and they
 never guess a path or start a second store.
 
-The folder holds `backlog.md` — the whole store, one row per line — and
-a folder per drained topic. Version control matters because kaizen
-commits its own writes: `kaizen: capture (<source>)` after each capture,
-`kaizen: summary` after each drain. That log is the record of which
+The backlog itself is not in the folder: it is the `frictions` table in
+the notebook of a Ymer Node, one row per friction, where a drained row
+stays with its status changed. The folder holds a folder per drained
+topic, and version control matters because summary commits what it
+writes there, as `kaizen: summary`. The table is the record of which
 sessions reflected at all, which is why even a session that found
-nothing appends a row.
+nothing records a row.
 
 ## The way of working it directs
 
@@ -88,8 +88,9 @@ exact wording; a block never copies the battery or the row grammar.
 - **It does not rank.** No scores, no counts, no tiebreak ladder. One
   thing per run, chosen by reading.
 - **It does not grow a second store.** No archive, no clusters file, no
-  staging area. A row leaves the backlog only by being drained, and the
-  file's own length is the debt gauge — when it feels long, that is the
-  signal to run a summary.
-- **It does not set itself up.** The environment is `setup`'s, and a
-  kaizen skill that meets an environment failure names that one door.
+  staging area. A row leaves the backlog only by being drained — its
+  status changes and the row stays — and the count of open rows is the
+  debt gauge: when it feels long, that is the signal to run a summary.
+- **It does not set itself up.** The folder and the ymer connection are
+  `setup`'s to check, and the node is yours to run; a kaizen skill that
+  meets an environment failure stops and names the door.
