@@ -1,16 +1,8 @@
 {
   "name": "kaizen",
-  "description": "Continuous improvement over your working process — capture frictions as you work, drain them into improvement work.",
+  "description": "Continuous improvement over your working process — capture frictions as you work, drain them into improvement work. The practice lives as two processes in your Ymer Node's notebook, not as skills.",
   "version": "0.1.2",
   "author": {
     "name": "Kristian Grönberg"
-  },
-  "userConfig": {
-    "plans_dir": {
-      "type": "directory",
-      "title": "State folder",
-      "description": "One folder for your kaizen state, under version control: drained topics get folders beneath it.",
-      "required": true
-    }
   }
 }

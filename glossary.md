@@ -3,8 +3,9 @@
 Canonical domain terms for this repository — the marketplace and every
 plugin in it; this is the repo's one glossary. Prose and manifests use
 these terms; `_Avoid_` synonyms are banned in new names. Marketplace-level
-terms are defined here. A plugin's own terms are defined in its
-shipped skill prose.
+terms are defined here. A plugin's own terms are defined where its practice
+lives — kaizen's in the Ymer Node notebook, at the rows the entries below
+name, or in place where no row defines the term.
 
 This glossary describes what is: an entry is written when the thing its
 term names is real. A `Redefinition in flight — <date> → <topic ID>:`
@@ -14,15 +15,17 @@ what stands below it is still the current one.
 ## B
 
 ### backlog
+Defined by the `frictions` table's `_meta` description in the Ymer Node
+notebook — its home.
 
-- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: improvements pool, staging
 
 ### battery
-A skill's fixed, ordered sequence of probes or checks, run whole — each with a
-defined outcome. Always named qualified by its skill (capture's six-probe
-battery); a skill has at most one.
+A skill's or a process's fixed, ordered sequence of probes or checks, run
+whole — each with a defined outcome. Always named qualified by its owner
+(setup's three-check battery, `kaizen_capture`'s six-probe battery); an
+owner has at most one.
 
 - _Used in_: marketplace
 - _Avoid_: checklist, probe list, check suite
@@ -30,14 +33,16 @@ battery); a skill has at most one.
 ## C
 
 ### carve topic
+Defined by the `kaizen_summary` process row in the Ymer Node notebook — its
+home.
 
-- _Defined in_: `plugins/kaizen/skills/summary/SKILL.md`
 - _Used in_: kaizen
-- _Avoid_: carving session, lift-out, digest, drain (that is `/kaizen:summary`'s act, not the topic)
+- _Avoid_: carving session, lift-out, digest, drain (that is `kaizen_summary`'s act, not the topic)
 
 ### cluster
+Defined by the `kaizen_summary` process row in the Ymer Node notebook — its
+home.
 
-- _Defined in_: `plugins/kaizen/skills/summary/SKILL.md`
 - _Used in_: kaizen
 
 ## D
@@ -62,22 +67,26 @@ second definition.
 ## F
 
 ### friction
+Defined by the `frictions` table's `_meta` description in the Ymer Node
+notebook — its home.
 
-- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: finding, improvement (the fix, not the observed waste)
 
 ### friction-batch
+Defined by the `kaizen_summary` process row in the Ymer Node notebook — its
+home.
 
-- _Defined in_: `plugins/kaizen/skills/summary/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: fix-now topic, the batch
 
 ## K
 
 ### kaizen block
+The lines at a skill's tail that run the `kaizen_capture` process from the
+node with the skill's slug as source; they copy nothing — the battery, the
+row grammar and the write live in the process.
 
-- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 
 ## P
@@ -88,7 +97,6 @@ Defined in the repo `CLAUDE.md` — the Conventions bullet stating it.
 - _Used in_: marketplace
 
 ### plans_dir
-Redefinition in flight — 2026-08-26 → 2026-08-26-development-plugin-kaizen-setup: the key gives way to a repositories-root key plus an optional plans-repo name defaulting to `plans`; the state folder derives as `<root>/<name>`.
 A plugin's one `userConfig` key (type `directory`): the user's
 git-controlled folder for state. It is the only machine-local value a
 plugin takes as configuration — everything else routes by name convention.
@@ -99,12 +107,12 @@ plugin takes as configuration — everything else routes by name convention.
 ## R
 
 ### recurrence row
+Defined by the `frictions` table's `_meta` description in the Ymer Node
+notebook — its home.
 
-- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 
 ### router
-Redefinition in flight — 2026-08-26 → 2026-08-26-development-plugin-kaizen-setup: the configuration half changes — the one `userConfig` key becomes the repositories root (state folder derived `<root>/<name>`); routing by name convention is unchanged.
 How a plugin's skills find machine-local state and ymer objects: one
 `userConfig` key (`plans_dir`) plus name conventions — the folder is
 configuration, the objects are convention. Nothing richer is config; a
@@ -129,7 +137,8 @@ file's skeleton is start position, its content domain.
 ## V
 
 ### vision row
+Defined by the `frictions` table's `_meta` description in the Ymer Node
+notebook — its home.
 
-- _Defined in_: `plugins/kaizen/skills/capture/SKILL.md`
 - _Used in_: kaizen
 - _Avoid_: vision candidate, vision friction

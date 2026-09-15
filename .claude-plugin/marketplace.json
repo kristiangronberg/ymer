@@ -4,7 +4,7 @@
     "name": "Kristian Grönberg"
   },
   "metadata": {
-    "description": "Plugins for working with ymer.ax — one plugin per practice, its skills the practice's moves. Using any plugin requires a ymer.ax account and one folder for state, under version control; install `setup`, name the folder, and run `/setup:env` to check both and create what is missing."
+    "description": "Plugins for working with ymer.ax — one plugin per practice, its moves the skills it ships or the process rows it points at. Using any plugin requires a ymer.ax account and one folder for state, under version control; install `setup`, name the folder, and run `/setup:env` to check both and create the floors that are missing."
   },
   "plugins": [
     {
@@ -15,7 +15,7 @@
     {
       "name": "kaizen",
       "source": "./plugins/kaizen",
-      "description": "Continuous improvement over your working process — capture frictions as you work, drain them into improvement work."
+      "description": "Continuous improvement over your working process — capture frictions as you work, drain them into improvement work. The practice lives as two processes in your Ymer Node's notebook, not as skills."
     }
   ]
 }

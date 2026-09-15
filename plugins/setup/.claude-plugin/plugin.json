@@ -4,5 +4,13 @@
   "version": "0.1.1",
   "author": {
     "name": "Kristian Grönberg"
+  },
+  "userConfig": {
+    "plans_dir": {
+      "type": "directory",
+      "title": "State folder",
+      "description": "One folder for your state, under version control: the folder /setup:env verifies and puts the floors in — point it at the folder your processes write their topics to.",
+      "required": true
+    }
   }
 }

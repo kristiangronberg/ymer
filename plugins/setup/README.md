@@ -10,9 +10,10 @@ you ask.
   you can follow.
 
 Run it once after installing, in a fresh session — a plugin's skills
-load at session start. After that, run it whenever another plugin's
-skill sends you here: a skill stops on an environment failure and names
-the door that fixes it rather than repairing anything itself.
+load at session start. After that, run it whenever another plugin — a
+skill it ships or a process it points at — sends you here: whatever a
+plugin ships stops on an environment failure and names the door that
+fixes it rather than repairing anything itself.
 
 ## Why it is a separate plugin
 
