@@ -23,16 +23,23 @@ and another front's rows stay open for that front's own summary.
 
 **Guard — environment failures have two doors.** The backlog's door is
 capture's: its guard names the node-side stops and the fix for each,
-restoring the node first. Anything else this skill needs that setup owns
-and finds broken — a `plans_dir` still reading as an unsubstituted
-`user_config` placeholder rather than a real folder, a state folder
-missing or not a git work tree, a failing ymer call — stops the run with
-one instruction: **run `/setup:env`** (install it first with
-`claude plugin install setup@ymer`, then start a fresh session — a
-plugin's skills load at session start). Repair nothing here, and never
-guess a path.
+restoring the node first. The state folder is setup's: resolve
+`<plans_dir>` the way `/setup:env`'s first check does — the `plans_dir`
+option under every `@ymer` plugin's entry in the user settings file
+(`pluginConfigs.<plugin>@ymer.options.plans_dir`), one value — never
+from a placeholder of this plugin's own, which declares no option.
+Anything setup owns and this skill finds broken — no `plans_dir` set,
+two plugins disagreeing, a state folder missing or not a git work tree,
+a failing ymer call — stops the run with one instruction: **run
+`/setup:env`** (install it first with `claude plugin install
+setup@ymer`, then start a fresh session — a plugin's skills load at
+session start). Repair nothing here, and never guess a path.
 
-**Guard — nothing to drain.** If the backlog holds no open row on this
+**Guard — nothing to drain.** First resolve `<front>` against the node:
+`SELECT slug FROM fronts` must list it, and a slug it does not list stops
+the run — the slug this front's instructions name is wrong, or its row
+is missing — because through every query below a wrong slug reads as an
+empty backlog, never as an error. Then: if the backlog holds no open row on this
 front, or none but rows no exit can take — empty rows, and vision rows for
 a product with no Roadmap project — there is no run to make. Say so and
 stop, naming `/kaizen:capture` as the way to put a row there: no drain, no
@@ -92,6 +99,20 @@ its own table, so the statements below are the skill's to carry.
    recurs slowly would fall out of view exactly as it matures into one
    worth doing. Whole means every open row on this front is in view, the
    aggregates first and then the rows, each through `notebook` `query`:
+
+   ```sql
+   -- every front's open rows: this front's are the run's, the others'
+   -- are named at the close and never drained here
+   SELECT front, count(*) AS open
+   FROM frictions
+   WHERE status = 'open'
+   GROUP BY front
+   ORDER BY open DESC
+   ```
+
+   That census is the one read across fronts, so a run can say what sits
+   on a front that has not drained it; every query after it scopes to
+   this front.
 
    ```sql
    -- what is open: rows per kind and source, oldest and newest
@@ -160,7 +181,7 @@ its own table, so the statements below are the skill's to carry.
    - The folder scan, which finds the paths a task name does not carry:
 
      ```
-     grep -rl --include='request.md' 'source: kaizen-summary' ${user_config.plans_dir}
+     grep -rl --include='request.md' 'source: kaizen-summary' <plans_dir>
      ```
 
      A folder holding nothing but its `request.md` is one nobody has
@@ -202,12 +223,14 @@ its own table, so the statements below are the skill's to carry.
    WHERE status = 'open' AND id IN (<ids>)
    ```
 
-   The ids are the cluster's, never the anchor's alone: the anchor and
-   every open row anchored on it — by `anchor_id`, or by the same
+   The ids are the cluster's, never the anchor's alone: this front's
+   portion of it — the anchor where its `front` is this one, and every
+   open row of this front anchored on it, by `anchor_id` or by the same
    `anchor_text` for a named cause — the rows step 1 read together. A
-   pointer left open on a drained anchor would read as the sharpest
-   signal next run, so after a drain an open pointer on a drained anchor
-   means exactly one thing: captured after it.
+   pointer left open on a drained anchor reads as the sharpest signal
+   next run, so after a drain an open pointer on a drained anchor means
+   one of two things: captured after it, or another front's row, left
+   open by step 3 for that front's own summary.
 
    `drained_to` names where the rows went: the folder the pick wrote, as
    `<area>/YYYY/MM-DD-<topic>/` under the state folder — the
@@ -223,15 +246,15 @@ its own table, so the statements below are the skill's to carry.
    announces what is already durable:
 
    ```
-   git -C ${user_config.plans_dir} add <area>/YYYY/MM-DD-<topic>/
-   git -C ${user_config.plans_dir} commit -m "kaizen: summary" -- <area>/YYYY/MM-DD-<topic>/
+   git -C <plans_dir> add <area>/YYYY/MM-DD-<topic>/
+   git -C <plans_dir> commit -m "kaizen: summary" -- <area>/YYYY/MM-DD-<topic>/
    ```
 
    Stage the folder the pick wrote; a learning-task pick writes no file
    and commits nothing — its drain is already durable in the table.
    **Pathspec-scope the commit**: the state folder can be written by
    concurrent sessions and a bare commit sweeps in their staged work.
-   Verify scoped: `git -C ${user_config.plans_dir} status` no longer
+   Verify scoped: `git -C <plans_dir> status` no longer
    lists the topic folder; foreign dirty paths may remain — leave them.
 
 6. **Close with the runnable reminder** (→ The close).
@@ -293,7 +316,7 @@ judgement over content rather than a count comparison.
 
 Everything wider than capture's bounded query is summary's, never
 capture's: the folder scan above, drained rows read in full, and an ad-hoc
-`grep -r '<term>' ${user_config.plans_dir}` when a row looks like a
+`grep -r '<term>' <plans_dir>` when a row looks like a
 recurrence of something already drained. Narrow by time if that gets
 unwieldy, but set no default window — the valuable catch is a friction
 recurring from a topic that shipped long ago, and a window blinds it.
@@ -309,14 +332,14 @@ scans the folder tree for it.
 
 **Order: route (below), then mint, then write `request.md`** — the file
 carries the task's id, and a halt at routing then leaves nothing on disk.
-The mint is three calls, because neither of the first two shows the
+The mint is two calls, because the first does not show the
 postcondition:
 
-1. `tasks create` — the task's name, and a description that is one line:
-   what this is, plus the folder path.
-2. `projects link_task` — link the new task to the Roadmap project the
-   area routes to.
-3. `tasks list` on that same project, narrowed by a name search for the
+1. `tasks create` — the task's name, a description that is one line
+   (what this is, plus the folder path), and its membership in the
+   Roadmap project the area routes to: membership is the task's own
+   property, written on the create the way the server's `help` says.
+2. `tasks list` on that same project, narrowed by a name search for the
    task's name — the read-back.
 
 Expect exactly one task, and the projects it names to include the target.
@@ -396,7 +419,7 @@ its *opening* date — every row carries its own.
 battery explicitly invites them — exits here. Summary **never opens the
 learning in-session**, exactly as it never runs the topic: it mints a task
 in a project named `Learning` (the one step 1 already listed, then the
-same create/link/read-back as exit 1), drains the rows to that task, and
+same create and read-back as exit 1), drains the rows to that task, and
 closes.
 
 The task's name is the gap **as a goal-contract-shaped statement**, not a
