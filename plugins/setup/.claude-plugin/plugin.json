@@ -1,7 +1,7 @@
 {
   "name": "setup",
   "description": "One-time setup for the ymer marketplace — verifies the state folder and the ymer connection, creates the Meta Roadmap project, and checks all three again whenever you ask.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "Kristian Grönberg"
   },
