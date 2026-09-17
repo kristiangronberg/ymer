@@ -1,8 +1,8 @@
 # Ymer Marketplace
 
 This repository is the `ymer` Claude Code plugin marketplace. Each
-plugin under `plugins/` packages **one practice** — its moves the
-skills it ships or the process rows it points at.
+plugin under `plugins/` packages **one practice** — its skills the
+practice's moves.
 
 Using any plugin requires at least two things, and they are stated in the
 marketplace description because they are real requirements:
@@ -15,14 +15,14 @@ Both are yours to bring — no plugin ships a connection or names your
 folder for you. `setup` is the plugin that checks both and creates the
 floors the way of working needs — a `Meta Roadmap` project. Its one
 skill, `/setup:env`, verifies the environment the other plugins work
-from and reports it; whatever a plugin ships — a skill or a process —
-stops at an environment failure and names the door that fixes it rather
-than repairing anything itself.
+from and reports it; each of their skills stops at an environment
+failure and names the door that fixes it rather than repairing anything
+itself.
 
 `kaizen` needs one thing more: a Ymer Node you run, whose notebook
-carries the process store. The store is not yet distributed — the
-[kaizen README](plugins/kaizen/README.md) says what the practice needs
-and where it lives.
+carries the `frictions` table and the `fronts` table it keys on. Nothing
+here creates them — the [kaizen README](plugins/kaizen/README.md) says
+what the practice needs and where it lives.
 
 ## Installing
 

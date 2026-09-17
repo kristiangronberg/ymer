@@ -1,20 +1,18 @@
 ---
 name: env
-description: Use to set up and verify the environment every ymer-marketplace plugin works from — the state folder, the ymer connection, and the Meta Roadmap project. Run it after installing, and whenever a skill's or a process's guard sends you here.
+description: Use to set up and verify the environment every ymer-marketplace plugin works from — the state folder, the ymer connection, and the Meta Roadmap project. Run it after installing, and whenever a skill's guard sends you here.
 ---
 
 # Setup — Env
 
-`/setup:env` puts the environment into the state the other plugins — the
-skills they ship and the processes they point at — assume, and reports
-what it found.
+`/setup:env` puts the environment into the state the other plugins' skills
+assume, and reports what it found.
 
 **Announce at start:** "Setup: checking the ymer environment."
 
-Setup owns the environment and the start position those skills and
-processes work from — configuration wired, the ymer connection alive,
-universal floors in place. A skill or a process owns its own domain and
-never sends you here for domain state.
+Setup owns the environment and the start position those skills work from —
+configuration wired, the ymer connection alive, universal floors in place.
+A skill owns its own domain and never sends you here for domain state.
 
 **The battery below is the desired state.** Every check verifies, creates
 what is missing, and never mutates what already exists. So a healthy
@@ -128,7 +126,7 @@ markdown below:
 # Meta Roadmap
 
 Improvement work about how you work — the process itself, belonging to no
-product. Its tasks are what to do next. A kaizen summary drains
+product. Its tasks are what to do next. `/kaizen:summary` drains
 process-level picks here; a pick about a product goes to that product's
 `<Product> Roadmap` instead.
 ```

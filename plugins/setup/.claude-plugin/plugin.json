@@ -9,7 +9,7 @@
     "plans_dir": {
       "type": "directory",
       "title": "State folder",
-      "description": "One folder for your state, under version control: the folder /setup:env verifies and puts the floors in — point it at the folder your processes write their topics to.",
+      "description": "One folder for your state, under version control: the folder /setup:env verifies and puts the floors in — drained topics get folders beneath it.",
       "required": true
     }
   }
