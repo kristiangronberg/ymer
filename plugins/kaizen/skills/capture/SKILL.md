@@ -19,7 +19,8 @@ anyone has committed to; it is evidence waiting to be weighed.
 
 One table, `frictions`, in the notebook of a Ymer Node, reached through
 the node's `notebook` tool — `query` reads, `execute` writes, one SQL
-statement per call. The node is the one your Ymer Node install serves —
+statement per call: a call runs only its first statement and drops the
+rest without a word. The node is the one your Ymer Node install serves —
 a project's development instance, or another server that also exposes a
 `notebook` tool, is not it; with more than one such tool loaded, a
 missing `frictions` table is first evidence of the wrong door. Nothing
