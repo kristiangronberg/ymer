@@ -4,13 +4,13 @@
     "name": "Kristian Grönberg"
   },
   "metadata": {
-    "description": "Plugins for working with ymer.ax — one plugin per practice, its skills the practice's moves. Using any plugin requires a ymer.ax account and one folder for state, under version control; install `setup`, name the folder, and run `/setup:env` to check both and create the floors that are missing."
+    "description": "Plugins for working with ymer.ax — one plugin per practice, its skills the practice's moves. Using any plugin requires a Ymer Node you run; a ymer.ax account and one version-controlled folder for state are each optional, and each is the default where a session reaches it. Install `setup` and run `/setup:env` to create what is missing and report what it found."
   },
   "plugins": [
     {
       "name": "setup",
       "source": "./plugins/setup",
-      "description": "One-time setup for the ymer marketplace — verifies the state folder and the ymer connection, creates the Meta Roadmap project, and checks all three again whenever you ask."
+      "description": "One-time setup for the ymer marketplace — creates the store skeletons in your Ymer Node's notebook, checks the state folder and the ymer connection, creates the Meta Roadmap project, and checks all four again whenever you ask."
     },
     {
       "name": "kaizen",

@@ -1,7 +1,7 @@
 {
   "name": "setup",
-  "description": "One-time setup for the ymer marketplace — verifies the state folder and the ymer connection, creates the Meta Roadmap project, and checks all three again whenever you ask.",
-  "version": "0.1.2",
+  "description": "One-time setup for the ymer marketplace — creates the store skeletons in your Ymer Node's notebook, checks the state folder and the ymer connection, creates the Meta Roadmap project, and checks all four again whenever you ask.",
+  "version": "0.2.0",
   "author": {
     "name": "Kristian Grönberg"
   },
@@ -9,8 +9,7 @@
     "plans_dir": {
       "type": "directory",
       "title": "State folder",
-      "description": "One folder for your state, under version control: the folder /setup:env verifies and puts the floors in — drained topics get folders beneath it.",
-      "required": true
+      "description": "Optional. One folder for your state, under version control: /setup:env verifies it, and drained topics get folders beneath it. Leave it unset and topics are kept in your Ymer Node's notebook instead."
     }
   }
 }

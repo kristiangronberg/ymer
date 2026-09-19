@@ -39,8 +39,9 @@ this session, a node that does not answer, or a notebook without the
 `frictions` table stops the run. Say which, and put the row you were
 about to record in the report, verbatim, so the friction outlives the
 stop. Restoring the node comes first: a down node is brought back, never
-worked around — no fallback file, no second store, no retry loop —
-and capture never creates the table.
+worked around — no fallback file, no second store, no retry loop — and
+capture never creates the table. `/setup:env` does, along with the
+`fronts` row every row here keys on.
 
 There is no second store — no archive, no clusters file, no staging — and
 nothing moves between containers at rest: a row leaves the backlog only
@@ -57,9 +58,11 @@ A friction row is four values; the table fills in the rest — `id`,
 with `open`:
 
 - `front` — the surface the session runs on, as the slug its initial
-  instructions name (`claude_code` for Claude Code). It is a key into the
-  notebook's `fronts` table, so a missing or unknown front is refused
-  rather than filed as someone else's.
+  instructions name; where they name none, the default for the harness
+  this session runs on — `claude_code` on Claude Code, `cowork` on
+  Cowork, told from the session's own tools rather than from any text.
+  It is a key into the notebook's `fronts` table, so a missing or
+  unknown front is refused rather than filed as someone else's.
 - `source` — the skill that invoked capture, its name in snake_case as
   its kaizen block passes it (`plan_review`), or `standalone` when
   nothing invoked it.

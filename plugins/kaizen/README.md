@@ -24,52 +24,64 @@ moment the picture is most accurate.
 
 ## Setup
 
-Kaizen needs a **ymer.ax** account, **one folder for state, under
-version control** — the `setup` plugin's single `plans_dir` setting — and
-a Ymer Node you run, whose notebook carries the `frictions` table and the
-`fronts` table it keys on. You bring all three; `setup` checks the first
-two, and nothing here creates the tables in your notebook.
+Kaizen needs **a Ymer Node you run**, whose notebook carries the
+`frictions` table and the `fronts` table it keys on. That is the whole
+requirement. A **ymer.ax** account and **one folder for state, under
+version control** — the `setup` plugin's single `plans_dir` setting — are
+each optional, and each is the default where a session reaches it: with
+ymer, the work is tracked in its Roadmap projects, and without it in the
+node's `tasks` table; with a folder, a drained topic gets one beneath it,
+and without one it becomes rows in the node's `topics` table. Nothing is
+asked and nothing falls back on a failure — a store that is there and
+broken stops the run instead.
 
 The install block is in the [marketplace README](../../README.md#installing):
-it brings the ymer connection, adds the marketplace, and installs both
-plugins. Then, in a fresh session, run `/setup:env`. It checks the state
-folder, checks that ymer answers, and reports what it found. You can
-also set the folder later with `/plugin configure setup@ymer` — the
-platform's own door to the same setting.
+it adds the marketplace and installs both plugins. Then, in a fresh
+session, run `/setup:env`. It creates the store skeletons in your
+notebook, checks the folder and ymer, and reports what it found — the
+report is where you read which store this machine is using. You can set
+the folder later with `/plugin configure setup@ymer` — the platform's own
+door to the same setting.
 
 Both skills assume that environment rather than re-proving it: on an
 environment failure they stop and name the door that fixes it, and they
 never guess a path or start a second store.
 
-The backlog itself is not in the folder: it is the `frictions` table in
+The backlog itself is never in the folder: it is the `frictions` table in
 the notebook of a Ymer Node, one row per friction, where a drained row
-stays with its status changed. The folder holds a folder per drained
-topic, and version control matters because summary commits what it
-writes there, as `kaizen: summary`. The table is the record of which
-sessions reflected at all, which is why even a session that found
-nothing records a row.
+stays with its status changed. A state folder, where you have one, holds
+a folder per drained topic, and version control matters because summary
+commits what it writes there, as `kaizen: summary`; without one those
+topics are rows in the node's `topics` table and there is nothing to
+commit. The table is the record of which sessions reflected at all, which
+is why even a session that found nothing records a row.
 
 ## The way of working it directs
 
 Kaizen is opinionated, because routing without configuration needs
 conventions to route by:
 
-- **One product = one ymer project named `<Product> Roadmap`.** Its
-  tasks are what to do next. Summary finds it by that name, and if no
-  such project exists it stops and tells you to create one rather than
+- **One product = one Roadmap.** With ymer that is a project named
+  `<Product> Roadmap`; summary finds it by that name, and if no such
+  project exists it stops and tells you to create one rather than
   inventing somewhere to put your work — `Meta Roadmap` matches that
-  name shape too, and is never a candidate for a product's pick.
-- **Work about how you work goes to `Meta Roadmap`** — one project for
+  name shape too, and is never a candidate for a product's pick. Without
+  ymer it is the `project` value a row in the node's `tasks` table
+  carries, derived from the area, so there is nothing to find and nothing
+  to create.
+- **Work about how you work goes to `Meta Roadmap`** — one home for
   the process itself, which belongs to no product. `/setup:env` creates
-  it, so it is a floor rather than a naming decision, and a
-  process-level pick never has to hunt for a home.
-- **Your state folder is laid out `<area>/YYYY/MM-DD-<topic>/`** — one
-  folder per topic, `<area>` being the repo or product it belongs to.
-  **`meta` is reserved** for work about how you work, and it is the area
-  that routes to `Meta Roadmap`.
-- **A project named `Learning`** is optional. With one, learning gaps
-  drain there as their own tasks; without one, they become ordinary
-  tasks in the product's roadmap.
+  the project where there is ymer, so it is a floor rather than a naming
+  decision, and a process-level pick never has to hunt for a home.
+- **A topic is laid out `<area>/YYYY/MM-DD-<topic>/`** — one topic per
+  folder in your state folder, or one row per artifact under that topic
+  id in the node's `topics` table. `<area>` is the repo or product it
+  belongs to, and **`meta` is reserved** for work about how you work — it
+  is the area that routes to `Meta Roadmap`.
+- **`Learning`** is optional practice: learning gaps drain there as their
+  own tasks, one per subject gap. With ymer that is a project of that
+  name, and without one they become ordinary tasks in the product's
+  Roadmap; in the node it is simply the `project` value `Learning`.
 
 If you already work some other way, the conventions are the part to read
 first — they are what the two skills assume.
@@ -93,6 +105,7 @@ exact wording; a block never copies the battery or the row grammar.
   staging area. A row leaves the backlog only by being drained — its
   status changes and the row stays — and the count of open rows is the
   debt gauge: when it feels long, that is the signal to run a summary.
-- **It does not set itself up.** The folder and the ymer connection are
-  `setup`'s to check, and the node is yours to run; a kaizen skill that
-  meets an environment failure stops and names the door.
+- **It does not set itself up.** The node is yours to run, and the folder
+  and the ymer connection are `setup`'s to check and yours to bring; a
+  kaizen skill that meets an environment failure stops and names the
+  door. Nothing here creates a table — `/setup:env` does.

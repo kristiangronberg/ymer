@@ -4,10 +4,12 @@ Setup is a plugin with one skill. `/setup:env` wires the environment
 every plugin in this marketplace assumes, and then verifies it whenever
 you ask.
 
-- **`/setup:env`** checks three things in order — your state folder is set
-  and under version control, ymer answers, and a `Meta Roadmap` project
-  exists — creating whatever is missing and reporting each one with a fix
-  you can follow.
+- **`/setup:env`** checks four things in order — your Ymer Node answers
+  and carries the store skeletons, your state folder is set and under
+  version control, ymer answers, and a `Meta Roadmap` project exists —
+  creating whatever is missing and reporting each one with a fix you can
+  follow. Only the node is required; the last three are optional, and
+  each check reports which store is in use instead.
 
 Run it once after installing, in a fresh session — a plugin's skills
 load at session start. After that, run it whenever another plugin's
@@ -17,9 +19,10 @@ the door that fixes it rather than repairing anything itself.
 ## Why it is a separate plugin
 
 **The checks belong in one place.** Every plugin here needs the same
-environment — a ymer.ax account and one version-controlled folder for
-state. Written into each plugin, that knowledge drifts apart; written
-here, there is one copy to keep true.
+environment — a Ymer Node you run, plus whichever of a ymer.ax account
+and a version-controlled folder for state you have. Written into each
+plugin, that knowledge drifts apart; written here, there is one copy to
+keep true.
 
 **A run-time skill should not spend its text proving its own setup is
 sane.** Ceremony that runs once now runs once. What is left at the tail
