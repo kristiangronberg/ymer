@@ -1,0 +1,15 @@
+{
+  "name": "ymer",
+  "description": "The directed way of working, as skills you invoke: brainstorm a topic into a direction, scout the ground, define what it means, plan it, harden the plan, implement it, review and ship — plus the supporting moves the phases lean on, kaizen's capture and summary over your working process, and the setup that checks the environment every plugin works from. Requires a Ymer Node and a state folder; a ymer.ax account is optional.",
+  "version": "0.1.2",
+  "author": {
+    "name": "Kristian Grönberg"
+  },
+  "userConfig": {
+    "state_folder": {
+      "type": "directory",
+      "title": "State folder",
+      "description": "Required. The one folder your topics live in — any folder, under version control or not: /ymer:setup verifies it, drained topics get folders beneath it, and its history is git where it is a git work tree and your Ymer Node's notebook otherwise."
+    }
+  }
+}

@@ -1,0 +1,271 @@
+#!/bin/sh
+# hermetic-probe-static — the static stage, sourced by hermetic-probe:
+# three checks over every tracked file, no model.
+#
+#   manifests    `claude plugin validate --strict` on the root and each plugin
+#   values       no personal value in any file — the five value classes
+#                (a filesystem path, an instance name, a host or port or
+#                URL, a backend call shape, a record id) as patterns
+#                below, plus the
+#                maintainer's own tokens from the token file; each hit must
+#                be a KEEP site (hermetic-probe-keep: file and allowed text)
+#   references   every /<plugin>:<skill> names a shipped skill, every
+#                relative link in a markdown file resolves, every
+#                ${CLAUDE_PLUGIN_ROOT} path exists, and no plugin carries
+#                an evals/ of its own — the one evals/ is the marketplace
+#                root's
+#
+# The corpus is `git ls-files` plus untracked files git does not ignore, so
+# a file added but not yet committed is swept too; it is read one file at a
+# time, so a path with a space in it is swept like any other, and a binary
+# file is read as text, so a value inside one is a hit like any other. A
+# listed entry that is not a file — a nested checkout or worktree, which
+# the listing prints as a directory, or a dangling link — is left out and
+# counted on the pass line. An empty corpus — no checkout, no git — fails
+# the stage with exit 2 rather than passing every check over nothing. The
+# one file left out of the corpus the values and references checks read
+# (manifests walks the tree itself) is hermetic-probe-keep: its rows are
+# the allowances, and each row allows exactly its own text at its own
+# file — the text is blanked out of the hit and the line must then match
+# nothing, so a second value beside an allowed one is a hit; and the text
+# must stand on its own, so a value that continues past it (`.x-tokens`
+# under a row for `.x`, `<url>/private` or `<url>?key=…` under a row for
+# `<url>`) is a hit too. A missing or empty KEEP file is exit 2, like the
+# token file: no allowances read means no sweep.
+#
+# The token file: one token per line, no comments, no blank lines, the
+# maintainer's own values that no class pattern can see — login name,
+# personal name, the names of personal trees, repositories and projects,
+# private hosts. It lives outside the repository and is never committed. A
+# missing token file fails the stage with exit 2: a skipped sweep would be
+# a clean-looking pass on exactly what the patterns cannot see. So does an
+# empty one, and one carrying a blank line — an empty pattern matches
+# every line, and a file with no token sweeps nothing.
+
+# Every pattern here is written so that it does not match its own line —
+# a bracketed letter breaks the literal — because this file is in the corpus.
+# Paths are caught by their root: the home roots, the system roots below,
+# and the tilde and HOME forms of a home-relative path. Known gap: an
+# absolute path under a root not listed here passes.
+# A record id is caught by its UUID shape, in either case: a handle into
+# someone's store names that someone's record.
+static_classes() {
+	cat <<'EOF'
+/User[s]/
+/hom[e]/
+/priva[t]e/
+/va[r]/
+/tm[p]/
+/op[t]/
+/us[r]/
+/et[c]/
+(^|[^A-Za-z0-9_])~[/]
+\$HOM[E]/
+https?:[/][/]
+[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}
+local[h]ost
+:[0-9]{4,5}([^0-9]|$)
+mcp_[_]
+[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}
+EOF
+}
+
+# The corpus, one path per line relative to the root — quoting off, so a
+# name carrying a non-ASCII byte is listed as it is on disk.
+static_files() {
+	git -C "$root" -c core.quotepath=off ls-files --cached --others --exclude-standard
+}
+
+# grep over a list of corpus paths, one file at a time — a path with a
+# space in it is one argument here, where xargs would split it in two —
+# with each file's own exit status read: 0 and 1 are answers, more is a
+# file the sweep could not read, and the stage never sweeps past one.
+# `-a` reads a binary file as text, so a hit inside one arrives as
+# `file:line:text` rather than as grep's prefix-less `Binary file …
+# matches`; the NUL bytes such a line carries are dropped before the hit
+# is kept, because awk reads a string only up to its first NUL and would
+# otherwise see an empty hit and report nothing.
+static_grep() { # static_grep <check> <list file> <out file> <grep args...>
+	check=$1
+	list=$2
+	out=$3
+	shift 3
+	: >"$tmp/one"
+	while IFS= read -r f; do
+		rc=0
+		(cd "$root" && grep -a "$@" /dev/null "$f") >>"$tmp/one" || rc=$?
+		[ "$rc" -le 1 ] || abort "$check" "the $check sweep could not read $f (grep exit $rc)"
+	done <"$list"
+	tr -d '\000' <"$tmp/one" >>"$out"
+}
+
+# The hits no KEEP row allows. Rows are `<file><TAB><allowed text>`; a hit
+# line is `<file>:<line>:<text>`. A row allows its own text and nothing
+# beside it: every allowed text for the hit's file is blanked out of the
+# hit's text, longest first, and the two matchers run again over what is
+# left — a second value sharing a line with an allowed one stays a hit.
+# An occurrence is blanked only where it stands on its own: a letter, a
+# digit, `_`, `/` or `.` before it, or a letter, a digit, `_`, `-`, `/` or
+# one of a URL's continuations (`?`, `#`, `&`, `=`, `@`) after it, means
+# the value runs on past the row's text, and the longer value is what the
+# line carries — a row allows the whole value it names, never a part of
+# one. A `.` after the text counts only when a name character follows it,
+# so a value ending a sentence is still allowed. The original line is what
+# gets printed, so the report shows the source.
+static_unkept() { # static_unkept <hits file> <classes file> <tokens file>
+	awk -F'\t' '
+		function standing(s, x,    p, q, b, a, n) {
+			q = 1
+			for (;;) {
+				p = index(substr(s, q), x)
+				if (p == 0) return 0
+				p += q - 1
+				b = p > 1 ? substr(s, p - 1, 1) : ""
+				a = substr(s, p + length(x), 1)
+				n = substr(s, p + length(x) + 1, 1)
+				if (b !~ /[A-Za-z0-9_\/.]/ && a !~ /[A-Za-z0-9_\/#?&=@-]/ && !(a == "." && n ~ /[A-Za-z0-9_]/)) return p
+				q = p + 1
+			}
+		}
+		NR == FNR { if ($0 !~ /^#/ && NF == 2) { k++; kf[k] = $1; kt[k] = $2 }; next }
+		{
+			f = $0; sub(/:.*/, "", f)
+			t = $0; sub(/^[^:]*:[0-9]*:/, "", t)
+			for (;;) {
+				best = 0
+				for (i = 1; i <= k; i++) {
+					if (kf[i] != f) continue
+					p = standing(t, kt[i])
+					if (p > 0 && (best == 0 || length(kt[i]) > length(kt[best]))) { best = i; bp = p }
+				}
+				if (best == 0) break
+				t = substr(t, 1, bp - 1) " " substr(t, bp + length(kt[best]))
+			}
+			print t
+		}' "$root/scripts/hermetic-probe-keep" "$1" >"$tmp/redacted"
+	{
+		grep -n -E -f "$2" "$tmp/redacted" || true
+		grep -n -F -f "$3" "$tmp/redacted" || true
+	} | sed 's/:.*//' | sort -n -u | while IFS= read -r n; do
+		sed -n "${n}p" "$1"
+	done
+}
+
+stage_static() {
+	echo "hermetic probe — static"
+
+	# 1. manifests
+	n=0
+	bad=''
+	for p in "$root" "$root"/plugins/*/; do
+		p=${p%/}
+		rel=${p#"$root"/}
+		[ "$rel" = "$root" ] && rel=.
+		if claude plugin validate --strict "$p" >/dev/null 2>&1; then
+			n=$((n + 1))
+		else
+			bad="$bad $rel"
+		fi
+	done
+	if [ -z "$bad" ]; then
+		pass manifests "$n validated --strict"
+	else
+		fail manifests "validate --strict fails on:$bad — run \`claude plugin validate --strict <path>\` and fix what it names"
+	fi
+
+	# 2. values
+	tokens=${HERMETIC_PROBE_TOKENS:-$HOME/.hermetic-probe-tokens}
+	if [ ! -f "$tokens" ]; then
+		abort values "no token file at $tokens — write one, one token per line, the maintainer's own names (login, person, trees, repositories, projects, private hosts); set HERMETIC_PROBE_TOKENS to use another path"
+	fi
+	# normalised before use: a CR-terminated token matches nothing, and a
+	# blank line is an empty pattern that matches every line
+	tr -d '\r' <"$tokens" >"$tmp/tokens"
+	if [ ! -s "$tmp/tokens" ] || grep -q -E '^[[:space:]]*$' "$tmp/tokens"; then
+		abort values "no token, or a blank line, in $tokens — one token per line, nothing else; the sweep runs on nothing less"
+	fi
+	# an empty KEEP file is exit 2 like an empty token file: the redaction
+	# awk reads the KEEP rows first, and with none to read it would consume
+	# every hit as a row and report nothing
+	[ -s "$root/scripts/hermetic-probe-keep" ] || abort values "no KEEP file, or an empty one, at scripts/hermetic-probe-keep — the allowances the sweep holds hits to; the sweep runs on nothing less"
+	static_classes >"$tmp/classes"
+	static_files | grep -v -x 'scripts/hermetic-probe-keep' >"$tmp/listed" || true
+	# an entry that is not a file is left out and counted: a nested
+	# checkout or worktree, which the listing prints as `dir/`, or a
+	# dangling link — grep would exit 2 on either and end the sweep
+	skipped=0
+	: >"$tmp/files"
+	while IFS= read -r f; do
+		if [ -f "$root/$f" ]; then
+			printf '%s\n' "$f" >>"$tmp/files"
+		else
+			skipped=$((skipped + 1))
+		fi
+	done <"$tmp/listed"
+	[ -s "$tmp/files" ] || abort values "the corpus is empty — $root is not a git checkout, or git is not on PATH; the sweep has nothing to read"
+	: >"$tmp/hits"
+	static_grep values "$tmp/files" "$tmp/hits" -n -E -f "$tmp/classes"
+	static_grep values "$tmp/files" "$tmp/hits" -n -F -f "$tmp/tokens"
+	sort -u -o "$tmp/hits" "$tmp/hits"
+	static_unkept "$tmp/hits" "$tmp/classes" "$tmp/tokens" >"$tmp/unkept"
+	files=$(wc -l <"$tmp/files" | tr -d ' ')
+	hits=$(wc -l <"$tmp/hits" | tr -d ' ')
+	skipnote=''
+	[ "$skipped" = 0 ] || skipnote=" ($skipped listed entries that are not files skipped: a nested checkout or worktree, a dangling link)"
+	if [ ! -s "$tmp/unkept" ]; then
+		pass values "$files files, $hits hits, every one a KEEP site$skipnote"
+	else
+		fail values "personal value outside KEEP — remove it, or add the site to scripts/hermetic-probe-keep as <file><TAB><allowed text>:"
+		sed 's/^/                 /' "$tmp/unkept"
+	fi
+
+	# 3. references
+	broken=''
+	slash=0
+	links=0
+	roots=0
+	# /<plugin>:<skill> — a leading `/` not itself inside a path
+	: >"$tmp/slash.raw"
+	static_grep references "$tmp/files" "$tmp/slash.raw" -n -o -E '(^|[^A-Za-z0-9_/])/[a-z][a-z0-9-]*:[a-z][a-z0-9-]*'
+	sed -E 's|^([^:]*:[0-9]+:)[^/]*/|\1|' "$tmp/slash.raw" >"$tmp/slash"
+	while IFS=: read -r f l plugin skill; do
+		slash=$((slash + 1))
+		[ -f "$root/plugins/$plugin/skills/$skill/SKILL.md" ] || broken="$broken
+                 $f:$l: /$plugin:$skill names no shipped skill"
+	done <"$tmp/slash"
+	# ](<link>) in the markdown files — the link syntax is markdown's, and
+	# the scripts here carry link-shaped text of their own. A target that
+	# names a scheme or starts at the root is an address, the values
+	# check's business; every other target, `./`-prefixed, `../`-prefixed
+	# or bare, resolves against the linking file's directory.
+	grep '\.md$' "$tmp/files" >"$tmp/files-md" || true
+	: >"$tmp/links"
+	static_grep references "$tmp/files-md" "$tmp/links" -n -o -E '\]\([^)#]+'
+	while IFS=: read -r f l link; do
+		link=${link#"]("}
+		case $link in
+		[A-Za-z]*:* | /*) continue ;;
+		esac
+		links=$((links + 1))
+		[ -e "$root/$(dirname "$f")/$link" ] || broken="$broken
+                 $f:$l: $link does not resolve"
+	done <"$tmp/links"
+	# a ${CLAUDE_PLUGIN_ROOT} path — resolved against the naming file's plugin
+	: >"$tmp/roots"
+	static_grep references "$tmp/files" "$tmp/roots" -n -o -E '\$\{CLAUDE_PLUGIN_ROOT\}/[^ "'"'"'`)]+'
+	while IFS=: read -r f l path; do
+		roots=$((roots + 1))
+		plugin=$(printf '%s\n' "$f" | sed -n 's|^plugins/\([^/]*\)/.*|\1|p')
+		[ -n "$plugin" ] && [ -e "$root/plugins/$plugin/${path#*\}/}" ] || broken="$broken
+                 $f:$l: $path does not exist under plugins/$plugin"
+	done <"$tmp/roots"
+	for e in "$root"/plugins/*/evals; do
+		[ -e "$e" ] && broken="$broken
+                 ${e#"$root"/}: a plugin's own evals/ ships with it — move its cases under the root's evals/"
+	done
+	if [ -z "$broken" ]; then
+		pass references "$slash slash references, $links relative links, $roots plugin-root paths — all resolve; no plugins/*/evals"
+	else
+		fail references "a reference does not resolve — fix each site:$broken"
+	fi
+}

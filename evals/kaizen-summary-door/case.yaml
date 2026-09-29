@@ -1,0 +1,57 @@
+schema_version: "1.1"
+name: kaizen-summary-door
+description: With no Ymer Node reachable, /ymer:kaizen-summary fires, announces itself, and stops at its guard naming the node.
+plugins: ["../../plugins/ymer"]
+runs: 1
+execution:
+  max_turns: 20
+  timeout_seconds: 300
+  allowed_tools: [Skill, Read, Glob, Grep]
+  prompt: "/ymer:kaizen-summary"
+graders:
+  - name: fired-plugin
+    type: regex
+    target: trace
+    pattern: 'ymer@inline'
+  - name: fired-command
+    type: regex
+    target: trace
+    pattern: '"slash_commands":\[[^\]]*"ymer:kaizen-summary"'
+  - name: fired-announce
+    type: regex
+    target: trace
+    pattern: 'Kaizen — summary session\.'
+  - name: no-mcp-server
+    type: regex
+    target: trace
+    pattern: '"mcp_servers":\[\]'
+  - name: no-mcp-call
+    type: regex
+    target: trace
+    match: not_contains
+    pattern: '"name":"mcp__'
+  - name: door-named
+    type: regex
+    target: last_message
+    flags: i
+    pattern: 'ymer-node|Ymer Node|notebook'
+  - name: never-write
+    type: tool_used
+    tool: Write
+    min: 0
+    max: 0
+  - name: never-edit
+    type: tool_used
+    tool: Edit
+    min: 0
+    max: 0
+  - name: never-bash
+    type: tool_used
+    tool: Bash
+    min: 0
+    max: 0
+  - name: never-notebookedit
+    type: tool_used
+    tool: NotebookEdit
+    min: 0
+    max: 0

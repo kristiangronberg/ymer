@@ -1,0 +1,55 @@
+# hermetic-probe-keep — the value sweep's allowed sites, one per line:
+# <file><TAB><allowed text>. A row allows exactly its text at its file:
+# the sweep blanks every allowed text out of a hit line and the line must
+# then match no class pattern and no token — a second value beside an
+# allowed one is still a hit, and nothing is allowed by file alone. A
+# row's text therefore covers the whole value it allows (the URL, not the
+# port in it), and the sweep holds it to that: a name character touching
+# the text — a letter, digit, `_` or `/` on either side, `.` before it, `-`
+# or a URL's `?`, `#`, `&`, `=` or `@` after it — means the value runs on,
+# and the longer value is the hit.
+# The sweep leaves this file out of its corpus and no other.
+#
+# The marketplace's own addresses, the node's and ymer's — public by role
+README.md	http://127.0.0.1:8012/mcp
+README.md	https://github.com/kristiangronberg/ymer-node
+README.md	kristiangronberg/ymer
+README.md	https://ymer.ax/mcp
+plugins/ymer/skills/setup/SKILL.md	http://127.0.0.1:8012/mcp
+plugins/ymer/skills/setup/SKILL.md	https://ymer.ax/mcp
+# The maintainer's name where a manifest or licence asks for one
+.claude-plugin/marketplace.json	"name": "Kristian Grönberg"
+LICENSE	Copyright (c) 2026 Kristian Grönberg
+plugins/ymer/.claude-plugin/plugin.json	"name": "Kristian Grönberg"
+# An example value in setup's report
+plugins/ymer/skills/setup/SKILL.md	/Users/you/state
+# The eval cases assert on the child's tool names
+evals/kaizen-capture-door/case.yaml	"name":"mcp__
+evals/kaizen-summary-door/case.yaml	"name":"mcp__
+evals/setup-door/case.yaml	"name":"mcp__
+evals/tutor-door/case.yaml	"name":"mcp__
+# The probe's own files: its defaults, the scratch node's address, the
+# notebook tool, and the test's seeded values
+scripts/hermetic-probe	$HOME/.hermetic-probe
+scripts/hermetic-probe	$HOME/.hermetic-probe-tokens
+scripts/hermetic-probe-static	$HOME/.hermetic-probe-tokens
+scripts/hermetic-probe-live	$HOME/.hermetic-probe
+scripts/hermetic-probe-live	http://127.0.0.1:$port/mcp
+scripts/hermetic-probe-live	127.0.0.1:$port
+scripts/hermetic-probe-live	mcp__ymer-node__notebook
+scripts/hermetic-probe-live	mcp__ymer-node__
+scripts/hermetic-probe-live	mcp__
+scripts/hermetic-probe-live	~/
+scripts/hermetic-probe-live	$HOME/
+scripts/hermetic-probe-test	mcp__ymer-node__notebook
+scripts/hermetic-probe-test	mcp__ymer-node
+scripts/hermetic-probe-test	127.0.0.1:8012->8012/tcp
+scripts/hermetic-probe-test	http://127.0.0.1:8112/mcp
+scripts/hermetic-probe-test	http://127.0.0.1:8012/mcp
+scripts/hermetic-probe-test	ymer-node:8012
+scripts/hermetic-probe-test	/Users/someone/state
+scripts/hermetic-probe-test	~/things
+scripts/hermetic-probe-test	~/things-private
+scripts/hermetic-probe-test	http://example.invalid:9999
+scripts/hermetic-probe-test	http://example.invalid:9999/mcp
+scripts/hermetic-probe-test	mcp__foo__bar

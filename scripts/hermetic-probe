@@ -1,0 +1,148 @@
+#!/bin/sh
+# hermetic-probe — the marketplace's maintainer-run gate proving the
+# personal-layer principle: the plugins run from nothing personal to the
+# maintainer. Three stages, chosen by subcommand, ordered by cost:
+#
+#   scripts/hermetic-probe          static, then eval — a skill lift's beat 5
+#   scripts/hermetic-probe static   the shipped files alone, no model
+#   scripts/hermetic-probe eval     every skill fired in `claude plugin eval`
+#                                   with no Ymer Node — fires, stops, names
+#                                   its door
+#   scripts/hermetic-probe live     static, eval, then a scratch Ymer Node
+#                                   and the README's own install lines inside
+#                                   the probe dir
+#
+# Environment — every value has a default except the compose file, which
+# is a required input because a maintainer's layout is not a default:
+#
+#   HERMETIC_PROBE_DIR           the probe dir: cfg/ keeps a claude.ai login
+#                                and is scrubbed of marketplace state each
+#                                live run; data/ is the scratch node's store,
+#                                state/ its scratch state folder, compose/
+#                                its copy of the compose file, hook/ the
+#                                runs' Bash hook and its declared commands,
+#                                each recreated each run
+#                                                      default $HOME/.hermetic-probe
+#   HERMETIC_PROBE_TOKENS        the maintainer's token file, one token per
+#                                line (→ hermetic-probe-static)
+#                                                      default $HOME/.hermetic-probe-tokens
+#   HERMETIC_PROBE_COMPOSE_FILE  the Ymer Node's own docker-compose.yml, copied
+#                                into the probe dir's compose/ and run only
+#                                from the copy, under the probe's project name
+#                                and port — never in place
+#                                                      no default
+#   HERMETIC_PROBE_PORT          the scratch node's port default 8112
+#
+# Every assertion is structural: a validator's exit code, a sweep over the
+# tracked files, the eval runner's kept trace, the scratch node's own MCP,
+# or a headless run's stream-json — never a judge model, never the host-side
+# database file. The report is one line per check, in order: ✔ a pass,
+# ✘ a failure naming its one fix, – not run naming what it waits on.
+#
+# Exit: 0 every check passed · 1 a check failed · 2 the probe could not run
+# (a missing prerequisite, or a stage that could not start).
+
+set -eu
+
+here=$(cd "$(dirname "$0")" && pwd)
+# physical: the live stage compares the paths a run names, which the CLI
+# reports normalised, against this prefix, and the install path hands it
+# to the CLI as the marketplace's address
+root=$(cd "$here/.." && pwd -P)
+
+# cfg/'s login is the one credential a live run may use, and the eval
+# runner bills whatever credential it finds: the key never reaches a child.
+unset ANTHROPIC_API_KEY
+
+usage() {
+	echo "usage: scripts/hermetic-probe [static | eval | live]" >&2
+	exit 2
+}
+
+[ $# -le 1 ] || usage
+mode=${1:-beat5}
+case $mode in
+static) stages=static ;;
+eval) stages=eval ;;
+beat5) stages='static eval' ;;
+live) stages='static eval live' ;;
+*) usage ;;
+esac
+
+failed=0
+node_up=0
+tmp=$(mktemp -d)
+
+# The one model the eval and live stages run on — pinned here, so the two
+# stages never drift apart and a model rollout is never mistaken for a
+# plugin regression.
+probe_model=claude-sonnet-5
+
+pass() { printf '  ✔ %-12s %s\n' "$1" "$2"; }
+fail() {
+	printf '  ✘ %-12s %s\n' "$1" "$2"
+	failed=1
+}
+notrun() { printf '  – %-12s not run — %s\n' "$1" "$2"; }
+# A precondition the probe cannot run without: reported like a failure,
+# exit 2. The EXIT trap runs a live node's teardown on the way out.
+abort() {
+	fail "$@"
+	exit 2
+}
+
+# The one EXIT trap: a live node that may have come up gets its teardown
+# whatever the exit status, then the temp dir goes. The teardown brings the
+# node down only while compose still resolves the probe's own project name;
+# otherwise it runs no `down`, keeps the scratch node's data and state
+# folder for inspection, and fails naming the command to run by hand.
+# live_teardown is defined by the live stage file; node_up is set once
+# docker-before and data/ exist and before `up` runs, so a failed `up`
+# still reaches the teardown.
+cleanup() {
+	rc=$?
+	if [ "$node_up" = 1 ]; then
+		live_teardown
+	fi
+	rm -rf "$tmp"
+	exit $rc
+}
+trap cleanup EXIT
+
+# The stage files this mode runs, one per stage. Checked before sourcing:
+# under this shell a failed `.` reaches the EXIT trap with status 0.
+for stage in $stages; do
+	if [ ! -f "$here/hermetic-probe-$stage" ]; then
+		echo "hermetic-probe: missing stage file $here/hermetic-probe-$stage" >&2
+		exit 2
+	fi
+	. "$here/hermetic-probe-$stage"
+done
+
+case $mode in
+static) stage_static ;;
+eval) stage_eval ;;
+beat5)
+	stage_static
+	echo
+	stage_eval
+	;;
+live)
+	stage_static
+	echo
+	stage_eval
+	echo
+	if [ "$failed" = 1 ]; then
+		notrun live "the static or eval stage failed above; the live stage never runs over a tree the cheap stages reject"
+	else
+		stage_live
+	fi
+	;;
+esac
+
+echo
+if [ "$failed" = 1 ]; then
+	echo "hermetic probe: a check failed — its line above names the fix."
+	exit 1
+fi
+echo "hermetic probe: every check passed."

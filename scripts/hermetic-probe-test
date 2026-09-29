@@ -1,0 +1,1229 @@
+#!/bin/sh
+# hermetic-probe-test — self-test for hermetic-probe and its stage files.
+# Run it after any edit to them: it works in a temp directory, calls no
+# model and touches no real node or config — `claude`, `docker`,
+# `docker-compose` and `curl` are shims first on PATH that record their
+# argv and replay canned output, and a shimmed call can leave files behind
+# the way a real run leaves them in state/, so what is tested is the
+# probe's own logic: the sweeps and their KEEP filter (a value beside an
+# allowed one, a value running on past one, a binary file, a nested
+# checkout in the corpus, an empty corpus, the token file's shape), the
+# reference rules, the runner's result read, the login assert, the scrub,
+# prompt-before-flags and the strict MCP config, the node read-back,
+# teardown on failure — a failed `up` included — the compose copy's
+# project name checked before `up` and again before `down`, a wrong one
+# refused at either end, each live precondition's exit 2, a run that did
+# not end in success, the two arms and the option between them, the seeded
+# steps' not-run lines, the state reads' deltas over the node and state/,
+# the history read, setup's report read for its facts — dressed, and
+# naming a wrong node address — the behaviour checks — an input carrying a
+# brace or an escaped quote included, a server call read by its result —
+# the runs' hook over its own events, the one model pin, and the exit codes.
+#
+#   scripts/hermetic-probe-test
+#
+# Exit 0 = every case passed.
+
+set -u
+
+here=$(cd "$(dirname "$0")" && pwd)
+# physical, as the live stage normalises its probe dir: mktemp's path sits
+# under a symlink on macOS, and the report lines the cases read spell $tmp
+tmp=$(cd "$(mktemp -d)" && pwd -P)
+trap 'rm -rf "$tmp"' EXIT
+
+pass=0
+fail=0
+
+check() { # check <name> <expected> <actual>
+	if [ "$2" = "$3" ]; then
+		pass=$((pass + 1))
+		echo "ok   — $1"
+	else
+		fail=$((fail + 1))
+		echo "FAIL — $1"
+		echo "       expected: $2"
+		echo "       actual:   $3"
+	fi
+}
+
+# ── shims ─────────────────────────────────────────────────────────────
+# One body for all four: log `<command> <argv>`, then answer from
+# $SHIM_DIR/queue (first line whose key is a substring of the argv,
+# consumed) or $SHIM_DIR/answers (the same, kept), where a line is
+# `<key><TAB><response>` and a response is text, `@<file>` or `rc=<n>`.
+# A `-o <file>`/`--json <file>` argument receives the text instead of
+# stdout.
+SHIM_DIR=$tmp/shim
+export SHIM_DIR
+mkdir -p "$tmp/bin" "$SHIM_DIR"
+for cmd in claude docker docker-compose curl; do
+	cat >"$tmp/bin/$cmd" <<'EOF'
+#!/bin/sh
+me=$(basename "$0")
+printf '%s %s\n' "$me" "$*" >>"$SHIM_DIR/log"
+[ -n "${ANTHROPIC_API_KEY+x}" ] && echo "$me: ANTHROPIC_API_KEY is set" >>"$SHIM_DIR/log"
+key=$(printf '%s %s' "$me" "$*" | tr '\n' ' ')
+out=''
+json=''
+prev=''
+for a in "$@"; do
+	case $prev in
+	-o) out=$a ;;
+	--json) json=$a ;;
+	esac
+	prev=$a
+done
+resp=''
+for src in queue answers; do
+	f=$SHIM_DIR/$src
+	[ -f "$f" ] || continue
+	n=$(awk -v k="$key" -F'\t' '{ if (index(k, $1) > 0) { print NR; exit } }' "$f")
+	[ -n "$n" ] || continue
+	resp=$(sed -n "${n}p" "$f" | cut -f2-)
+	if [ "$src" = queue ]; then
+		sed "${n}d" "$f" >"$f.new" && mv "$f.new" "$f"
+	fi
+	break
+done
+case $resp in
+rc=*) exit "${resp#rc=}" ;;
+@*) body=$(cat "${resp#@}") ;;
+*) body=$resp ;;
+esac
+# a call's side effect: the first line of $SHIM_DIR/effects whose key is a
+# substring of the argv, consumed, run as a shell command — what a real
+# run leaves on disk
+if [ -f "$SHIM_DIR/effects" ]; then
+	n=$(awk -v k="$key" -F'\t' '{ if (index(k, $1) > 0) { print NR; exit } }' "$SHIM_DIR/effects")
+	if [ -n "$n" ]; then
+		eff=$(sed -n "${n}p" "$SHIM_DIR/effects" | cut -f2-)
+		sed "${n}d" "$SHIM_DIR/effects" >"$SHIM_DIR/effects.new" && mv "$SHIM_DIR/effects.new" "$SHIM_DIR/effects"
+		sh -c "$eff"
+	fi
+fi
+if [ -n "$out" ]; then
+	printf '%s\n' "$body" >"$out"
+elif [ -n "$json" ]; then
+	printf '%s\n' "$body" >"$json"
+else
+	printf '%s\n' "$body"
+fi
+exit 0
+EOF
+	chmod +x "$tmp/bin/$cmd"
+done
+PATH=$tmp/bin:$PATH
+export PATH
+
+shim_reset() { # shim_reset — empty log, queue, answers and effects
+	: >"$SHIM_DIR/log"
+	: >"$SHIM_DIR/queue"
+	: >"$SHIM_DIR/answers"
+	: >"$SHIM_DIR/effects"
+}
+queue() { printf '%s\t%s\n' "$1" "$2" >>"$SHIM_DIR/queue"; }
+answer() { printf '%s\t%s\n' "$1" "$2" >>"$SHIM_DIR/answers"; }
+effect() { printf '%s\t%s\n' "$1" "$2" >>"$SHIM_DIR/effects"; }
+# requeue/reanswer <key> [<response>]... — drop every line keyed exactly
+# <key>, then add one line per response: how a case replaces what
+# live_queue put there
+shim_drop() { # shim_drop <queue|answers|effects> <key> — the one drop-by-key they share
+	awk -F'\t' -v k="$2" '$1 != k' "$SHIM_DIR/$1" >"$SHIM_DIR/$1.new" && mv "$SHIM_DIR/$1.new" "$SHIM_DIR/$1"
+}
+requeue() {
+	k=$1
+	shift
+	shim_drop queue "$k"
+	for r in "$@"; do queue "$k" "$r"; done
+}
+reanswer() {
+	k=$1
+	shift
+	shim_drop answers "$k"
+	for r in "$@"; do answer "$k" "$r"; done
+}
+logged() { grep -c -F -- "$1" "$SHIM_DIR/log"; }
+# The live stage's compose call, from its own copy of the compose file, and
+# the bash-commands failure's text up to its run list — each spelled once
+scratch_dc="docker-compose -p hermetic-probe -f $tmp/probe/compose/docker-compose.yml"
+bash_other='✘ bash-commands a Bash command other than `claude mcp get <name>` or the state folder'"'"'s `rev-parse` in run(s)'
+
+# ── canned output ─────────────────────────────────────────────────────
+canned=$tmp/canned
+mkdir -p "$canned"
+printf '{\n  "loggedIn": true,\n  "authMethod": "claude.ai"\n}\n' >"$canned/auth-ok.json"
+printf '{\n  "loggedIn": false,\n  "authMethod": "none"\n}\n' >"$canned/auth-none.json"
+# `claude mcp list` under a logged-in config dir: the login's own claude.ai
+# connectors, listed whether or not anything was ever added
+printf 'Checking MCP server health…\n\nclaude.ai Docs: %s - ✔ Connected\n' 'http://example.invalid:9999/mcp' >"$canned/mcp-list-connectors.txt"
+# The runner's result, pretty-printed one key per line as the real one is.
+eval_result() { # eval_result <partial> <total> <passed> <runs ending normally>
+	printf '{\n  "schemaVersion": 1,\n  "partial": %s,\n  "cases": [\n' "$1"
+	i=0
+	while [ "$i" -lt "$4" ]; do
+		i=$((i + 1))
+		printf '    {\n      "name": "case-%s",\n      "arms": {\n        "with": [\n          {\n            "error": null,\n            "passed": true\n          }\n        ]\n      }\n    },\n' "$i"
+	done
+	printf '    {\n      "name": "tail",\n      "arms": {\n        "with": [\n          {\n            "error": "timed out after 300s",\n            "passed": false\n          }\n        ]\n      }\n    }\n'
+	printf '  ],\n  "aggregates": {\n    "casesTotal": %s,\n    "casesPassed": %s\n  }\n}\n' "$2" "$3"
+}
+eval_result false 2 2 2 >"$canned/eval-ok.json"
+eval_result false 2 1 2 >"$canned/eval-fail.json"
+eval_result true 2 1 1 >"$canned/eval-partial.json"
+eval_result false 1 1 1 >"$canned/eval-short.json"
+# stream-json runs: an init line naming the servers the run saw, one
+# tool_use block per <tool> <input> pair, the tool_result lines a case
+# sets, an optional narration line, and the result line last — the shape
+# the live stage reads
+trace_init_default='{"type":"system","subtype":"init","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"}]}'
+trace_init=$trace_init_default
+trace_narration=''
+run_trace() { # run_trace <result text> [<tool> <input json>]...
+	printf '%s\n' "$trace_init"
+	r=$1
+	shift
+	i=0
+	while [ $# -ge 2 ]; do
+		i=$((i + 1))
+		printf '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t%s","name":"%s","input":%s}]}}\n' "$i" "$1" "$2"
+		shift 2
+	done
+	[ -n "$trace_results" ] && printf '%s\n' "$trace_results"
+	[ -n "$trace_narration" ] && printf '{"type":"assistant","message":{"content":[{"type":"text","text":"%s"}]}}\n' "$trace_narration"
+	printf '{"is_error":false,"subtype":"success","type":"result","result":"%s","permission_denials":[%s]}\n' "$r" "$trace_denied"
+}
+trace_denied='' # the result event's permission_denials entries, for a trace whose calls were refused
+trace_results='' # tool_result lines, one per answered call: a call a case leaves out has no result
+tool_result() { # tool_result <id> <content> <is_error> — a user line answering tool_use <id>, as the CLI writes one
+	printf '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","content":"%s","is_error":%s,"tool_use_id":"%s"}]}}' "$2" "$3" "$1"
+}
+notebook=mcp__ymer-node__notebook
+live=$tmp/live # the live cases' fixture, named here so a canned trace can read under it
+pstate=$tmp/probe/state # the live stage's state/, under the probe dir every live case uses
+# setup's report with no state folder named, in the lines the skill's own
+# grammar gives; the second variant is the wording a denied read
+# produced, which the report check must not accept
+setup_report="Setup — ymer environment\n\n  ✔ node          reachable — 7 tables created, front \`claude_code\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  ✔ ymer          no connection in this session — work tracked in the node's \`tasks\` table\n  – Meta Roadmap  not checked"
+run_trace "$setup_report" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' Read "{\"file_path\":\"$live/plugins/ymer/skills/setup/SKILL.md\"}" >"$canned/run-setup1.jsonl"
+run_trace "$(printf '%s' "$setup_report" | sed 's/not set — set it/not readable from this session — set it/')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-unreadable.jsonl"
+run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO frictions VALUES (1)"}}' >"$canned/run-capture.jsonl"
+# summary with no state folder: it reads the backlog and stops naming setup
+run_trace 'No state folder is named, so nothing was drained. Run /ymer:setup.' $notebook '{"action":"query","data":{"sql":"SELECT slug FROM fronts"}}' >"$canned/run-summary-stop.jsonl"
+# summary's healthy trace in the second arm carries the declared commands
+# — the state folder's rev-parse bare and with its path quoted — reads
+# inside the probe dir, one path absolute and one relative, a write under
+# state/, and the history row it saves
+save_sql="INSERT INTO topics_history (topic, area, artifact, body, phase, front) SELECT 't', 'meta', 'request.md', new.body, 'kaizen_summary', 'claude_code' FROM (SELECT 'b' AS body) AS new"
+run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE frictions SET status = 1"}}' $notebook "{\"action\":\"execute\",\"data\":{\"sql\":\"$save_sql\"}}" Bash '{"command":"claude mcp get ymer"}' Bash '{"command":"claude mcp get ymer 2>&1"}' Bash "{\"command\":\"git -C $pstate rev-parse --is-inside-work-tree\"}" Bash "{\"command\":\"git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree\"}" Write "{\"file_path\":\"$pstate/meta/2026/09-21-friction-batch/request.md\",\"content\":\"x\"}" Read "{\"file_path\":\"$tmp/probe/cwd/notes.md\"}" Glob '{"pattern":"*.md"}' >"$canned/run-summary.jsonl"
+# the same summary writing beside state/ rather than into it
+run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE frictions SET status = 1"}}' Write "{\"file_path\":\"$tmp/probe/cwd/request.md\",\"content\":\"x\"}" >"$canned/run-summary-outside.jsonl"
+# the re-run's report, healthy on the result line while a narration line
+# mid-run says `tables created`: only a read of the result line passes it
+trace_narration='All seven tables created earlier are present; composing the report.'
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2.jsonl"
+trace_narration=''
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — git work tree, history in git" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-git.jsonl"
+run_trace "  ✔ node          reachable — 7 tables created, front \`claude_code\` added" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created.jsonl"
+# setup's reports dressed the way a model dresses them — a sentence
+# before, bold role names, ` — ` separators, backticked values, a code
+# fence, a Details section after, a decoration or a double blank inside a
+# phrase the check reads — right in every fact, so the report checks must
+# pass them; the re-run's Details line says created and added, off the
+# node's line, and does not decide the node's line
+run_trace "Now compiling the full report.\n\n**Setup — ymer environment**\n\n\`\`\`\n✔ **node** — reachable — 7 tables created, front \`claude_code\` added\n✘ **state_folder** — not **set** — set it with /plugin configure ymer@ymer\n✔ **ymer** — no  connection in this session (no \`ymer\` MCP server configured) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked\n\`\`\`\n\nDetails:\n- **state_folder**: the option is unset." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-decorated.jsonl"
+run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 7 tables present (fronts, frictions, tasks, tasks_log, topics_history, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed — front \`claude_code\` already registered\n✔ **state_folder** — \`$pstate\` — not a git work tree, history in the node's \`topics_history\`\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-node\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
+# no coordinator line, and the Meta Roadmap line naming ymer's missing
+# connection and tasks in its place: the coordinator is not reported
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables created, front \`claude_code\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  – Meta Roadmap  not checked — no connection to ymer; process work routes to \`Meta Roadmap\` in \`tasks\`" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-ymer.jsonl"
+# the re-run's node line naming a change the re-run never made: tables
+# created, or a front row added — and the line saying created beside a
+# Details line that restates the node's facts without it
+run_trace "  ✔ node          reachable — 7 tables created, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-only.jsonl"
+run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\` added\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-added.jsonl"
+run_trace "  ✔ node          reachable — 7 tables created, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nDetails:\n- ✔ **node**: reachable, 7 tables, front \`claude_code\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-recap.jsonl"
+# the re-run's report naming the node by address: a port the node does
+# not run on, as a URL, as a bare port and after the node's server name,
+# and the probe's own port
+run_trace "  ✔ node          reachable at http://127.0.0.1:8012/mcp — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-url.jsonl"
+run_trace "  ✔ node          reachable on port 8012 — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-port.jsonl"
+run_trace "  ✔ node          reachable at ymer-node:8012 — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-host.jsonl"
+run_trace "  ✔ node          reachable at http://127.0.0.1:8112/mcp — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-right-url.jsonl"
+# the first run's and the drift run's reports naming a port the node does
+# not run on, each otherwise the run it stands in for
+run_trace "$(printf '%s' "$setup_report" | sed 's/reachable —/reachable on port 8012 —/')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' Read "{\"file_path\":\"$live/plugins/ymer/skills/setup/SKILL.md\"}" >"$canned/run-setup1-wrong-port.jsonl"
+run_trace 'tasks.due_date added — node on port 8012' $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3-wrong-port.jsonl"
+run_trace 'tasks.due_date added' $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3.jsonl"
+# the state folder's reading aimed at another folder: the path is the
+# stage's own, so any other is no declared command
+run_trace 'read' Bash '{"command":"git -C /Users/someone/state rev-parse --is-inside-work-tree"}' >"$canned/run-capture-revparse.jsonl"
+run_trace 'committed' Bash '{"command":"git commit -m x"}' >"$canned/run-summary-git.jsonl"
+# a `{}` ahead of the commit: a read cut at the first `}` would hide it
+run_trace 'committed' Bash '{"command":"echo {} && git commit -m x"}' >"$canned/run-summary-git-brace.jsonl"
+run_trace 'written' Write '{"file_path":"notes.md","content":"x"}' >"$canned/run-capture-write.jsonl"
+run_trace 'appended' Bash '{"command":"echo x >> notes.txt"}' >"$canned/run-capture-bash.jsonl"
+run_trace 'read' Bash '{"command":"claude mcp get ymer 2>&1; echo done"}' >"$canned/run-capture-compound.jsonl"
+# the same compound, refused: the run's result event names it under
+# permission_denials, so it never ran — the record is the same whether the
+# runs' hook or the permission layer refused it; and `true`, the habit the
+# hook refuses where no allow rule would
+trace_denied='{"tool_name":"Bash","tool_use_id":"t1","tool_input":{"command":"claude mcp get ymer 2>&1; echo done"}}'
+run_trace 'read' Bash '{"command":"claude mcp get ymer 2>&1; echo done"}' >"$canned/run-capture-refused.jsonl"
+trace_denied='{"tool_name":"Bash","tool_use_id":"t1","tool_input":{"command":"true","description":"d"}}'
+run_trace 'read' Bash '{"command":"true","description":"d"}' >"$canned/run-capture-true-refused.jsonl"
+trace_denied=''
+run_trace 'read' Read '{"file_path":"/Users/someone/state"}' >"$canned/run-capture-outside.jsonl"
+# two paths that open under an allowed prefix and climb out of it, and a
+# Glob whose pattern is absolute — a call with no path key at all
+run_trace 'read' Read "{\"file_path\":\"$tmp/probe/cwd/../outside\"}" >"$canned/run-capture-climb.jsonl"
+run_trace 'read' Read "{\"file_path\":\"$live/../outside\"}" >"$canned/run-capture-climb-root.jsonl"
+run_trace 'globbed' Glob '{"pattern":"/Users/someone/state"}' >"$canned/run-capture-glob.jsonl"
+# a brace glob ahead of its path: the `}` inside the pattern would end a
+# read cut at the first `}` before the path key
+run_trace 'globbed' Glob '{"pattern":"*.{md,yaml}","path":"/Users/someone/state"}' >"$canned/run-capture-glob-brace.jsonl"
+run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach.jsonl"
+# a server call read by its result, paired by id: the CLI's answer that
+# no such tool exists — a name with no tool part, beside a notebook call
+# left unanswered — reaches nothing; a foreign tool that answered, that was
+# refused, or whose no-such-tool answer names another tool reached its
+# server; and the call above, with no result at all, is a reach too
+trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-node</tool_use_error>' true)
+run_trace 'recorded' mcp__ymer-node '{}' $notebook '{"action":"execute","data":{"sql":"INSERT INTO frictions VALUES (1)"}}' >"$canned/run-capture-no-such-tool.jsonl"
+trace_results=$(tool_result t1 'found' false)
+run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-answered.jsonl"
+trace_results=$(tool_result t1 'Claude requested permissions to use mcp__foo__bar, but you have not granted it yet.' true)
+run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-refused.jsonl"
+trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-node</tool_use_error>' true)
+run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-misnamed.jsonl"
+trace_results=''
+trace_init='{"type":"system","subtype":"init","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"},{"name":"other","status":"connected","source":"claudeai"}]}'
+run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO frictions VALUES (1)"}}' >"$canned/run-capture-connector.jsonl"
+trace_init=$trace_init_default
+# a compound behind an escaped quote: the stage reads the command as the
+# whole JSON string, so what it holds runs on past the quoted name to the `;`
+run_trace 'read' Bash '{"command":"claude mcp get \"ymer\"; cat ~/things-private"}' >"$canned/run-capture-quoted.jsonl"
+sed 's/"subtype":"success"/"subtype":"error_max_turns"/' "$canned/run-capture.jsonl" >"$canned/run-capture-failed.jsonl"
+# tutor at its guard: with no ymer, the docs' home named; with no tables,
+# setup named — each having only read the node
+run_trace "Tutor skill — stopped: no ymer docs tool in this session. The knowledge and engagement docs live in ymer, so nothing was opened." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-ymer.jsonl"
+run_trace "Tutor skill — stopped: the notebook has no tutor_subjects or tutor_engagements table. Run /ymer:setup, which creates both." $notebook '{"action":"query","data":{"sql":"SELECT name FROM sqlite_master"}}' >"$canned/run-tutor-stop.jsonl"
+node_rows() { # node_rows <n> — a query answer whose first cell is <n>
+	printf '{"result":{"content":[{"text":"{\\"columns\\":[\\"n\\"],\\"rows\\":[[%s]]}","type":"text"}],"isError":false}}' "$1"
+}
+node_tables() { # node_tables <n> — a tables answer counting <n>
+	printf '{"result":{"content":[{"text":"{\\"count\\":%s,\\"tables\\":[]}","type":"text"}],"isError":false}}' "$1"
+}
+node_text_rows() { # node_text_rows <text> — a query answer whose first cell is the text <text>
+	printf '{"result":{"content":[{"text":"{\\"columns\\":[\\"t\\"],\\"rows\\":[[\\"%s\\"]]}","type":"text"}],"isError":false}}' "$1"
+}
+# The files a summary run leaves in state/, written by the claude shim's
+# effect for that run: the topic run 6 drains to, the friction-batch run 7
+# opens, and run 8's append to it — ten seed lines under the first heading
+# each time, the opening date kept.
+drained_to='demo/2026/09-21-probe-topic/'
+batch_dir=$pstate/meta/2026/09-21-friction-batch
+batch_body() { # batch_body <created> <seed lines> — a friction-batch request.md
+	printf -- '---\nsource: kaizen-summary\ntask: 1\ncreated: %s\n---\n\n# friction-batch\n\n## Below the bar for their own topic\n\n' "$1"
+	i=0
+	while [ "$i" -lt "$2" ]; do
+		i=$((i + 1))
+		printf -- '- #%s seed friction %s below the bar\n' "$i" "$i"
+	done
+	printf '\n## Moot, or judged not worth doing\n'
+}
+batch_body 2026-09-21 10 >"$canned/batch-10.md"
+batch_body 2026-09-21 20 >"$canned/batch-20.md"
+batch_body 2026-09-22 20 >"$canned/batch-20-redated.md"
+# summary_effects <run 3> <run 6> <run 7> <run 8> — what each summary run
+# leaves on disk, replacing any queued before; `:` leaves nothing
+summary_effects() {
+	shim_drop effects 'claude -p /ymer:kaizen-summary'
+	for e in "$@"; do effect 'claude -p /ymer:kaizen-summary' "$e"; done
+}
+effect_drain="mkdir -p '$pstate/$drained_to' && printf 'x\n' >'$pstate/${drained_to}request.md'"
+effect_batch="mkdir -p '$batch_dir' && cp '$canned/batch-10.md' '$batch_dir/request.md'"
+effect_append="cp '$canned/batch-20.md' '$batch_dir/request.md'"
+
+# ── fixtures ──────────────────────────────────────────────────────────
+# fixture <dir> — a marketplace shaped like this one: the plugin ymer
+# (skills setup, kaizen-capture, kaizen-summary, tutor — each skill the
+# live stage runs) and its README, the probe's
+# scripts and KEEP file copied in, a one-token token file beside it (outside
+# the corpus, as the real one is), as a git repo.
+fixture() {
+	mkdir -p "$1/.claude-plugin" "$1/scripts"
+	mkdir -p "$1/plugins/ymer/.claude-plugin"
+	printf '{ "name": "ymer", "version": "0.0.1" }\n' >"$1/plugins/ymer/.claude-plugin/plugin.json"
+	printf 'Install it, then run /ymer:setup — see [installing](%s).\n' '../../README.md#installing' >"$1/plugins/ymer/README.md"
+	for s in ymer/setup ymer/kaizen-capture ymer/kaizen-summary ymer/tutor; do
+		mkdir -p "$1/plugins/${s%/*}/skills/${s#*/}"
+		printf -- '---\nname: %s\n---\nA skill; its door is /ymer:setup.\n' "${s#*/}" >"$1/plugins/${s%/*}/skills/${s#*/}/SKILL.md"
+	done
+	printf '{ "name": "m", "plugins": [ { "name": "ymer", "source": "./plugins/ymer" } ] }\n' >"$1/.claude-plugin/marketplace.json"
+	# the README links an address: a link the references check must not
+	# count as relative, at a site the KEEP row below allows
+	printf 'A readme.\n\n## Installing\n\nRun /ymer:setup; the node is [Ymer Node](%s).\n' 'http://example.invalid:9999/mcp' >"$1/README.md"
+	printf 'evals/results/\n' >"$1/.gitignore"
+	cp "$here/hermetic-probe" "$here/hermetic-probe-static" "$here/hermetic-probe-eval" "$here/hermetic-probe-live" "$here/hermetic-probe-keep" "$1/scripts/"
+	printf 'README.md\t%s\n' 'http://example.invalid:9999/mcp' >>"$1/scripts/hermetic-probe-keep"
+	printf 'someone-token\n' >"$1.tokens"
+	git -C "$1" init -q
+	git -C "$1" add -A
+	git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m fixture
+}
+fixture_cases() { # fixture_cases <dir> — two eval cases
+	mkdir -p "$1/evals/a" "$1/evals/b"
+	printf 'name: a\n' >"$1/evals/a/case.yaml"
+	printf 'name: b\n' >"$1/evals/b/case.yaml"
+}
+# The isError:false body a seed's execute answers with.
+seed_ok='{"result":{"content":[{"text":"{}","type":"text"}],"isError":false}}'
+# The body a write the node refuses on a foreign key answers with.
+node_fk_refused='{"result":{"content":[{"text":"SQLite error: FOREIGN KEY constraint failed","type":"text"}],"isError":true}}'
+# live_queue [<frictions count>] — every answer the live stage's happy
+# path consumes, in the order the stage asks, and every file its runs
+# leave behind; the count capture leaves behind defaults to 1. A queue line
+# is consumed by the first request carrying its key, an answer line stays;
+# answers are searched after the queue and in order. The first summary run
+# is the first arm's, which stops and leaves nothing; the install between
+# the arms writes the option into cfg/, the way the CLI does.
+live_queue() {
+	queue 'curl -sS -o /dev/null' 'rc=7'
+	answer 'claude auth status' "@$canned/auth-ok.json"
+	queue 'claude plugin list --json' '[]'
+	queue 'claude plugin marketplace list --json' '[]'
+	queue 'claude mcp list' 'No MCP servers configured. Use `claude mcp add` to add a server.'
+	answer 'docker ps' 'ymer-node-install-ymer-node-1 127.0.0.1:8012->8012/tcp'
+	answer '"method":"tools/list"' '{"result":{}}'
+	queue '"action":"tables"' "$(node_tables 0)"
+	queue 'claude plugin list --json' '[ { "id": "ymer@ymer" } ]'
+	queue 'claude mcp list' 'ymer-node: http://127.0.0.1:8112/mcp (HTTP) - ✔ Connected'
+	queue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl"
+	queue '"action":"tables"' "$(node_tables 7)"
+	queue 'FROM fronts"' "$(node_rows 1)"
+	queue "tbl_name = 'topics_history'" "$(node_rows 4)"
+	queue "WHERE name = 'topics'" "$(node_rows 0)"
+	queue 'INTO tutor_engagements' "$node_fk_refused"
+	queue 'claude -p /ymer:kaizen-capture' "@$canned/run-capture.jsonl"
+	queue "kind = 'friction'\"" "$(node_rows "${1:-1}")"
+	queue 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-stop.jsonl"
+	queue "status = 'open'\"" "$(node_rows 1)"
+	queue 'FROM tasks"' "$(node_rows 0)"
+	queue 'FROM topics_history"' "$(node_rows 0)"
+	effect 'claude plugin install ymer@ymer --config' "printf '{\n  \"pluginConfigs\": {\n    \"ymer@ymer\": {\n      \"options\": {\n        \"state_folder\": \"%s\"\n      }\n    }\n  }\n}\n' '$pstate' >'$tmp/probe/cfg/settings.json'"
+	answer 'sqlite_master' "$(node_rows 5)"
+	queue 'claude -p /ymer:setup' "@$canned/run-setup2.jsonl"
+	queue 'FROM fronts"' "$(node_rows 1)"
+	answer '"action":"execute"' "$seed_ok"
+	queue 'pragma_table_info' "$(node_rows 0)"
+	queue 'claude -p /ymer:setup' "@$canned/run-setup3.jsonl"
+	queue 'pragma_table_info' "$(node_rows 1)"
+	answer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary.jsonl"
+	summary_effects ':' "$effect_drain" "$effect_batch" "$effect_append"
+	queue "FROM tasks WHERE status = 'new'" "$(node_rows 1)"
+	queue "FROM topics_history WHERE artifact = 'request.md'" "$(node_rows 1)"
+	queue 'JOIN topics_history h ON' "$(node_rows 1)"
+	queue 'SELECT drained_to FROM frictions' "$(node_text_rows "$drained_to")"
+	queue "SELECT count(DISTINCT area ||" "$(node_rows 1)"
+	queue 'LIMIT 1 OFFSET 0' "$(node_rows 10)"
+	queue "source = 'hermetic_probe' AND status = 'drained'" "$(node_rows 10)"
+	queue "SELECT count(*) FROM topics_history WHERE topic LIKE" "$(node_rows 1)"
+	queue "source = 'hermetic_probe' AND status = 'drained'" "$(node_rows 20)"
+	queue "SELECT count(*) FROM topics_history WHERE topic LIKE" "$(node_rows 2)"
+	queue 'LIMIT 1 OFFSET 0' "$(node_rows 20)"
+	queue 'LIMIT 1 OFFSET 1' "$(node_rows 10)"
+	queue 'claude -p /ymer:tutor' "@$canned/run-tutor-ymer.jsonl"
+	queue 'FROM tutor_subjects"' "$(node_rows 0)"
+	queue 'FROM tutor_engagements"' "$(node_rows 0)"
+	queue "name LIKE 'tutor%'" "$(node_rows 0)"
+	queue 'claude -p /ymer:tutor' "@$canned/run-tutor-stop.jsonl"
+	queue "name LIKE 'tutor%'" "$(node_rows 0)"
+}
+
+probe() { # probe <fixture> <args...> — output in $out, exit status in $rc
+	fx=$1
+	shift
+	out=$(cd "$fx" && HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$tmp/probe sh scripts/hermetic-probe "$@" 2>&1)
+	rc=$?
+}
+lines() { printf '%s\n' "$out" | grep -c -F -- "$1"; }
+live_case() { # live_case — the eval answer, compose's resolved project name, and a fresh shim state every live case starts from
+	shim_reset
+	answer 'claude plugin eval' "@$canned/eval-ok.json"
+	answer ' config' 'name: hermetic-probe'
+}
+
+live_seeded() { # live_seeded <slash command> <trace> — live_case, then live_queue with <trace> queued ahead of it as that command's run
+	live_case
+	queue "claude -p $1" "@$canned/$2"
+	live_queue
+}
+
+# ── 1 · usage ─────────────────────────────────────────────────────────
+fx=$tmp/f1
+fixture "$fx"
+shim_reset
+probe "$fx" bogus
+check "unknown subcommand exits 2" 2 "$rc"
+check "unknown subcommand prints usage" 1 "$(lines 'usage: scripts/hermetic-probe')"
+
+# ── 2 · static, clean tree ────────────────────────────────────────────
+shim_reset
+probe "$fx" static
+check "static clean exits 0" 0 "$rc"
+check "static clean: manifests pass" 1 "$(lines '✔ manifests')"
+check "static clean: values pass" 1 "$(lines '✔ values')"
+check "static clean: references pass — the fixture's and the live stage's own" 1 "$(lines '✔ references   30 slash references, 1 relative links, 0 plugin-root paths')"
+check "static validates the root and the plugin" 2 "$(logged 'claude plugin validate --strict')"
+# a nested checkout and a dangling link in the tree: git lists the one as
+# `nested/` and the other by name, grep can read neither, and both are
+# skipped and counted rather than ending the sweep
+mkdir -p "$fx/nested"
+git -C "$fx/nested" init -q
+ln -s "$fx/nope" "$fx/dangling"
+shim_reset
+probe "$fx" static
+check "static with a nested checkout and a dangling link exits 0" 0 "$rc"
+check "static with a nested checkout and a dangling link: both skipped and counted" 1 "$(lines 'every one a KEEP site (2 listed entries that are not files skipped')"
+rm -rf "$fx/nested" "$fx/dangling"
+
+# ── 3 · static, the token file missing, empty, or carrying a blank line ─
+shim_reset
+rm "$fx.tokens"
+probe "$fx" static
+check "no token file exits 2" 2 "$rc"
+check "no token file names its path" 1 "$(lines "no token file at $fx.tokens")"
+: >"$fx.tokens"
+shim_reset
+probe "$fx" static
+check "empty token file exits 2" 2 "$rc"
+check "empty token file names its path" 1 "$(lines "no token, or a blank line, in $fx.tokens")"
+printf 'someone-token\n\n' >"$fx.tokens"
+shim_reset
+probe "$fx" static
+check "blank line in the token file exits 2" 2 "$rc"
+check "blank line in the token file: the values check names it" 1 "$(lines "✘ values       no token, or a blank line, in $fx.tokens")"
+printf 'someone-token\n' >"$fx.tokens"
+
+# ── 3b · static, the KEEP file empty or missing ───────────────────────
+# an empty KEEP file would read every hit as a row and report nothing
+cp "$fx/scripts/hermetic-probe-keep" "$tmp/keep.bak"
+: >"$fx/scripts/hermetic-probe-keep"
+shim_reset
+probe "$fx" static
+check "empty KEEP file exits 2" 2 "$rc"
+check "empty KEEP file: the values check names it" 1 "$(lines '✘ values       no KEEP file, or an empty one, at scripts/hermetic-probe-keep')"
+rm "$fx/scripts/hermetic-probe-keep"
+shim_reset
+probe "$fx" static
+check "no KEEP file exits 2" 2 "$rc"
+check "no KEEP file: the values check names it" 1 "$(lines '✘ values       no KEEP file, or an empty one, at scripts/hermetic-probe-keep')"
+cp "$tmp/keep.bak" "$fx/scripts/hermetic-probe-keep"
+
+# ── 4 · static, an empty corpus ───────────────────────────────────────
+fx=$tmp/f4
+fixture "$fx"
+rm -rf "$fx/.git"
+shim_reset
+probe "$fx" static
+check "no checkout exits 2" 2 "$rc"
+check "no checkout: the values check names the corpus" 1 "$(lines "✘ values       the corpus is empty — $fx is not a git checkout")"
+
+# ── 5 · static, seeded values, one KEEP site, a CRLF token, a binary file ─
+fx=$tmp/f5
+fixture "$fx"
+printf 'a path /Users/someone/state here\na tree ~/things here\na host http://example.invalid:9999/mcp here\na call mcp__foo__bar here\na token someone-token here\na kept ~/things beside /Users/someone/state here\na longer ~/things-private here\na kept ~/things.\n' >"$fx/plugins/ymer/skills/setup/notes.md"
+printf 'a path /Users/someone/state here\n' >"$fx/plugins/ymer/skills/setup/a note.md"
+printf 'blob\0%s\n' '/Users/someone/state' >"$fx/plugins/ymer/skills/setup/blob.bin"
+printf 'someone-token\r\n' >"$fx.tokens"
+printf 'plugins/ymer/skills/setup/notes.md\t~/things\n' >>"$fx/scripts/hermetic-probe-keep"
+# a KEEP'd URL standing alone, and the same URL running on through a query
+u=http://example.invalid:9999/mcp
+printf 'a kept %s here\na longer %s?token=x here\n' "$u" "$u" >"$fx/plugins/ymer/skills/setup/url.md"
+printf 'plugins/ymer/skills/setup/url.md\t%s\n' "$u" >>"$fx/scripts/hermetic-probe-keep"
+# a record id the way a doc handle carries it, lower and upper case —
+# assembled at run time, so this file carries none
+printf 'a handle doc-%s-%s here\nan upper handle doc-%s-%s here\n' 0000aaaa 1111-2222-3333-444455556666 0000AAAA 1111-2222-3333-444455556666 >"$fx/plugins/ymer/skills/setup/ids.md"
+shim_reset
+probe "$fx" static
+check "seeded values exit 1" 1 "$rc"
+check "seeded values: the values check fails" 1 "$(lines '✘ values')"
+check "seeded values: the path is listed" 1 "$(lines 'notes.md:1:a path /Users/someone/state')"
+check "seeded values: the host is listed" 1 "$(lines 'notes.md:3:a host http://example.invalid:9999')"
+check "seeded values: the call shape is listed" 1 "$(lines 'notes.md:4:a call mcp__foo__bar')"
+check "seeded values: the token is listed, CR and all" 1 "$(lines 'notes.md:5:a token someone-token')"
+check "seeded values: the KEEP site is not listed" 0 "$(lines 'notes.md:2:')"
+check "seeded values: a value beside the KEEP site on one line is listed" 1 "$(lines 'notes.md:6:a kept ~/things beside /Users/someone/state')"
+check "seeded values: a value running on past the KEEP text is listed" 1 "$(lines 'notes.md:7:a longer ~/things-private')"
+check "seeded values: the KEEP text ending a sentence is not listed" 0 "$(lines 'notes.md:8:')"
+check "seeded values: a file with a space in its name is swept" 1 "$(lines 'a note.md:1:a path /Users/someone/state')"
+check "seeded values: a binary file is swept and its hit listed with its line" 1 "$(lines 'blob.bin:1:blob')"
+check "seeded values: the KEEP'd URL standing alone is not listed" 0 "$(lines 'url.md:1:')"
+check "seeded values: the KEEP'd URL running on through a query is listed" 1 "$(lines "url.md:2:a longer $u?token=x")"
+check "seeded values: a record id in a doc handle is listed" 1 "$(lines 'ids.md:1:a handle doc-0000aaaa-')"
+check "seeded values: an upper-case record id is listed" 1 "$(lines 'ids.md:2:an upper handle doc-0000AAAA-')"
+
+# ── 6 · static, broken references and a plugin-level evals/ ───────────
+fx=$tmp/f6
+fixture "$fx"
+# reference-shaped text is assembled at run time, so this file carries none
+printf 'See /ymer:%s, [gone](%s), [gone2](%s) and `${CLAUDE_PLUGIN_ROOT}%s`.\n' nope ../gone.md gone2.md /scripts/gone.sh >"$fx/plugins/ymer/skills/setup/refs.md"
+mkdir -p "$fx/plugins/ymer/evals/x"
+printf 'name: x\n' >"$fx/plugins/ymer/evals/x/case.yaml"
+shim_reset
+probe "$fx" static
+check "broken references exit 1" 1 "$rc"
+check "broken references: the references check fails" 1 "$(lines '✘ references')"
+check "broken references: the slash reference is named" 1 "$(lines 'nope names no shipped skill')"
+check "broken references: the link is named" 1 "$(lines 'refs.md:1: ../gone.md does not resolve')"
+check "broken references: the bare-form link is named" 1 "$(lines 'refs.md:1: gone2.md does not resolve')"
+check "broken references: the plugin-root path is named" 1 "$(lines 'gone.sh does not exist under plugins/ymer')"
+check "broken references: the plugin-level evals/ is named" 1 "$(lines 'plugins/ymer/evals: a plugin')"
+
+# ── 7 · static, a manifest that fails --strict ────────────────────────
+fx=$tmp/f7
+fixture "$fx"
+shim_reset
+queue 'claude plugin validate --strict' 'rc=1'
+probe "$fx" static
+check "failing manifest exits 1" 1 "$rc"
+check "failing manifest: the manifests check names the path" 1 "$(lines '✘ manifests    validate --strict fails on: .')"
+
+# ── 8 · eval, two cases pass ──────────────────────────────────────────
+fx=$tmp/f8
+fixture "$fx"
+fixture_cases "$fx"
+shim_reset
+answer 'claude plugin eval' "@$canned/eval-ok.json"
+ANTHROPIC_API_KEY=not-for-children
+export ANTHROPIC_API_KEY
+probe "$fx" eval
+unset ANTHROPIC_API_KEY
+check "eval ok exits 0" 0 "$rc"
+check "eval ok: the cases line" 1 "$(lines '✔ cases        2 cases, 2 passed on claude-sonnet-5')"
+check "eval runs the root once, pinned, one run, no baseline, no publish" 1 "$(logged "claude plugin eval $fx --trust-plugin --ablation none --runs 1 --model claude-sonnet-5 --no-publish --max-cost-usd 5 --json $fx/evals/results/hermetic-probe.json")"
+check "eval: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is set')"
+check "eval keeps the runner's log beside the result" 1 "$(test -f "$fx/evals/results/hermetic-probe.log" && echo 1)"
+
+# ── 9 · eval, a case fails ────────────────────────────────────────────
+shim_reset
+answer 'claude plugin eval' "@$canned/eval-fail.json"
+probe "$fx" eval
+check "eval fail exits 1" 1 "$rc"
+check "eval fail: names the result" 1 "$(lines "✘ cases        1 of 2 cases passed (exit 0) — each failed grader's explanation is in $fx/evals/results/hermetic-probe.json")"
+
+# ── 10 · eval, a partial run and a run error ──────────────────────────
+shim_reset
+answer 'claude plugin eval' "@$canned/eval-partial.json"
+probe "$fx" eval
+check "eval partial exits 1" 1 "$rc"
+check "eval partial: the runner line" 1 "$(lines '✘ runner       the run is partial')"
+shim_reset
+answer 'claude plugin eval' "@$canned/eval-short.json"
+probe "$fx" eval
+check "eval short exits 1" 1 "$rc"
+check "eval short: a case failed to load" 1 "$(lines '✘ cases        2 case.yaml files, 1 cases ran')"
+
+# ── 11 · eval, no cases ───────────────────────────────────────────────
+fx=$tmp/f11
+fixture "$fx"
+shim_reset
+probe "$fx" eval
+check "eval with no cases exits 2" 2 "$rc"
+check "eval with no cases says so" 1 "$(lines '✘ cases        no evals/*/case.yaml')"
+
+# ── 12 · live, the compose file unset ─────────────────────────────────
+fx=$live
+fixture "$fx"
+fixture_cases "$fx"
+live_case
+unset HERMETIC_PROBE_COMPOSE_FILE
+probe "$fx" live
+check "live without a compose file exits 2" 2 "$rc"
+check "live without a compose file names the variable" 1 "$(lines '✘ compose      HERMETIC_PROBE_COMPOSE_FILE is unset')"
+check "live runs static and eval first" 1 "$(lines '✔ cases')"
+HERMETIC_PROBE_COMPOSE_FILE=$tmp/docker-compose.yml
+export HERMETIC_PROBE_COMPOSE_FILE
+printf 'services: {}\n' >"$HERMETIC_PROBE_COMPOSE_FILE"
+
+# ── 13 · live, no login in cfg/ ───────────────────────────────────────
+live_case
+queue 'curl -sS -o /dev/null' 'rc=7'
+answer 'claude auth status' "@$canned/auth-none.json"
+probe "$fx" live
+check "live without a login exits 2" 2 "$rc"
+check "live without a login names the login line, key unset" 1 "$(lines "✘ login        no claude.ai login in $tmp/probe/cfg — run: env -u ANTHROPIC_API_KEY CLAUDE_CONFIG_DIR=$tmp/probe/cfg claude auth login --claudeai")"
+check "live without a login brings no node up" 0 "$(logged 'docker-compose')"
+
+# ── 14 · live, the port already answers ───────────────────────────────
+live_case
+probe "$fx" live
+check "live with a busy port exits 2" 2 "$rc"
+check "live with a busy port names the variable" 1 "$(lines 'set HERMETIC_PROBE_PORT to a free port')"
+
+# ── 15 · live, the happy path ─────────────────────────────────────────
+live_case
+live_queue
+probe "$fx" live
+check "live happy path exits 0" 0 "$rc"
+check "live happy path: every line passes" 0 "$(lines '✘')"
+check "live: the login line" 1 "$(lines '✔ login')"
+check "live: the scrub line" 1 "$(lines '✔ scrub')"
+check "live: the node line" 1 "$(lines '✔ node         up on http://127.0.0.1:8112/mcp, notebook empty')"
+check "live: the install line" 1 "$(lines '✔ install      marketplace from')"
+check "live: setup, setup-node, setup-history, setup-tutor, setup-report, capture, summary-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, summary, batch, append, append-history, tutor-ymer, tutor-stop" 19 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (setup|setup-node|setup-history|setup-tutor|setup-report|capture|summary-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|summary|batch|append|append-history|tutor-ymer|tutor-stop) ')"
+check "live: the summary line names the drained topic and its file" 1 "$(lines "✔ summary      1 tasks row(s) at new in a Roadmap project, 1 request.md topics_history row(s), the friction drained to $drained_to, its request.md in state/")"
+check "live: the append line reads the deltas" 1 "$(lines '✔ append       still one friction-batch file, created 20260921 kept, seeds drained 10 → 20, seed lines in the file 10 → 20, both headings once')"
+check "live: the append-history line reads the save" 1 "$(lines "✔ append-history one more topics_history row, the newest carrying the file's 20 seed lines and the one before it the pre-image's 10")"
+check "live: the teardown's install line" 1 "$(lines '✔ install      untouched')"
+check "live: servers, isolation, writes, bash-commands, summary-git and setup-address pass — the node alone, reads inside, writes under state/, the declared commands allowed, no commit, no wrong node address" 6 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (servers|isolation|writes|bash-commands|summary-git|setup-address) ')"
+check "live scrubs through the CLI" 3 "$(printf '%s\n' "$(logged 'claude plugin uninstall ymer@ymer')" "$(logged 'claude plugin marketplace remove ymer')" "$(logged 'claude mcp remove ymer-node')" | grep -c '^1$')"
+check "live brings the node up under its own project and port, from its own copy of the compose file" 1 "$(logged "$scratch_dc up -d")"
+check "live never runs compose against the named file itself" 0 "$(logged "-f $HERMETIC_PROBE_COMPOSE_FILE")"
+check "live resolves the project name before up and again before down" 2 "$(logged "$scratch_dc config")"
+check "live: the copy is the named file byte for byte" 0 "$(cmp -s "$HERMETIC_PROBE_COMPOSE_FILE" "$tmp/probe/compose/docker-compose.yml"; echo $?)"
+check "live installs through the README's lines, and again with state/ as the option" '1 1 2 1' "$(printf '%s %s %s %s' "$(logged 'claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8112/mcp')" "$(logged "claude plugin marketplace add $fx")" "$(logged 'claude plugin install ymer@ymer')" "$(logged "claude plugin install ymer@ymer --config state_folder=$pstate")")"
+check "live runs ten headless prompts, prompt before flags" 10 "$(logged 'claude -p /')"
+run_flags="--output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash(claude mcp get *) Bash(git -C * rev-parse --is-inside-work-tree) mcp__ymer-node__notebook --add-dir $pstate --model claude-sonnet-5 --max-turns 60 --strict-mcp-config --mcp-config "'{"mcpServers":{"ymer-node":{"type":"http","url":"http://127.0.0.1:8112/mcp"}}}'" --settings $tmp/probe/hook/settings.json"
+check "live: every run is stream-json, verbose, pinned, the notebook and the two declared Bash commands allowed, state/ added, the scratch node the one server, the runs' hook loaded" 10 "$(logged "$run_flags")"
+check "live: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is set')"
+check "live: teardown brings the node down" 1 "$(logged "$scratch_dc down")"
+check "live: data/ is gone after teardown" 0 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
+check "live: state/ is gone after teardown" 0 "$(test -e "$pstate" && echo 1 || echo 0)"
+check "live: the runs are kept" 10 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
+# node.log is truncated at the stage's start like the traces: the two
+# `tables` reads are this invocation's — the node-up one and the teardown's
+check "live: node.log is this invocation's alone" 2 "$(grep -c '^>> tables {}' "$tmp/probe/runs/node.log")"
+
+# ── 15b · live, the runs' hook over its own events ────────────────────
+# the files the happy path left in the probe dir: the settings file loads
+# the hook on Bash, and the hook, fed a PreToolUse event the way the CLI
+# writes one, lets a declared command run (exit 0) and refuses every other
+# (exit 2) — a habit, a compound, another redirect, another folder, and an
+# event whose input does not open with the command
+hook_event() { # hook_event <command as its JSON string spells it> — the hook's exit status for a Bash event carrying it
+	printf '{"session_id":"s","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s","description":"d"},"tool_use_id":"t1"}' "$1" | sh "$tmp/probe/hook/bash" 2>/dev/null
+	echo $?
+}
+hook_settings="{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Bash\",\"hooks\":[{\"type\":\"command\",\"command\":\"sh '$tmp/probe/hook/bash'\"}]}]}}"
+check "live hook: the settings file loads it on Bash, and nothing else" "$hook_settings" "$(cat "$tmp/probe/hook/settings.json" 2>/dev/null)"
+check "live hook: the declared commands run" '0 0 0 0' "$(printf '%s %s %s %s' "$(hook_event 'claude mcp get ymer')" "$(hook_event 'claude mcp get ymer 2>&1')" "$(hook_event "git -C $pstate rev-parse --is-inside-work-tree")" "$(hook_event "git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree")")"
+check "live hook: every other command is refused" '2 2 2 2 2' "$(printf '%s %s %s %s %s' "$(hook_event 'true')" "$(hook_event 'claude mcp get ymer 2>&1; echo \"---\"')" "$(hook_event 'claude mcp get ymer 2>/dev/null')" "$(hook_event 'git -C /Users/someone/state rev-parse --is-inside-work-tree')" "$(printf '{"tool_name":"Bash","tool_input":{"description":"d","command":"claude mcp get ymer"}}' | sh "$tmp/probe/hook/bash" 2>/dev/null; echo $?)")"
+check "live hook: a refusal names the declared commands to the model" 1 "$(printf '{"tool_input":{"command":"true"}}' | sh "$tmp/probe/hook/bash" 2>&1 >/dev/null | grep -c -F '`claude mcp get <name>`')"
+
+# ── 16 · live, the scrub: the login's connectors allowed, a leftover not ─
+live_case
+live_queue
+requeue 'claude mcp list' "@$canned/mcp-list-connectors.txt" 'ymer-node: http://127.0.0.1:8112/mcp (HTTP) - ✔ Connected'
+probe "$fx" live
+check "live scrub with the login's connectors listed exits 0" 0 "$rc"
+check "live scrub with the login's connectors listed passes" 1 "$(lines '✔ scrub')"
+live_case
+live_queue
+requeue 'claude mcp list' 'other: http://example.invalid:9999/mcp (HTTP) - ✔ Connected'
+probe "$fx" live
+check "live scrub with a server left exits 2" 2 "$rc"
+check "live scrub with a server left names the list" 1 "$(lines '✘ scrub        still present after the scrub: mcp')"
+
+# ── 16b · live, the scrub: an orphaned cache version dir allowed, an unmarked one not ─
+# `plugin uninstall` leaves plugins/cache/ymer/<plugin>/<version> behind
+# with an `.orphaned_at` marker; only a directory without the marker is a
+# leftover. cfg/ persists across cases, so the planted dir is removed after
+vdir=$tmp/probe/cfg/plugins/cache/ymer/ymer/9.9.9-probe
+live_case
+live_queue
+mkdir -p "$vdir"
+: >"$vdir/.orphaned_at"
+probe "$fx" live
+check "live scrub with an orphaned cache version dir exits 0" 0 "$rc"
+check "live scrub with an orphaned cache version dir passes" 1 "$(lines '✔ scrub')"
+live_case
+live_queue
+rm -f "$vdir/.orphaned_at"
+probe "$fx" live
+check "live scrub with an unmarked cache version dir exits 2" 2 "$rc"
+check "live scrub with an unmarked cache version dir names the cache" 1 "$(lines '✘ scrub        still present after the scrub: cache')"
+check "live scrub with an unmarked cache version dir brings no node up" 0 "$(logged 'docker-compose')"
+rm -rf "$tmp/probe/cfg/plugins"
+check "live scrub with a server left brings no node up" 0 "$(logged 'docker-compose')"
+
+# ── 17 · live, a step fails: teardown still runs, exit 1 ──────────────
+live_case
+live_queue 0
+probe "$fx" live
+check "live failed step exits 1" 1 "$rc"
+check "live failed step: the capture line names the count and the kind" 1 "$(lines '✘ capture      after /ymer:kaizen-capture the node holds 0 frictions rows of kind friction')"
+check "live failed step: the later steps still ran" 1 "$(lines '✔ append ')"
+check "live failed step: teardown still ran" 1 "$(logged "$scratch_dc down")"
+
+# ── 18 · live, a run that did not end in success ──────────────────────
+live_seeded /ymer:kaizen-capture run-capture-failed.jsonl
+probe "$fx" live
+check "live failed run exits 1" 1 "$rc"
+check "live failed run: the run line names it" 1 "$(lines "✘ run-2        run 2 (/ymer:kaizen-capture) did not end in success — read $tmp/probe/runs/2.jsonl")"
+check "live failed run: the later steps still ran" 1 "$(lines '✔ append ')"
+
+# ── 19 · live, setup's report without its grammar's lines ─────────────
+live_seeded /ymer:setup run-setup1-unreadable.jsonl
+probe "$fx" live
+check "live unreadable-settings report exits 1" 1 "$rc"
+check "live unreadable-settings report: the setup-report line" 1 "$(lines '✘ setup-report the report has no line carrying')"
+check "live unreadable-settings report: setup itself still passes" 1 "$(lines '✔ setup        7 tables created, 1 front row')"
+
+# ── 19b · live, the subject index's foreign key not enforced ──────────
+live_case
+live_queue
+requeue 'INTO tutor_engagements' "$seed_ok"
+probe "$fx" live
+check "live unenforced foreign key exits 1" 1 "$rc"
+check "live unenforced foreign key: the setup-tutor line names it" 1 "$(lines '✘ setup-tutor  an engagement row naming no subject was not refused on its foreign key')"
+check "live unenforced foreign key: setup itself still passes" 1 "$(lines '✔ setup        7 tables created, 1 front row')"
+
+# ── 19c · live, tutor past its guard ──────────────────────────────────
+live_case
+live_queue
+requeue 'FROM tutor_subjects"' "$(node_rows 1)"
+probe "$fx" live
+check "live tutor writing with no ymer exits 1" 1 "$rc"
+check "live tutor writing with no ymer: the tutor-ymer line names the rows" 1 "$(lines '✘ tutor-ymer   after /ymer:tutor with no ymer: 1 tutor_subjects rows, 0 tutor_engagements rows')"
+# a tutor table back after the run on a node without them: tutor made one
+live_case
+live_queue
+requeue "name LIKE 'tutor%'" "$(node_rows 0)" "$(node_rows 1)"
+probe "$fx" live
+check "live tutor creating a table exits 1" 1 "$rc"
+check "live tutor creating a table: the tutor-stop line names it" 1 "$(lines '✘ tutor-stop   after /ymer:tutor with no tutor tables: 1 tutor tables')"
+# the drop refused: the step is reported not run, never asserted
+live_case
+live_queue
+queue 'DROP TABLE tutor_engagements' "$node_fk_refused"
+probe "$fx" live
+check "live tutor tables not dropped exits 1" 1 "$rc"
+check "live tutor tables not dropped: the seed line names it" 1 "$(lines '✘ tutor-stop-seed DROP TABLE did not remove the tutor tables')"
+check "live tutor tables not dropped: tutor-stop reported not run" 1 "$(lines '– tutor-stop   not run — its seed failed')"
+check "live tutor tables not dropped: tutor-stop never passes" 0 "$(lines '✔ tutor-stop')"
+
+# ── 20 · live, the drain not resolving to its topic ───────────────────
+live_case
+live_queue
+requeue 'JOIN topics_history h ON' "$(node_rows 0)"
+probe "$fx" live
+check "live unresolved drain exits 1" 1 "$rc"
+check "live unresolved drain: the summary line names the four reads" 1 "$(lines "✘ summary      after /ymer:kaizen-summary: 1 tasks at new in a Roadmap project, 1 request.md topics_history rows, 0 frictions drained to a row their drained_to resolves to, request.md at state/$drained_to present")"
+# the row resolves, and the file is not where drained_to says
+live_case
+live_queue
+summary_effects ':' ':' "$effect_batch" "$effect_append"
+probe "$fx" live
+check "live drain with no file exits 1" 1 "$rc"
+check "live drain with no file: the summary line names the file absent" 1 "$(lines "request.md at state/$drained_to absent")"
+
+# ── 20b · live, the first arm's summary drained with no state folder ──
+live_case
+live_queue
+requeue "status = 'open'\"" "$(node_rows 0)"
+probe "$fx" live
+check "live first-arm drain exits 1" 1 "$rc"
+check "live first-arm drain: the summary-stop line names the open count" 1 "$(lines '✘ summary-stop after /ymer:kaizen-summary with no state folder: 0 open frictions, 0 tasks, 0 topics_history rows')"
+
+# ── 21 · live, the re-run's report the fresh-creation way ─────────────
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-created.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live fresh-creation report exits 1" 1 "$rc"
+check "live fresh-creation report: the converge-report line" 1 "$(lines '✘ converge-report the re-run'"'"'s report does not read')"
+check "live fresh-creation report: converge still passes" 1 "$(lines '✔ converge     sqlite_master')"
+check "live fresh-creation report: setup-folder names the missing line" 1 "$(lines '✘ setup-folder the re-run'"'"'s report does not read')"
+
+# ── 21b · live, state/ reported as a git work tree ────────────────────
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-git.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live state/ read as git exits 1" 1 "$rc"
+check "live state/ read as git: the setup-folder line" 1 "$(lines '✘ setup-folder the re-run'"'"'s report does not read')"
+check "live state/ read as git: converge-report still passes" 1 "$(lines '✔ converge-report')"
+
+# ── 21c · live, the install between the arms sets no option ───────────
+live_case
+live_queue
+shim_drop effects 'claude plugin install ymer@ymer --config'
+rm -f "$tmp/probe/cfg/settings.json"
+probe "$fx" live
+check "live option not set exits 2" 2 "$rc"
+check "live option not set: the state-folder line names cfg/" 1 "$(lines "✘ state-folder the install did not set state_folder to $pstate")"
+check "live option not set: the second arm never runs" 3 "$(logged 'claude -p /')"
+check "live option not set: teardown brought the node down" 1 "$(logged "$scratch_dc down")"
+
+# ── 21d · live, the probe dir inside a git work tree ──────────────────
+live_case
+live_queue
+out=$(cd "$fx" && HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$fx/probe-in-git sh scripts/hermetic-probe live 2>&1)
+rc=$?
+check "live state/ inside a git work tree exits 2" 2 "$rc"
+check "live state/ inside a git work tree names the variable" 1 "$(lines "✘ state        $fx/probe-in-git/state is inside a git work tree — set HERMETIC_PROBE_DIR")"
+check "live state/ inside a git work tree brings no node up" 0 "$(logged 'docker-compose')"
+rm -rf "$fx/probe-in-git"
+
+# ── 21e · live, the compose copy resolving to another project ─────────
+# a project name that is not the probe's own — an install's, pinned beside
+# the named file — stops the stage before anything is brought up
+live_case
+live_queue
+reanswer ' config' 'name: ymer-node-install'
+probe "$fx" live
+check "live foreign project exits 2" 2 "$rc"
+check "live foreign project names the copy" 1 "$(lines "✘ compose      docker-compose does not resolve the project to hermetic-probe from $tmp/probe/compose/docker-compose.yml")"
+check "live foreign project names the config log" 1 "$(lines "read $tmp/probe/runs/compose-config-before-up.log; nothing was brought up")"
+check "live foreign project brings nothing up" 0 "$(logged ' up -d')"
+check "live foreign project takes nothing down" 0 "$(logged ' down')"
+
+# ── 21f · live, the name resolving elsewhere by teardown ──────────────
+# right at bring-up, wrong at teardown: the down is refused and named
+live_case
+live_queue
+queue ' config' 'name: hermetic-probe'
+reanswer ' config' 'name: ymer-node-install'
+probe "$fx" live
+check "live teardown refusal exits 1" 1 "$rc"
+check "live teardown refusal: the install line names it" 1 "$(lines '✘ install      refused docker-compose down — the project does not resolve to hermetic-probe')"
+check "live teardown refusal: no down ran" 0 "$(logged ' down')"
+check "live teardown refusal: the install line names the config log" 1 "$(lines "read $tmp/probe/runs/compose-config-before-down.log")"
+check "live teardown refusal: the install line hands back the scoped down" 1 "$(lines "NODE_DATA_DIR='$tmp/probe/data' docker-compose -p hermetic-probe -f '$tmp/probe/compose/docker-compose.yml' down\`")"
+check "live teardown refusal: data/ is kept" 1 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
+check "live teardown refusal: the scratch state folder is kept" 1 "$(test -e "$pstate" && echo 1 || echo 0)"
+check "live teardown refusal: the docker ps comparison still runs after it, whichever way it reads" 1 "$(printf '%s\n' "$out" | grep -c -E '^  (✔ install      untouched|✘ install      docker ps differs)')"
+
+# ── 21g · live, setup's reports dressed ───────────────────────────────
+# the right facts under bold, backticks, a fence and sentences around
+# them: every report check reads the facts and passes
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1-decorated.jsonl" "@$canned/run-setup2-decorated.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live dressed reports exit 0" 0 "$rc"
+check "live dressed reports: the setup-report line" 1 "$(lines '✔ setup-report')"
+check "live dressed reports: the converge-report line" 1 "$(lines '✔ converge-report')"
+check "live dressed reports: the setup-folder line" 1 "$(lines '✔ setup-folder')"
+
+# the Meta Roadmap line naming ymer's missing connection and tasks does
+# not stand in for the coordinator's own line
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1-no-ymer.jsonl" "@$canned/run-setup2.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live report with no coordinator line exits 1" 1 "$rc"
+check "live report with no coordinator line: the setup-report line" 1 "$(lines '✘ setup-report the report has no line carrying')"
+
+# ── 21h · live, the re-run's node line saying created or added ────────
+# the re-run executed nothing, so a line saying it created tables or
+# added a front row names a change that never happened — and a line
+# restating the node's facts without the word does not clear it
+for t in created-only added created-recap; do
+	live_case
+	live_queue
+	requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-$t.jsonl" "@$canned/run-setup3.jsonl"
+	probe "$fx" live
+	check "live re-run saying $t exits 1" 1 "$rc"
+	check "live re-run saying $t: the converge-report line" 1 "$(lines '✘ converge-report the re-run'"'"'s report does not read')"
+	check "live re-run saying $t: setup-folder still passes" 1 "$(lines '✔ setup-folder')"
+done
+
+# ── 21i · live, a setup report naming a node address ──────────────────
+# a port the node does not run on fails, as a URL, as a bare port and
+# after the node's server name; the probe's own port is the node's real
+# address and passes
+for t in wrong-url wrong-port wrong-host; do
+	live_case
+	live_queue
+	requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-$t.jsonl" "@$canned/run-setup3.jsonl"
+	probe "$fx" live
+	check "live report naming the $t exits 1" 1 "$rc"
+	check "live report naming the $t: the setup-address line names the run" 1 "$(lines '✘ setup-address a setup report names a node port other than 8112 in run(s) 4 ')"
+	check "live report naming the $t: converge-report still passes" 1 "$(lines '✔ converge-report')"
+done
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-right-url.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live report naming the probe's own address exits 0" 0 "$rc"
+check "live report naming the probe's own address: the setup-address line" 1 "$(lines '✔ setup-address')"
+
+# ── 21j · live, the first and the drift runs naming a node address ────
+# every setup run's report is read for the node's address, not the
+# re-run's alone: a wrong port in the first run and the drift run fails
+# naming both
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1-wrong-port.jsonl" "@$canned/run-setup2.jsonl" "@$canned/run-setup3-wrong-port.jsonl"
+probe "$fx" live
+check "live first and drift reports naming the wrong port exit 1" 1 "$rc"
+check "live first and drift reports naming the wrong port: the setup-address line names both runs" 1 "$(lines '✘ setup-address a setup report names a node port other than 8112 in run(s) 1 5 ')"
+
+# ── 22 · live, a git commit, a file write and a foreign server's tool ──
+# a queue line ahead of live_queue's answers first; summary's second-arm
+# answer is persistent, so it is replaced
+live_seeded /ymer:kaizen-capture run-capture-write.jsonl
+reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-git.jsonl"
+probe "$fx" live
+check "live git commit exits 1" 1 "$rc"
+check "live git commit: the summary-git line names the second arm's summary runs" 1 "$(lines '✘ summary-git  summary attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
+check "live git commit: the bash-commands line names the summary runs" 1 "$(lines "$bash_other 6 7 8")"
+check "live file write: the writes line names the capture run" 1 "$(lines '✘ writes       a file write outside the second arm'"'"'s summary runs or outside')"
+check "live file write: the writes line names run 2 alone" 1 "$(lines "in run(s) 2 — read $tmp/probe/runs/<n>.jsonl")"
+live_case
+live_queue
+reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-outside.jsonl"
+probe "$fx" live
+check "live write beside state/ exits 1" 1 "$rc"
+check "live write beside state/: the writes line names the summary runs" 1 "$(lines "outside $pstate in run(s) 6 7 8")"
+live_seeded /ymer:kaizen-capture run-capture-revparse.jsonl
+probe "$fx" live
+check "live rev-parse on another folder exits 1" 1 "$rc"
+check "live rev-parse on another folder: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
+live_seeded /ymer:kaizen-capture run-capture-reach.jsonl
+probe "$fx" live
+check "live foreign tool exits 1" 1 "$rc"
+check "live foreign tool: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+
+# ── 22b · live, a server call read by its result ──────────────────────
+# a call the CLI answered with no such tool reached nothing: servers
+# passes and names the run and the tool; a foreign call answered, refused,
+# or answered no such tool under another name reached its server
+live_seeded /ymer:kaizen-capture run-capture-no-such-tool.jsonl
+probe "$fx" live
+check "live call to no such tool exits 0" 0 "$rc"
+check "live call to no such tool: servers passes, naming the run and the tool" 1 "$(lines '✔ servers      every run'"'"'s init line names ymer-node alone, and no other server'"'"'s tool was called — a call to no such tool, reaching nothing, in run(s) 2 (mcp__ymer-node)')"
+live_seeded /ymer:kaizen-capture run-capture-reach-answered.jsonl
+probe "$fx" live
+check "live foreign tool answered exits 1" 1 "$rc"
+check "live foreign tool answered: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+live_seeded /ymer:kaizen-capture run-capture-reach-refused.jsonl
+probe "$fx" live
+check "live foreign tool refused exits 1" 1 "$rc"
+check "live foreign tool refused: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+live_seeded /ymer:kaizen-capture run-capture-reach-misnamed.jsonl
+probe "$fx" live
+check "live foreign tool answered no such tool under another name exits 1" 1 "$rc"
+check "live foreign tool answered no such tool under another name: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+
+# ── 23 · live, a second server in a run's init line ───────────────────
+live_seeded /ymer:kaizen-capture run-capture-connector.jsonl
+probe "$fx" live
+check "live second server exits 1" 1 "$rc"
+check "live second server: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+check "live second server: capture itself still passes" 1 "$(lines '✔ capture')"
+
+# ── 24 · live, a read outside the probe dir ───────────────────────────
+live_seeded /ymer:kaizen-capture run-capture-outside.jsonl
+probe "$fx" live
+check "live outside read exits 1" 1 "$rc"
+check "live outside read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+
+# ── 25 · live, a compound Bash command opening with the declared one ──
+live_seeded /ymer:kaizen-capture run-capture-compound.jsonl
+probe "$fx" live
+check "live compound command exits 1" 1 "$rc"
+check "live compound command: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
+
+# ── 25b · live, a compound behind an escaped quote ────────────────────
+# the stage reads the command as the whole JSON string, escaped quotes
+# included, so the `;` after the quoted name is in what it matches, and
+# the name match fails it
+live_seeded /ymer:kaizen-capture run-capture-quoted.jsonl
+probe "$fx" live
+check "live quoted compound command exits 1" 1 "$rc"
+check "live quoted compound command: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
+
+# ── 25c · live, a compound and a habit the run refused ────────────────
+# the attempt is in the trace, but the result event's permission_denials
+# says it never ran, whichever layer refused it: bash-commands passes and
+# names the run as refused, naming no refuser
+live_seeded /ymer:kaizen-capture run-capture-refused.jsonl
+probe "$fx" live
+check "live refused compound exits 0" 0 "$rc"
+check "live refused compound: bash-commands passes, naming the refused run" 1 "$(lines '✔ bash-commands no Bash command beyond `claude mcp get <name>` and the state folder'"'"'s `rev-parse` ran in any run — refused, never run, in run(s) 2')"
+live_seeded /ymer:kaizen-capture run-capture-true-refused.jsonl
+probe "$fx" live
+check "live refused habit exits 0" 0 "$rc"
+check "live refused habit: bash-commands passes, naming the refused run" 1 "$(lines '✔ bash-commands no Bash command beyond `claude mcp get <name>` and the state folder'"'"'s `rev-parse` ran in any run — refused, never run, in run(s) 2')"
+
+# ── 26 · live, docker-compose not on PATH ─────────────────────────────
+# the shim is hidden and PATH narrowed to the system's own directories, so
+# a real binary installed elsewhere on the maintainer's machine is not found
+live_case
+mv "$tmp/bin/docker-compose" "$tmp/dc.hidden"
+savepath=$PATH
+PATH=$tmp/bin:$(getconf PATH)
+probe "$fx" live
+PATH=$savepath
+mv "$tmp/dc.hidden" "$tmp/bin/docker-compose"
+check "live without docker-compose exits 2" 2 "$rc"
+check "live without docker-compose names the binary" 1 "$(lines '✘ docker       docker-compose is not on PATH')"
+
+# ── 27 · live, the compose file path names no file ────────────────────
+live_case
+HERMETIC_PROBE_COMPOSE_FILE=$tmp/nope.yml
+probe "$fx" live
+HERMETIC_PROBE_COMPOSE_FILE=$tmp/docker-compose.yml
+check "live with a missing compose file exits 2" 2 "$rc"
+check "live with a missing compose file names the path" 1 "$(lines "✘ compose      no file at $tmp/nope.yml")"
+
+# ── 28 · live, docker down ────────────────────────────────────────────
+live_case
+queue 'docker info' 'rc=1'
+probe "$fx" live
+check "live with docker down exits 2" 2 "$rc"
+check "live with docker down says so" 1 "$(lines '✘ docker       docker is not running')"
+
+# ── 29 · live, the image absent ───────────────────────────────────────
+live_case
+queue 'docker image inspect' 'rc=1'
+probe "$fx" live
+check "live without the image exits 2" 2 "$rc"
+check "live without the image names it" 1 "$(lines '✘ image        no ymer-node:latest image')"
+
+# ── 30 · live, data/ not empty at bring-up: exit 2, teardown still runs ─
+live_case
+queue 'curl -sS -o /dev/null' 'rc=7'
+answer 'claude auth status' "@$canned/auth-ok.json"
+answer 'docker ps' 'ymer-node-install-ymer-node-1 127.0.0.1:8012->8012/tcp'
+answer '"method":"tools/list"' '{"result":{}}'
+queue '"action":"tables"' "$(node_tables 3)"
+probe "$fx" live
+check "live over a populated node exits 2" 2 "$rc"
+check "live over a populated node names the count and data/" 1 "$(lines "✘ node         the scratch node's notebook holds 3 tables — its data/ ($tmp/probe/data) was not empty")"
+check "live over a populated node: teardown brought the node down" 1 "$(logged "$scratch_dc down")"
+check "live over a populated node: the install line still reads untouched" 1 "$(lines '✔ install      untouched')"
+check "live over a populated node: data/ is gone" 0 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
+
+# ── 31 · live, docker-compose up fails: exit 2, teardown still runs ───
+live_case
+live_queue
+queue 'up -d' 'rc=1'
+probe "$fx" live
+check "live with a failed up exits 2" 2 "$rc"
+check "live with a failed up names the log" 1 "$(lines "✘ node         docker-compose up failed — read $tmp/probe/runs/compose-up.log")"
+check "live with a failed up: teardown brought the node down" 1 "$(logged "$scratch_dc down")"
+check "live with a failed up: data/ is gone" 0 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
+
+# ── 32 · live, the drift seed fails: drift not run, never passed, and a ─
+# stale trace under the skipped run's name is not read as this run's
+live_case
+live_queue
+queue 'DROP COLUMN due_date' 'rc=1'
+cp "$canned/run-capture-bash.jsonl" "$tmp/probe/runs/5.jsonl"
+probe "$fx" live
+check "live failed drift seed exits 1" 1 "$rc"
+check "live failed drift seed: the drift-seed line" 1 "$(lines '✘ drift-seed   DROP COLUMN due_date did not remove tasks.due_date')"
+check "live failed drift seed: drift is not run" 1 "$(lines '– drift        not run — its seed failed — see drift-seed')"
+check "live failed drift seed: drift never passes" 0 "$(lines '✔ drift')"
+check "live failed drift seed: the later steps still ran" 1 "$(lines '✔ batch')"
+check "live failed drift seed: the stale trace is gone, not read" 0 "$(test -e "$tmp/probe/runs/5.jsonl" && echo 1 || echo 0)"
+check "live failed drift seed: bash-commands reads the runs that ran" 1 "$(lines '✔ bash-commands')"
+
+# ── 33 · live, the first friction seed fails: batch not run, append waits ─
+live_case
+live_queue
+queue 'seed friction 1 below' 'rc=1'
+probe "$fx" live
+check "live failed batch seed exits 1" 1 "$rc"
+check "live failed batch seed: the batch-seed line" 1 "$(lines '✘ batch-seed   the node refused the ten seed rows')"
+check "live failed batch seed: batch is not run" 1 "$(lines '– batch        not run — its seed failed — see batch-seed')"
+check "live failed batch seed: append waits on batch" 1 "$(lines '– append       not run — the batch step did not pass — see batch')"
+check "live failed batch seed: append-history waits on append" 1 "$(lines '– append-history not run — the append step did not run — see append')"
+check "live failed batch seed: append never passes" 0 "$(lines '✔ append')"
+
+# ── 34 · live, the second friction seed fails: append not run ─────────
+live_case
+live_queue
+queue 'seed friction 1 below' "$seed_ok"
+queue 'seed friction 1 below' 'rc=1'
+probe "$fx" live
+check "live failed append seed exits 1" 1 "$rc"
+check "live failed append seed: batch passed" 1 "$(lines '✔ batch')"
+check "live failed append seed: the append-seed line" 1 "$(lines '✘ append-seed  the node refused the second ten seed rows')"
+check "live failed append seed: append is not run" 1 "$(lines '– append       not run — its seed failed — see append-seed')"
+check "live failed append seed: append-history is not run" 1 "$(lines '– append-history not run — the append step did not run — see append')"
+check "live failed append seed: append never passes" 0 "$(lines '✔ append')"
+
+# ── 35 · live, the append a no-op, a rewrite that moved the date, and ──
+# an append the history never saw
+live_case
+live_queue
+summary_effects ':' "$effect_drain" "$effect_batch" ':'
+requeue "source = 'hermetic_probe' AND status = 'drained'" "$(node_rows 10)" "$(node_rows 10)"
+probe "$fx" live
+check "live no-op append exits 1" 1 "$rc"
+check "live no-op append: the append line reads the deltas" 1 "$(lines '✘ append       1 friction-batch files, created 20260921 → 20260921, seeds drained 10 → 10, seed lines in the file 10 → 10, headings 1 and 1')"
+check "live no-op append: batch still passes" 1 "$(lines '✔ batch')"
+live_case
+live_queue
+summary_effects ':' "$effect_drain" "$effect_batch" "cp '$canned/batch-20-redated.md' '$batch_dir/request.md'"
+probe "$fx" live
+check "live rewritten batch exits 1" 1 "$rc"
+check "live rewritten batch: the append line names the moved date" 1 "$(lines '✘ append       1 friction-batch files, created 20260921 → 20260922, seeds drained 10 → 20')"
+# the file appended to, and no row saved for it: every file delta holds,
+# and the history read alone tells it from a save
+live_case
+live_queue
+requeue "SELECT count(*) FROM topics_history WHERE topic LIKE" "$(node_rows 1)" "$(node_rows 1)" "$(node_rows 1)"
+requeue 'LIMIT 1 OFFSET 0' "$(node_rows 10)" "$(node_rows 10)"
+probe "$fx" live
+check "live unsaved append exits 1" 1 "$rc"
+check "live unsaved append: the append-history line names the rows" 1 "$(lines '✘ append-history topics_history rows 1 → 1, seed lines 10 in the newest row')"
+check "live unsaved append: append's deltas still pass" 1 "$(lines '✔ append ')"
+
+# ── 36 · live, a Bash command that is no declared one ─────────────────
+live_seeded /ymer:kaizen-capture run-capture-bash.jsonl
+probe "$fx" live
+check "live shell write exits 1" 1 "$rc"
+check "live shell write: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
+check "live shell write: summary-git still passes" 1 "$(lines '✔ summary-git')"
+check "live shell write: writes still passes" 1 "$(lines '✔ writes')"
+
+# ── 37 · live, a read climbing out of an allowed prefix, and an absolute ─
+# Glob pattern: the probe dir's `..`, the checkout's `..`, and a Glob
+# naming its root in `pattern` with no path key for the read to find
+live_seeded /ymer:kaizen-capture run-capture-climb.jsonl
+probe "$fx" live
+check "live climbing read exits 1" 1 "$rc"
+check "live climbing read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+live_seeded /ymer:kaizen-capture run-capture-climb-root.jsonl
+probe "$fx" live
+check "live climbing read from the checkout exits 1" 1 "$rc"
+check "live climbing read from the checkout: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+live_seeded /ymer:kaizen-capture run-capture-glob.jsonl
+probe "$fx" live
+check "live absolute glob exits 1" 1 "$rc"
+check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+
+# ── 37b · live, a brace inside an input's string ──────────────────────
+# a Glob whose brace pattern precedes its path, and a `{}` ahead of a git
+# commit: a read cut at the first `}` saw neither the path nor the commit
+live_seeded /ymer:kaizen-capture run-capture-glob-brace.jsonl
+probe "$fx" live
+check "live brace glob exits 1" 1 "$rc"
+check "live brace glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+live_case
+live_queue
+reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-git-brace.jsonl"
+probe "$fx" live
+check "live brace before a git commit exits 1" 1 "$rc"
+check "live brace before a git commit: the summary-git line" 1 "$(lines '✘ summary-git  summary attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
+
+# ── 38 · the model pin: one probe_model, in the entry alone ───────────
+# the eval and live stages read the entry's pin, so a second assignment in
+# a stage file would let the two drift apart — and no argv the shims log
+# tells two pins reading the same value from one
+pins() { cat "$@" | grep -c '^probe_model='; }
+check "one probe_model pin across the entry and the stages" 1 "$(pins "$here"/hermetic-probe "$here"/hermetic-probe-static "$here"/hermetic-probe-eval "$here"/hermetic-probe-live)"
+mkdir -p "$tmp/pin"
+cp "$here"/hermetic-probe "$here"/hermetic-probe-static "$here"/hermetic-probe-eval "$here"/hermetic-probe-live "$tmp/pin/"
+printf 'probe_model=claude-sonnet-5\n' >>"$tmp/pin/hermetic-probe-eval"
+check "a second pin in a stage file is counted" 2 "$(pins "$tmp/pin"/hermetic-probe "$tmp/pin"/hermetic-probe-static "$tmp/pin"/hermetic-probe-eval "$tmp/pin"/hermetic-probe-live)"
+
+echo
+echo "hermetic-probe-test: $pass passed, $fail failed"
+[ "$fail" = 0 ]

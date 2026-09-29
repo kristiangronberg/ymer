@@ -1,0 +1,65 @@
+#!/bin/sh
+# hermetic-probe-eval — the eval stage, sourced by hermetic-probe: every
+# case under evals/ run once through `claude plugin eval`, each a skill
+# fired with no Ymer Node reachable, asserting from the runner's own JSON
+# result that every case loaded, ran to its own end, and passed.
+#
+# What a case asserts is in its case.yaml: the skill fired (the child's
+# init event names the plugin and the slash command, and the skill's own
+# announce line appears in the trace), it stopped (no write tool, no MCP
+# tool, and — read here — no run error such as the turn cap), and it named
+# its door in its last message. The model is the entry script's pin, so a
+# model rollout is never mistaken for a plugin regression; the run uses
+# the credential of the config dir this script runs under, in the runner's
+# own isolation.
+#
+# The runner writes its own results under evals/results/ (ignored by git);
+# this stage keeps its JSON result and the runner's output there too, as
+# evals/results/hermetic-probe.json and hermetic-probe.log.
+
+stage_eval() {
+	echo "hermetic probe — eval"
+
+	# One case.yaml per case directory, directly under evals/ — the shape
+	# this marketplace keeps; the runner would also find nested and
+	# prompt.md-form cases, and then the count here would disagree with it.
+	cases=0
+	for c in "$root"/evals/*/case.yaml; do
+		[ -f "$c" ] && cases=$((cases + 1))
+	done
+	if [ "$cases" = 0 ]; then
+		abort cases "no evals/*/case.yaml under $root — the eval stage has nothing to run"
+	fi
+
+	mkdir -p "$root/evals/results"
+	result=$root/evals/results/hermetic-probe.json
+	log=$root/evals/results/hermetic-probe.log
+	rm -f "$result" "$log"
+	if claude plugin eval "$root" --trust-plugin --ablation none --runs 1 \
+		--model "$probe_model" --no-publish --max-cost-usd 5 --json "$result" \
+		>"$log" 2>&1; then
+		rc=0
+	else
+		rc=$?
+	fi
+
+	if [ ! -f "$result" ]; then
+		abort runner "claude plugin eval wrote no result (exit $rc) — read $log"
+	fi
+
+	total=$(sed -n 's/^ *"casesTotal": \([0-9]*\),*$/\1/p' "$result")
+	passed=$(sed -n 's/^ *"casesPassed": \([0-9]*\),*$/\1/p' "$result")
+	errors=$(grep -c '^ *"error": null,*$' "$result" || true)
+
+	if grep -q '^ *"partial": true' "$result"; then
+		fail runner "the run is partial — read $result (partialReason) and run again"
+	elif [ "$total" != "$cases" ]; then
+		fail cases "$cases case.yaml files, $total cases ran — a case failed to load; read $log"
+	elif [ "$errors" != "$cases" ]; then
+		fail runs "$((cases - errors)) of $cases runs ended abnormally (a turn cap or timeout) — read the error fields in $result"
+	elif [ "$rc" != 0 ] || [ "$passed" != "$cases" ]; then
+		fail cases "$passed of $cases cases passed (exit $rc) — each failed grader's explanation is in $result"
+	else
+		pass cases "$cases cases, $cases passed on $probe_model — fired, stopped, door named"
+	fi
+}

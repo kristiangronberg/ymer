@@ -1,0 +1,950 @@
+#!/bin/sh
+# hermetic-probe-live — the live stage, sourced by hermetic-probe: a scratch
+# Ymer Node whose notebook starts empty, the README's own install lines
+# inside the probe dir's cfg/, and the plugins run headless against that
+# node in two arms. With no state folder named, setup creates the store
+# skeletons, fails its state-folder check and reports the coordinator by
+# reach, capture records a friction, and summary stops at its guard. With
+# the probe dir's state/ — a plain folder, not a git work tree — named as
+# the state folder, setup converges on a re-run and repairs drift, and
+# summary drains into state/, opens a friction-batch there and appends to
+# it, each save a file in state/ and a row in the node's topics_history.
+# Last, tutor stops at its guard twice and writes nothing: with no ymer,
+# and with its subject-index tables dropped.
+# State is asserted through the scratch node's own MCP over curl, never
+# through the bind-mounted database file (a stale decoy under a VM-backed
+# Docker), and through the files in state/; behaviour through each run's
+# stream-json.
+#
+# In order: the login in cfg/ (a claude.ai login, the one credential; a
+# missing one names the `claude auth login` line and exits 2), the scrub
+# (marketplace, plugins, plugin cache, MCP server removed through the CLI
+# and each list asserted empty — the login's own claude.ai connectors
+# excepted, which the CLI lists under a logged-in config dir and which the
+# runs below keep out by flag), the node (a copy of the compose file in
+# compose/, never the named file itself, run under the probe's own project
+# name and port — the name asserted as the probe's own before up and again
+# before down — data/ fresh and world-writable — the container runs as
+# another uid — and state/ fresh beside it, asserted no git work tree),
+# the install path (the README's lines with the
+# marketplace by working-tree path and the node on the probe's port),
+# ten headless runs — eight in two arms, then tutor's two — each under
+# the probe's own hook,
+# written into hook/, which refuses every Bash command but the declared
+# ones, and the install line re-run between the arms with state/ as the
+# plugin's state_folder option — then teardown — at the
+# end of the stage, or by the EXIT trap on any earlier exit — and the
+# install's containers asserted
+# untouched. runs/ keeps each run's stream-json, the install and compose
+# logs, and node.log: every request the stage made to the node with the
+# raw response, the record to read before a red line is taken as a
+# finding about a skill. The traces and node.log are this invocation's
+# alone: the previous run's are removed at the start of the stage.
+#
+# Exit 2 on any precondition, 1 on a failed step.
+
+live_project=hermetic-probe
+
+# The node over its MCP, protocol 2026-07-28: no initialize handshake and
+# no session — every request carries the protocol fields in params._meta
+# and mirrors them in the mcp-* headers, a tools/call its tool name and
+# action besides; the notebook tool takes {action, data} arguments. A
+# query's rows come back as escaped JSON inside result.content[0].text;
+# node_count reads the first cell of the first row, node_body the whole
+# response. Every request and its raw response are appended to
+# runs/node.log, which outlives the node: a red line's number can be
+# checked against what the node said.
+# A number the response does not carry reads UNPARSEABLE, never blank —
+# a blank compares false and looks like a skill finding; the marker says
+# the probe's own read failed.
+node_version=2026-07-28
+node_meta="\"_meta\":{\"io.modelcontextprotocol/protocolVersion\":\"$node_version\",\"io.modelcontextprotocol/clientCapabilities\":{}}"
+
+node_init() { # node_init — true once the node answers a tools/list with a result
+	rm -f "$tmp/init.json"
+	curl -sS -o "$tmp/init.json" -X POST "$url" \
+		-H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+		-H "mcp-protocol-version: $node_version" -H 'mcp-method: tools/list' \
+		--data "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{$node_meta}}" \
+		2>/dev/null || return 1
+	grep -q '"result"' "$tmp/init.json"
+}
+
+node_body() { # node_body <action> <data json> — the response body on stdout, curl's status
+	printf '>> %s %s\n' "$1" "$2" >>"$runs/node.log"
+	rm -f "$tmp/node.out"
+	rc=0
+	curl -sS -o "$tmp/node.out" -X POST "$url" \
+		-H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+		-H "mcp-protocol-version: $node_version" -H 'mcp-method: tools/call' \
+		-H 'mcp-name: notebook' -H "mcp-param-action: $1" \
+		--data "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{$node_meta,\"name\":\"notebook\",\"arguments\":{\"action\":\"$1\",\"data\":$2}}}" \
+		2>>"$runs/node.log" || rc=$?
+	if [ -f "$tmp/node.out" ]; then
+		cat "$tmp/node.out" >>"$runs/node.log"
+		cat "$tmp/node.out"
+	fi
+	printf '\n<< curl exit %s\n' "$rc" >>"$runs/node.log"
+	return $rc
+}
+
+node_number() { # node_number <text> — the text when it is an integer, else UNPARSEABLE
+	case $1 in
+	'' | *[!0-9]*) echo UNPARSEABLE ;;
+	*) echo "$1" ;;
+	esac
+}
+
+node_count() { # node_count <sql selecting one integer> — the integer, or UNPARSEABLE
+	node_number "$(node_body query "{\"sql\":\"$1\"}" | grep -o '\\"rows\\":\[\[[0-9]*' | sed 's/.*\[\[//')"
+}
+
+node_tables() { # node_tables — the notebook's table count, or UNPARSEABLE
+	node_number "$(node_body tables '{}' | grep -o '\\"count\\":[0-9]*' | sed 's/.*://')"
+}
+
+node_execute() { # node_execute <sql> — true when the node reports no error
+	node_body execute "{\"sql\":\"$1\"}" | grep -q '"isError":false'
+}
+
+node_text() { # node_text <sql selecting one text> — the text, or UNPARSEABLE
+	t=$(node_body query "{\"sql\":\"$1\"}" | grep -o '\\"rows\\":\[\[\\"[^\\]*' | sed 's/.*\[\[\\"//')
+	if [ -n "$t" ]; then echo "$t"; else echo UNPARSEABLE; fi
+}
+
+# The files in state/, read straight from disk: the half of a save the node
+# cannot show. A file that is not there reads UNPARSEABLE, never 0 — a 0
+# would pass a "no more than" and look like a skill finding.
+file_occurrences() { # file_occurrences <file> <text> — how often <text> occurs in <file>
+	if [ -f "$1" ]; then
+		grep -o -F -- "$2" "$1" | wc -l | tr -d ' '
+	else
+		echo UNPARSEABLE
+	fi
+}
+
+file_created() { # file_created <file> — the file's `created:` date as YYYYMMDD, or UNPARSEABLE
+	node_number "$(sed -n 's/^created: //p' "$1" 2>/dev/null | head -n 1 | tr -d '-')"
+}
+
+batch_files() { # batch_files — every friction-batch request.md under state/, one per line
+	find "$state" -type f -path '*/meta/*-friction-batch/request.md' 2>/dev/null
+}
+
+# The declared commands — the Bash commands a run may run — one ERE per
+# line in hook/declared, each matched against a command as its JSON string
+# spells it, escaped quotes included, so a separator, any other redirect, a
+# substitution or an escaped newline anywhere in it fails the match:
+# `claude mcp get <name>` whole, a trailing `2>&1` admitted, and the state
+# folder's own `git -C <state/> rev-parse --is-inside-work-tree`, its path
+# bare or quoted. The file is the one home of the patterns: the runs' hook
+# refuses every other command against it, and bash-commands reads every
+# command that ran against it. The hook's refusal message and
+# bash-commands' pass and fail lines spell the set in words, so a change to
+# the set moves those three texts with it. The hook is sh, reading the PreToolUse event on
+# stdin — one JSON line, tool_input's command its first key (CLI 2.1.283,
+# measured); an event it cannot read that way is refused, as bash-commands
+# fails closed on such an input. Its exit 2 is the refusal, which lands in
+# the result's permission_denials like the permission layer's own, and its
+# message is what the model reads, so it names the declared commands and
+# that each runs alone. hook/ is written fresh each run.
+live_hook() {
+	rm -rf "$hook"
+	mkdir -p "$hook"
+	state_re=$(printf '%s' "$state" | sed 's/[][\.*^$()+?{}|]/\\&/g')
+	printf '%s\n' '^claude mcp get [A-Za-z0-9_.-]+( 2>&1)?$' "^git -C (\\\\\"|')?$state_re(\\\\\"|')? rev-parse --is-inside-work-tree\$" >"$hook/declared"
+	cat >"$hook/bash" <<'EOF'
+#!/bin/sh
+# The hermetic probe's PreToolUse hook on Bash: a command matching a line
+# of the declared file beside this one runs, and every other is refused.
+cmd=$(sed -E -n 's/.*"tool_input":\{"command":"(([^"\\]|\\.)*)".*/\1/p')
+if [ -n "$cmd" ] && printf '%s\n' "$cmd" | grep -q -E -f "$(dirname "$0")/declared"; then
+	exit 0
+fi
+echo 'Refused: only two shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`, and `git -C <the state folder> rev-parse --is-inside-work-tree`.' >&2
+exit 2
+EOF
+	printf '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"sh %s"}]}]}}\n' "'$hook/bash'" >"$hook/settings.json"
+}
+
+# One headless run in an empty working directory under the probe dir, its
+# stream-json kept in runs/. Prompt before flags; the notebook tool
+# allowed, and Bash for the declared commands, each by an allow rule —
+# `claude mcp get`, the read the skills name on Claude Code before they
+# take a missing ymer as absent (the rule shape is the CLI's own `--help`
+# example, `Bash(git *)`), and `git -C <folder> rev-parse
+# --is-inside-work-tree`, the reading that says which history tracks the
+# state folder (a `*` in the middle of a rule admits the path and nothing
+# else: CLI 2.1.282, measured). The allow rules do not bound the shell:
+# under acceptEdits a read-only command such as `true` or `echo` runs with
+# no rule matching it (CLI 2.1.283, measured), so every run also loads
+# hook/settings.json, and its hook is what makes the declared commands
+# binding. A tool call no rule and no mode admits is asked, and an
+# unattended run denies it; either way the attempt stays in the trace for
+# the checks below. state/ sits outside the working
+# directory, where acceptEdits denies a write, so it is added as a
+# directory the run may edit (measured the same way). The MCP servers are
+# the flag's alone: a logged-in config dir carries the organisation's
+# claude.ai connectors, which `claude mcp remove` cannot reach and which
+# would give the skills a ymer to find, so --strict-mcp-config keeps every
+# configured server out and --mcp-config passes the scratch node in. A run
+# that did not end in success gets a fail line of its own here; the state
+# and behaviour reads below still run over what it left, and the function
+# returns 0 so that `set -e` never ends the stage on a run.
+nl='
+'
+live_run() { # live_run <n> <prompt>
+	rm -rf "$dir/cwd"
+	mkdir -p "$dir/cwd"
+	(cd "$dir/cwd" && claude -p "$2" --output-format stream-json --verbose \
+		--permission-mode acceptEdits \
+		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree)' mcp__ymer-node__notebook \
+		--add-dir "$state" --model "$probe_model" --max-turns 60 \
+		--strict-mcp-config --mcp-config "$mcp" --settings "$hook/settings.json") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
+	ran="$ran $1"
+	if ! live_result "$1" | grep -q '"subtype":"success"'; then
+		fail "run-$1" "run $1 (${2%%"$nl"*}) did not end in success — read $runs/$1.jsonl"
+	fi
+	return 0
+}
+
+# A run's result line — the last line of its trace, carrying the final
+# message as `result`: the one place a skill's report is read from, so
+# narration mid-run never decides a line.
+live_result() { # live_result <n>
+	tail -n 1 "$runs/$1.jsonl"
+}
+
+# A skill's report is read for the facts its lines carry, never for its
+# form. The model running a skill keeps a report's content and varies its
+# dress from run to run — bold role names, backticked values, ` — `
+# between the parts, a code fence, a sentence before or after the lines —
+# and a check that matched the dress would read red on a right report and
+# send the reader into the trace for nothing. So every check on a
+# report's lines reads them through report_lines, which takes the result
+# out of its JSON string into lines of its own, drops the fence lines,
+# strips Markdown's backslash escapes, `*` and backticks and collapses
+# runs of blanks; the check then
+# asks for its words on one line, case aside, and a red names a wrong or
+# missing fact. A read that looks for one token anywhere in the result —
+# the run's success subtype, summary's door — keeps the raw line, which
+# no decoration splits.
+report_lines() { # report_lines <n> — run <n>'s report, one line per line, undressed
+	live_result "$1" | sed -E -n 's/.*"result":"(([^"\\]|\\.)*)".*/\1/p' |
+		awk '{
+			s = $0
+			out = ""
+			n = length(s)
+			for (i = 1; i <= n; i++) {
+				c = substr(s, i, 1)
+				if (c == "\\" && i < n) {
+					i++
+					c = substr(s, i, 1)
+					if (c == "n") c = "\n"
+					else if (c == "t") c = " "
+					else if (c == "r") c = ""
+				}
+				out = out c
+			}
+			print out
+		}' |
+		grep -v -E '^[[:space:]]*```' |
+		sed -E 's/\\([[:punct:]])/\1/g; s/[*`]//g; s/[[:space:]]+/ /g' || true
+}
+
+report_match() { # report_match <n> <word>... — the lines of run <n>'s report carrying every word, case aside
+	rpt_n=$1
+	shift
+	report_lines "$rpt_n" >"$tmp/report"
+	for rpt_w in "$@"; do
+		grep -i -F -- "$rpt_w" "$tmp/report" >"$tmp/report.next" || true
+		mv "$tmp/report.next" "$tmp/report"
+	done
+	cat "$tmp/report"
+}
+
+# The node ports run <n>'s report names, one per line: a port after a
+# host naming this machine — loopback by IPv4, IPv6 or by name, or the
+# any-address form — or after the node's registered server name, in a URL
+# or bare, and a port given as a port. Known gap: a number standing alone,
+# with neither a host nor the word before it, is not read as a port.
+report_ports() { # report_ports <n>
+	report_lines "$1" | grep -o -i -E '(127\.0\.0\.1|local[h]ost|0\.0\.0\.0|\[::1\]|ymer-node):[0-9]+' | sed 's/.*://' || true
+	report_lines "$1" | grep -o -i -E '(^|[^a-z])ports?:? *[0-9]+' | sed -E 's/.*[^0-9]//' || true
+}
+
+# Tool calls a run made, one per line as `<tool> <input>`, read from the
+# assistant messages' tool_use blocks. The input is taken whole, from its
+# opening brace to the brace that balances it: a brace inside a string
+# value — a Glob's `*.{md,yaml}`, a `{}` in a Bash command — is a byte of
+# the string, and an escaped quote stays inside it, so no key after such
+# a byte is lost to the reads below (a cut at the first `}` lost them).
+denied_bash() { # denied_bash <n> — each Bash command refused in run <n>, by the runs' hook or the permission layer, one per line, spelled as live_calls reads it: the result event's permission_denials, the run's own record of what never ran
+	grep '"type":"result"' "$runs/$1.jsonl" |
+		grep -o -E '"tool_name":"Bash","tool_use_id":"[^"]*","tool_input":\{"command":"([^"\\]|\\.)*"' |
+		sed -E 's/.*"tool_input":\{"command":"//; s/"$//' || true
+}
+
+live_calls() { # live_calls <n>
+	awk '
+		{
+			s = $0
+			for (;;) {
+				p = index(s, "\"type\":\"tool_use\",")
+				if (p == 0) break
+				s = substr(s, p)
+				q = index(s, "\"name\":\"")
+				r = index(s, "\"input\":{")
+				if (q == 0 || r == 0) break
+				name = substr(s, q + 8)
+				name = substr(name, 1, index(name, "\"") - 1)
+				n = length(s)
+				depth = 0
+				quoted = 0
+				for (j = r + 8; j <= n; j++) {
+					c = substr(s, j, 1)
+					if (quoted) {
+						if (c == "\\") j++
+						else if (c == "\"") quoted = 0
+					} else if (c == "\"") quoted = 1
+					else if (c == "{") depth++
+					else if (c == "}") {
+						depth--
+						if (depth == 0) break
+					}
+				}
+				print name " " substr(s, r + 8, j - r - 7)
+				s = substr(s, j + 1)
+			}
+		}' "$runs/$1.jsonl"
+}
+
+# Whether run <n> made an execute call through the node's notebook tool.
+live_executed() { # live_executed <n>
+	live_calls "$1" | grep '^mcp__ymer-node__notebook' | grep -q '"action":"execute"'
+}
+
+# The mcp__ calls a run made, one per line as `reached <tool>` or
+# `unreached <tool>`, each call paired with its tool_result by id. A call is
+# unreached only where the CLI answered that no such tool exists: the result's
+# content, first after its type, is exactly `<tool_use_error>Error: No
+# such tool available: <tool></tool_use_error>` naming the call's own
+# tool. Every other answer — a server's error, a refusal — and a call with
+# no result at all is a reach, so a form the read does not know fails
+# closed.
+live_mcp() { # live_mcp <n>
+	awk -v pre='"content":"<tool_use_error>Error: No such tool available: ' '
+		NR == FNR {
+			s = $0
+			for (;;) {
+				p = index(s, "\"type\":\"tool_result\",")
+				if (p == 0) break
+				s = substr(s, p + 21)
+				q = index(s, "\"tool_use_id\":\"")
+				if (q == 0) break
+				id = substr(s, q + 15)
+				id = substr(id, 1, index(id, "\"") - 1)
+				if (index(s, pre) == 1) {
+					t = substr(s, length(pre) + 1)
+					e = index(t, "</tool_use_error>\"")
+					if (e > 0) unreached[id] = substr(t, 1, e - 1)
+				}
+			}
+			next
+		}
+		{
+			s = $0
+			for (;;) {
+				p = index(s, "\"type\":\"tool_use\",")
+				if (p == 0) break
+				s = substr(s, p + 18)
+				i = index(s, "\"id\":\"")
+				q = index(s, "\"name\":\"")
+				if (i == 0 || q == 0) break
+				id = substr(s, i + 6)
+				id = substr(id, 1, index(id, "\"") - 1)
+				name = substr(s, q + 8)
+				name = substr(name, 1, index(name, "\"") - 1)
+				if (index(name, "mcp__") == 1) print ((id in unreached && unreached[id] == name) ? "unreached " : "reached ") name
+			}
+		}' "$runs/$1.jsonl" "$runs/$1.jsonl"
+}
+
+# The paths a run's Read, Glob and Grep calls named, one per line: each
+# call's file_path or path, and a Glob's pattern besides — an absolute
+# pattern names its own root, with no path key at all, and only Glob's
+# pattern is a path (Grep's is a regex over content), so it is read in a
+# pass of its own. A call naming none reads the working directory, which
+# is inside the probe dir.
+live_reads() { # live_reads <n>
+	live_calls "$1" | grep -E '^(Read|Glob|Grep) ' | sed -E -n 's/.*"(file_path|path)":"([^"]*)".*/\2/p'
+	live_calls "$1" | grep -E '^Glob ' | sed -E -n 's/.*"pattern":"([^"]*)".*/\1/p'
+}
+
+# The scratch node's compose invocation, one spelling for up, down and the
+# name check: always the probe dir's own copy of the compose file, never the
+# file the variable names. That file's directory may pin another project in
+# a .env beside it — a Ymer Node install's does — and the copy in compose/,
+# which holds no .env, has no such name to fall back to.
+live_compose() {
+	PORT=$port NODE_DATA_DIR=$data docker-compose -p "$live_project" -f "$scratch_compose" "$@"
+}
+
+# live_resolves <label> — true only when compose resolves the copy's project
+# name to the probe's own; no up and no down runs otherwise. Everything
+# config printed, its errors included, is kept in runs/ as
+# compose-config-<label>.log, one log per check, for a refusal to point at.
+live_resolves() {
+	[ "$(live_compose config 2>&1 | tee "$runs/compose-config-$1.log" | sed -n 's/^name: //p')" = "$live_project" ]
+}
+
+live_teardown() {
+	echo
+	echo "hermetic probe — live teardown"
+	if live_resolves before-down; then
+		live_compose down >"$runs/compose-down.log" 2>&1 || true
+		rm -rf "$data" "$state"
+	else
+		fail install "refused docker-compose down — the project does not resolve to $live_project — read $runs/compose-config-before-down.log; $data and $state are kept for inspection; bring the scratch node down by hand with \`PORT=$port NODE_DATA_DIR='$data' docker-compose -p $live_project -f '$scratch_compose' down\`"
+	fi
+	rm -rf "$dir/cwd"
+	docker ps --format '{{.Names}} {{.Ports}}' | sort >"$tmp/docker-after"
+	if cmp -s "$tmp/docker-before" "$tmp/docker-after"; then
+		pass install "untouched — docker ps lists the same containers and ports as before"
+	else
+		fail install "docker ps differs from before the run — compare:
+$(diff "$tmp/docker-before" "$tmp/docker-after" | sed 's/^/                 /')"
+	fi
+	node_up=0
+}
+
+stage_live() {
+	echo "hermetic probe — live"
+
+	# the probe dir in physical form: the CLI reports a run's paths physical
+	# and normalised, and `isolation` compares them against $dir by prefix,
+	# so a trailing slash or a symlinked parent in the override would
+	# redden every legitimate read under the run's own working directory
+	dir=${HERMETIC_PROBE_DIR:-$HOME/.hermetic-probe}
+	mkdir -p "$dir"
+	dir=$(cd "$dir" && pwd -P)
+	cfg=$dir/cfg
+	data=$dir/data
+	runs=$dir/runs
+	state=$dir/state
+	scratch_compose=$dir/compose/docker-compose.yml
+	hook=$dir/hook
+	port=${HERMETIC_PROBE_PORT:-8112}
+	compose=${HERMETIC_PROBE_COMPOSE_FILE:-}
+	url=http://127.0.0.1:$port/mcp
+	mcp="{\"mcpServers\":{\"ymer-node\":{\"type\":\"http\",\"url\":\"$url\"}}}"
+	ran=''
+
+	# preconditions
+	[ -n "$compose" ] || abort compose "HERMETIC_PROBE_COMPOSE_FILE is unset — export it naming your Ymer Node's docker-compose.yml"
+	[ -f "$compose" ] || abort compose "no file at $compose — point HERMETIC_PROBE_COMPOSE_FILE at your Ymer Node's docker-compose.yml"
+	command -v docker-compose >/dev/null 2>&1 || abort docker "docker-compose is not on PATH — install the standalone docker-compose binary"
+	docker info >/dev/null 2>&1 || abort docker "docker is not running — start it"
+	docker image inspect ymer-node:latest >/dev/null 2>&1 || abort image "no ymer-node:latest image — build or pull the Ymer Node image the compose file runs"
+	if curl -sS -o /dev/null "$url" >/dev/null 2>&1; then
+		abort port "something already answers on 127.0.0.1:$port — set HERMETIC_PROBE_PORT to a free port"
+	fi
+	mkdir -p "$cfg" "$runs"
+	rm -f "$runs"/*.jsonl "$runs"/*.err "$runs/node.log"
+	export CLAUDE_CONFIG_DIR=$cfg
+
+	# 1. login — the command the abort names runs outside the probe, where
+	# the key may be set: with it set, `auth login` reports success and
+	# lands nothing
+	auth=$(claude auth status --json 2>/dev/null || true)
+	case $auth in
+	*'"authMethod": "claude.ai"'*) pass login "claude.ai login in $cfg" ;;
+	*) abort login "no claude.ai login in $cfg — run: env -u ANTHROPIC_API_KEY CLAUDE_CONFIG_DIR=$cfg claude auth login --claudeai" ;;
+	esac
+
+	# 2. scrub — every list empty afterwards; the MCP list may still carry
+	# the login's claude.ai connectors, which no `mcp remove` reaches and
+	# which the runs keep out by flag, so those lines are the one allowance.
+	# The cache: `plugin uninstall` leaves the version directory behind
+	# with an `.orphaned_at` marker (CLI 2.1.278, measured), and a later
+	# install replaces such a directory whole — so a marked one is not a
+	# lagging copy and does not count; an unmarked one does
+	claude plugin uninstall ymer@ymer >/dev/null 2>&1 || true
+	claude plugin marketplace remove ymer >/dev/null 2>&1 || true
+	claude mcp remove ymer-node >/dev/null 2>&1 || true
+	left=''
+	claude plugin list --json 2>/dev/null | grep -q '"id": ".*@ymer"' && left="$left plugins"
+	claude plugin marketplace list --json 2>/dev/null | grep -q '"name": "ymer"' && left="$left marketplace"
+	claude mcp list 2>/dev/null | grep -v -e '^Checking MCP' -e '^claude\.ai ' -e '^No MCP servers configured\.' -e '^$' | grep -q . && left="$left mcp"
+	[ "$(find "$cfg/plugins/cache/ymer" -mindepth 2 -maxdepth 2 -type d ! -exec test -e {}/.orphaned_at \; -print 2>/dev/null | wc -l | tr -d ' ')" = 0 ] || left="$left cache"
+	if [ -z "$left" ]; then
+		pass scrub "no ymer marketplace, plugins, plugin cache or MCP server in $cfg"
+	else
+		abort scrub "still present after the scrub:$left — remove them by hand under $cfg (\`claude plugin list\`, \`claude plugin marketplace list\`, \`claude mcp list\`, plugins/cache/ymer)"
+	fi
+
+	# 3. the scratch node — node_up goes to 1 before `up` runs, not after
+	# it succeeds: a failed `up` can leave the project's network and
+	# container behind, and the EXIT trap's teardown is what removes them
+	# (it needs docker-before and data/ to exist, so it is set after both).
+	# state/ fresh, and a plain folder: a probe dir inside some git work tree
+	# would turn the second arm's drain into a commit instead of a row
+	rm -rf "$state"
+	mkdir -p "$state"
+	if git -C "$state" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+		abort state "$state is inside a git work tree — set HERMETIC_PROBE_DIR to a directory outside every git checkout"
+	fi
+	# compose/ fresh: the named compose file copied in, and the project name
+	# the copy resolves to asserted as the probe's own before anything runs
+	rm -rf "${scratch_compose%/*}"
+	mkdir -p "${scratch_compose%/*}"
+	cp "$compose" "$scratch_compose"
+	live_resolves before-up || abort compose "docker-compose does not resolve the project to $live_project from $scratch_compose — read $runs/compose-config-before-up.log; nothing was brought up"
+	docker ps --format '{{.Names}} {{.Ports}}' | sort >"$tmp/docker-before"
+	rm -rf "$data"
+	mkdir -p "$data"
+	chmod -R a+rwX "$data"
+	node_up=1
+	if ! live_compose up -d >"$runs/compose-up.log" 2>&1; then
+		abort node "docker-compose up failed — read $runs/compose-up.log"
+	fi
+	i=0
+	until node_init; do
+		i=$((i + 1))
+		[ "$i" -lt 30 ] || abort node "the scratch node did not answer a tools/list on $url within 30 s — read \`docker-compose -p $live_project -f $scratch_compose logs\`"
+		sleep 1
+	done
+	tables=$(node_tables)
+	if [ "$tables" = 0 ]; then
+		pass node "up on $url, notebook empty"
+	else
+		abort node "the scratch node's notebook holds $tables tables — its data/ ($data) was not empty at bring-up"
+	fi
+
+	# 4. the install path — the README's lines, the marketplace by path;
+	# each tolerant, so a failed line is reported by the list reads below
+	# rather than ending the script with the CLI's own exit status
+	claude mcp add --transport http --scope user ymer-node "$url" >"$runs/install.log" 2>&1 || true
+	claude plugin marketplace add "$root" >>"$runs/install.log" 2>&1 || true
+	claude plugin install ymer@ymer >>"$runs/install.log" 2>&1 || true
+	missing=''
+	claude plugin list --json 2>/dev/null | grep -q '"id": "ymer@ymer"' || missing="$missing ymer@ymer"
+	claude mcp list 2>/dev/null | grep -q "^ymer-node: $url" || missing="$missing ymer-node"
+	if [ -z "$missing" ]; then
+		pass install "marketplace from $root, ymer@ymer, ymer-node on $url"
+	else
+		abort install "not installed:$missing — read $runs/install.log"
+	fi
+
+	# 5. the runs — state from the node and from state/, behaviour from the
+	# trace. The first arm names no state folder: the install above set no
+	# option, so every skill reads the option's placeholder. The hook every
+	# run loads is written first, from state/'s own path.
+	live_hook
+	live_run 1 '/ymer:setup'
+	tables=$(node_tables)
+	fronts=$(node_count 'SELECT count(*) FROM fronts')
+	if [ "$tables" = 7 ] && [ "$fronts" = 1 ]; then
+		pass setup "7 tables created, 1 front row"
+	else
+		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows (expected 7 and 1) — read $runs/1.jsonl"
+	fi
+	if live_calls 1 | grep -q '^mcp__ymer-node__notebook'; then
+		pass setup-node "setup wrote through the node's notebook tool"
+	else
+		fail setup-node "no notebook call in $runs/1.jsonl — the run never reached the node"
+	fi
+	# topics_history arrives whole — the table, its index and both triggers,
+	# four sqlite_master entries — and the retired topics table never does
+	history=$(node_count "SELECT count(*) FROM sqlite_master WHERE tbl_name = 'topics_history'")
+	retired=$(node_count "SELECT count(*) FROM sqlite_master WHERE name = 'topics'")
+	if [ "$history" = 4 ] && [ "$retired" = 0 ]; then
+		pass setup-history "topics_history with its index and two triggers, no topics table"
+	else
+		fail setup-history "after /ymer:setup sqlite_master holds $history topics_history entries and $retired topics tables (expected 4 and 0) — read $runs/1.jsonl"
+	fi
+	# the subject index arrives with its foreign key enforced: an engagement
+	# row naming a subject tutor_subjects does not hold is refused by the
+	# node on that key — a refusal for any other reason, no such table
+	# among them, is no pass
+	if node_body execute "{\"sql\":\"INSERT INTO tutor_engagements (title, subject, engagement_doc) VALUES ('probe engagement', 'probe-no-subject', 'probe-engagement')\"}" | grep -q 'FOREIGN KEY constraint failed'; then
+		pass setup-tutor "tutor_engagements refuses an engagement whose subject has no row"
+	else
+		fail setup-tutor "an engagement row naming no subject was not refused on its foreign key — read the last execute in $runs/node.log"
+		# an accepted probe row would read as tutor's write at run 9
+		node_execute "DELETE FROM tutor_engagements WHERE title = 'probe engagement'" || true
+	fi
+	# no state folder named fails its line, and the coordinator is reported
+	# by reach — each read as the facts its line carries. The coordinator's
+	# line is the one that passed: the Meta Roadmap line, marked not
+	# checked, may name ymer, its missing connection and tasks too
+	if report_match 1 '✘' state_folder 'not set' | grep -q . &&
+		report_match 1 '✔' ymer 'no connection' tasks | grep -q .; then
+		pass setup-report "state_folder not set and failed, ymer no connection — the coordinator reported by reach"
+	else
+		fail setup-report "the report has no line carrying \`✘\`, \`state_folder\` and \`not set\`, or none carrying \`✔\`, \`ymer\`, \`no connection\` and \`tasks\` — read the result line of $runs/1.jsonl"
+	fi
+
+	# the prompt seeds a real friction, so the row is one summary can drain:
+	# an empty capture is a correct row that nothing drains
+	live_run 2 '/ymer:kaizen-capture
+
+Source: `readme_edit`. The work just finished, in the repo `demo`: one
+README paragraph was reworded. It had to be done twice — the first
+rewrite linked a heading, "Installing", that the README does not have,
+and the broken link was found only by re-reading the file afterwards; a
+link check before the edit would have caught it.'
+	frictions=$(node_count "SELECT count(*) FROM frictions WHERE kind = 'friction'")
+	if [ "$frictions" = 1 ]; then
+		pass capture "1 frictions row of kind friction"
+	else
+		fail capture "after /ymer:kaizen-capture the node holds $frictions frictions rows of kind friction (expected 1 — the prompt names a real friction, so an empty row is a miss) — read $runs/2.jsonl"
+	fi
+
+	# summary with no state folder stops at its guard naming setup, and
+	# drains, mints and saves nothing: the friction stays open for the
+	# second arm's drain
+	live_run 3 '/ymer:kaizen-summary'
+	open=$(node_count "SELECT count(*) FROM frictions WHERE kind = 'friction' AND status = 'open'")
+	minted=$(node_count 'SELECT count(*) FROM tasks')
+	saved=$(node_count 'SELECT count(*) FROM topics_history')
+	if live_result 3 | grep -q -F '/ymer:setup'; then named=names; else named='does not name'; fi
+	if [ "$open" = 1 ] && [ "$minted" = 0 ] && [ "$saved" = 0 ] && [ "$named" = names ]; then
+		pass summary-stop "stopped naming /ymer:setup — the friction still open, no task, no topics_history row"
+	else
+		fail summary-stop "after /ymer:kaizen-summary with no state folder: $open open frictions, $minted tasks, $saved topics_history rows, and the result line $named /ymer:setup (expected 1, 0, 0, names) — read $runs/3.jsonl"
+	fi
+
+	# The second arm: state/ named as the state folder through the line the
+	# README gives for it. Re-running the install over the installed plugin
+	# rewrites the option (CLI 2.1.282, measured); the setting is read back
+	# from cfg/ rather than trusted.
+	claude plugin install ymer@ymer --config "state_folder=$state" >>"$runs/install.log" 2>&1 || true
+	if grep -q -F "\"state_folder\": \"$state\"" "$cfg/settings.json" 2>/dev/null; then
+		pass state-folder "state_folder set to $state"
+	else
+		abort state-folder "the install did not set state_folder to $state — read $runs/install.log and $cfg/settings.json"
+	fi
+
+	# the two schema reads are tolerant: a lost node fails the fronts
+	# conjunct below (UNPARSEABLE against the count before) instead of
+	# ending the script
+	node_body query '{"sql":"SELECT name FROM sqlite_master ORDER BY name"}' >"$tmp/schema-before" || true
+	fronts_before=$fronts
+	live_run 4 '/ymer:setup'
+	node_body query '{"sql":"SELECT name FROM sqlite_master ORDER BY name"}' >"$tmp/schema-after" || true
+	fronts=$(node_count 'SELECT count(*) FROM fronts')
+	if cmp -s "$tmp/schema-before" "$tmp/schema-after" && [ "$fronts" != UNPARSEABLE ] && [ "$fronts" = "$fronts_before" ]; then
+		pass converge "sqlite_master and the fronts count unchanged by the re-run"
+	else
+		fail converge "the re-run changed the node (schema or fronts count) — read $runs/4.jsonl"
+	fi
+	if live_executed 4; then
+		fail converge-calls "the re-run made an execute call — read $runs/4.jsonl"
+	else
+		pass converge-calls "no execute call in the re-run"
+	fi
+	# the node's line on a healthy re-run: reachable, the tables it holds
+	# and the front, and nothing created or added — converge-calls shows the
+	# re-run executed nothing, so a line carrying the node's facts that says
+	# either word states a change that never happened. Every such line is
+	# read, and one saying either word fails the check even beside a clean
+	# one. Known gap: the check reads the words' presence, not what the line
+	# asserts, so a healthy line that names either word only to deny it
+	# (`nothing added`) reads red too; setup's own grammar gives a healthy
+	# re-run the bare line, and a red here is loud, never a silent pass.
+	node_lines=$(report_match 4 '✔' node reachable '7 tables' claude_code)
+	if [ -n "$node_lines" ] && ! printf '%s\n' "$node_lines" | grep -q -i -w -e created -e added; then
+		pass converge-report "the node line reads reachable, 7 tables and the front, nothing created or added"
+	else
+		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\`, \`7 tables\` and \`claude_code\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
+	fi
+	# the folder's own line: state/ printed as configured, read as a folder
+	# that is not a git work tree, passed, its history named on the same line
+	if report_match 4 '✔' state_folder "$state" 'not a git work tree' topics_history | grep -q .; then
+		pass setup-folder "state/ reported as not a git work tree, tracked by topics_history"
+	else
+		fail setup-folder "the re-run's report does not read \`✔\`, \`state_folder\`, $state, \`not a git work tree\` and \`topics_history\` on one line — read the result line of $runs/4.jsonl"
+	fi
+
+	# Each of the three seeded steps runs only when its seed took: a step
+	# whose seed failed is reported not run, never asserted over state the
+	# seed left as it was — a due_date never dropped reads "put back" on
+	# its own, and a second batch never inserted leaves one file either way.
+	# A seed the node refused: its own fail line, and the step not run.
+	seed_failed() {
+		fail "$1-seed" "$2"
+		notrun "$1" "its seed failed — see $1-seed"
+	}
+	due_pragma="SELECT count(*) FROM pragma_table_info('tasks') WHERE name = 'due_date'"
+	if node_execute 'ALTER TABLE tasks DROP COLUMN due_date' && [ "$(node_count "$due_pragma")" = 0 ]; then
+		live_run 5 '/ymer:setup'
+		due=$(node_count "$due_pragma")
+		if [ "$due" = 1 ]; then
+			pass drift "tasks.due_date put back"
+		else
+			fail drift "tasks.due_date is still missing after /ymer:setup — read $runs/5.jsonl"
+		fi
+	else
+		seed_failed drift "DROP COLUMN due_date did not remove tasks.due_date on the node — read $runs/node.log"
+	fi
+
+	# the drain into state/, read as the artefacts it deposits: a task at new
+	# in the project the area derives, the friction drained to a topic whose
+	# request.md topics_history row its drained_to resolves to — the row's
+	# own key rearranged as <area>/YYYY/MM-DD-<topic>/ — and the file itself
+	# at state/<drained_to>request.md
+	live_run 6 '/ymer:kaizen-summary'
+	tasks=$(node_count "SELECT count(*) FROM tasks WHERE status = 'new' AND project LIKE '% Roadmap'")
+	rows=$(node_count "SELECT count(*) FROM topics_history WHERE artifact = 'request.md'")
+	drained=$(node_count "SELECT count(DISTINCT f.id) FROM frictions f JOIN topics_history h ON f.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE f.status = 'drained' AND f.kind = 'friction' AND h.artifact = 'request.md'")
+	to=$(node_text "SELECT drained_to FROM frictions WHERE status = 'drained' AND kind = 'friction'")
+	if [ -f "$state/${to}request.md" ]; then file=present; else file=absent; fi
+	if [ "$tasks" != UNPARSEABLE ] && [ "$tasks" -ge 1 ] && [ "$rows" != UNPARSEABLE ] && [ "$rows" -ge 1 ] && [ "$drained" = 1 ] && [ "$file" = present ]; then
+		pass summary "$tasks tasks row(s) at new in a Roadmap project, $rows request.md topics_history row(s), the friction drained to $to, its request.md in state/"
+	else
+		fail summary "after /ymer:kaizen-summary: $tasks tasks at new in a Roadmap project, $rows request.md topics_history rows, $drained frictions drained to a row their drained_to resolves to, request.md at state/$to $file (expected ≥1, ≥1, 1, present) — read $runs/6.jsonl"
+	fi
+
+	# The friction-batch is read on both halves of its save: the file in
+	# state/ and its rows in topics_history. The newest row must carry the
+	# file's own seed lines — a row that lags the file is a save that never
+	# happened. The history is append-only, so the batch is counted as
+	# topics, never as rows: run 6 may already have opened it, and run 7's
+	# append then adds a row to the same topic.
+	batch_where="FROM topics_history WHERE topic LIKE '%friction-batch' AND artifact = 'request.md'"
+	batch_rows_sql="SELECT count(*) $batch_where"
+	batch_topics_sql="SELECT count(DISTINCT area || '/' || topic) $batch_where"
+	drained_sql="SELECT count(*) FROM frictions WHERE source = 'hermetic_probe' AND status = 'drained'"
+	below_bar='## Below the bar for their own topic'
+	moot_bar='## Moot, or judged not worth doing'
+	row_occurrences() { # row_occurrences <text> <offset> — the SQL counting <text> in the batch's row <offset> back from the newest
+		echo "SELECT (length(body) - length(replace(body, '$1', ''))) / length('$1') $batch_where ORDER BY id DESC LIMIT 1 OFFSET $2"
+	}
+	seed="INSERT INTO frictions (front, source, context, body) VALUES"
+	i=0
+	while [ "$i" -lt 10 ]; do
+		i=$((i + 1))
+		seed="$seed ((SELECT slug FROM fronts LIMIT 1), 'hermetic_probe', 'probe/seed', 'seed friction $i below the bar')"
+		[ "$i" -lt 10 ] && seed="$seed,"
+	done
+	batch_ok=0
+	if node_execute "$seed"; then
+		live_run 7 '/ymer:kaizen-summary'
+		files=$(batch_files | wc -l | tr -d ' ')
+		f=$(batch_files | head -n 1)
+		below=$(file_occurrences "$f" "$below_bar")
+		moot=$(file_occurrences "$f" "$moot_bar")
+		batches=$(node_count "$batch_topics_sql")
+		row_lines=$(node_count "$(row_occurrences 'seed friction' 0)")
+		file_lines=$(file_occurrences "$f" 'seed friction')
+		if [ "$files" = 1 ] && [ "$below" = 1 ] && [ "$moot" = 1 ] && [ "$batches" = 1 ] &&
+			[ "$file_lines" != UNPARSEABLE ] && [ "$row_lines" = "$file_lines" ]; then
+			pass batch "one friction-batch in state/ and in topics_history, both headings once, its newest row carrying its $file_lines seed lines"
+			batch_ok=1
+		else
+			fail batch "$files friction-batch files after ten below-bar seeds, the below-the-bar heading $below time(s), the moot heading $moot, $batches friction-batch topics in topics_history, seed lines $file_lines in the file and $row_lines in the newest row (expected 1, 1, 1, 1, and the two equal) — read $runs/7.jsonl"
+		fi
+	else
+		seed_failed batch "the node refused the ten seed rows — read $runs/node.log"
+	fi
+
+	# The append is read as a delta over the batch: more seeds drained and
+	# more seed lines in the file than before run 8, the opening date kept,
+	# the headings still once and still one file — and the save as one more
+	# row, the newest carrying the file's lines and the one before it the
+	# pre-image, the lines the file held before the append.
+	# The `_before` reads follow the seed: it inserts open frictions rows,
+	# which move neither the drained count nor the batch file.
+	if [ "$batch_ok" != 1 ]; then
+		notrun append "the batch step did not pass — see batch"
+		notrun append-history "the append step did not run — see append"
+	elif ! node_execute "$seed"; then
+		seed_failed append "the node refused the second ten seed rows — read $runs/node.log"
+		notrun append-history "the append step did not run — see append"
+	else
+		drained_before=$(node_count "$drained_sql")
+		lines_before=$(file_occurrences "$f" 'seed friction')
+		created_before=$(file_created "$f")
+		rows_before=$(node_count "$batch_rows_sql")
+		live_run 8 '/ymer:kaizen-summary'
+		files=$(batch_files | wc -l | tr -d ' ')
+		drained_after=$(node_count "$drained_sql")
+		lines_after=$(file_occurrences "$f" 'seed friction')
+		created_after=$(file_created "$f")
+		below=$(file_occurrences "$f" "$below_bar")
+		moot=$(file_occurrences "$f" "$moot_bar")
+		if [ "$files" = 1 ] && [ "$below" = 1 ] && [ "$moot" = 1 ] &&
+			[ "$drained_before" != UNPARSEABLE ] && [ "$drained_after" != UNPARSEABLE ] && [ "$drained_after" -gt "$drained_before" ] &&
+			[ "$lines_before" != UNPARSEABLE ] && [ "$lines_after" != UNPARSEABLE ] && [ "$lines_after" -gt "$lines_before" ] &&
+			[ "$created_before" != UNPARSEABLE ] && [ "$created_after" = "$created_before" ]; then
+			pass append "still one friction-batch file, created $created_before kept, seeds drained $drained_before → $drained_after, seed lines in the file $lines_before → $lines_after, both headings once"
+		else
+			fail append "$files friction-batch files, created $created_before → $created_after, seeds drained $drained_before → $drained_after, seed lines in the file $lines_before → $lines_after, headings $below and $moot (expected 1, unchanged, more, more, 1 and 1) — read $runs/8.jsonl"
+		fi
+		rows_after=$(node_count "$batch_rows_sql")
+		newest=$(node_count "$(row_occurrences 'seed friction' 0)")
+		previous=$(node_count "$(row_occurrences 'seed friction' 1)")
+		if [ "$rows_before" != UNPARSEABLE ] && [ "$rows_after" = $((rows_before + 1)) ] &&
+			[ "$newest" = "$lines_after" ] && [ "$previous" = "$lines_before" ]; then
+			pass append-history "one more topics_history row, the newest carrying the file's $lines_after seed lines and the one before it the pre-image's $lines_before"
+		else
+			fail append-history "topics_history rows $rows_before → $rows_after, seed lines $newest in the newest row and $previous in the one before it, against $lines_after in the file after and $lines_before before (expected one more row, and the two pairs equal) — read the execute calls in $runs/8.jsonl"
+		fi
+	fi
+
+	# Tutor stops at its guard where a store it needs is missing, and
+	# writes nothing on the way: first with its tables in place and no
+	# ymer — every run loads the scratch node alone — then with the tables
+	# dropped, a node set up before they existed. The drop is a seed,
+	# engagements first since its foreign key names the subjects table, and
+	# a drop the node refused leaves the step not run.
+	live_run 9 '/ymer:tutor git'
+	subjects=$(node_count 'SELECT count(*) FROM tutor_subjects')
+	engagements=$(node_count 'SELECT count(*) FROM tutor_engagements')
+	if live_executed 9; then wrote=wrote; else wrote='no write'; fi
+	# ymer as a word of its own: ymer-node, the Ymer Node and /ymer:<skill> name it too
+	if report_match 9 ymer docs | sed 's/[Yy][Mm][Ee][Rr] [Nn][Oo][Dd][Ee]//g' | grep -q -i -E '(^|[^/:[:alnum:]-])ymer($|[^:[:alnum:]-])'; then named=names; else named='does not name'; fi
+	if [ "$subjects" = 0 ] && [ "$engagements" = 0 ] && [ "$wrote" = 'no write' ] && [ "$named" = names ]; then
+		pass tutor-ymer "stopped naming ymer as its docs' home — no execute call, both tutor tables empty"
+	else
+		fail tutor-ymer "after /ymer:tutor with no ymer: $subjects tutor_subjects rows, $engagements tutor_engagements rows, $wrote, and the report $named ymer and docs on one line (expected 0, 0, no write, names) — read $runs/9.jsonl"
+	fi
+	tutor_tables="SELECT count(*) FROM sqlite_master WHERE name LIKE 'tutor%'"
+	if node_execute 'DROP TABLE tutor_engagements' && node_execute 'DROP TABLE tutor_subjects' && [ "$(node_count "$tutor_tables")" = 0 ]; then
+		live_run 10 '/ymer:tutor git'
+		tutor_left=$(node_count "$tutor_tables")
+		if live_executed 10; then wrote=wrote; else wrote='no write'; fi
+		if live_result 10 | grep -q -F '/ymer:setup'; then named=names; else named='does not name'; fi
+		if [ "$tutor_left" = 0 ] && [ "$wrote" = 'no write' ] && [ "$named" = names ]; then
+			pass tutor-stop "stopped naming /ymer:setup — no execute call, no tutor table created"
+		else
+			fail tutor-stop "after /ymer:tutor with no tutor tables: $tutor_left tutor tables, $wrote, and the result line $named /ymer:setup (expected 0, no write, names) — read $runs/10.jsonl"
+		fi
+	else
+		seed_failed tutor-stop "DROP TABLE did not remove the tutor tables on the node — read $runs/node.log"
+	fi
+
+	# Behaviour across every run that ran: the servers each run saw, the
+	# files it read and wrote, the node ports a setup run's report names,
+	# and every Bash command — the tool name alone cannot tell a declared
+	# command from a shell redirect, so the whole command is read, and a
+	# command with anything after it (a `;`, a pipe, a redirect) is not it.
+	servers=''
+	unreached=''
+	outside=''
+	writes=''
+	shell=''
+	refused=''
+	commits=''
+	write_runs=' 6 7 8 '
+	summary_runs=' 3 6 7 8 '
+	setup_runs=' 1 4 5 '
+	addressed=''
+	for n in $ran; do
+		# the init line is the trace's first; every server it names must
+		# be ymer-node, and no other server's tool may have been reached
+		# past it — ToolSearch finds a connector's tools whether or not
+		# the init line listed the connector. A call the CLI answered
+		# with no such tool reached nothing: it is left out here and named
+		# on the pass line with its tool, as a refused command is
+		named=$(head -n 1 "$runs/$n.jsonl" | grep -o '"mcp_servers":\[[^]]*\]' | grep -o '"name":"[^"]*"' | sort -u | tr '\n' ' ')
+		live_mcp "$n" >"$tmp/mcp"
+		if [ "$named" != '"name":"ymer-node" ' ] || grep '^reached ' "$tmp/mcp" | grep -v -q '^reached mcp__ymer-node__'; then
+			servers="$servers $n"
+		fi
+		tools=$(sed -n 's/^unreached //p' "$tmp/mcp" | sort -u | tr '\n' ' ' | sed 's/ $//')
+		[ -z "$tools" ] || unreached="$unreached $n ($tools)"
+		# every path a Read, Glob or Grep named sits under the probe dir or
+		# the marketplace checkout the plugins load from; a relative one
+		# resolves under the run's working directory, inside the probe dir.
+		# `..` is read before the two prefixes: a path under an allowed
+		# prefix that then climbs is outside, and the prefix arm — case
+		# takes its first match — would keep it as inside
+		live_reads "$n" | while IFS= read -r p; do
+			case $p in
+			'~/'*) p=$HOME/${p#'~/'} ;;
+			esac
+			case $p in
+			*..*) echo "$p" ;;
+			"$dir" | "$dir"/* | "$root" | "$root"/*) ;;
+			/* | '~'*) echo "$p" ;;
+			esac
+		done | grep -q . && outside="$outside $n"
+		# a file write belongs to the second arm's summary runs alone, and
+		# lands under state/: any other run's write, a write naming a path
+		# outside state/ or climbing out of it, and a write whose path the
+		# read cannot find all count
+		wcalls=$(live_calls "$n" | grep -E '^(Write|Edit|NotebookEdit) ' || true)
+		if [ -n "$wcalls" ]; then
+			case $write_runs in
+			*" $n "*)
+				printf '%s\n' "$wcalls" | while IFS= read -r c; do
+					p=$(printf '%s\n' "$c" | sed -E -n 's/.*"(file_path|notebook_path)":"([^"]*)".*/\2/p')
+					case $p in
+					*..*) echo "$c" ;;
+					"$state"/*) ;;
+					*) echo "$c" ;;
+					esac
+				done | grep -q . && writes="$writes $n"
+				;;
+			*) writes="$writes $n" ;;
+			esac
+		fi
+		# every command that ran is a declared one, read against
+		# hook/declared as the runs' hook reads it: the command is the
+		# whole JSON string, escaped quotes included, and an input whose
+		# first key is not the command is not read at all, and fails
+		# closed. A refused command never ran: it is left out here and
+		# named on the pass line, read off the run's own permission_denials.
+		# A grep that cannot read hook/declared (status 2) counts the run,
+		# so a lost file fails closed rather than passing every command
+		denied_bash "$n" >"$tmp/denied"
+		live_calls "$n" | grep '^Bash ' | sed -E 's/^Bash \{"command":"(([^"\\]|\\.)*)".*/\1/' |
+			grep -v -E -f "$hook/declared" >"$tmp/other" || [ $? -eq 1 ] || echo "hook/declared unreadable" >>"$tmp/other"
+		grep -v -x -F -f "$tmp/denied" "$tmp/other" | grep -q . && shell="$shell $n"
+		grep -q . "$tmp/denied" && refused="$refused $n"
+		case $summary_runs in
+		*" $n "*) live_calls "$n" | grep '^Bash ' | grep -q 'git commit' && commits="$commits $n" ;;
+		esac
+		# a setup report names the node only where it runs: a port it
+		# gives other than the probe's own is an address the node is not on
+		case $setup_runs in
+		*" $n "*) report_ports "$n" | grep -v -x -F "$port" | grep -q . && addressed="$addressed $n" ;;
+		esac
+	done
+	if [ -z "$servers" ]; then
+		pass servers "every run's init line names ymer-node alone, and no other server's tool was called${unreached:+ — a call to no such tool, reaching nothing, in run(s)$unreached}"
+	else
+		fail servers "run(s)$servers reached a server beyond ymer-node — read the init line's mcp_servers and the mcp__ calls in $runs/<n>.jsonl"
+	fi
+	if [ -z "$outside" ]; then
+		pass isolation "every Read, Glob and Grep stayed under $dir or $root"
+	else
+		fail isolation "run(s)$outside read outside $dir and $root — read the call and its permission_denials in $runs/<n>.jsonl"
+	fi
+	if [ -z "$writes" ]; then
+		pass writes "file writes only in the second arm's summary runs, and only under $state"
+	else
+		fail writes "a file write outside the second arm's summary runs or outside $state in run(s)$writes — read $runs/<n>.jsonl"
+	fi
+	if [ -z "$shell" ]; then
+		pass bash-commands "no Bash command beyond \`claude mcp get <name>\` and the state folder's \`rev-parse\` ran in any run${refused:+ — refused, never run, in run(s)$refused}"
+	else
+		fail bash-commands "a Bash command other than \`claude mcp get <name>\` or the state folder's \`rev-parse\` in run(s)$shell — read its command in $runs/<n>.jsonl"
+	fi
+	if [ -z "$commits" ]; then
+		pass summary-git "no git commit attempted in any summary run"
+	else
+		fail summary-git "summary attempted a git commit, with the state folder unset or no git work tree, in run(s)$commits — read $runs/<n>.jsonl"
+	fi
+	if [ -z "$addressed" ]; then
+		pass setup-address "every setup report names the node at its own port or at no address"
+	else
+		fail setup-address "a setup report names a node port other than $port in run(s)$addressed — read the result line of $runs/<n>.jsonl"
+	fi
+
+	# 6. teardown — here on the way through, so its install line lands
+	# before the summary; the EXIT trap runs it instead on any earlier exit.
+	live_teardown
+}
