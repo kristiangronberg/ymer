@@ -1,0 +1,821 @@
+#!/bin/sh
+# payload-verify-test — self-test for the ymer plugin's payload verifier,
+# plugins/ymer/bin/payload-verify. The hermetic probe's static stage runs
+# it; run it by hand after any edit to the verifier. It works in a temp
+# directory and touches no real topic.
+#
+#   sh scripts/payload-verify-test
+#
+# Covers every verdict arm — containment PASS, PENDING, FAIL ticked and
+# absent, drifted past the final-state count, a final-state count half
+# reached mid-plan and still short with the plan complete, early arrival;
+# whole-file match, differ under a ticked and an unticked box, missing
+# under a ticked and an unticked box, early arrival — and the count's own
+# rules: non-overlapping occurrences, the payload's final newline, blank
+# lines inside a payload, a target with no final newline, bytes that are
+# not UTF-8. Every authoring-defect exit: usage and each argument edge,
+# an unset HOME, the topic directory's shape, missing plan.md or
+# manifest, each malformed manifest line, a ~user target, duplicate and
+# suffixed checkboxes, a gate with no checkbox, no or two payload files,
+# an empty, unreadable or non-file payload, a payload file with no
+# extension, an orphan payload file, an unreadable target, and an awk
+# that fails on the scan or the count. The reference scan: each literal
+# class, each placeholder spelling, each class's token alone on its
+# line, the reported line number, the state-store class keyed on the
+# state folder's own name, both exemptions by target — the state folder
+# and an --exempt tree given absolute, relative, through a symlink, or
+# twice, a symlinked file included, a sibling that only shares the prefix
+# excluded — both markers, and a clean payload of near-misses. A run that
+# could loop is bounded, so a regression fails instead of hanging. Last,
+# the placeholder list in the verifier is held equal to the plugin
+# glossary's.
+#
+# Exit 0 = every case passed.
+
+set -u
+
+here=$(cd "$(dirname "$0")" && pwd)
+verify=$here/../plugins/ymer/bin/payload-verify
+glossary=$here/../plugins/ymer/glossary.md
+# physical: mktemp's path can sit under a symlink, and the verifier
+# compares resolved paths
+tmp=$(cd "$(mktemp -d)" && pwd -P)
+trap 'rm -rf "$tmp"' EXIT
+
+pass=0
+fail=0
+
+check() { # check <name> <expected> <actual>
+	if [ "$2" = "$3" ]; then
+		pass=$((pass + 1))
+		echo "ok   — $1"
+	else
+		fail=$((fail + 1))
+		echo "FAIL — $1"
+		echo "       expected: $2"
+		echo "       actual:   $3"
+	fi
+}
+
+verdict() { # verdict <report> <step-id> — the status word for one gate
+	printf '%s\n' "$1" | awk -v id="$2" '$2 == id { print $1 }'
+}
+
+note_seen() { # note_seen <report> <substring> — echoes it back when present
+	case $1 in
+	*"$2"*) printf '%s' "$2" ;;
+	*) printf '%s' "MISSING: $1" ;;
+	esac
+}
+
+run() { # run <args...> — the report in $report, the exit status in $code
+	report=$(sh "$verify" "$@" 2>&1)
+	code=$?
+}
+
+defect() { # defect <name> <expected stderr substring> <args...>
+	name=$1
+	want=$2
+	shift 2
+	err=$(sh "$verify" "$@" 2>&1 >/dev/null)
+	code=$?
+	check "$name — exit 2" "2" "$code"
+	check "$name — message" "$want" "$(note_seen "$err" "$want")"
+}
+
+summary() { printf '%s\n' "$report" | tail -n 1; }
+
+bounded() { # bounded <dir> <args...> — run from <dir>, killed after 20 s, so a runaway fails instead of hanging
+	bdir=$1
+	shift
+	(cd "$bdir" && exec sh "$verify" "$@") >"$tmp/bounded.out" 2>&1 &
+	bpid=$!
+	(sleep 20 && kill "$bpid") >/dev/null 2>&1 &
+	wpid=$!
+	wait "$bpid"
+	code=$?
+	kill "$wpid" 2>/dev/null
+	report=$(cat "$tmp/bounded.out")
+}
+
+# stub <name> <text> — a directory holding an awk that fails on any
+# program whose arguments carry <text> and runs the real awk otherwise
+realawk=$(command -v awk)
+stub() {
+	mkdir -p "$tmp/$1"
+	printf '#!/bin/sh\ncase "$*" in *%s*) echo "awk: stub refuses this program" >&2; exit 2 ;; esac\nexec %s "$@"\n' \
+		"$2" "$realawk" >"$tmp/$1/awk"
+	chmod 755 "$tmp/$1/awk"
+}
+
+# root reads any file, so the unreadable-file cases only run as a user
+if [ "$(id -u)" = 0 ]; then asroot=1; else asroot=0; fi
+
+# Topic directories sit in a state folder laid out the way the verifier
+# reads it; every target sits outside it, in $tmp/repo.
+topicdir() { printf '%s/state/area/2026/09-29-%s\n' "$tmp" "$1"; }
+
+fixture() { # fixture <name> — a minimal valid one-gate topic, all landed
+	d=$(topicdir "$1")
+	mkdir -p "$d/payloads" "$tmp/repo/$1"
+	printf '# Fixture\n\n- [x] **T1S1: landed**\n' >"$d/plan.md"
+	printf 'alpha line\n' >"$d/payloads/t1s1.md"
+	printf 'before\nalpha line\nafter\n' >"$tmp/repo/$1/target.md"
+	printf 't1s1 %s/target.md\n' "$tmp/repo/$1" >"$d/payloads/manifest"
+}
+
+# ── 1. The verdict matrix ────────────────────────────────────────────
+# One topic exercising the containment arms (landed, not yet,
+# ticked-but-absent, a final-state count only half reached, early
+# arrival), the whole-file arms (match, differ) and a letter-suffixed
+# pair of payloads joining one checkbox (t2s2a/t2s2b → T2S2).
+
+full=$(topicdir full)
+r=$tmp/repo/full
+mkdir -p "$full/payloads" "$r"
+cat >"$full/plan.md" <<'PLAN'
+# Full Fixture
+
+### Task 1: containment gates
+
+- [x] **T1S1: landed**
+
+- [ ] **T1S2: not yet**
+
+- [x] **T1S3: ticked but never landed**
+
+- [x] **T1S4: repeated content, half landed**
+
+- [ ] **T1S5: arrived early**
+
+### Task 2: whole-file gates
+
+- [x] **T2S1: whole file**
+
+- [x] **T2S2: whole file plus one more line**
+PLAN
+
+printf 'alpha line\n' >"$full/payloads/t1s1.md"
+printf 'beta line\n' >"$full/payloads/t1s2.md"
+printf 'gamma line\n' >"$full/payloads/t1s3.md"
+printf 'delta line\n' >"$full/payloads/t1s4.md"
+printf 'epsilon line\n' >"$full/payloads/t1s5.md"
+printf 'whole one\nwhole two\n' >"$full/payloads/t2s1.md"
+printf 'whole three\nwhole four\n' >"$full/payloads/t2s2a.md"
+printf 'zeta line\n' >"$full/payloads/t2s2b.md"
+
+printf 'alpha line\ndelta line\nepsilon line\nzeta line\n' >"$r/target.md"
+printf 'whole one\nwhole two\n' >"$r/whole-ok.md"
+printf 'not what the payload says\n' >"$r/whole-bad.md"
+
+{
+	printf '# gates for the fixture above\n\n'
+	printf 't1s1 %s/target.md\n' "$r"
+	printf 't1s2 %s/target.md\n' "$r"
+	printf 't1s3 %s/target.md\n' "$r"
+	printf 't1s4 %s/target.md 2\n' "$r"
+	printf 't1s5 %s/target.md\n' "$r"
+	printf 't2s1 %s/whole-ok.md whole\n' "$r"
+	printf 't2s2a %s/whole-bad.md whole\n' "$r"
+	printf 't2s2b %s/target.md\n' "$r"
+} >"$full/payloads/manifest"
+
+run "$full"
+check "mixed run exit code" "1" "$code"
+check "landed → PASS" "PASS" "$(verdict "$report" t1s1)"
+check "unticked and absent → PENDING" "PENDING" "$(verdict "$report" t1s2)"
+check "ticked and absent → FAIL" "FAIL" "$(verdict "$report" t1s3)"
+check "half a final-state count → PENDING" "PENDING" "$(verdict "$report" t1s4)"
+check "final-state note" "1 of 2 so far (final-state count)" \
+	"$(note_seen "$report" "1 of 2 so far (final-state count)")"
+check "early arrival → FAIL" "FAIL" "$(verdict "$report" t1s5)"
+check "early-arrival note" "early: 1 of 1 but box unticked" \
+	"$(note_seen "$report" "early: 1 of 1 but box unticked")"
+check "whole file matches → PASS" "PASS" "$(verdict "$report" t2s1)"
+check "whole file differs under a ticked box → FAIL" "FAIL" "$(verdict "$report" t2s2a)"
+check "whole file differs under a ticked box — note" "ticked but target differs from payload" \
+	"$(note_seen "$report" "ticked but target differs from payload")"
+check "letter-suffix joins T2S2 → PASS" "PASS" "$(verdict "$report" t2s2b)"
+check "report line shape" "PASS    t1s1   $r/target.md — 1 of 1" \
+	"$(printf '%s\n' "$report" | grep ' t1s1 ')"
+check "mixed run summary" "payload-verify: 8 gate(s) — 3 PASS · 2 PENDING · 3 FAIL" "$(summary)"
+
+# ── 2. The same topic, fully landed ──────────────────────────────────
+# Land the missing bytes, tick the two open boxes, make the whole-file
+# target match: every gate turns PASS and the exit goes green.
+
+printf 'beta line\ngamma line\ndelta line\n' >>"$r/target.md"
+cp "$full/payloads/t2s2a.md" "$r/whole-bad.md"
+sed 's/^- \[ \]/- [x]/' "$full/plan.md" >"$full/plan.next" &&
+	mv "$full/plan.next" "$full/plan.md"
+
+run "$full"
+check "all-landed exit code" "0" "$code"
+check "all-landed summary" "payload-verify: 8 gate(s) — 8 PASS · 0 PENDING · 0 FAIL" "$(summary)"
+
+# ── 3. Plan complete — the terminal moment ───────────────────────────
+# Once every gate's box is ticked every gated step has run, so a
+# final-state count still short is FAIL rather than PENDING. Two
+# things make the pair discriminating: the predicate reads the GATED
+# boxes only — T9S9 below is a verifier step with no gate and stays
+# unticked in both runs — and the control moves a DIFFERENT gate's box,
+# leaving t2s1 itself ticked at 1 of 2 in both, so only the plan's
+# completeness can explain the flip. A third run pins the arm order:
+# the same complete plan with t2s1 at zero occurrences reads `ticked
+# but`, never `plan complete but` — zero under a ticked box is the
+# older, more specific verdict.
+
+plan_end_fixture() { # plan_end_fixture <name> <landed|open|absent> — t1s1's state, or t2s1 at zero
+	d=$(topicdir "$1")
+	t=$tmp/repo/$1
+	mkdir -p "$d/payloads" "$t"
+	printf 'alpha line\n' >"$d/payloads/t1s1.md"
+	printf 'delta line\n' >"$d/payloads/t2s1.md"
+	if [ "$2" = absent ]; then
+		: >"$t/target-b.md"
+	else
+		printf 'delta line\n' >"$t/target-b.md"
+	fi
+	printf 't1s1 %s/target-a.md\nt2s1 %s/target-b.md 2\n' "$t" "$t" \
+		>"$d/payloads/manifest"
+	if [ "$2" = open ]; then
+		: >"$t/target-a.md"
+		first='[ ]'
+	else
+		printf 'alpha line\n' >"$t/target-a.md"
+		first='[x]'
+	fi
+	printf '# Fixture\n\n- %s **T1S1: landed**\n\n- [x] **T2S1: repeated content**\n\n- [ ] **T9S9: run the verifier**\n' \
+		"$first" >"$d/plan.md"
+}
+
+plan_end_fixture plan-end landed
+run "$(topicdir plan-end)"
+check "plan complete, count short — exit" "1" "$code"
+check "plan complete, count short — verdict" "FAIL" "$(verdict "$report" t2s1)"
+note='plan complete but 1 of 2 occurrences'
+check "plan-complete note" "$note" "$(note_seen "$report" "$note")"
+check "plan-complete summary" "payload-verify: 2 gate(s) — 1 PASS · 0 PENDING · 1 FAIL" "$(summary)"
+
+plan_end_fixture plan-open open
+run "$(topicdir plan-open)"
+check "control: another gate still open — exit" "0" "$code"
+check "control: another gate still open — verdict" "PENDING" "$(verdict "$report" t2s1)"
+check "control: another gate still open — summary" \
+	"payload-verify: 2 gate(s) — 0 PASS · 2 PENDING · 0 FAIL" "$(summary)"
+
+plan_end_fixture plan-absent absent
+run "$(topicdir plan-absent)"
+check "plan complete, count zero — exit" "1" "$code"
+note='ticked but 0 of 2 occurrences'
+check "plan complete, count zero — the zero arm wins" "$note" "$(note_seen "$report" "$note")"
+
+# ── 4. The arms the matrix does not reach ────────────────────────────
+# Drifted past the final-state count; a whole-file target missing under
+# a ticked and an unticked box; a whole-file target already matching
+# under an unticked box; a whole-file target differing under an unticked
+# box.
+
+arms=$(topicdir arms)
+r=$tmp/repo/arms
+mkdir -p "$arms/payloads" "$r"
+printf '# Fixture\n\n- [x] **T1S1: a**\n\n- [x] **T1S2: b**\n\n- [ ] **T1S3: c**\n\n- [ ] **T1S4: d**\n\n- [ ] **T1S5: e**\n' \
+	>"$arms/plan.md"
+printf 'omega line\n' >"$arms/payloads/t1s1.md"
+printf 'whole five\n' >"$arms/payloads/t1s2.md"
+printf 'whole six\n' >"$arms/payloads/t1s3.md"
+printf 'whole seven\n' >"$arms/payloads/t1s4.md"
+printf 'whole eight\n' >"$arms/payloads/t1s5.md"
+printf 'omega line\nomega line\n' >"$r/drift.md"
+printf 'whole seven\n' >"$r/early.md"
+printf 'something else\n' >"$r/differ.md"
+{
+	printf 't1s1 %s/drift.md\n' "$r"
+	printf 't1s2 %s/missing-ticked.md whole\n' "$r"
+	printf 't1s3 %s/missing-open.md whole\n' "$r"
+	printf 't1s4 %s/early.md whole\n' "$r"
+	printf 't1s5 %s/differ.md whole\n' "$r"
+} >"$arms/payloads/manifest"
+
+run "$arms"
+check "arms exit code" "1" "$code"
+check "past the count → FAIL" "FAIL" "$(verdict "$report" t1s1)"
+check "past the count — note" "drifted: 2 of 1 occurrences" \
+	"$(note_seen "$report" "drifted: 2 of 1 occurrences")"
+check "whole file missing, ticked → FAIL" "FAIL" "$(verdict "$report" t1s2)"
+check "whole file missing, ticked — note" "ticked but target missing" \
+	"$(note_seen "$report" "ticked but target missing")"
+check "whole file missing, unticked → PENDING" "PENDING" "$(verdict "$report" t1s3)"
+check "whole file missing, unticked — note" "target not created yet" \
+	"$(note_seen "$report" "target not created yet")"
+check "whole file early → FAIL" "FAIL" "$(verdict "$report" t1s4)"
+check "whole file early — note" "early: whole file already matches but box unticked" \
+	"$(note_seen "$report" "early: whole file already matches but box unticked")"
+check "whole file differs, unticked → PENDING" "PENDING" "$(verdict "$report" t1s5)"
+check "whole file differs, unticked — note" "target differs (not applied yet)" \
+	"$(note_seen "$report" "target differs (not applied yet)")"
+check "arms summary" "payload-verify: 5 gate(s) — 0 PASS · 2 PENDING · 3 FAIL" "$(summary)"
+
+# ── 5. What a count counts ───────────────────────────────────────────
+# Occurrences never overlap: `aa` sits in `aaaa` twice, not three times.
+# The payload's bytes are the whole needle, final newline included: a
+# payload without one is found in a line that has one, and a payload
+# with one is not found in a last line that lacks it — in a multi-line
+# target too, where only the last byte decides — a newline one byte
+# earlier does not count. Blank lines inside and
+# at the end of a payload are part of it. Bytes that are not UTF-8 are
+# counted like any others. A ~-rooted target is read from $HOME.
+
+count_topic=$(topicdir count)
+r=$tmp/repo/count
+mkdir -p "$count_topic/payloads" "$r" "$tmp/fakehome"
+printf '# Fixture\n\n- [x] **T1S1: a**\n\n- [x] **T1S2: b**\n\n- [ ] **T1S3: c**\n\n- [x] **T1S4: d**\n\n- [x] **T1S5: e**\n\n- [ ] **T1S6: f**\n\n- [x] **T1S7: g**\n' \
+	>"$count_topic/plan.md"
+printf 'y\n' >"$count_topic/payloads/t1s6.txt"
+printf 'first\ny' >"$r/multi-without-newline.txt"
+printf 'one\n\ntwo\n\n' >"$count_topic/payloads/t1s7.txt"
+printf 'x\none\n\ntwo\n\ny' >"$r/blank-lines.txt"
+printf 'aa' >"$count_topic/payloads/t1s1.txt"
+printf 'aaaa\n' >"$r/overlap.txt"
+printf 'alpha' >"$count_topic/payloads/t1s2.txt"
+printf 'alpha\n' >"$r/with-newline.txt"
+printf 'omega\n' >"$count_topic/payloads/t1s3.txt"
+printf 'omega' >"$r/without-newline.txt"
+printf '\377\376 raw\n' >"$count_topic/payloads/t1s4.bin"
+printf 'head\n\377\376 raw\ntail\n' >"$r/raw.bin"
+printf 'home line\n' >"$count_topic/payloads/t1s5.md"
+printf 'home line\n' >"$tmp/fakehome/target.md"
+{
+	printf 't1s1 %s/overlap.txt 2\n' "$r"
+	printf 't1s2 %s/with-newline.txt\n' "$r"
+	printf 't1s3 %s/without-newline.txt\n' "$r"
+	printf 't1s4 %s/raw.bin\n' "$r"
+	printf 't1s5 %s\n' '~/target.md'
+	printf 't1s6 %s/multi-without-newline.txt\n' "$r"
+	printf 't1s7 %s/blank-lines.txt\n' "$r"
+} >"$count_topic/payloads/manifest"
+
+report=$(HOME=$tmp/fakehome sh "$verify" "$count_topic" 2>&1)
+code=$?
+check "count rules exit code" "0" "$code"
+check "non-overlapping: 2 of 2" "PASS" "$(verdict "$report" t1s1)"
+check "payload with no final newline is found" "PASS" "$(verdict "$report" t1s2)"
+check "payload's final newline is part of it" "PENDING" "$(verdict "$report" t1s3)"
+check "payload's final newline — note" "0 of 1" "$(printf '%s\n' "$report" | awk '$2 == "t1s3" { print $(NF - 2), $(NF - 1), $NF }')"
+check "bytes that are not UTF-8 are counted" "PASS" "$(verdict "$report" t1s4)"
+check "a ~-rooted target is read from HOME" "PASS" "$(verdict "$report" t1s5)"
+check "a ~-rooted target is reported expanded" "PASS    t1s5   $tmp/fakehome/target.md — 1 of 1" \
+	"$(printf '%s\n' "$report" | grep ' t1s5 ')"
+check "a multi-line target's missing final newline — verdict" "PENDING" "$(verdict "$report" t1s6)"
+check "a multi-line target's missing final newline — note" "0 of 1" \
+	"$(printf '%s\n' "$report" | awk '$2 == "t1s6" { print $(NF - 2), $(NF - 1), $NF }')"
+check "blank lines inside and after a payload are part of it" "PASS" "$(verdict "$report" t1s7)"
+
+# ── 6. Fenced checkbox literals never join a gate ────────────────────
+# An illustrative box inside a fence is not progress. Paired with its
+# positive control — the same box outside the fence resolves — so a
+# matcher that stopped seeing boxes entirely cannot pass this case. A
+# suffixed box inside a fence is illustration too, and stays quiet.
+
+fixture fenced
+cat >"$(topicdir fenced)/plan.md" <<'PLAN'
+# Fenced Fixture
+
+Illustration only — the boxes below are payload, not progress:
+
+````
+- [x] **T1S1: landed**
+```
+- [x] **T1S1b: still inside the four-backtick fence**
+````
+PLAN
+defect "fenced box does not join" "no checkbox T1S1 in" "$(topicdir fenced)"
+
+fixture unfenced
+run "$(topicdir unfenced)"
+check "control: unfenced box joins — exit" "0" "$code"
+check "control: unfenced box joins — verdict" "PASS" "$(verdict "$report" t1s1)"
+
+# A line of backticks with an info string opens a fence but never closes
+# one: the box after it stays inside, so the plan has one T1S1, not two.
+fixture infofence
+cat >"$(topicdir infofence)/plan.md" <<'PLAN'
+# Info-string Fixture
+
+- [x] **T1S1: landed**
+
+```
+```sh
+- [x] **T1S1: still inside — the info-string line did not close the fence**
+```
+PLAN
+run "$(topicdir infofence)"
+check "an info-string line does not close a fence — exit" "0" "$code"
+check "an info-string line does not close a fence — verdict" "PASS" "$(verdict "$report" t1s1)"
+
+# A capital X ticks a box as a lowercase one does.
+fixture capx
+printf '# Fixture\n\n- [X] **T1S1: landed**\n' >"$(topicdir capx)/plan.md"
+run "$(topicdir capx)"
+check "[X] reads as ticked — exit" "0" "$code"
+check "[X] reads as ticked — verdict" "PASS" "$(verdict "$report" t1s1)"
+
+# ── 7. Authoring defects ─────────────────────────────────────────────
+
+fixture orphan
+printf 'stray\n' >"$(topicdir orphan)/payloads/t9s9.md"
+printf 'stray\n' >"$(topicdir orphan)/payloads/t8s8.md"
+defect "orphan payload files, listed in order" "payload file(s) with no manifest gate: t8s8.md, t9s9.md" "$(topicdir orphan)"
+
+fixture relative
+printf 't1s1 target.md\n' >"$(topicdir relative)/payloads/manifest"
+defect "relative target path" "target must be absolute or ~-rooted" "$(topicdir relative)"
+
+# A ~user spelling is refused at the manifest, never expanded or walked.
+fixture tildeuser
+printf 't1s1 ~nobody/target.md\n' >"$(topicdir tildeuser)/payloads/manifest"
+defect "a ~user target" "(~user is not expanded)" "$(topicdir tildeuser)"
+fixture tildebare
+printf 't1s1 ~foo\n' >"$(topicdir tildebare)/payloads/manifest"
+defect "a bare ~name target" "(~user is not expanded)" "$(topicdir tildebare)"
+
+fixture badid
+printf 'T1S1 %s/target.md\n' "$tmp/repo/badid" >"$(topicdir badid)/payloads/manifest"
+defect "bad step-id" "bad step-id" "$(topicdir badid)"
+
+fixture dupgate
+printf 't1s1 %s/target.md\nt1s1 %s/target.md\n' "$tmp/repo/dupgate" "$tmp/repo/dupgate" \
+	>"$(topicdir dupgate)/payloads/manifest"
+defect "duplicate gate" "duplicate gate for t1s1" "$(topicdir dupgate)"
+
+fixture badcount
+printf 't1s1 %s/target.md 0\n' "$tmp/repo/badcount" >"$(topicdir badcount)/payloads/manifest"
+defect "expected of zero" "expected must be a positive integer or 'whole'" "$(topicdir badcount)"
+
+fixture twofiles
+printf 'alpha line\n' >"$(topicdir twofiles)/payloads/t1s1.ex"
+defect "two payload files for one id" "want exactly one payloads/t1s1" "$(topicdir twofiles)"
+
+fixture nofile
+rm "$(topicdir nofile)/payloads/t1s1.md"
+defect "no payload file for a gate" "want exactly one payloads/t1s1.<ext>, found 0" "$(topicdir nofile)"
+
+fixture malformed
+printf 't1s1 %s/target.md 1 extra\n' "$tmp/repo/malformed" >"$(topicdir malformed)/payloads/manifest"
+defect "malformed manifest line" "expected <step-id> <target-path> [expected]" "$(topicdir malformed)"
+
+fixture nobox
+printf '# Fixture\n\n- [x] **T2S1: another step**\n' >"$(topicdir nobox)/plan.md"
+defect "gate with no checkbox" "no checkbox T1S1 in plan.md for gate t1s1" "$(topicdir nobox)"
+
+fixture dupbox
+printf '# Fixture\n\n- [x] **T1S1: landed**\n\n- [ ] **T1S1: again**\n' >"$(topicdir dupbox)/plan.md"
+defect "duplicate checkbox" "duplicate checkbox T1S1" "$(topicdir dupbox)"
+
+# A suffixed checkbox is a defect whether or not a bare sibling stands
+# beside it: with one, its gate would silently join the sibling; alone,
+# its gate would find no box.
+fixture sufbox
+printf '# Fixture\n\n- [x] **T1S1: landed**\n\n- [ ] **T1S1b: the second payload**\n' >"$(topicdir sufbox)/plan.md"
+defect "suffixed checkbox beside its bare sibling" "suffixed checkbox T1S1b" "$(topicdir sufbox)"
+fixture sufalone
+printf '# Fixture\n\n- [x] **T1S1a: alone**\n' >"$(topicdir sufalone)/plan.md"
+defect "suffixed checkbox alone" "suffixed checkbox T1S1a" "$(topicdir sufalone)"
+
+fixture empty
+: >"$(topicdir empty)/payloads/t1s1.md"
+defect "empty payload file" "payloads/t1s1.md is empty" "$(topicdir empty)"
+
+fixture paydir
+rm "$(topicdir paydir)/payloads/t1s1.md"
+mkdir "$(topicdir paydir)/payloads/t1s1.md"
+defect "a directory named as a payload" "payloads/t1s1.md is not a regular file" "$(topicdir paydir)"
+
+# A file the verifier cannot read is a defect, never a clean scan or a
+# zero count.
+if [ "$asroot" = 0 ]; then
+	fixture unreadpay
+	chmod 000 "$(topicdir unreadpay)/payloads/t1s1.md"
+	defect "an unreadable payload" "payloads/t1s1.md is not readable" "$(topicdir unreadpay)"
+	fixture unreadtarget
+	chmod 000 "$tmp/repo/unreadtarget/target.md"
+	defect "an unreadable target" "cannot read $tmp/repo/unreadtarget/target.md" "$(topicdir unreadtarget)"
+	# a whole-file gate, unticked: cmp's exit 2 must not read as "differs"
+	fixture unreadwhole
+	printf '# Fixture\n\n- [ ] **T1S1: not yet**\n' >"$(topicdir unreadwhole)/plan.md"
+	printf 't1s1 %s/target.md whole\n' "$tmp/repo/unreadwhole" >"$(topicdir unreadwhole)/payloads/manifest"
+	chmod 000 "$tmp/repo/unreadwhole/target.md"
+	defect "an unreadable whole-file target" "cannot read $tmp/repo/unreadwhole/target.md" "$(topicdir unreadwhole)"
+else
+	echo "skip — the three unreadable-file cases: root reads every file"
+fi
+
+# An awk that fails on the reference scan or on a count stops the run
+# with exit 2; the stub fails on that one program and runs the real awk
+# for every other.
+stub awk-scan 'ppath='
+fixture awkscan
+err=$(PATH="$tmp/awk-scan:$PATH" sh "$verify" "$(topicdir awkscan)" 2>&1 >/dev/null)
+code=$?
+check "an awk that fails on the scan — exit 2" "2" "$code"
+check "an awk that fails on the scan — message" "cannot scan payloads/t1s1.md" \
+	"$(note_seen "$err" "cannot scan payloads/t1s1.md")"
+stub awk-count 'pnl='
+fixture awkcount
+err=$(PATH="$tmp/awk-count:$PATH" sh "$verify" "$(topicdir awkcount)" 2>&1 >/dev/null)
+code=$?
+check "an awk that fails on a count — exit 2" "2" "$code"
+check "an awk that fails on a count — message" "cannot count payloads/t1s1.md" \
+	"$(note_seen "$err" "cannot count payloads/t1s1.md")"
+
+# A payload file with no extension is a defect whether or not its name
+# is a gate's step-id — never quietly neither payload nor orphan.
+fixture dotless
+printf 'alpha line\n' >"$(topicdir dotless)/payloads/t1s1"
+defect "no extension, named as a gate" "payload file t1s1 has no extension" "$(topicdir dotless)"
+fixture dotless2
+printf 'stray\n' >"$(topicdir dotless2)/payloads/notes"
+defect "no extension, named as nothing" "payload file notes has no extension" "$(topicdir dotless2)"
+
+fixture noplan
+rm "$(topicdir noplan)/plan.md"
+defect "missing plan.md" "no plan.md under" "$(topicdir noplan)"
+
+fixture noman
+rm "$(topicdir noman)/payloads/manifest"
+defect "missing manifest" "no payloads/manifest under" "$(topicdir noman)"
+
+# The state folder is read off the topic directory's shape, so a
+# directory without that shape is refused rather than exempting an
+# arbitrary ancestor. The control is the fixture every case above uses.
+mkdir -p "$tmp/flat/payloads" "$tmp/repo/flat"
+printf '# Fixture\n\n- [x] **T1S1: landed**\n' >"$tmp/flat/plan.md"
+printf 'alpha line\n' >"$tmp/flat/payloads/t1s1.md"
+printf 'alpha line\n' >"$tmp/repo/flat/target.md"
+printf 't1s1 %s/target.md\n' "$tmp/repo/flat" >"$tmp/flat/payloads/manifest"
+defect "a directory without the topic shape" "is not a topic directory" "$tmp/flat"
+yy=$tmp/state/area/26/09-29-short
+mkdir -p "$yy/payloads" "$tmp/repo/short"
+printf '# Fixture\n\n- [x] **T1S1: landed**\n' >"$yy/plan.md"
+printf 'alpha line\n' >"$yy/payloads/t1s1.md"
+printf 'alpha line\n' >"$tmp/repo/short/target.md"
+printf 't1s1 %s/target.md\n' "$tmp/repo/short" >"$yy/payloads/manifest"
+defect "a year directory that is not four digits" "is not a topic directory" "$yy"
+fixture shaped
+run "$(topicdir shaped)"
+check "control: the topic shape is accepted — exit" "0" "$code"
+
+defect "no arguments" "usage: payload-verify"
+defect "two topic directories" "usage: payload-verify" "$full" "$full"
+defect "an empty first positional" "usage: payload-verify" "" "$full"
+defect "an unknown flag" "usage: payload-verify" "$full" -x
+defect "--exempt with no tree" "usage: payload-verify" "$full" --exempt
+defect "--exempt=<tree> in one word" "usage: payload-verify" "$full" --exempt="$tmp/repo"
+defect "--exempt naming no directory" "--exempt $tmp/nowhere: no such directory" "$full" --exempt "$tmp/nowhere"
+err=$( (unset HOME; sh "$verify" "$full") 2>&1 >/dev/null)
+code=$?
+check "HOME unset — exit 2" "2" "$code"
+check "HOME unset — message" "HOME is not set" "$(note_seen "$err" "HOME is not set")"
+
+# ── 8. Workflow-internal references in project-bound payloads ────────
+# One hit per literal class, one per placeholder spelling, both
+# exemptions by target, both markers from each side, and a clean
+# payload carrying the near-misses that must stay quiet. That clean
+# case is the falsifiability pairing for deliberately over-approximating
+# matchers: without it, over-firing patterns pass this suite and the
+# gate becomes noise nobody trusts.
+
+wir() { # wir <name> <payload line> — one gate, unticked, target in $tmp/repo
+	d=$(topicdir "$1")
+	mkdir -p "$d/payloads" "$tmp/repo/$1"
+	printf '# Fixture\n\n- [ ] **T1S1: pending**\n' >"$d/plan.md"
+	printf '%s\n' "$2" >"$d/payloads/t1s1.md"
+	printf 'target bytes\n' >"$tmp/repo/$1/target.md"
+	printf 't1s1 %s/target.md\n' "$tmp/repo/$1" >"$d/payloads/manifest"
+}
+
+wir_trips() { # wir_trips <name> <payload line> <expected row tail>
+	wir "$1" "$2"
+	defect "$1 trips the scan" "t1s1.md:1: $3" "$(topicdir "$1")"
+}
+
+wir_quiet() { # wir_quiet <name> <payload line>
+	wir "$1" "$2"
+	run "$(topicdir "$1")"
+	check "$1 stays quiet — exit" "0" "$code"
+	check "$1 stays quiet — verdict" "PENDING" "$(verdict "$report" t1s1)"
+}
+
+wir_trips topic-id 'Guards the 2026-07-27-runtime-ca-trust cutover.' \
+	'topic ID — 2026-07-27-runtime-ca-trust'
+wir_trips state-up 'See ../state/ymer/2026/ for the record.' \
+	'state-store path — ../state'
+wir_trips state-down 'Kept in state/ymer/2026/ for now.' \
+	'state-store path — state/ymer/'
+wir_trips artifact 'The anchor is quoted in plan.md.' \
+	'artifact basename — plan.md'
+wir_trips review 'Dispositions are recorded in review.md.' \
+	'artifact basename — review.md'
+wir_trips step 'Landed at T4S2 of the plan.' \
+	'step ID — T4S2'
+wir_trips label 'Asserted at spec D5.' \
+	'label — spec D5'
+
+# Each placeholder spelling is the same reference as its literal.
+wir_trips ph-topic 'Filled in as <topic ID> later.' \
+	'topic ID — <topic ID>'
+wir_trips ph-state 'Written under <state folder> by the session.' \
+	'state-store path — <state folder>'
+wir_trips ph-folder 'Read from <topic folder> first.' \
+	'state-store path — <topic folder>'
+wir_trips ph-step 'Every box is T<task>S<step>.' \
+	'step ID — T<task>S<step>'
+wir_trips ph-stepid 'Named payloads/<step-id>.md here.' \
+	'step ID — <step-id>'
+wir_trips ph-phase 'Committed at <phase> close.' \
+	'phase name — <phase>'
+
+# A token alone on its line trips as it does mid-line: the line's own
+# edges stand in for the boundary on either side.
+wir_trips edge-topic '2026-07-27-runtime-ca-trust' \
+	'topic ID — 2026-07-27-runtime-ca-trust'
+wir_trips edge-up '../state' \
+	'state-store path — ../state'
+wir_trips edge-down 'state/ymer/' \
+	'state-store path — state/ymer/'
+wir_trips edge-artifact 'plan.md' \
+	'artifact basename — plan.md'
+wir_trips edge-step 'T4S2' \
+	'step ID — T4S2'
+wir_trips edge-label 'spec D5' \
+	'label — spec D5'
+
+# A row names the line the token sits on.
+wir line3 "$(printf 'A first line.\nA second line.\nLanded at T4S2 here.')"
+defect "a hit on line 3 is reported on line 3" "t1s1.md:3: step ID — T4S2" "$(topicdir line3)"
+
+# One row per class per line, the leftmost spelling reported.
+wir "ph-leftmost" 'At <topic ID>, not 2026-07-27-runtime-ca-trust.'
+defect "leftmost spelling is the row" "t1s1.md:1: topic ID — <topic ID>" "$(topicdir ph-leftmost)"
+
+# The state-store class keys on the state folder's own name: this
+# state folder is `state`, so a `plans` path is a project's own.
+wir_quiet state-other 'See ../plans/ymer/2026/ and plans/ymer/ here.'
+
+# Exemption 1 — the target is process machinery, not project content:
+# under the state folder, under an --exempt tree, or reached through a
+# symlink that resolves into one — a symlinked directory or a symlinked
+# file. Only the file target exists, and it lacks the payload: the run
+# reads and writes nothing real, and the unticked boxes leave each gate
+# PENDING. The control runs the same topic with no --exempt, and the
+# three gates outside the state folder trip.
+
+ex=$(topicdir exempt)
+mkdir -p "$ex/payloads" "$tmp/machinery" "$tmp/repo/exempt"
+ln -s "$tmp/machinery" "$tmp/repo/exempt/linked"
+printf 'machinery bytes\n' >"$tmp/machinery/real.md"
+ln -s "$tmp/machinery/real.md" "$tmp/repo/exempt/filelink.md"
+printf '# Fixture\n\n- [ ] **T1S1: a**\n\n- [ ] **T1S2: b**\n\n- [ ] **T1S3: c**\n\n- [ ] **T1S4: d**\n' >"$ex/plan.md"
+for id in t1s1 t1s2 t1s3 t1s4; do
+	printf 'Topic 2026-08-16-standalone-repos, plan.md, T4S2, spec D5, <topic ID>.\n' \
+		>"$ex/payloads/$id.md"
+done
+{
+	printf 't1s1 %s/no-such-file.md\n' "$tmp/state/area"
+	printf 't1s2 %s/no-such-file.md\n' "$tmp/machinery"
+	printf 't1s3 %s/no-such-file.md\n' "$tmp/repo/exempt/linked"
+	printf 't1s4 %s/filelink.md\n' "$tmp/repo/exempt"
+} >"$ex/payloads/manifest"
+
+run "$ex" --exempt "$tmp/machinery"
+check "exempt targets skip the scan — exit" "0" "$code"
+check "exempt targets skip the scan — summary" \
+	"payload-verify: 4 gate(s) — 0 PASS · 4 PENDING · 0 FAIL" "$(summary)"
+run --exempt "$tmp/machinery" "$ex"
+check "--exempt ahead of the topic directory reads the same — exit" "0" "$code"
+run "$ex" --exempt "$tmp/state" --exempt "$tmp/machinery"
+check "--exempt given twice — exit" "0" "$code"
+# A relative --exempt is read from the working directory — a plain
+# directory, and a bare-name symlink whose own target is relative.
+ln -s machinery "$tmp/mlink"
+bounded "$tmp" "$ex" --exempt machinery
+check "a relative --exempt directory — exit" "0" "$code"
+bounded "$tmp" "$ex" --exempt mlink
+check "a bare relative --exempt symlink — exit" "0" "$code"
+err=$(sh "$verify" "$ex" 2>&1 >/dev/null)
+code=$?
+check "control: without --exempt — exit 2" "2" "$code"
+check "control: without --exempt — the state folder still exempts t1s1" "0" \
+	"$(printf '%s\n' "$err" | grep -c 't1s1.md:')"
+check "control: without --exempt — t1s2 trips" "1" \
+	"$(printf '%s\n' "$err" | grep -c 't1s2.md:1: topic ID')"
+check "control: without --exempt — t1s3 trips" "1" \
+	"$(printf '%s\n' "$err" | grep -c 't1s3.md:1: topic ID')"
+check "control: without --exempt — t1s4 trips" "1" \
+	"$(printf '%s\n' "$err" | grep -c 't1s4.md:1: topic ID')"
+
+# A tree whose name only starts with an exempt tree's name is not under it.
+wir exsib 'Topic 2026-08-16-standalone-repos.'
+mkdir -p "$tmp/machinery-old"
+printf 't1s1 %s/no-such-file.md\n' "$tmp/machinery-old" >"$(topicdir exsib)/payloads/manifest"
+defect "a sibling sharing the prefix is not exempt" "t1s1.md:1: topic ID" \
+	"$(topicdir exsib)" --exempt "$tmp/machinery"
+
+# Exemption 2 — a line carrying a remediation marker's `plan:`. The
+# marker ahead of the token is what the exemption keys on — the `#` of a
+# source comment or the `Remediation(` a parsed fixture keeps — so the
+# marker text is exempt wherever it sits, while prose that merely writes
+# `plan: <topic id>` with no marker is a forbidden citation and trips.
+# The exemption is line-level, so a marker line carrying an unrelated
+# forbidden token is exempt whole: a recorded cost, not a rediscovery.
+
+wir_quiet marker '# scratch. plan: 2026-07-12-schedule-spec-migrate.md'
+wir_quiet marker-string \
+	'  assert parsed == "Remediation(inert): heals rows. plan: 2026-06-06-fix-oauth"'
+wir_quiet marker-wide \
+	'# scratch. plan: 2026-07-12-schedule-spec-migrate — see plan.md'
+wir_trips prose-plan \
+	'As the writeup says, plan: 2026-07-31-telemetry-call-outcomes covers it.' \
+	'topic ID — 2026-07-31-telemetry-call-outcomes'
+wir_trips marker-inside-word \
+	'# see x-plan: 2026-07-12-schedule-spec-migrate' \
+	'topic ID — 2026-07-12-schedule-spec-migrate'
+
+# Exemption 3 — the redefinition-in-flight marker exempts a topic ID
+# standing after it, in either spelling, and nothing else: another class
+# on the same line still trips, and a topic ID ahead of the marker is
+# not the marker's.
+
+wir_quiet redef-dated \
+	'Redefinition in flight — 2026-09-29 → 2026-09-29-references-fetch-and-cache: the key changes.'
+wir_quiet redef-template \
+	'A `Redefinition in flight — <date> → <topic ID>:` line heads an entry being redefined.'
+wir_trips redef-label \
+	'Redefinition in flight — 2026-09-29 → 2026-09-29-references-fetch-and-cache: see spec D3.' \
+	'label — spec D3'
+wir_trips redef-ahead \
+	'From 2026-07-31-telemetry-call-outcomes: Redefinition in flight — <date> → <topic ID>: x.' \
+	'topic ID — 2026-07-31-telemetry-call-outcomes'
+
+# The clean payload — every near-miss stays quiet: reader-frame
+# numbering, dates and timestamp ids, in-repo dated doc paths, names
+# that only contain an artifact basename or a state-store path, a step
+# ID inside a word, each token with one boundary broken, and the
+# placeholders the suite writes for roles and for author-filled values.
+
+wir clean 'placeholder'
+cat >"$(topicdir clean)/payloads/t1s1.md" <<'CLEAN'
+Step 3: run `mix setup`. Task 4 drops the table (Plan 3a).
+Recorded on 2026-08-16; the backup id is "2026-01-01-00-00-00".
+See docs/deployment-plan.md and docs/bugs/2026-05-04-hints-bug-report.md.
+floor_state/ymer/ is a fixture dir and xT4S2x is not a step id.
+Clone into <checkout>, or pick any <tree>; <repo> and <topic> are yours.
+The layout is <area>/YYYY/MM-DD-<topic>/, and a <name> is a <name>.
+my-plan.md and plan.mdx are file names; ../statex is a sibling.
+T4S2_ is an identifier, as are -2026-01-01-foo and _2026-01-01-foo.
+CLEAN
+run "$(topicdir clean)"
+check "clean payload stays quiet — exit" "0" "$code"
+check "clean payload stays quiet — verdict" "PENDING" "$(verdict "$report" t1s1)"
+
+# ── 9. The placeholder spellings are the glossary's ──────────────────
+# The verifier carries the spellings as one constant; the plugin
+# glossary's `workflow-internal reference` entry names them in prose,
+# wrapped across lines. Both sets are read the same way here and held
+# equal, and the control shows the comparison can fail: one spelling
+# dropped from a copy of the verifier breaks it.
+
+glossary_set() { # glossary_set <glossary> — the entry's backticked spellings carrying a `<`
+	awk '
+		/^### workflow-internal reference$/ { on = 1; next }
+		on && /^#/ { on = 0 }
+		on { s = s " " $0 }
+		END {
+			while (match(s, /`[^`]*`/)) {
+				t = substr(s, RSTART + 1, RLENGTH - 2)
+				s = substr(s, RSTART + RLENGTH)
+				gsub(/[[:space:]]+/, " ", t)
+				if (index(t, "<")) print t
+			}
+		}' "$1" | sort -u | tr '\n' '|'
+}
+
+script_set() { # script_set <verifier> — the spellings in wir_placeholders
+	awk -F '\t' '
+		/^wir_placeholders\(\)/ { on = 1; next }
+		on && /^EOF$/ { exit }
+		on == 2 { print $2 }
+		on && /<<.EOF.$/ { on = 2 }' "$1" | sort -u | tr '\n' '|'
+}
+
+g=$(glossary_set "$glossary")
+s=$(script_set "$verify")
+check "the glossary entry names six spellings" "6" "$(printf '%s' "$g" | tr '|' '\n' | grep -c .)"
+check "the verifier's spellings are the glossary's" "$g" "$s"
+grep -v -F '<phase>' "$verify" >"$tmp/verify-short"
+check "control: a spelling dropped from the verifier breaks the match" "differ" \
+	"$([ "$(script_set "$tmp/verify-short")" = "$g" ] && echo same || echo differ)"
+
+echo
+echo "payload-verify-test: $pass passed, $fail failed"
+[ "$fail" -eq 0 ]

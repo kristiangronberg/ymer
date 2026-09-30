@@ -237,7 +237,7 @@ its command, and stop only when the work depends on one
   `payloads/` file lands by Reading that file and re-emitting its bytes
   through Write/Edit — never retyped from memory, never reconstructed
   from plan prose (contract: development-process § Artifacts). The
-  plan's own `Run:` lines invoke the shared verifier at task
+  plan's own `Run:` lines invoke the payload verifier at task
   boundaries; a FAIL on an earlier, already-ticked step is the clobber
   signal, or — with every gate's box ticked — a promised occurrence no
   gated step ever landed. The note names neither: the verifier holds no

@@ -38,14 +38,19 @@ the one that was not.
    - `planPath` — absolute path to the plan file. If the user named a plan, use
      it; otherwise find it under `<state folder>/<repo>/` (`<repo>` is the
      checkout's directory name, or `meta` for a cross-repo
-     process topic), and if ambiguous, ask which one. This is the only
-     required input.
+     process topic), and if ambiguous, ask which one. It is required,
+     and so is `verifierCommand`.
    - `specPath` — absolute path to the spec the plan was written from. Default:
      the topic directory's `spec.md` (the define phase's artifact, next to the
      plan) when it exists; otherwise a separate spec/requirements doc the user
      named. Omit only when no spec exists apart from the plan.
    - `focus` — free text, only if the user asked to emphasise something this run
      (e.g. "lean hard on security" or "architecture"). Pass it through verbatim.
+   - `verifierCommand` — the payload verifier as this session runs it:
+     `sh ${CLAUDE_PLUGIN_ROOT}/bin/payload-verify`, then one
+     `--exempt <tree>` per machinery tree the front binds. The
+     workflow's rewrite author runs it on the topic directory; a
+     workflow script cannot resolve the plugin root itself.
 
 2. **Note the in-place rewrite.** Briefly remind the user the workflow
    rewrites the plan in place. The pre-rewrite plan is already committed
@@ -141,7 +146,9 @@ the one that was not.
      beside the plan, and its fixes land in whichever surface carries
      the defect — plan or payload file. A pass that edited either
      surface closes by re-running the join:
-     `<the payload verifier> <the topic directory>`. Nothing is implemented yet, so a
+     `sh ${CLAUDE_PLUGIN_ROOT}/bin/payload-verify <the topic directory>`,
+     one `--exempt <tree>` after it per machinery tree the front binds.
+     Nothing is implemented yet, so a
      correctly-authored plan reports every gate PENDING and exits 0;
      exit 2 means the rewrite desynced `plan.md` and
      `payloads/manifest` — a gate whose checkbox or payload file is
@@ -218,6 +225,7 @@ the one that was not.
        "planPath": "<abs path>",
        "specPath": "<abs path or omit>",
        "focus": "<text or omit>",
+       "verifierCommand": "sh ${CLAUDE_PLUGIN_ROOT}/bin/payload-verify --exempt <tree>",
        "facts": {
          "hasCode": true,
          "touchesConcurrency": false,

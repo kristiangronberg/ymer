@@ -1,6 +1,6 @@
 #!/bin/sh
 # hermetic-probe-static — the static stage, sourced by hermetic-probe:
-# three checks over every tracked file, no model.
+# four checks over every tracked file, no model.
 #
 #   manifests    `claude plugin validate --strict` on the root and each plugin
 #   values       no personal value in any file — the five value classes
@@ -14,6 +14,9 @@
 #                ${CLAUDE_PLUGIN_ROOT} path exists, and no plugin carries
 #                an evals/ of its own — the one evals/ is the marketplace
 #                root's
+#   verifier     scripts/payload-verify-test passes — the plugin's payload
+#                verifier against its fixtures, and its placeholder list
+#                against the plugin glossary
 #
 # The corpus is `git ls-files` plus untracked files git does not ignore, so
 # a file added but not yet committed is swept too; it is read one file at a
@@ -267,5 +270,15 @@ stage_static() {
 		pass references "$slash slash references, $links relative links, $roots plugin-root paths — all resolve; no plugins/*/evals"
 	else
 		fail references "a reference does not resolve — fix each site:$broken"
+	fi
+
+	# 4. verifier
+	if [ ! -f "$root/scripts/payload-verify-test" ]; then
+		fail verifier "no scripts/payload-verify-test — restore it; without it the plugin's payload verifier ships untested"
+	elif sh "$root/scripts/payload-verify-test" >"$tmp/pvt" 2>&1; then
+		pass verifier "$(tail -n 1 "$tmp/pvt")"
+	else
+		fail verifier "scripts/payload-verify-test failed — run \`sh scripts/payload-verify-test\` and fix each FAIL it names:"
+		grep -A 2 '^FAIL' "$tmp/pvt" | sed 's/^/                 /'
 	fi
 }

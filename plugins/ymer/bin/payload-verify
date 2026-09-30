@@ -1,0 +1,586 @@
+#!/bin/sh
+# payload-verify — prove every payload's arrival for one topic.
+#
+#   sh payload-verify <topic-dir> [--exempt <tree>]...
+#
+# <topic-dir> is a topic folder, laid out <state folder>/<area>/YYYY/MM-DD-<topic>.
+# Pass one --exempt per machinery tree the front binds — none when it binds
+# none. The state folder is read off the topic directory's own shape, so it
+# is never an argument.
+#
+# Reads <topic-dir>/payloads/manifest and <topic-dir>/plan.md, evaluates
+# one payload gate per manifest line, and reports each as
+#
+#   PASS     box ticked, payload bytes present as expected
+#   PENDING  not yet at its final state — box unticked and bytes not
+#            (fully) there, or a final-state count only partially
+#            reached mid-plan. Mid-plan is the whole of its life: with
+#            the plan complete, no gate reads PENDING.
+#   FAIL     box ticked but the bytes absent or drifted — or a
+#            final-state count still short with the plan complete — or
+#            the payload fully present under an unticked box (early
+#            arrival: pre-existing content or an out-of-order apply,
+#            worth a look)
+#
+# Progress truth is the plan's own ticked boxes (`- [x] **T4S2: …`) —
+# the verifier takes no progress argument, so a wrong one cannot
+# silently skip gates. Backtick-fenced code in plan.md is skipped when
+# scanning boxes, so an illustrative checkbox in such a fence never joins
+# a gate; a `~~~` fence is not recognised.
+#
+# **Plan complete** is derived, never declared: every gate's checkbox is
+# ticked. It is the terminal moment — "not yet" is only honest before
+# it — so a final-state count still short there is FAIL, and no gate
+# reads PENDING at all. Only gated boxes enter the predicate: the
+# verifier step itself, and any close step after it, are unticked when
+# the gate runs. Accepted edge — an occurrence a later payload-less step
+# adds by hand, a command or a manual edit, trips the rule early: such
+# an occurrence should carry a gate of its own, and the early FAIL says
+# so.
+#
+# Manifest grammar — one gate per line; `#` comments and blank lines
+# are ignored:
+#
+#   <step-id> <target-path> [expected]
+#
+#   step-id      lowercase t<task>s<step>, optional letter suffix
+#                (t4s2, t4s2a). Names the payload file
+#                payloads/<step-id>.<ext> (exactly one must exist, and it
+#                must not be empty) and joins the checkbox T<task>S<step>
+#                (suffix stripped). The suffix belongs to payload files
+#                alone: a checkbox is always bare.
+#   target-path  absolute, or rooted at ~/. A ~user spelling is refused,
+#                never expanded.
+#   expected     positive integer occurrence count (default 1) — the
+#                count in the plan's FINAL state, so repeated-content
+#                gates read PENDING mid-plan — or the word `whole`:
+#                the payload is the target's entire intended content
+#                (a Create payload), gated by byte equality.
+#
+# Everything is validated before any gate is judged: a malformed line,
+# a step-id with no checkbox, a suffixed checkbox, no (or several)
+# payload files, an empty or unreadable payload file, a payload file
+# with no extension, or a payload file with no manifest line is an
+# authoring defect — reported with exit 2 and the fix, never folded into
+# a gate verdict. So is a file the verifier cannot read or an awk that
+# fails on it: a scan that did not run never reads as a clean one.
+#
+# A payload bound for a **project repository** carries no
+# workflow-internal reference: a topic ID, a state-store path, an
+# artifact basename, a step ID, a bare `spec D5`-style label, or the
+# placeholder spelling of one of those classes (wir_placeholders below).
+# Every gate's payload bytes are scanned for those, and a hit is an
+# authoring defect too — reported as `<payload>:<line>: <class> —
+# <token>`. Targets under the state folder or an --exempt tree, after
+# symlinks resolve, are process machinery talking about the process and
+# are skipped. Two markers are exempt wherever they sit: a line carrying
+# a remediation marker's `#`-opened `plan: <topic id>` is exempt whole;
+# on a line where `Redefinition in flight — ` stands ahead of a topic
+# ID, that topic ID is exempt and every other class still reads. Prose
+# that merely writes the same token is not a marker.
+#
+# The state-store class keys on the state folder's own directory name:
+# `../<name>` and `<name>/<dir>/`. A state folder named with a common
+# word — docs, notes, work — therefore also flags a project's own
+# `docs/guides/`. Name the state folder distinctively; --exempt takes a
+# whole tree, never one file.
+#
+# Bytes, not characters: every file is read under LC_ALL=C and no
+# encoding is required. A line ends at a newline byte, and a word
+# character is an ASCII letter, digit or `_`. A count gate reads its
+# payload and target as text, and the reference scan reads each payload
+# as text, so all of them are assumed free of NUL bytes; a whole-file
+# gate compares raw bytes.
+#
+# HOME must be set: a home-rooted path is read from it, and an
+# environment that lacks it is refused up front rather than read as a
+# verdict.
+#
+# Exit: 0 no FAIL · 1 at least one FAIL · 2 usage, environment or
+# authoring defect.
+
+set -u
+LC_ALL=C
+export LC_ALL
+unset CDPATH
+
+tab=$(printf '\t')
+
+tmp=$(mktemp -d) || {
+	echo "payload-verify: cannot make a temp directory — set TMPDIR to a writable directory" >&2
+	exit 2
+}
+trap 'rm -rf "$tmp"' EXIT
+trap 'exit 2' HUP INT TERM
+
+die() {
+	printf 'payload-verify: %s\n' "$1" >&2
+	exit 2
+}
+
+usage() {
+	die "usage: payload-verify <topic-dir> [--exempt <tree>]... — the topic directory, then one --exempt per machinery tree the front binds"
+}
+
+# The placeholder spellings of the workflow-internal-reference classes,
+# one `<class><TAB><spelling>` per line. The plugin glossary's
+# `workflow-internal reference` entry lists the same spellings, and the
+# marketplace's own test fails when the two sets differ.
+wir_placeholders() {
+	cat <<'EOF'
+topic ID	<topic ID>
+state-store path	<state folder>
+state-store path	<topic folder>
+step ID	T<task>S<step>
+step ID	<step-id>
+phase name	<phase>
+EOF
+}
+
+# expand <path> — a leading ~ is $HOME, as the manifest grammar allows
+expand() {
+	case $1 in
+	\~) printf '%s\n' "$HOME" ;;
+	\~/*) printf '%s%s\n' "$HOME" "${1#\~}" ;;
+	*) printf '%s\n' "$1" ;;
+	esac
+}
+
+# resolve <path> — the physical absolute path, every symlink followed; a
+# tail that does not exist yet stays as written. A relative path is read
+# from the working directory first, so every parent step is a real
+# parent and the walk ends at / at the latest. Always called through
+# $( ), so its variables never reach the caller.
+resolve() {
+	r=$1
+	case $r in
+	/*) ;;
+	*) r=$(pwd -P)/$r ;;
+	esac
+	if [ -d "$r" ]; then
+		(cd -P "$r" && pwd -P)
+		return
+	fi
+	n=0
+	while [ -h "$r" ] && [ "$n" -lt 40 ]; do
+		n=$((n + 1))
+		l=$(readlink "$r")
+		case $l in
+		/*) r=$l ;;
+		*) r=${r%/*}/$l ;;
+		esac
+	done
+	if [ -d "$r" ]; then
+		(cd -P "$r" && pwd -P)
+		return
+	fi
+	d=${r%/*}
+	b=${r##*/}
+	[ -n "$d" ] || d=/
+	d=$(resolve "$d")
+	case $d in
+	*/) printf '%s%s\n' "$d" "$b" ;;
+	*) printf '%s/%s\n' "$d" "$b" ;;
+	esac
+}
+
+# exempt <physical path> — true under the state folder or an --exempt tree
+exempt() {
+	while IFS= read -r root; do
+		case $1 in
+		"$root" | "$root"/*) return 0 ;;
+		esac
+	done <"$tmp/exempt"
+	return 1
+}
+
+# lastnl <file> — 1 when the file's last byte is a newline, else 0
+lastnl() {
+	if [ -s "$1" ] && [ "$(tail -c 1 "$1" | wc -l | tr -d ' ')" = 1 ]; then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
+# count <payload> <target> — the payload's occurrences in the target,
+# non-overlapping, left to right
+count() {
+	awk -v pnl="$(lastnl "$1")" -v tnl="$(lastnl "$2")" '
+		function slurp(f, nl,    s, l, k, g) {
+			s = ""
+			k = 0
+			while ((g = (getline l < f)) > 0) s = (k++ ? s "\n" : "") l
+			if (g < 0) {
+				print "payload-verify: cannot read " f " — check its permissions" | "cat 1>&2"
+				exit 2
+			}
+			close(f)
+			return (nl && k) ? s "\n" : s
+		}
+		BEGIN {
+			p = slurp(ARGV[1], pnl)
+			t = slurp(ARGV[2], tnl)
+			if (p == "") exit 2
+			n = 0
+			while ((i = index(t, p)) > 0) {
+				n++
+				t = substr(t, i + length(p))
+			}
+			print n
+			exit
+		}' "$1" "$2"
+}
+
+# ── arguments ────────────────────────────────────────────────────────
+
+topic=''
+topic_set=0
+: >"$tmp/exempt"
+while [ $# -gt 0 ]; do
+	case $1 in
+	--exempt)
+		[ $# -ge 2 ] || usage
+		[ -d "$2" ] || die "--exempt $2: no such directory — pass each machinery tree the front binds, as an existing directory"
+		root=$(resolve "$2") || exit 2
+		printf '%s\n' "$root" >>"$tmp/exempt"
+		shift 2
+		;;
+	-*) usage ;;
+	*)
+		[ "$topic_set" = 0 ] || usage
+		topic_set=1
+		topic=$1
+		shift
+		;;
+	esac
+done
+[ "$topic_set" = 1 ] || usage
+[ -n "${HOME:-}" ] || die "HOME is not set — a home-rooted path is read from it; set HOME, as a login shell does"
+
+topic=$(expand "$topic")
+case $topic in
+/*) ;;
+*) topic=$(pwd)/$topic ;;
+esac
+if [ -d "$topic" ]; then
+	topic=$(cd "$topic" && pwd)
+fi
+while :; do
+	case $topic in
+	?*/) topic=${topic%/} ;;
+	*) break ;;
+	esac
+done
+
+plan=$topic/plan.md
+pay=$topic/payloads
+man=$pay/manifest
+[ -f "$plan" ] || die "no plan.md under $topic — pass the topic directory that holds plan.md and payloads/manifest"
+[ -f "$man" ] || die "no payloads/manifest under $topic — a plan whose steps carry no payload has no manifest and nothing to verify"
+
+# The state folder is the topic directory's great-grandparent, read only
+# once the directory has the topic shape: a wrong-shaped path would
+# exempt an arbitrary ancestor, and the reference scan would then pass on
+# nothing.
+base=${topic##*/}
+year=${topic%/*}
+area=${year%/*}
+state=${area%/*}
+year=${year##*/}
+case $base in
+[0-9][0-9]-[0-9][0-9]-?*) shape=1 ;;
+*) shape=0 ;;
+esac
+case $year in
+[0-9][0-9][0-9][0-9]) ;;
+*) shape=0 ;;
+esac
+[ -n "$state" ] || shape=0
+[ "$shape" = 1 ] || die "$topic is not a topic directory — pass <state folder>/<area>/YYYY/MM-DD-<topic>, the shape the state folder is read from"
+state=$(resolve "$state")
+printf '%s\n' "$state" >>"$tmp/exempt"
+
+# ── boxes ────────────────────────────────────────────────────────────
+# `<id> <1|0>` per checkbox outside a fence (CommonMark-ish: a fence
+# opened by N backticks closes only on a line of >= N backticks alone).
+
+awk -v plan="$plan" '
+	function die(m) { print "payload-verify: " m | "cat 1>&2"; bad = 1; exit 2 }
+	{
+		line = $0
+		if (line ~ /^[[:space:]]*```/) {
+			t = line
+			sub(/^[[:space:]]*/, "", t)
+			ticks = t
+			sub(/[^`].*$/, "", ticks)
+			ticks = length(ticks)
+			sub(/[[:space:]]*$/, "", t)
+			if (fence == 0) fence = ticks
+			else if (ticks >= fence && t ~ /^`+$/) fence = 0
+			next
+		}
+		if (fence) next
+		if (line ~ /^[[:space:]]*- \[[ xX]\] \*\*T[0-9]+S[0-9]+[a-z]:/) {
+			id = line
+			sub(/^[[:space:]]*- \[[ xX]\] \*\*/, "", id)
+			sub(/:.*$/, "", id)
+			die("suffixed checkbox " id " in " plan " (line " NR ") — a checkbox carries the bare T<task>S<step>; name the box " substr(id, 1, length(id) - 1) " and keep the letter on its payload files alone")
+		}
+		if (line ~ /^[[:space:]]*- \[[ xX]\] \*\*T[0-9]+S[0-9]+:/) {
+			s = line
+			sub(/^[[:space:]]*- \[/, "", s)
+			ticked = (substr(s, 1, 1) == " ") ? 0 : 1
+			id = s
+			sub(/^[ xX]\] \*\*/, "", id)
+			sub(/:.*$/, "", id)
+			if (id in seen) die("duplicate checkbox " id " in " plan " (line " NR ") — give each step its own step ID")
+			seen[id] = 1
+			print id, ticked
+		}
+	}
+	END { if (bad) exit 2 }' "$plan" >"$tmp/boxes" || exit 2
+
+# ── the manifest ─────────────────────────────────────────────────────
+# The payloads/ listing is read once; each gate becomes one
+# `<sid> <box> <ticked> <payload file> <target> <expected>` line.
+
+ls -A "$pay" >"$tmp/listing" || die "cannot list $pay — check its permissions"
+
+awk -v q="'" '
+	function die(m) { print "payload-verify: " m | "cat 1>&2"; bad = 1; exit 2 }
+	FILENAME == ARGV[1] { box[$1] = $2; next }
+	FILENAME == ARGV[2] { if ($0 != "manifest") file[$0] = 1; next }
+	{
+		line = $0
+		sub(/^[[:space:]]+/, "", line)
+		sub(/[[:space:]]+$/, "", line)
+		if (line == "" || line ~ /^#/) next
+		nf = split(line, f, /[[:space:]]+/)
+		if (nf != 2 && nf != 3) die("manifest line " FNR ": expected <step-id> <target-path> [expected]: " q line q " — one gate per line, fields separated by spaces")
+		sid = f[1]
+		target = f[2]
+		if (sid !~ /^t[0-9]+s[0-9]+[a-z]?$/) die("manifest line " FNR ": bad step-id " q sid q " (want t<task>s<step>[a-z]) — the lowercase form of the step ID, letter suffix optional")
+		if (sid in seen) die("manifest line " FNR ": duplicate gate for " sid " — one gate per payload file; a second payload in the step takes a letter suffix")
+		seen[sid] = 1
+		expected = nf == 3 ? f[3] : "1"
+		if (expected != "whole") {
+			if (expected !~ /^[0-9]+$/ || expected + 0 < 1) die("manifest line " FNR ": expected must be a positive integer or " q "whole" q ": " q expected q)
+			expected = expected + 0
+		}
+		if (target !~ /^\// && target != "~" && target !~ /^~\//) die("manifest line " FNR ": target must be absolute or ~-rooted: " q target q " — write the full path, or ~ and a slash for one under your home directory (~user is not expanded)")
+		b = sid
+		sub(/[a-z]$/, "", b)
+		b = toupper(b)
+		if (!(b in box)) die("manifest line " FNR ": no checkbox " b " in plan.md for gate " sid " — add the step " q "- [ ] **" b ": …" q " or correct the step-id")
+		k = 0
+		for (x in file) if (index(x, sid ".") == 1) { k++; pf = x }
+		if (k != 1) die("manifest line " FNR ": want exactly one payloads/" sid ".<ext>, found " k " — one payload file per gate, named by its step-id")
+		print sid "\t" b "\t" box[b] "\t" pf "\t" target "\t" expected
+	}
+	END {
+		if (bad) exit 2
+		for (x in file) if (index(x, ".") == 0) die("payload file " x " has no extension — name it payloads/<step-id>.<ext>")
+		o = ""
+		for (x in file) {
+			p = x
+			sub(/\..*$/, "", p)
+			if (!(p in seen)) o = o (o == "" ? "" : "\n") x
+		}
+		if (o != "") {
+			n = split(o, a, "\n")
+			for (i = 2; i <= n; i++) {
+				v = a[i]
+				for (j = i - 1; j >= 1 && a[j] > v; j--) a[j + 1] = a[j]
+				a[j + 1] = v
+			}
+			s = a[1]
+			for (i = 2; i <= n; i++) s = s ", " a[i]
+			die("payload file(s) with no manifest gate: " s " — add a manifest line for each, or remove the file")
+		}
+	}' "$tmp/boxes" "$tmp/listing" "$man" >"$tmp/gates" || exit 2
+
+while IFS=$tab read -r sid box ticked pf target expected; do
+	[ -f "$pay/$pf" ] || die "payloads/$pf is not a regular file — a payload is a file named payloads/<step-id>.<ext>"
+	[ -r "$pay/$pf" ] || die "payloads/$pf is not readable — check its permissions"
+	[ -s "$pay/$pf" ] || die "payloads/$pf is empty — a payload carries at least one line of the target's final state"
+done <"$tmp/gates"
+
+# ── workflow-internal references ─────────────────────────────────────
+# Each class below mirrors its token shape with ASCII word boundaries: a
+# leading class the token may not follow, and for some a trailing class
+# it may not run into. A sentinel newline at both ends of the line stands
+# for the line's edges.
+
+wir_placeholders >"$tmp/wir"
+: >"$tmp/hits"
+stem=${state##*/}
+while IFS=$tab read -r sid box ticked pf target expected; do
+	real=$(resolve "$(expand "$target")")
+	exempt "$real" && continue
+	awk -v ppath="$pay/$pf" -v stem="$stem" '
+		function esc(s,    o, i, c) {
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (index("\\^$.[]|()*+?{}", c)) o = o "\\" c
+				else o = o c
+			}
+			return o
+		}
+		# find <s> <re> <head> <tail> — the leftmost token, head and tail
+		# sentinels stripped; sets at, the token position, 0 on none
+		function find(s, re, head, tail) {
+			at = 0
+			if (!match(s, re)) return ""
+			at = RSTART + head
+			return substr(s, RSTART + head, RLENGTH - head - tail)
+		}
+		# pick <s> <class> <literal re> <head> <tail> — the leftmost of the
+		# literal token and every placeholder spelling of the class
+		function pick(s, cls, re, head, tail,    tok, best, pos, i, p) {
+			best = ""
+			pos = 0
+			if (re != "") {
+				tok = find(s, re, head, tail)
+				if (at) { best = tok; pos = at }
+			}
+			for (i = 1; i <= np; i++) {
+				if (pc[i] != cls) continue
+				p = index(s, ps[i])
+				if (p && (pos == 0 || p < pos)) { best = ps[i]; pos = p }
+			}
+			return pos ? best : ""
+		}
+		FILENAME == ARGV[1] {
+			split($0, w, "\t")
+			np++
+			pc[np] = w[1]
+			ps[np] = w[2]
+			next
+		}
+		FNR == 1 {
+			st = esc(stem)
+			topic_re = "[^A-Za-z0-9_/-][0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[a-z0-9]*[a-z][a-z0-9]*(-[a-z0-9]+)*"
+			up_re = "[^A-Za-z0-9_-]\\.\\./" st "[^A-Za-z0-9_-]"
+			down_re = "[^A-Za-z0-9_-]" st "/[a-z][a-z0-9_-]*/"
+			art_re = "[^A-Za-z0-9_-](plan|spec|survey|brainstorm|review|sketch|implemented)\\.md[^A-Za-z0-9_]"
+			step_re = "[^A-Za-z0-9_]T[0-9]+S[0-9]+[^A-Za-z0-9_]"
+			label_re = "[^A-Za-z0-9_](Spec|spec|Survey|survey|Brainstorm|brainstorm) [A-Z][0-9]+[^A-Za-z0-9_]"
+			remedy_re = "(#|Remediation\\()(.*[^A-Za-z0-9_-])?plan:[[:space:]]*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-"
+			marker = "Redefinition in flight — "
+		}
+		{
+			s = "\n" $0 "\n"
+			# the remediation marker: the whole line is exempt
+			if (match(s, remedy_re)) next
+			# the redefinition-in-flight marker: a topic ID after it is exempt
+			m = index(s, marker)
+			ts = m ? substr(s, 1, m - 1) "\n" : s
+			tok = pick(ts, "topic ID", topic_re, 1, 0)
+			if (tok != "") hit("topic ID", tok)
+			up = find(s, up_re, 1, 1)
+			upat = at
+			down = find(s, down_re, 1, 0)
+			if (upat && (!at || upat <= at)) { lit = up; at = upat } else lit = down
+			tok = placeholder_or(s, "state-store path", lit, at)
+			if (tok != "") hit("state-store path", tok)
+			tok = pick(s, "artifact basename", art_re, 1, 1)
+			if (tok != "") hit("artifact basename", tok)
+			tok = pick(s, "step ID", step_re, 1, 1)
+			if (tok != "") hit("step ID", tok)
+			tok = pick(s, "label", label_re, 1, 1)
+			if (tok != "") hit("label", tok)
+			tok = pick(s, "phase name", "", 0, 0)
+			if (tok != "") hit("phase name", tok)
+		}
+		# placeholder_or <s> <class> <literal token> <its position> — the
+		# leftmost of a literal already found and the class placeholders
+		function placeholder_or(s, cls, lit, lat,    best, pos, i, p) {
+			best = lit
+			pos = lit == "" ? 0 : lat
+			for (i = 1; i <= np; i++) {
+				if (pc[i] != cls) continue
+				p = index(s, ps[i])
+				if (p && (pos == 0 || p < pos)) { best = ps[i]; pos = p }
+			}
+			return best
+		}
+		function hit(cls, tok) { printf "  %s:%d: %s — %s\n", ppath, FNR, cls, tok }
+	' "$tmp/wir" "$pay/$pf" >>"$tmp/hits" ||
+		die "cannot scan payloads/$pf — awk failed on it (its error is above); the scan needs a POSIX awk"
+done <"$tmp/gates"
+if [ -s "$tmp/hits" ]; then
+	{
+		echo "payload-verify: workflow-internal reference in payload prose bound for a project repo (write-plan's frame bar) — reword each line below for the target file's reader, or pass --exempt for a machinery tree the front binds:"
+		cat "$tmp/hits"
+	} >&2
+	exit 2
+fi
+
+# ── the verdicts ─────────────────────────────────────────────────────
+# Plan complete — every gate's box ticked — is the terminal moment:
+# every gated step has run, so a count still short of its final-state
+# count is short for good (the accepted edge: the header).
+
+complete=1
+while IFS=$tab read -r sid box ticked pf target expected; do
+	[ "$ticked" = 1 ] || complete=0
+done <"$tmp/gates"
+
+pass=0
+pending=0
+fail=0
+total=0
+while IFS=$tab read -r sid box ticked pf target expected; do
+	target=$(expand "$target")
+	payload=$pay/$pf
+	if [ "$expected" = whole ]; then
+		if [ ! -f "$target" ]; then
+			if [ "$ticked" = 1 ]; then status=FAIL note='ticked but target missing'; else status=PENDING note='target not created yet'; fi
+		elif [ ! -r "$target" ]; then
+			die "cannot read $target — check its permissions"
+		elif cmp -s "$target" "$payload"; then
+			if [ "$ticked" = 1 ]; then status=PASS note='whole file matches'; else status=FAIL note='early: whole file already matches but box unticked'; fi
+		else
+			if [ "$ticked" = 1 ]; then status=FAIL note='ticked but target differs from payload'; else status=PENDING note='target differs (not applied yet)'; fi
+		fi
+	else
+		if [ -f "$target" ]; then
+			n=$(count "$payload" "$target") ||
+				die "cannot count payloads/$pf in $target — awk failed on it (its error is above)"
+		else
+			n=0
+		fi
+		case $n in
+		'' | *[!0-9]*) die "cannot count payloads/$pf in $target — awk returned '$n'; the count needs a POSIX awk" ;;
+		esac
+		of="$n of $expected"
+		if [ "$n" -eq "$expected" ]; then
+			if [ "$ticked" = 1 ]; then status=PASS note=$of; else status=FAIL note="early: $of but box unticked"; fi
+		elif [ "$n" -gt "$expected" ]; then
+			status=FAIL note="drifted: $of occurrences"
+		elif [ "$ticked" = 1 ]; then
+			if [ "$n" -eq 0 ]; then
+				status=FAIL note="ticked but $of occurrences"
+			elif [ "$complete" = 1 ]; then
+				status=FAIL note="plan complete but $of occurrences"
+			else
+				status=PENDING note="$of so far (final-state count)"
+			fi
+		else
+			status=PENDING note=$of
+		fi
+	fi
+	case $status in
+	PASS) pass=$((pass + 1)) ;;
+	PENDING) pending=$((pending + 1)) ;;
+	FAIL) fail=$((fail + 1)) ;;
+	esac
+	total=$((total + 1))
+	printf '%-7s %-6s %s — %s\n' "$status" "$sid" "$target" "$note"
+done <"$tmp/gates"
+
+printf 'payload-verify: %d gate(s) — %d PASS · %d PENDING · %d FAIL\n' "$total" "$pass" "$pending" "$fail"
+[ "$fail" -eq 0 ] || exit 1
+exit 0

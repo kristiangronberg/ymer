@@ -645,10 +645,16 @@ content, embedded content
 The gate proving one payload landed: the target file contains the
 payload file's exact bytes at the expected count (a whole-file `diff` for a
 Create payload), joined to its step's checkbox by step ID and reported
-PASS / PENDING / FAIL by the shared verifier. Not one of sweep's gate
+PASS / PENDING / FAIL by the payload verifier. Not one of sweep's gate
 shapes — a delta gate certifies one edit's increment; the payload gate
 certifies the bytes' presence in the target.
 _Avoid_: byte-identity gate, arrival gate
+
+### payload verifier
+The plugin's shipped script that evaluates every payload gate of one
+topic and reports each PASS / PENDING / FAIL; defined in its prose home,
+development-process mechanics' payload contract.
+_Avoid_: shared verifier, the bar's mechanical half
 
 ### pending interview
 The state in which a phase's own artifact carries an
@@ -1228,10 +1234,17 @@ _Avoid_: tour, code walk, demo, review-and-learn
 A token that names something in the pipeline's own artifacts rather than
 in the code or its history — a topic ID, a state-store path, an artifact
 basename (`plan.md`, `spec.md`), a step or task ID, a phase name, a
-decision or finding label (`spec D5`). Public-register commit messages
-carry none (the register rule: the operations contract, restated in
-development-process's ground rules and review's ship sequence), and
-payload prose bound for a project repo carries none either (write-plan's
-Payloads section, gated by the payload verifier); a remediation marker's
-`plan:` topic ID is the one sanctioned site in a project repo.
-_Avoid_: plan-side construct, plan-internal reference, private ref
+decision or finding label (`spec D5`). Each class has a literal spelling
+and, where the suite writes one, a placeholder spelling — `<topic ID>`;
+`<state folder>`, `<topic folder>`; `T<task>S<step>`, `<step-id>`;
+`<phase>` — and either spelling is the reference. Public-register commit
+messages carry none (the register rule: the operations contract,
+restated in development-process's ground rules and review's ship
+sequence), and payload prose bound for a project repo carries none
+either (write-plan's Payloads section, gated by the payload verifier).
+A project repo has two sanctioned sites, both
+markers: a remediation marker's `plan:` topic ID, and a
+redefinition-in-flight marker's topic ID (→ redefinition-in-flight
+marker).
+_Avoid_: plan-side construct, plan-internal reference, private ref, role
+token

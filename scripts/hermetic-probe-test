@@ -18,7 +18,9 @@
 # the history read, setup's report read for its facts — dressed, and
 # naming a wrong node address — the behaviour checks — an input carrying a
 # brace or an escaped quote included, a server call read by its result —
-# the runs' hook over its own events, the one model pin, and the exit codes.
+# the runs' hook over its own events, the one model pin, the static
+# stage's verifier check — its test passing, failing and missing — and
+# the exit codes.
 #
 #   scripts/hermetic-probe-test
 #
@@ -365,6 +367,9 @@ fixture() {
 	printf 'A readme.\n\n## Installing\n\nRun /ymer:setup; the node is [Ymer Node](%s).\n' 'http://example.invalid:9999/mcp' >"$1/README.md"
 	printf 'evals/results/\n' >"$1/.gitignore"
 	cp "$here/hermetic-probe" "$here/hermetic-probe-static" "$here/hermetic-probe-eval" "$here/hermetic-probe-live" "$here/hermetic-probe-keep" "$1/scripts/"
+	# the static stage runs the marketplace's verifier test: a stub stands in,
+	# since what it tests is not this probe's business
+	printf '#!/bin/sh\necho "payload-verify-test: 1 passed, 0 failed"\n' >"$1/scripts/payload-verify-test"
 	printf 'README.md\t%s\n' 'http://example.invalid:9999/mcp' >>"$1/scripts/hermetic-probe-keep"
 	printf 'someone-token\n' >"$1.tokens"
 	git -C "$1" init -q
@@ -588,6 +593,27 @@ queue 'claude plugin validate --strict' 'rc=1'
 probe "$fx" static
 check "failing manifest exits 1" 1 "$rc"
 check "failing manifest: the manifests check names the path" 1 "$(lines '✘ manifests    validate --strict fails on: .')"
+
+# ── 7b · static, the verifier check ───────────────────────────────────
+# the fixture's stub test passes, then fails naming a case, then is gone:
+# a failing or missing test is a failed check, never a skipped one
+fx=$tmp/f7b
+fixture "$fx"
+shim_reset
+probe "$fx" static
+check "a passing verifier test exits 0" 0 "$rc"
+check "a passing verifier test: the check shows its summary" 1 "$(lines '✔ verifier     payload-verify-test: 1 passed, 0 failed')"
+printf '#!/bin/sh\necho "FAIL — a stub case"\necho "payload-verify-test: 0 passed, 1 failed"\nexit 1\n' >"$fx/scripts/payload-verify-test"
+shim_reset
+probe "$fx" static
+check "a failing verifier test exits 1" 1 "$rc"
+check "a failing verifier test: the check names the command" 1 "$(lines '✘ verifier     scripts/payload-verify-test failed')"
+check "a failing verifier test: its FAIL line is shown" 1 "$(lines 'FAIL — a stub case')"
+rm "$fx/scripts/payload-verify-test"
+shim_reset
+probe "$fx" static
+check "a missing verifier test exits 1" 1 "$rc"
+check "a missing verifier test: the check names it" 1 "$(lines '✘ verifier     no scripts/payload-verify-test')"
 
 # ── 8 · eval, two cases pass ──────────────────────────────────────────
 fx=$tmp/f8

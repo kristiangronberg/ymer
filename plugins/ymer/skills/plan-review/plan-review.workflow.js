@@ -14,6 +14,7 @@ export const meta = {
 //   planPath : absolute path to the plan file to review and rewrite (required)
 //   specPath : absolute path to the original spec/requirements, if separate (optional)
 //   focus    : free-text emphasis for this run, e.g. "lean hard on security" (optional)
+//   verifierCommand : the payload verifier's command line, resolved by the host — `sh <plugin root>/bin/payload-verify` plus one `--exempt <tree>` per machinery tree the front binds (required)
 //
 // NOTE: depending on the harness, the runtime may forward `args` either as a
 // parsed object or as a JSON-encoded *string*. Normalize both shapes here so a
@@ -31,6 +32,7 @@ if (typeof input === 'string') {
 const planPath = input && input.planPath
 const specPath = (input && input.specPath) || null
 const focus = (input && input.focus) || null
+const verifierCommand = (input && input.verifierCommand) || null
 
 // Derived facts about the plan, supplied by the host (the plan-review SKILL).
 // Workflow scripts have no filesystem access, so the script cannot read the
@@ -90,6 +92,10 @@ const digestBlock = decisionDigest
 
 if (!planPath) {
   throw new Error('plan-review workflow requires args.planPath (absolute path to the plan file).')
+}
+
+if (!verifierCommand) {
+  throw new Error('plan-review workflow requires args.verifierCommand (the payload verifier command line: sh <plugin root>/bin/payload-verify plus one --exempt per machinery tree the front binds — plan-review/SKILL.md Steps §1).')
 }
 
 const specLine = specPath
@@ -209,7 +215,7 @@ This is the single most common failure class — be exhaustive here.`,
 - Flag tooling/config gotchas the plan ignores — the project's CLAUDE.md gotcha/testing sections usually list them (linter config merge behavior, security-scanner skip config, path-vs-hex dependency swaps).
 - The glossary governing this plan is: ${glossaryPath}. When it exists, check the plan's vocabulary against it: flag names — in prose or code blocks — that use an _Avoid_ synonym instead of the canonical term, and any plan text that redefines a glossary term instead of pointing to the glossary.
 - Prose claims embedded in planned content (moduledocs/docstrings, comments, Dockerfile/config comments, README fragments) are claims — verify each against the real codebase AND against the plan's own grounding facts; a conflict between the two is a finding.
-- Payload prose destined for a project repository is written in the target file's frame — for the reader of that file, saying what the code does or why in terms a \`git log\` reader can act on — and carries no workflow-internal reference: a topic ID, a state-store path, an artifact basename, a step or task ID, a phase name, a decision or finding label. Provenance is the change described, never a pointer into the state store; a remediation marker's \`plan:\` line is the one sanctioned topic-ID site. Targets in the state folder or a machinery tree are exempt — they talk about the process by right.
+- Payload prose destined for a project repository is written in the target file's frame — for the reader of that file, saying what the code does or why in terms a \`git log\` reader can act on — and carries no workflow-internal reference, in its literal or its placeholder spelling: a topic ID, a state-store path, an artifact basename, a step or task ID, a phase name, a decision or finding label. Provenance is the change described, never a pointer into the state store; a project repo has two sanctioned topic-ID sites, a remediation marker's \`plan:\` line and a redefinition-in-flight marker's topic ID. Targets in the state folder or a machinery tree are exempt — they talk about the process by right.
 - the payload verifier already fails the token classes that have no reader-frame reading, so flag what it cannot see: a \`Step 3\` / \`Task 4\` / \`Plan 3a\` that means a plan's step rather than the target file's own numbering, provenance written as a pointer at the record of a change instead of as the change, and prose that is true and untokened yet only legible to someone holding the plan.`,
   },
   {
@@ -347,7 +353,7 @@ const rewritePrompt = (findings) => `You are the author of the implementation pl
 ${payloadsLine}
 Rules:
 - Edit the file at ${planPath} directly with Edit/Write — and, where a confirmed fix changes payload bytes or gates, edit the payload files and manifest in the payloads/ directory beside it. Do NOT create a separate review file and do NOT just append a notes section in place of fixing the body — fold the fixes into the actual plan.
-- If any step of the plan carries a "Payload:" reference line, close by running the payload verifier on the directory holding ${planPath}: nothing is implemented yet, so a correctly-authored plan reports every gate PENDING and exits 0. Exit 2 means your edit desynced plan.md and payloads/manifest — a gate whose checkbox or payload file is gone, a malformed line — or that a payload bound for a project repo carries a workflow-internal reference; exit 1 means a payload already sits in its target (the vacuous-payload case) — or, on a re-plan whose carried steps keep their ticks, a count gate short with every gate box ticked: an occurrence a payload-less step would add by hand, which needs a gate of its own. Fix whichever it names and re-run before returning. A plan whose steps carry no "Payload:" line authored no payload at all — deletions, commands, and behavior only — so there is nothing to verify, and never a reason to author an empty manifest.
+- If any step of the plan carries a "Payload:" reference line, close by running the payload verifier on the directory holding ${planPath} — \`${verifierCommand} <that directory>\`: nothing is implemented yet, so a correctly-authored plan reports every gate PENDING and exits 0. Exit 2 means your edit desynced plan.md and payloads/manifest — a gate whose checkbox or payload file is gone, a malformed line — or that a payload bound for a project repo carries a workflow-internal reference; exit 1 means a payload already sits in its target (the vacuous-payload case) — or, on a re-plan whose carried steps keep their ticks, a count gate short with every gate box ticked: an occurrence a payload-less step would add by hand, which needs a gate of its own. Fix whichever it names and re-run before returning. A plan whose steps carry no "Payload:" line authored no payload at all — deletions, commands, and behavior only — so there is nothing to verify, and never a reason to author an empty manifest.
 - Apply every confirmed fix. Where a finding lists "alternatives", it is a genuine design decision: pick the option best supported by this codebase's conventions (CLAUDE.md / README.md) and the plan's named coding-standards companion skill where it names one, apply it, and record it under designDecisions with the alternatives you did not take and your rationale.
 - Record every design decision in the PLAN itself, not only in your return value: next to the step it affects, add a \`> Design decision: <what you chose> — <the alternatives you did not take> — <why>\` note. The structured designDecisions field is relayed in this session only and does not survive to later phases; the note in the plan does, and downstream reviews read it as settled rather than re-litigating it. Return the same decisions under designDecisions as well.
 - When an applied fix changes a decision's scope or statement, sweep the fix's footprint before returning: search the whole plan plus every payloads/ file for the decision's subject (substring/stem terms, synonyms included — the sweep skill) and revisit each hit so no site still states the pre-fix form. Your notes stay \`> Design decision:\` — never write \`> **Amended (\` markers: that grammar records plan amendments and belongs to the plan author (write-plan).
