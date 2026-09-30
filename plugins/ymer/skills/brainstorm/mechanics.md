@@ -1,6 +1,6 @@
 # Brainstorming — mechanics
 
-The mechanics of the brainstorm skill, moved here byte for byte from `SKILL.md`, which keeps the intent and the spine and names this file under every heading that has entries here. The headings are `SKILL.md`'s own; read a section's entries at the moment that section runs.
+The mechanics of the brainstorm skill, which keeps the intent and the spine and names this file under every heading that has entries here. The headings are `SKILL.md`'s own; read a section's entries at the moment that section runs.
 
 ## Overview
 

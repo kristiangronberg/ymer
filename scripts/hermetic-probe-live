@@ -144,7 +144,7 @@ batch_files() { # batch_files — every friction-batch request.md under state/, 
 # the set moves those three texts with it. The hook is sh, reading the PreToolUse event on
 # stdin — one JSON line, tool_input's command its first key (CLI 2.1.283,
 # measured); an event it cannot read that way is refused, as bash-commands
-# fails closed on such an input. Its exit 2 is the refusal, which lands in
+# fails closed on such an input that ran. Its exit 2 is the refusal, which lands in
 # the result's permission_denials like the permission layer's own, and its
 # message is what the model reads, so it names the declared commands and
 # that each runs alone. hook/ is written fresh each run.
@@ -279,12 +279,6 @@ report_ports() { # report_ports <n>
 # value — a Glob's `*.{md,yaml}`, a `{}` in a Bash command — is a byte of
 # the string, and an escaped quote stays inside it, so no key after such
 # a byte is lost to the reads below (a cut at the first `}` lost them).
-denied_bash() { # denied_bash <n> — each Bash command refused in run <n>, by the runs' hook or the permission layer, one per line, spelled as live_calls reads it: the result event's permission_denials, the run's own record of what never ran
-	grep '"type":"result"' "$runs/$1.jsonl" |
-		grep -o -E '"tool_name":"Bash","tool_use_id":"[^"]*","tool_input":\{"command":"([^"\\]|\\.)*"' |
-		sed -E 's/.*"tool_input":\{"command":"//; s/"$//' || true
-}
-
 live_calls() { # live_calls <n>
 	awk '
 		{
@@ -317,6 +311,12 @@ live_calls() { # live_calls <n>
 				s = substr(s, j + 1)
 			}
 		}' "$runs/$1.jsonl"
+}
+
+denied_bash() { # denied_bash <n> — the tool_use_id of each Bash call refused in run <n>, by the runs' hook or the permission layer, one per line: the result event's permission_denials, the run's own record of what never ran, read by tool name and id alone
+	grep '"type":"result"' "$runs/$1.jsonl" |
+		grep -o -E '"tool_name":"Bash","tool_use_id":"[^"]+"' |
+		sed -E 's/.*"tool_use_id":"//; s/"$//' || true
 }
 
 # Whether run <n> made an execute call through the node's notebook tool.
@@ -366,6 +366,66 @@ live_mcp() { # live_mcp <n>
 				name = substr(s, q + 8)
 				name = substr(name, 1, index(name, "\"") - 1)
 				if (index(name, "mcp__") == 1) print ((id in unreached && unreached[id] == name) ? "unreached " : "reached ") name
+			}
+		}' "$runs/$1.jsonl" "$runs/$1.jsonl"
+}
+
+# The Bash calls that ran in run <n>, one per line as each call's input:
+# every Bash tool_use block the run made, less each call the result
+# event's permission_denials names by its tool_use_id — a denial takes out
+# the one call it names and nothing else, whatever that call's input
+# holds, and a denial naming no call takes out nothing. The input is read
+# whole, as live_calls reads it. A call's id is read only where the CLI
+# writes it, straight after the block's type (CLI 2.1.283, measured): a
+# call whose id is not there is never taken out, so a record the read
+# does not know fails closed.
+live_bash() { # live_bash <n>
+	awk '
+		NR == FNR {
+			if (index($0, "\"type\":\"result\"") == 0) next
+			s = $0
+			for (;;) {
+				p = index(s, "\"tool_name\":\"Bash\",\"tool_use_id\":\"")
+				if (p == 0) break
+				s = substr(s, p + 34)
+				id = substr(s, 1, index(s, "\"") - 1)
+				if (id != "") denied[id] = 1
+			}
+			next
+		}
+		{
+			s = $0
+			for (;;) {
+				p = index(s, "\"type\":\"tool_use\",")
+				if (p == 0) break
+				s = substr(s, p)
+				q = index(s, "\"name\":\"")
+				r = index(s, "\"input\":{")
+				if (q == 0 || r == 0) break
+				name = substr(s, q + 8)
+				name = substr(name, 1, index(name, "\"") - 1)
+				id = ""
+				if (index(s, "\"type\":\"tool_use\",\"id\":\"") == 1) {
+					id = substr(s, 25)
+					id = substr(id, 1, index(id, "\"") - 1)
+				}
+				n = length(s)
+				depth = 0
+				quoted = 0
+				for (j = r + 8; j <= n; j++) {
+					c = substr(s, j, 1)
+					if (quoted) {
+						if (c == "\\") j++
+						else if (c == "\"") quoted = 0
+					} else if (c == "\"") quoted = 1
+					else if (c == "{") depth++
+					else if (c == "}") {
+						depth--
+						if (depth == 0) break
+					}
+				}
+				if (name == "Bash" && !(id != "" && id in denied)) print substr(s, r + 8, j - r - 7)
+				s = substr(s, j + 1)
 			}
 		}' "$runs/$1.jsonl" "$runs/$1.jsonl"
 }
@@ -893,17 +953,17 @@ link check before the edit would have caught it.'
 		fi
 		# every command that ran is a declared one, read against
 		# hook/declared as the runs' hook reads it: the command is the
-		# whole JSON string, escaped quotes included, and an input whose
-		# first key is not the command is not read at all, and fails
-		# closed. A refused command never ran: it is left out here and
-		# named on the pass line, read off the run's own permission_denials.
-		# A grep that cannot read hook/declared (status 2) counts the run,
-		# so a lost file fails closed rather than passing every command
-		denied_bash "$n" >"$tmp/denied"
-		live_calls "$n" | grep '^Bash ' | sed -E 's/^Bash \{"command":"(([^"\\]|\\.)*)".*/\1/' |
+		# whole JSON string, escaped quotes included. A refused call never
+		# ran, whatever its input's shape: live_bash leaves it out by its
+		# id, and the run is named on the pass line. An input that ran
+		# whose first key is not the command is not unwrapped, and fails
+		# closed. A grep that cannot read hook/declared (status 2) counts
+		# the run, so a lost file fails closed rather than passing every
+		# command
+		live_bash "$n" | sed -E 's/^\{"command":"(([^"\\]|\\.)*)".*/\1/' |
 			grep -v -E -f "$hook/declared" >"$tmp/other" || [ $? -eq 1 ] || echo "hook/declared unreadable" >>"$tmp/other"
-		grep -v -x -F -f "$tmp/denied" "$tmp/other" | grep -q . && shell="$shell $n"
-		grep -q . "$tmp/denied" && refused="$refused $n"
+		grep -q . "$tmp/other" && shell="$shell $n"
+		denied_bash "$n" | grep -q . && refused="$refused $n"
 		case $summary_runs in
 		*" $n "*) live_calls "$n" | grep '^Bash ' | grep -q 'git commit' && commits="$commits $n" ;;
 		esac

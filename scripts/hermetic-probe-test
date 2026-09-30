@@ -17,7 +17,8 @@
 # steps' not-run lines, the state reads' deltas over the node and state/,
 # the history read, setup's report read for its facts — dressed, and
 # naming a wrong node address — the behaviour checks — an input carrying a
-# brace or an escaped quote included, a server call read by its result —
+# brace or an escaped quote included, a server call read by its result, a
+# refusal read by its call's id —
 # the runs' hook over its own events, the one model pin, the static
 # stage's verifier check — its test passing, failing and missing — and
 # the exit codes.
@@ -273,7 +274,21 @@ trace_denied='{"tool_name":"Bash","tool_use_id":"t1","tool_input":{"command":"cl
 run_trace 'read' Bash '{"command":"claude mcp get ymer 2>&1; echo done"}' >"$canned/run-capture-refused.jsonl"
 trace_denied='{"tool_name":"Bash","tool_use_id":"t1","tool_input":{"command":"true","description":"d"}}'
 run_trace 'read' Bash '{"command":"true","description":"d"}' >"$canned/run-capture-true-refused.jsonl"
+# a refusal is read by its call's id: the compound refused and then run
+# again, where the one refusal takes out the first call alone; the refused
+# compound with its id moved off its place after the block's type, where
+# the read does not take it, so the call is never taken out; and the habit
+# refused with its description ahead of its command, which never ran
+# either, whatever its input's key order
+trace_denied='{"tool_name":"Bash","tool_use_id":"t1","tool_input":{"command":"claude mcp get ymer 2>&1; echo done"}}'
+run_trace 'read' Bash '{"command":"claude mcp get ymer 2>&1; echo done"}' Bash '{"command":"claude mcp get ymer 2>&1; echo done"}' >"$canned/run-capture-refused-then-ran.jsonl"
+sed 's/"id":"t1","name":"Bash"/"name":"Bash","id":"t1"/' "$canned/run-capture-refused.jsonl" >"$canned/run-capture-refused-id-moved.jsonl"
+trace_denied='{"tool_name":"Bash","tool_use_id":"t1","tool_input":{"description":"d","command":"true"}}'
+run_trace 'read' Bash '{"description":"d","command":"true"}' >"$canned/run-capture-description-refused.jsonl"
 trace_denied=''
+# a declared command that ran with its description ahead of it: the
+# command is not first, so the read does not unwrap it, and it fails closed
+run_trace 'read' Bash '{"description":"d","command":"claude mcp get ymer"}' >"$canned/run-capture-description.jsonl"
 run_trace 'read' Read '{"file_path":"/Users/someone/state"}' >"$canned/run-capture-outside.jsonl"
 # two paths that open under an allowed prefix and climb out of it, and a
 # Glob whose pattern is absolute — a call with no path key at all
@@ -1074,6 +1089,28 @@ live_seeded /ymer:kaizen-capture run-capture-true-refused.jsonl
 probe "$fx" live
 check "live refused habit exits 0" 0 "$rc"
 check "live refused habit: bash-commands passes, naming the refused run" 1 "$(lines '✔ bash-commands no Bash command beyond `claude mcp get <name>` and the state folder'"'"'s `rev-parse` ran in any run — refused, never run, in run(s) 2')"
+
+# ── 25d · live, a refusal read by its call's id ───────────────────────
+# a refusal takes out the one call its id names: the same compound run
+# again after it counts, and so does a refused call whose id the read
+# cannot find; a refused call never ran whatever its input's key order,
+# while a declared command that ran with its command not first fails closed
+live_seeded /ymer:kaizen-capture run-capture-refused-then-ran.jsonl
+probe "$fx" live
+check "live compound refused, then run: exits 1" 1 "$rc"
+check "live compound refused, then run: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
+live_seeded /ymer:kaizen-capture run-capture-refused-id-moved.jsonl
+probe "$fx" live
+check "live refusal with its call's id moved exits 1" 1 "$rc"
+check "live refusal with its call's id moved: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
+live_seeded /ymer:kaizen-capture run-capture-description-refused.jsonl
+probe "$fx" live
+check "live refused habit, description first: exits 0" 0 "$rc"
+check "live refused habit, description first: bash-commands passes, naming the refused run" 1 "$(lines '✔ bash-commands no Bash command beyond `claude mcp get <name>` and the state folder'"'"'s `rev-parse` ran in any run — refused, never run, in run(s) 2')"
+live_seeded /ymer:kaizen-capture run-capture-description.jsonl
+probe "$fx" live
+check "live declared command, description first: exits 1" 1 "$rc"
+check "live declared command, description first: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
 
 # ── 26 · live, docker-compose not on PATH ─────────────────────────────
 # the shim is hidden and PATH narrowed to the system's own directories, so
