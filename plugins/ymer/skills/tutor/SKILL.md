@@ -342,8 +342,9 @@ opening's create included, and those whole-body writes take the hash
 gate: the write rules are the Knowledge Docs section's and bind this
 doc too (§ Editing a body, below). The sitting-log append takes the
 append door there — `insert_after` on the previous entry's node, the new
-entry read back — since a section write offers neither the explicit slug
-nor a summary return; the text goes in the section body. The
+entry read back — since a section write takes no slug and its digest
+covers the whole stored body, bytes this call never sent; the text goes
+in the section body. The
 `tutor_engagements` row's doc handle is `<slug>-<uuid>`, the same form
 as a `tutor_subjects` row's.
 Skeleton:
@@ -395,7 +396,10 @@ section only when the subject's corpus moves; a sitting close appends
 its entry to `## Sitting log` (`docs update_section`, appending), edits
 the goal-contract and arc sections as ticks and statuses land, and
 drops a dated delta line under `Materials & state-deltas` when the
-corpus moved. **Resolve the node from `docs get_structure` and never
+corpus moved. A close's section writes on this doc go in one
+`docs update_section` item — its edits, resolved from a single
+`docs get_structure` read, land in one save or none do. **Resolve the
+node from `docs get_structure` and never
 write the whole-body root** — it is not a section, and replacing it
 discards the entire engagement record (the trap: Knowledge Docs
 § Editing a body, below). Nothing routinely snapshots this doc, so
@@ -503,9 +507,9 @@ learned and not learned. The goal: check all the boxes.
   without it, so it is not assumed safe. Handles resolve by their
   trailing UUID, so a drifted slug breaks nothing stored; the bare form
   is simply what the subject index's handles read as.
-- **Editing a body:** a whole-body `docs update`, asking for the summary
-  return. It gives the stored body's byte length and a digest of it
-  instead of echoing the whole body back; compare that digest against
+- **Editing a body:** a whole-body `docs update`. Its item's result
+  gives the stored body's byte length and a digest of it instead of
+  echoing the whole body back; compare that digest against
   your own of the bytes you sent, by the algorithm help names. A
   whole-body write is retyped through context, and a length-preserving
   slip — an arrow becoming a dash, `- [x]` becoming `- [ ]` — moves no
@@ -520,7 +524,8 @@ learned and not learned. The goal: check all the boxes.
   after an existing node — takes `docs update_section` in `insert_after`
   mode on a node resolved from `docs get_structure`, never an id typed
   by hand, and reads the new section back (`docs get_section`), since
-  that call offers no summary return: the unchanged bytes never pass
+  the digest that call returns covers the whole stored body, which it
+  never sent: the unchanged bytes never pass
   through context, which the whole-body door cannot promise, and its
   help names the optimistic locking a concurrent whole-document edit
   trips. Whole-body `docs update` plus the digest stays the door for
