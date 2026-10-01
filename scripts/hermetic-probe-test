@@ -19,7 +19,12 @@
 # naming a wrong node address — the behaviour checks — an input carrying a
 # brace or an escaped quote included, a server call read by its result, a
 # refusal read by its call's id —
-# the runs' hook over its own events, the one model pin, the static
+# the runs' working directory outside the home tree — a TMPDIR under it
+# refused — and a read under that directory, the instructions check — a
+# file loaded in a run or in its subagent, a transcript missing or with
+# no environment, the control recording its planted file, none, or
+# another beside it — the runs' hook over its own events, the one model
+# pin, the static
 # stage's verifier check — its test passing, failing and missing — and
 # the exit codes.
 #
@@ -65,6 +70,8 @@ for cmd in claude docker docker-compose curl; do
 #!/bin/sh
 me=$(basename "$0")
 printf '%s %s\n' "$me" "$*" >>"$SHIM_DIR/log"
+# a headless call's working directory, physical, as the CLI records it
+[ "$me $1" = 'claude -p' ] && pwd -P >>"$SHIM_DIR/cwds"
 [ -n "${ANTHROPIC_API_KEY+x}" ] && echo "$me: ANTHROPIC_API_KEY is set" >>"$SHIM_DIR/log"
 key=$(printf '%s %s' "$me" "$*" | tr '\n' ' ')
 out=''
@@ -119,8 +126,9 @@ done
 PATH=$tmp/bin:$PATH
 export PATH
 
-shim_reset() { # shim_reset — empty log, queue, answers and effects
+shim_reset() { # shim_reset — empty log, working directories, queue, answers and effects
 	: >"$SHIM_DIR/log"
+	: >"$SHIM_DIR/cwds"
 	: >"$SHIM_DIR/queue"
 	: >"$SHIM_DIR/answers"
 	: >"$SHIM_DIR/effects"
@@ -179,7 +187,7 @@ eval_result false 1 1 1 >"$canned/eval-short.json"
 # tool_use block per <tool> <input> pair, the tool_result lines a case
 # sets, an optional narration line, and the result line last — the shape
 # the live stage reads
-trace_init_default='{"type":"system","subtype":"init","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"}]}'
+trace_init_default='{"type":"system","subtype":"init","session_id":"s-run","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"}]}'
 trace_init=$trace_init_default
 trace_narration=''
 run_trace() { # run_trace <result text> [<tool> <input json>]...
@@ -313,7 +321,7 @@ run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-r
 trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-node</tool_use_error>' true)
 run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-misnamed.jsonl"
 trace_results=''
-trace_init='{"type":"system","subtype":"init","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"},{"name":"other","status":"connected","source":"claudeai"}]}'
+trace_init='{"type":"system","subtype":"init","session_id":"s-run","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"},{"name":"other","status":"connected","source":"claudeai"}]}'
 run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO frictions VALUES (1)"}}' >"$canned/run-capture-connector.jsonl"
 trace_init=$trace_init_default
 # a compound behind an escaped quote: the stage reads the command as the
@@ -324,6 +332,55 @@ sed 's/"subtype":"success"/"subtype":"error_max_turns"/' "$canned/run-capture.js
 # setup named — each having only read the node
 run_trace "Tutor skill — stopped: no ymer docs tool in this session. The knowledge and engagement docs live in ymer, so nothing was opened." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-ymer.jsonl"
 run_trace "Tutor skill — stopped: the notebook has no tutor_subjects or tutor_engagements table. Run /ymer:setup, which creates both." $notebook '{"action":"query","data":{"sql":"SELECT name FROM sqlite_master"}}' >"$canned/run-tutor-stop.jsonl"
+# The session transcripts the instructions check reads, under the probe
+# dir's cfg/projects/ and found by the session id on a trace's init line:
+# the one every canned run names, recording its environment and no
+# instructions file, and one per variant a case seeds — a file loaded
+# after the first turn, a nested file reached through a read, no
+# environment recorded, no transcript at all, and a clean main transcript
+# whose subagent loads a file. Nothing the stage runs writes under
+# cfg/projects/, so they are planted once.
+transcripts=$tmp/probe/cfg/projects
+env_line='{"type":"attachment","attachment":{"type":"environment","snapshot":{"workingDirectory":"/w"}}}'
+instr_line='{"type":"attachment","attachment":{"type":"instructions","files":[{"path":"/someone/.claude/CLAUDE.md","type":"Project","content":"x"}]}}'
+nested_line='{"type":"attachment","attachment":{"type":"nested_memory","path":"/someone/project/CLAUDE.md","content":{"path":"/someone/project/CLAUDE.md","type":"Project","content":"x"},"displayPath":"CLAUDE.md"}}'
+mkdir -p "$transcripts/-w/s-subagent/subagents"
+printf '%s\n' '{"type":"user"}' "$env_line" >"$transcripts/-w/s-run.jsonl"
+printf '%s\n' "$env_line" '{"type":"user"}' "$instr_line" >"$transcripts/-w/s-loaded.jsonl"
+printf '%s\n' "$env_line" '{"type":"user"}' "$nested_line" >"$transcripts/-w/s-nested.jsonl"
+printf '%s\n' '{"type":"user"}' >"$transcripts/-w/s-noenv.jsonl"
+printf '%s\n' "$env_line" >"$transcripts/-w/s-subagent.jsonl"
+printf '%s\n' "$env_line" "$instr_line" >"$transcripts/-w/s-subagent/subagents/agent-1.jsonl"
+for v in loaded nested noenv missing subagent; do
+	sed "s/\"session_id\":\"s-run\"/\"session_id\":\"s-$v\"/" "$canned/run-capture.jsonl" >"$canned/run-capture-$v.jsonl"
+done
+# The control call: its trace names a session of its own, and its effect —
+# run in the control's working directory, as the call is — plants that
+# session's transcript, recording the planted CLAUDE.md by its physical
+# path alone, beside another file, or no file at all.
+trace_init=$(printf '%s' "$trace_init_default" | sed 's/"s-run"/"s-control"/')
+run_trace 'ok' >"$canned/run-control.jsonl"
+trace_init=$trace_init_default
+cat >"$canned/plant-control" <<EOF
+# plant-control <planted | another | none> — the control session's transcript
+mkdir -p '$transcripts/-control'
+f=\$(pwd -P)/CLAUDE.md
+{
+	printf '%s\n' '$env_line'
+	case \$1 in
+	planted) printf '{"type":"attachment","attachment":{"type":"instructions","files":[{"path":"%s","type":"Project"}]}}\n' "\$f" ;;
+	another) printf '{"type":"attachment","attachment":{"type":"instructions","files":[{"path":"%s","type":"Project"},{"path":"/someone/CLAUDE.md","type":"Project"}]}}\n' "\$f" ;;
+	esac
+} >'$transcripts/-control/s-control.jsonl'
+EOF
+# A capture trace written where a headless call runs: its one call reads
+# notes.md in that working directory by its physical path.
+cat >"$canned/cwd-read-trace" <<'EOF'
+# cwd-read-trace <init line> <trace file>
+printf '%s\n' "$1" >"$2"
+printf '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"%s/notes.md"}}]}}\n' "$(pwd -P)" >>"$2"
+printf '%s\n' '{"is_error":false,"subtype":"success","type":"result","result":"recorded","permission_denials":[]}' >>"$2"
+EOF
 node_rows() { # node_rows <n> — a query answer whose first cell is <n>
 	printf '{"result":{"content":[{"text":"{\\"columns\\":[\\"n\\"],\\"rows\\":[[%s]]}","type":"text"}],"isError":false}}' "$1"
 }
@@ -418,6 +475,8 @@ live_queue() {
 	queue '"action":"tables"' "$(node_tables 0)"
 	queue 'claude plugin list --json' '[ { "id": "ymer@ymer" } ]'
 	queue 'claude mcp list' 'ymer-node: http://127.0.0.1:8112/mcp (HTTP) - ✔ Connected'
+	queue 'claude -p Reply with' "@$canned/run-control.jsonl"
+	effect 'claude -p Reply with' "sh '$canned/plant-control' planted"
 	queue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl"
 	queue '"action":"tables"' "$(node_tables 7)"
 	queue 'FROM fronts"' "$(node_rows 1)"
@@ -463,7 +522,10 @@ live_queue() {
 probe() { # probe <fixture> <args...> — output in $out, exit status in $rc
 	fx=$1
 	shift
-	out=$(cd "$fx" && HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$tmp/probe sh scripts/hermetic-probe "$@" 2>&1)
+	# the entry's temp dir, and the live runs' working directories in it,
+	# under $tmp whatever TMPDIR the caller carries
+	mkdir -p "$tmp/tmpdir"
+	out=$(cd "$fx" && TMPDIR=$tmp/tmpdir HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$tmp/probe sh scripts/hermetic-probe "$@" 2>&1)
 	rc=$?
 }
 lines() { printf '%s\n' "$out" | grep -c -F -- "$1"; }
@@ -731,7 +793,10 @@ check "live: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is se
 check "live: teardown brings the node down" 1 "$(logged "$scratch_dc down")"
 check "live: data/ is gone after teardown" 0 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
 check "live: state/ is gone after teardown" 0 "$(test -e "$pstate" && echo 1 || echo 0)"
-check "live: the runs are kept" 10 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
+check "live: the runs are kept, the control call's beside them" 11 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
+check "live: the instructions line" 1 "$(lines '✔ instructions no run loaded an instructions file — 10 transcript(s) read, each recording its environment, and the control run recorded its planted CLAUDE.md alone')"
+check "live: the control call, prompt before flags — one turn, no server, under the runs' hook" 1 "$(logged "claude -p Reply with the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}'" --settings $tmp/probe/hook/settings.json")"
+check "live: eleven headless calls, every one from a working directory outside the probe dir and the home directory" '11 0' "$(printf '%s %s' "$(wc -l <"$SHIM_DIR/cwds" | tr -d ' ')" "$(grep -c -e "^$tmp/probe" -e "^$HOME" "$SHIM_DIR/cwds")")"
 # node.log is truncated at the stage's start like the traces: the two
 # `tables` reads are this invocation's — the node-up one and the teardown's
 check "live: node.log is this invocation's alone" 2 "$(grep -c '^>> tables {}' "$tmp/probe/runs/node.log")"
@@ -900,7 +965,7 @@ check "live option not set: teardown brought the node down" 1 "$(logged "$scratc
 # ── 21d · live, the probe dir inside a git work tree ──────────────────
 live_case
 live_queue
-out=$(cd "$fx" && HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$fx/probe-in-git sh scripts/hermetic-probe live 2>&1)
+out=$(cd "$fx" && TMPDIR=$tmp/tmpdir HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$fx/probe-in-git sh scripts/hermetic-probe live 2>&1)
 rc=$?
 check "live state/ inside a git work tree exits 2" 2 "$rc"
 check "live state/ inside a git work tree names the variable" 1 "$(lines "✘ state        $fx/probe-in-git/state is inside a git work tree — set HERMETIC_PROBE_DIR")"
@@ -1060,7 +1125,7 @@ check "live second server: capture itself still passes" 1 "$(lines '✔ capture'
 live_seeded /ymer:kaizen-capture run-capture-outside.jsonl
 probe "$fx" live
 check "live outside read exits 1" 1 "$rc"
-check "live outside read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+check "live outside read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
 
 # ── 25 · live, a compound Bash command opening with the declared one ──
 live_seeded /ymer:kaizen-capture run-capture-compound.jsonl
@@ -1252,15 +1317,15 @@ check "live shell write: writes still passes" 1 "$(lines '✔ writes')"
 live_seeded /ymer:kaizen-capture run-capture-climb.jsonl
 probe "$fx" live
 check "live climbing read exits 1" 1 "$rc"
-check "live climbing read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+check "live climbing read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
 live_seeded /ymer:kaizen-capture run-capture-climb-root.jsonl
 probe "$fx" live
 check "live climbing read from the checkout exits 1" 1 "$rc"
-check "live climbing read from the checkout: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+check "live climbing read from the checkout: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
 live_seeded /ymer:kaizen-capture run-capture-glob.jsonl
 probe "$fx" live
 check "live absolute glob exits 1" 1 "$rc"
-check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
 
 # ── 37b · live, a brace inside an input's string ──────────────────────
 # a Glob whose brace pattern precedes its path, and a `{}` ahead of a git
@@ -1268,13 +1333,94 @@ check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ iso
 live_seeded /ymer:kaizen-capture run-capture-glob-brace.jsonl
 probe "$fx" live
 check "live brace glob exits 1" 1 "$rc"
-check "live brace glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe and $fx")"
+check "live brace glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
 live_case
 live_queue
 reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-git-brace.jsonl"
 probe "$fx" live
 check "live brace before a git commit exits 1" 1 "$rc"
 check "live brace before a git commit: the summary-git line" 1 "$(lines '✘ summary-git  summary attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
+
+# ── 37c · live, the instructions check over the runs' transcripts ─────
+# a file loaded after the first turn, a nested file reached through a
+# read, a transcript recording no environment, no transcript at all, and
+# a subagent's load beside a clean main transcript: each reds the line
+# naming the run and what was read, and the checks over the run's trace
+# still read it
+live_seeded /ymer:kaizen-capture run-capture-loaded.jsonl
+probe "$fx" live
+check "live file loaded exits 1" 1 "$rc"
+check "live file loaded: the instructions line names the run, the file and its transcript" 1 "$(lines "✘ instructions run(s) 2 loaded an instructions file — first /someone/.claude/CLAUDE.md in $transcripts/-w/s-loaded.jsonl")"
+check "live file loaded: capture itself still passes" 1 "$(lines '✔ capture')"
+live_seeded /ymer:kaizen-capture run-capture-nested.jsonl
+probe "$fx" live
+check "live nested file loaded exits 1" 1 "$rc"
+check "live nested file loaded: the instructions line names the run, the file and its transcript" 1 "$(lines "✘ instructions run(s) 2 loaded an instructions file — first /someone/project/CLAUDE.md in $transcripts/-w/s-nested.jsonl")"
+live_seeded /ymer:kaizen-capture run-capture-noenv.jsonl
+probe "$fx" live
+check "live transcript recording no environment exits 1" 1 "$rc"
+check "live transcript recording no environment: the instructions line names the run and the transcript" 1 "$(lines "✘ instructions run(s) 2 left a transcript the check cannot vouch for, missing or recording no environment — first $transcripts/-w/s-noenv.jsonl")"
+live_seeded /ymer:kaizen-capture run-capture-missing.jsonl
+probe "$fx" live
+check "live transcript missing exits 1" 1 "$rc"
+check "live transcript missing: the instructions line names what it looked for" 1 "$(lines "✘ instructions run(s) 2 left a transcript the check cannot vouch for, missing or recording no environment — first $transcripts/*/s-missing.jsonl")"
+live_seeded /ymer:kaizen-capture run-capture-subagent.jsonl
+probe "$fx" live
+check "live subagent's load exits 1" 1 "$rc"
+check "live subagent's load: the instructions line names the subagent's transcript" 1 "$(lines "✘ instructions run(s) 2 loaded an instructions file — first /someone/.claude/CLAUDE.md in $transcripts/-w/s-subagent/subagents/agent-1.jsonl")"
+
+# ── 37d · live, the control recording none, or another beside its own ──
+# the runs read clean, and the line is red all the same: the read that
+# found nothing in them is the one the control vouches for
+for v in none another; do
+	live_case
+	live_queue
+	shim_drop effects 'claude -p Reply with'
+	effect 'claude -p Reply with' "sh '$canned/plant-control' $v"
+	probe "$fx" live
+	check "live control recording $v exits 1" 1 "$rc"
+	check "live control recording $v: the instructions line names the control" 1 "$(lines '✘ instructions the control run recorded ')"
+	check "live control recording $v: the line names the control's trace" 1 "$(lines "read $tmp/probe/runs/control.jsonl and its transcript")"
+done
+check "live control recording another: the line names the other file" 1 "$(lines '/someone/CLAUDE.md')"
+
+# ── 37e · live, the runs' working directory under the home directory ──
+# the probe's temp dir follows TMPDIR, and a TMPDIR under HOME is refused
+# before anything runs, naming the variable to move
+mkdir -p "$tmp/fakehome/t"
+live_case
+live_queue
+out=$(cd "$fx" && HOME=$tmp/fakehome TMPDIR=$tmp/fakehome/t HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$tmp/probe sh scripts/hermetic-probe live 2>&1)
+rc=$?
+check "live working directory under HOME exits 2" 2 "$rc"
+check "live working directory under HOME: the cwd line names the directory and TMPDIR" 1 "$(lines "✘ cwd          the runs' working directory $tmp/fakehome/t/hermetic-probe.")"
+check "live working directory under HOME: the fix names TMPDIR" 1 "$(lines 'point TMPDIR outside the home directory')"
+check "live working directory under HOME brings no node up" 0 "$(logged 'docker-compose')"
+check "live working directory under HOME runs nothing headless" 0 "$(logged 'claude -p')"
+check "live working directory under HOME: the temp dir is removed" 0 "$(find "$tmp/fakehome/t" -mindepth 1 | wc -l | tr -d ' ')"
+
+# ── 37f · live, a read under the run's own working directory ──────────
+# the first setup run's effect, run where the call runs, writes the
+# capture run's trace, which reads a file in that working directory by
+# its physical path — outside the probe dir, admitted as the run's own
+live_case
+queue 'claude -p /ymer:kaizen-capture' "@$canned/run-capture-cwd.jsonl"
+effect 'claude -p /ymer:setup' "sh '$canned/cwd-read-trace' '$trace_init_default' '$canned/run-capture-cwd.jsonl'"
+live_queue
+probe "$fx" live
+check "live read under the working directory exits 0" 0 "$rc"
+check "live read under the working directory: isolation passes" 1 "$(lines '✔ isolation')"
+check "live read under the working directory: the read names a path outside the probe dir" '1 0' "$(printf '%s %s' "$(grep -c -F '/notes.md"' "$tmp/probe/runs/2.jsonl")" "$(grep -c -F "\"file_path\":\"$tmp/probe" "$tmp/probe/runs/2.jsonl")")"
+
+# ── 37g · a TMPDIR the probe cannot make its temp dir under ───────────
+# every stage needs the temp dir, so a missing TMPDIR stops the probe
+# before any stage runs — exit 2, the probe could not run, naming the
+# variable to move — and never reads as a failed check
+out=$(cd "$fx" && TMPDIR=$tmp/no-such-dir HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$tmp/probe sh scripts/hermetic-probe static 2>&1)
+rc=$?
+check "static under a missing TMPDIR exits 2" 2 "$rc"
+check "static under a missing TMPDIR: the line names TMPDIR" 1 "$(lines 'point TMPDIR at a writable directory')"
+check "static under a missing TMPDIR runs no stage" 0 "$(lines '✔ values')"
 
 # ── 38 · the model pin: one probe_model, in the entry alone ───────────
 # the eval and live stages read the entry's pin, so a second assignment in

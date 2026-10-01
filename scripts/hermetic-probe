@@ -32,6 +32,10 @@
 #                                and port — never in place
 #                                                      no default
 #   HERMETIC_PROBE_PORT          the scratch node's port default 8112
+#   TMPDIR                       where the probe's temp dir is made, and in it
+#                                the live runs' working directories — outside
+#                                the home directory, or the live stage refuses
+#                                to run                default /tmp
 #
 # Every assertion is structural: a validator's exit code, a sweep over the
 # tracked files, the eval runner's kept trace, the scratch node's own MCP,
@@ -71,7 +75,18 @@ esac
 
 failed=0
 node_up=0
-tmp=$(mktemp -d)
+# made under TMPDIR by an explicit template: a bare `mktemp -d` on macOS
+# takes the per-user temp dir and ignores TMPDIR, the one variable the
+# live stage's refusal of a working directory under HOME names. It runs
+# before the EXIT trap exists, so a TMPDIR it cannot make a directory
+# under exits 2 here, in every stage, with nothing yet to clean up.
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/hermetic-probe.XXXXXX") || {
+	echo "hermetic-probe: cannot make a temp dir under ${TMPDIR:-/tmp} — point TMPDIR at a writable directory" >&2
+	exit 2
+}
+# absolute and physical once, here: a relative TMPDIR would leave $tmp
+# relative, and every stage that reads it from another directory would miss
+tmp=$(cd "$tmp" && pwd -P)
 
 # The one model the eval and live stages run on — pinned here, so the two
 # stages never drift apart and a model rollout is never mistaken for a

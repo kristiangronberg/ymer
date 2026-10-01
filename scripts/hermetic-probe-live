@@ -28,8 +28,9 @@
 # another uid — and state/ fresh beside it, asserted no git work tree),
 # the install path (the README's lines with the
 # marketplace by working-tree path and the node on the probe's port),
-# ten headless runs — eight in two arms, then tutor's two — each under
-# the probe's own hook,
+# the instructions check's control call, then ten headless runs — eight
+# in two arms, then tutor's two — each from a working directory outside
+# the home tree and under the probe's own hook,
 # written into hook/, which refuses every Bash command but the declared
 # ones, and the install line re-run between the arms with state/ as the
 # plugin's state_folder option — then teardown — at the
@@ -167,7 +168,7 @@ EOF
 	printf '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"sh %s"}]}]}}\n' "'$hook/bash'" >"$hook/settings.json"
 }
 
-# One headless run in an empty working directory under the probe dir, its
+# One headless run in an empty working directory outside the home tree, its
 # stream-json kept in runs/. Prompt before flags; the notebook tool
 # allowed, and Bash for the declared commands, each by an allow rule —
 # `claude mcp get`, the read the skills name on Claude Code before they
@@ -194,9 +195,9 @@ EOF
 nl='
 '
 live_run() { # live_run <n> <prompt>
-	rm -rf "$dir/cwd"
-	mkdir -p "$dir/cwd"
-	(cd "$dir/cwd" && claude -p "$2" --output-format stream-json --verbose \
+	rm -rf "$cwd"
+	mkdir -p "$cwd"
+	(cd "$cwd" && claude -p "$2" --output-format stream-json --verbose \
 		--permission-mode acceptEdits \
 		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree)' mcp__ymer-node__notebook \
 		--add-dir "$state" --model "$probe_model" --max-turns 60 \
@@ -434,11 +435,100 @@ live_bash() { # live_bash <n>
 # call's file_path or path, and a Glob's pattern besides — an absolute
 # pattern names its own root, with no path key at all, and only Glob's
 # pattern is a path (Grep's is a regex over content), so it is read in a
-# pass of its own. A call naming none reads the working directory, which
-# is inside the probe dir.
+# pass of its own. A call naming none reads the run's working directory,
+# which isolation admits beside the probe dir.
 live_reads() { # live_reads <n>
 	live_calls "$1" | grep -E '^(Read|Glob|Grep) ' | sed -E -n 's/.*"(file_path|path)":"([^"]*)".*/\2/p'
 	live_calls "$1" | grep -E '^Glob ' | sed -E -n 's/.*"pattern":"([^"]*)".*/\1/p'
+}
+
+# The session transcripts behind one headless call, one path per line: the
+# main transcript, found under cfg/projects/ by the session_id on the
+# trace's init line in whichever project directory holds it — the name
+# the CLI derives for that directory from the working directory is never
+# spelled here — and every transcript in its subagents/ beside it. An
+# init line carrying no session id, or an id no transcript carries,
+# prints `MISSING <what was looked for>`, so the check fails closed.
+live_transcripts() { # live_transcripts <trace>
+	sid=$(head -n 1 "$1" 2>/dev/null | grep -o '"session_id":"[^"]*"' | head -n 1 | sed 's/^"session_id":"//; s/"$//')
+	if [ -z "$sid" ]; then
+		echo "MISSING a session_id on the init line of $1"
+		return 0
+	fi
+	main=$(find "$cfg/projects" -mindepth 2 -maxdepth 2 -type f -name "$sid.jsonl" 2>/dev/null || true)
+	if [ -z "$main" ]; then
+		echo "MISSING $cfg/projects/*/$sid.jsonl"
+		return 0
+	fi
+	printf '%s\n' "$main"
+	printf '%s\n' "$main" | while IFS= read -r m; do
+		find "${m%.jsonl}/subagents" -type f -name '*.jsonl' 2>/dev/null || true
+	done
+}
+
+# The instructions check's read of one headless call, one tab-separated
+# line per finding: `read <transcript>` for each transcript recording an
+# environment attachment — the record every session and every subagent
+# but a fork writes at its start (CLI 2.1.286, measured), so its presence
+# says the read parsed that transcript's attachments; `unseen
+# <transcript>` for one missing or recording none; and `loaded <file>
+# <transcript>` for each file Claude Code records as loaded — a CLAUDE.md,
+# CLAUDE.local.md or rules file: every path an instructions attachment
+# lists (the files loaded at startup, or after the first turn), and the
+# one path a nested_memory attachment names (a CLAUDE.md reached later
+# through a read, whose record repeats that path inside its content, so
+# only the first is taken). Every line is read, and either attachment
+# whose path the read cannot find names UNPARSEABLE, so it still counts.
+live_instructions() { # live_instructions <trace>
+	live_transcripts "$1" | while IFS= read -r t; do
+		case $t in
+		'MISSING '*)
+			printf 'unseen\t%s\n' "${t#MISSING }"
+			continue
+			;;
+		esac
+		if grep -q -F '"attachment":{"type":"environment"' "$t" 2>/dev/null; then
+			printf 'read\t%s\n' "$t"
+		else
+			printf 'unseen\t%s\n' "$t"
+		fi
+		awk -v t="$t" '
+			index($0, "\"attachment\":{\"type\":\"instructions\"") {
+				s = $0
+				n = 0
+				while ((p = index(s, "\"path\":\"")) > 0) {
+					s = substr(s, p + 8)
+					printf "loaded\t%s\t%s\n", substr(s, 1, index(s, "\"") - 1), t
+					n++
+				}
+				if (n == 0) printf "loaded\tUNPARSEABLE\t%s\n", t
+			}
+			(a = index($0, "\"attachment\":{\"type\":\"nested_memory\"")) {
+				s = substr($0, a)
+				if ((p = index(s, "\"path\":\"")) > 0) {
+					s = substr(s, p + 8)
+					printf "loaded\t%s\t%s\n", substr(s, 1, index(s, "\"") - 1), t
+				} else printf "loaded\tUNPARSEABLE\t%s\n", t
+			}' "$t" 2>/dev/null || true
+	done
+}
+
+# The instructions check's positive control: one headless call from a
+# working directory holding a CLAUDE.md the probe plants, whose transcript
+# must record exactly that file — the proof that the read which finds
+# nothing in the runs can see a load at all, in the record Claude Code
+# writes today. An instrument, not a scenario run: it is not in $ran, and
+# only the instructions check reads it. One short prompt and one turn,
+# since the load is recorded before the model answers (CLI 2.1.286,
+# measured at about $0.06), no server, and the runs' hook in force.
+live_control() {
+	rm -rf "$control"
+	mkdir -p "$control"
+	printf '%s\n' '# Planted by the hermetic probe' '' 'The instructions check expects this file, and only this one, in the control run'"'"'s transcript.' >"$control/CLAUDE.md"
+	(cd "$control" && claude -p 'Reply with the single word ok.' --output-format stream-json --verbose \
+		--model "$probe_model" --max-turns 1 \
+		--strict-mcp-config --mcp-config '{"mcpServers":{}}' --settings "$hook/settings.json") </dev/null >"$runs/control.jsonl" 2>"$runs/control.err" || true
+	return 0
 }
 
 # The scratch node's compose invocation, one spelling for up, down and the
@@ -467,7 +557,6 @@ live_teardown() {
 	else
 		fail install "refused docker-compose down — the project does not resolve to $live_project — read $runs/compose-config-before-down.log; $data and $state are kept for inspection; bring the scratch node down by hand with \`PORT=$port NODE_DATA_DIR='$data' docker-compose -p $live_project -f '$scratch_compose' down\`"
 	fi
-	rm -rf "$dir/cwd"
 	docker ps --format '{{.Names}} {{.Ports}}' | sort >"$tmp/docker-after"
 	if cmp -s "$tmp/docker-before" "$tmp/docker-after"; then
 		pass install "untouched — docker ps lists the same containers and ports as before"
@@ -484,7 +573,7 @@ stage_live() {
 	# the probe dir in physical form: the CLI reports a run's paths physical
 	# and normalised, and `isolation` compares them against $dir by prefix,
 	# so a trailing slash or a symlinked parent in the override would
-	# redden every legitimate read under the run's own working directory
+	# redden every legitimate read under it
 	dir=${HERMETIC_PROBE_DIR:-$HOME/.hermetic-probe}
 	mkdir -p "$dir"
 	dir=$(cd "$dir" && pwd -P)
@@ -499,8 +588,25 @@ stage_live() {
 	url=http://127.0.0.1:$port/mcp
 	mcp="{\"mcpServers\":{\"ymer-node\":{\"type\":\"http\",\"url\":\"$url\"}}}"
 	ran=''
+	# The runs' working directories sit outside the home tree: for any
+	# directory under it, Claude Code loads the home directory's own
+	# .claude/CLAUDE.md as the home directory's project instructions,
+	# whatever CLAUDE_CONFIG_DIR names — the config dir moves only where
+	# the user's own instructions are read from. Both live in the entry's
+	# temp dir, which its EXIT trap removes on every exit path, and both
+	# are physical, as $dir is: isolation compares a run's reads against
+	# the one, and the instructions check the path a transcript records
+	# against the other.
+	cwd=$(cd "$tmp" && pwd -P)/cwd
+	control=$(cd "$tmp" && pwd -P)/control
+	home=$(cd "$HOME" && pwd -P)
 
 	# preconditions
+	for d in "$cwd" "$control"; do
+		case $d in
+		"$home" | "$home"/*) abort cwd "the runs' working directory $d sits under $HOME, where every run would load the home directory's .claude/CLAUDE.md — point TMPDIR outside the home directory" ;;
+		esac
+	done
 	[ -n "$compose" ] || abort compose "HERMETIC_PROBE_COMPOSE_FILE is unset — export it naming your Ymer Node's docker-compose.yml"
 	[ -f "$compose" ] || abort compose "no file at $compose — point HERMETIC_PROBE_COMPOSE_FILE at your Ymer Node's docker-compose.yml"
 	command -v docker-compose >/dev/null 2>&1 || abort docker "docker-compose is not on PATH — install the standalone docker-compose binary"
@@ -599,8 +705,10 @@ stage_live() {
 	# 5. the runs — state from the node and from state/, behaviour from the
 	# trace. The first arm names no state folder: the install above set no
 	# option, so every skill reads the option's placeholder. The hook every
-	# run loads is written first, from state/'s own path.
+	# run loads is written first, from state/'s own path; the instructions
+	# check's control call runs next, under the same hook.
 	live_hook
+	live_control
 	live_run 1 '/ymer:setup'
 	tables=$(node_tables)
 	fronts=$(node_count 'SELECT count(*) FROM fronts')
@@ -901,6 +1009,11 @@ link check before the edit would have caught it.'
 	summary_runs=' 3 6 7 8 '
 	setup_runs=' 1 4 5 '
 	addressed=''
+	loaded=''
+	loaded_first=''
+	unseen=''
+	unseen_first=''
+	transcripts=0
 	for n in $ran; do
 		# the init line is the trace's first; every server it names must
 		# be ymer-node, and no other server's tool may have been reached
@@ -915,9 +1028,10 @@ link check before the edit would have caught it.'
 		fi
 		tools=$(sed -n 's/^unreached //p' "$tmp/mcp" | sort -u | tr '\n' ' ' | sed 's/ $//')
 		[ -z "$tools" ] || unreached="$unreached $n ($tools)"
-		# every path a Read, Glob or Grep named sits under the probe dir or
-		# the marketplace checkout the plugins load from; a relative one
-		# resolves under the run's working directory, inside the probe dir.
+		# every path a Read, Glob or Grep named sits under the probe dir, the
+		# run's own working directory, or the marketplace checkout the
+		# plugins load from; a relative one resolves under the run's
+		# working directory.
 		# `..` is read before the two prefixes: a path under an allowed
 		# prefix that then climbs is outside, and the prefix arm — case
 		# takes its first match — would keep it as inside
@@ -927,7 +1041,7 @@ link check before the edit would have caught it.'
 			esac
 			case $p in
 			*..*) echo "$p" ;;
-			"$dir" | "$dir"/* | "$root" | "$root"/*) ;;
+			"$dir" | "$dir"/* | "$cwd" | "$cwd"/* | "$root" | "$root"/*) ;;
 			/* | '~'*) echo "$p" ;;
 			esac
 		done | grep -q . && outside="$outside $n"
@@ -972,6 +1086,19 @@ link check before the edit would have caught it.'
 		case $setup_runs in
 		*" $n "*) report_ports "$n" | grep -v -x -F "$port" | grep -q . && addressed="$addressed $n" ;;
 		esac
+		# every transcript the run left, its subagents' included, read for
+		# the instructions check: a file any of them records as loaded, and
+		# a transcript missing or recording no environment — one the read
+		# cannot vouch for — each names the run, the first of each kept for
+		# the fail line
+		live_instructions "$runs/$n.jsonl" >"$tmp/instructions"
+		first=$(awk -F '\t' '$1 == "loaded" { print $2 " in " $3; exit }' "$tmp/instructions")
+		[ -z "$first" ] || loaded="$loaded $n"
+		[ -n "$loaded_first" ] || loaded_first=$first
+		first=$(awk -F '\t' '$1 == "unseen" { print $2; exit }' "$tmp/instructions")
+		[ -z "$first" ] || unseen="$unseen $n"
+		[ -n "$unseen_first" ] || unseen_first=$first
+		transcripts=$((transcripts + $(grep -c '^read' "$tmp/instructions" || true)))
 	done
 	if [ -z "$servers" ]; then
 		pass servers "every run's init line names ymer-node alone, and no other server's tool was called${unreached:+ — a call to no such tool, reaching nothing, in run(s)$unreached}"
@@ -979,9 +1106,9 @@ link check before the edit would have caught it.'
 		fail servers "run(s)$servers reached a server beyond ymer-node — read the init line's mcp_servers and the mcp__ calls in $runs/<n>.jsonl"
 	fi
 	if [ -z "$outside" ]; then
-		pass isolation "every Read, Glob and Grep stayed under $dir or $root"
+		pass isolation "every Read, Glob and Grep stayed under $dir, $root or the runs' working directory $cwd"
 	else
-		fail isolation "run(s)$outside read outside $dir and $root — read the call and its permission_denials in $runs/<n>.jsonl"
+		fail isolation "run(s)$outside read outside $dir, $root and the runs' working directory $cwd — read the call and its permission_denials in $runs/<n>.jsonl"
 	fi
 	if [ -z "$writes" ]; then
 		pass writes "file writes only in the second arm's summary runs, and only under $state"
@@ -1002,6 +1129,28 @@ link check before the edit would have caught it.'
 		pass setup-address "every setup report names the node at its own port or at no address"
 	else
 		fail setup-address "a setup report names a node port other than $port in run(s)$addressed — read the result line of $runs/<n>.jsonl"
+	fi
+	# instructions: no run loads an instructions file, and the read that
+	# says so proves its sight twice — every transcript it read records an
+	# environment attachment, and the control call's transcript records the
+	# CLAUDE.md the probe planted, nothing more and nothing less. A red
+	# control reddens the line whatever the runs showed: the read it vouches
+	# for is the one they were read by
+	live_instructions "$runs/control.jsonl" >"$tmp/instructions"
+	control_files=$(awk -F '\t' '$1 == "loaded" { print $2 }' "$tmp/instructions" | sort -u | tr '\n' ' ' | sed 's/ $//')
+	control_unseen=$(awk -F '\t' '$1 == "unseen" { print $2; exit }' "$tmp/instructions")
+	why=''
+	[ -z "$loaded" ] || why="run(s)$loaded loaded an instructions file — first $loaded_first"
+	[ -z "$unseen" ] || why="${why:+$why; }run(s)$unseen left a transcript the check cannot vouch for, missing or recording no environment — first $unseen_first"
+	if [ -n "$control_unseen" ]; then
+		why="${why:+$why; }the control run left a transcript the check cannot vouch for — $control_unseen; read $runs/control.jsonl and its transcript"
+	elif [ "$control_files" != "$control/CLAUDE.md" ]; then
+		why="${why:+$why; }the control run recorded ${control_files:-no instructions file} where it planted $control/CLAUDE.md alone, so the read cannot be trusted to see a load; read $runs/control.jsonl and its transcript"
+	fi
+	if [ -z "$why" ]; then
+		pass instructions "no run loaded an instructions file — $transcripts transcript(s) read, each recording its environment, and the control run recorded its planted CLAUDE.md alone"
+	else
+		fail instructions "$why"
 	fi
 
 	# 6. teardown — here on the way through, so its install line lands
