@@ -17,11 +17,13 @@
 #
 #   HERMETIC_PROBE_DIR           the probe dir: cfg/ keeps a claude.ai login
 #                                and is scrubbed of marketplace state each
-#                                live run; data/ is the scratch node's store,
-#                                state/ its scratch state folder, compose/
-#                                its copy of the compose file, hook/ the
-#                                runs' Bash hook and its declared commands,
-#                                each recreated each run
+#                                live run, its projects/ — every session's
+#                                transcript — wiped whole; data/ is the
+#                                scratch node's store, state/ its scratch
+#                                state folder, compose/ its copy of the
+#                                compose file, hook/ the runs' Bash hook
+#                                and its declared commands, each recreated
+#                                each run
 #                                                      default $HOME/.hermetic-probe
 #   HERMETIC_PROBE_TOKENS        the maintainer's token file, one token per
 #                                line (→ hermetic-probe-static)

@@ -131,7 +131,8 @@ Defined in the repo `CLAUDE.md` — the Conventions bullet stating it.
 ### probe dir
 The persistent directory under `$HOME` the live stage owns: `cfg/`, the
 throwaway Claude config that keeps the login and is scrubbed of
-marketplace state each run; `data/`, the scratch node's store, recreated
+marketplace state each run, its `projects/`, every session's transcript,
+wiped whole; `data/`, the scratch node's store, recreated
 each run; `state/`, the scratch state folder — a plain folder, not a git
 work tree — recreated each run too; `compose/`, the stage's own copy
 of the compose file it is given, recreated each run, which every

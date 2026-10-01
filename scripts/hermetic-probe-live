@@ -41,6 +41,14 @@
 # raw response, the record to read before a red line is taken as a
 # finding about a skill. The traces and node.log are this invocation's
 # alone: the previous run's are removed at the start of the stage.
+# cfg/projects/, where Claude Code keeps the transcript of every session
+# run under the config dir, is the probe's own as well: wiped whole at the
+# start of the stage, beside the traces, on a line of its own. The last
+# invocation's transcripts stay until the next one, for the post-mortem a
+# red line sends the reader to; a hand probe that wants its transcripts
+# kept runs under a config dir of its own. A run is handed state/ alone
+# of the probe dir: cfg/ holds the login, its account record and those
+# transcripts, and a read there fails `isolation`.
 #
 # Exit 2 on any precondition, 1 on a failed step.
 
@@ -436,7 +444,7 @@ live_bash() { # live_bash <n>
 # pattern names its own root, with no path key at all, and only Glob's
 # pattern is a path (Grep's is a regex over content), so it is read in a
 # pass of its own. A call naming none reads the run's working directory,
-# which isolation admits beside the probe dir.
+# which isolation admits beside state/ and the checkout.
 live_reads() { # live_reads <n>
 	live_calls "$1" | grep -E '^(Read|Glob|Grep) ' | sed -E -n 's/.*"(file_path|path)":"([^"]*)".*/\2/p'
 	live_calls "$1" | grep -E '^Glob ' | sed -E -n 's/.*"pattern":"([^"]*)".*/\1/p'
@@ -571,7 +579,7 @@ stage_live() {
 	echo "hermetic probe — live"
 
 	# the probe dir in physical form: the CLI reports a run's paths physical
-	# and normalised, and `isolation` compares them against $dir by prefix,
+	# and normalised, and `isolation` compares them against $state by prefix,
 	# so a trailing slash or a symlinked parent in the override would
 	# redden every legitimate read under it
 	dir=${HERMETIC_PROBE_DIR:-$HOME/.hermetic-probe}
@@ -617,6 +625,21 @@ stage_live() {
 	fi
 	mkdir -p "$cfg" "$runs"
 	rm -f "$runs"/*.jsonl "$runs"/*.err "$runs/node.log"
+	# cfg/projects/ is the probe's own: every session the config dir has
+	# seen keeps its transcript there, a hand probe's and an older live
+	# run's alike, and nothing else removes them. Wiped whole, before any
+	# call writes this invocation's, and counted on a line of its own; the
+	# login and the rest of cfg/ stay. A wipe that cannot finish fails its
+	# line and the stage runs on: the checks read this invocation's
+	# transcripts by session id, which nothing left behind can carry
+	gone_files=$(find "$cfg/projects" -type f -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ')
+	gone_dirs=$(find "$cfg/projects" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
+	rm -rf "$cfg/projects" 2>/dev/null || true
+	if [ -e "$cfg/projects" ]; then
+		fail transcripts "could not remove all of $cfg/projects — remove it by hand (\`rm -rf '$cfg/projects'\`), checking why the probe could not"
+	else
+		pass transcripts "removed $gone_files transcript(s) in $gone_dirs project dir(s) from $cfg/projects — the probe's own, wiped at each live stage"
+	fi
 	export CLAUDE_CONFIG_DIR=$cfg
 
 	# 1. login — the command the abort names runs outside the probe, where
@@ -1028,10 +1051,14 @@ link check before the edit would have caught it.'
 		fi
 		tools=$(sed -n 's/^unreached //p' "$tmp/mcp" | sort -u | tr '\n' ' ' | sed 's/ $//')
 		[ -z "$tools" ] || unreached="$unreached $n ($tools)"
-		# every path a Read, Glob or Grep named sits under the probe dir, the
-		# run's own working directory, or the marketplace checkout the
-		# plugins load from; a relative one resolves under the run's
-		# working directory.
+		# every path a Read, Glob or Grep named sits under the probe dir's
+		# state/, the run's own working directory, or the marketplace
+		# checkout the plugins load from; a relative one resolves under the
+		# run's working directory. The rest of the probe dir is no root a
+		# run is handed: cfg/ holds the login, its account record and every
+		# session's transcript. An allow-list, so a read a skill
+		# legitimately needs elsewhere fails here, named, and is admitted by
+		# widening this arm.
 		# `..` is read before the two prefixes: a path under an allowed
 		# prefix that then climbs is outside, and the prefix arm — case
 		# takes its first match — would keep it as inside
@@ -1040,8 +1067,8 @@ link check before the edit would have caught it.'
 			'~/'*) p=$HOME/${p#'~/'} ;;
 			esac
 			case $p in
-			*..*) echo "$p" ;;
-			"$dir" | "$dir"/* | "$cwd" | "$cwd"/* | "$root" | "$root"/*) ;;
+			.. | ../* | */.. | */../*) echo "$p" ;;
+			"$state" | "$state"/* | "$cwd" | "$cwd"/* | "$root" | "$root"/*) ;;
 			/* | '~'*) echo "$p" ;;
 			esac
 		done | grep -q . && outside="$outside $n"
@@ -1056,7 +1083,7 @@ link check before the edit would have caught it.'
 				printf '%s\n' "$wcalls" | while IFS= read -r c; do
 					p=$(printf '%s\n' "$c" | sed -E -n 's/.*"(file_path|notebook_path)":"([^"]*)".*/\2/p')
 					case $p in
-					*..*) echo "$c" ;;
+					.. | ../* | */.. | */../*) echo "$c" ;;
 					"$state"/*) ;;
 					*) echo "$c" ;;
 					esac
@@ -1106,9 +1133,9 @@ link check before the edit would have caught it.'
 		fail servers "run(s)$servers reached a server beyond ymer-node — read the init line's mcp_servers and the mcp__ calls in $runs/<n>.jsonl"
 	fi
 	if [ -z "$outside" ]; then
-		pass isolation "every Read, Glob and Grep stayed under $dir, $root or the runs' working directory $cwd"
+		pass isolation "every Read, Glob and Grep stayed under $state, $root or the runs' working directory $cwd"
 	else
-		fail isolation "run(s)$outside read outside $dir, $root and the runs' working directory $cwd — read the call and its permission_denials in $runs/<n>.jsonl"
+		fail isolation "run(s)$outside read outside $state, $root and the runs' working directory $cwd, the only roots a run is handed — read the call and its permission_denials in $runs/<n>.jsonl; a read a skill legitimately needs elsewhere is admitted by widening isolation's arm in scripts/hermetic-probe-live"
 	fi
 	if [ -z "$writes" ]; then
 		pass writes "file writes only in the second arm's summary runs, and only under $state"

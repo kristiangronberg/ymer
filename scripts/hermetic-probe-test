@@ -20,7 +20,9 @@
 # brace or an escaped quote included, a server call read by its result, a
 # refusal read by its call's id —
 # the runs' working directory outside the home tree — a TMPDIR under it
-# refused — and a read under that directory, the instructions check — a
+# refused — and a read under that directory, a read under the probe dir
+# outside state/, the wipe of cfg/projects/ — a set left by earlier
+# sessions, none, and a wipe that cannot finish — the instructions check — a
 # file loaded in a run or in its subagent, a transcript missing or with
 # no environment, the control recording its planted file, none, or
 # another beside it — the runs' hook over its own events, the one model
@@ -223,10 +225,10 @@ run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO f
 run_trace 'No state folder is named, so nothing was drained. Run /ymer:setup.' $notebook '{"action":"query","data":{"sql":"SELECT slug FROM fronts"}}' >"$canned/run-summary-stop.jsonl"
 # summary's healthy trace in the second arm carries the declared commands
 # — the state folder's rev-parse bare and with its path quoted — reads
-# inside the probe dir, one path absolute and one relative, a write under
-# state/, and the history row it saves
+# inside state/, one path under it, one naming state/ itself and one
+# relative, a write under state/, and the history row it saves
 save_sql="INSERT INTO topics_history (topic, area, artifact, body, phase, front) SELECT 't', 'meta', 'request.md', new.body, 'kaizen_summary', 'claude_code' FROM (SELECT 'b' AS body) AS new"
-run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE frictions SET status = 1"}}' $notebook "{\"action\":\"execute\",\"data\":{\"sql\":\"$save_sql\"}}" Bash '{"command":"claude mcp get ymer"}' Bash '{"command":"claude mcp get ymer 2>&1"}' Bash "{\"command\":\"git -C $pstate rev-parse --is-inside-work-tree\"}" Bash "{\"command\":\"git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree\"}" Write "{\"file_path\":\"$pstate/meta/2026/09-21-friction-batch/request.md\",\"content\":\"x\"}" Read "{\"file_path\":\"$tmp/probe/cwd/notes.md\"}" Glob '{"pattern":"*.md"}' >"$canned/run-summary.jsonl"
+run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE frictions SET status = 1"}}' $notebook "{\"action\":\"execute\",\"data\":{\"sql\":\"$save_sql\"}}" Bash '{"command":"claude mcp get ymer"}' Bash '{"command":"claude mcp get ymer 2>&1"}' Bash "{\"command\":\"git -C $pstate rev-parse --is-inside-work-tree\"}" Bash "{\"command\":\"git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree\"}" Write "{\"file_path\":\"$pstate/meta/2026/09-21-friction-batch/request.md\",\"content\":\"x\"}" Read "{\"file_path\":\"$pstate/meta/2026/09-21-friction-batch/request.md\"}" Glob "{\"pattern\":\"*.md\",\"path\":\"$pstate\"}" Glob '{"pattern":"*.md"}' >"$canned/run-summary.jsonl"
 # the same summary writing beside state/ rather than into it
 run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE frictions SET status = 1"}}' Write "{\"file_path\":\"$tmp/probe/cwd/request.md\",\"content\":\"x\"}" >"$canned/run-summary-outside.jsonl"
 # the re-run's report, healthy on the result line while a narration line
@@ -298,10 +300,18 @@ trace_denied=''
 # command is not first, so the read does not unwrap it, and it fails closed
 run_trace 'read' Bash '{"description":"d","command":"claude mcp get ymer"}' >"$canned/run-capture-description.jsonl"
 run_trace 'read' Read '{"file_path":"/Users/someone/state"}' >"$canned/run-capture-outside.jsonl"
+# reads under the probe dir that state/ does not hold: a session
+# transcript in cfg/projects/, the login's account record in cfg/, and a
+# Glob over the probe dir itself
+run_trace 'read' Read "{\"file_path\":\"$tmp/probe/cfg/projects/-w/s-run.jsonl\"}" >"$canned/run-capture-cfg-transcript.jsonl"
+run_trace 'read' Read "{\"file_path\":\"$tmp/probe/cfg/.claude.json\"}" >"$canned/run-capture-cfg-account.jsonl"
+run_trace 'globbed' Glob "{\"pattern\":\"*.jsonl\",\"path\":\"$tmp/probe\"}" >"$canned/run-capture-probe-dir.jsonl"
 # two paths that open under an allowed prefix and climb out of it, and a
 # Glob whose pattern is absolute — a call with no path key at all
-run_trace 'read' Read "{\"file_path\":\"$tmp/probe/cwd/../outside\"}" >"$canned/run-capture-climb.jsonl"
+run_trace 'read' Read "{\"file_path\":\"$pstate/../outside\"}" >"$canned/run-capture-climb.jsonl"
 run_trace 'read' Read "{\"file_path\":\"$live/../outside\"}" >"$canned/run-capture-climb-root.jsonl"
+# a `..` inside a file name under state/ climbs nowhere
+run_trace 'read' Read "{\"file_path\":\"$pstate/x..md\"}" >"$canned/run-capture-dots-in-name.jsonl"
 run_trace 'globbed' Glob '{"pattern":"/Users/someone/state"}' >"$canned/run-capture-glob.jsonl"
 # a brace glob ahead of its path: the `}` inside the pattern would end a
 # read cut at the first `}` before the path key
@@ -338,32 +348,36 @@ run_trace "Tutor skill — stopped: the notebook has no tutor_subjects or tutor_
 # instructions file, and one per variant a case seeds — a file loaded
 # after the first turn, a nested file reached through a read, no
 # environment recorded, no transcript at all, and a clean main transcript
-# whose subagent loads a file. Nothing the stage runs writes under
-# cfg/projects/, so they are planted once.
+# whose subagent loads a file. The stage wipes cfg/projects/ at its
+# start, so they are kept in canned/ and planted by the control call's
+# effect: the first headless call, after the wipe.
 transcripts=$tmp/probe/cfg/projects
+kept=$canned/transcripts
 env_line='{"type":"attachment","attachment":{"type":"environment","snapshot":{"workingDirectory":"/w"}}}'
 instr_line='{"type":"attachment","attachment":{"type":"instructions","files":[{"path":"/someone/.claude/CLAUDE.md","type":"Project","content":"x"}]}}'
 nested_line='{"type":"attachment","attachment":{"type":"nested_memory","path":"/someone/project/CLAUDE.md","content":{"path":"/someone/project/CLAUDE.md","type":"Project","content":"x"},"displayPath":"CLAUDE.md"}}'
-mkdir -p "$transcripts/-w/s-subagent/subagents"
-printf '%s\n' '{"type":"user"}' "$env_line" >"$transcripts/-w/s-run.jsonl"
-printf '%s\n' "$env_line" '{"type":"user"}' "$instr_line" >"$transcripts/-w/s-loaded.jsonl"
-printf '%s\n' "$env_line" '{"type":"user"}' "$nested_line" >"$transcripts/-w/s-nested.jsonl"
-printf '%s\n' '{"type":"user"}' >"$transcripts/-w/s-noenv.jsonl"
-printf '%s\n' "$env_line" >"$transcripts/-w/s-subagent.jsonl"
-printf '%s\n' "$env_line" "$instr_line" >"$transcripts/-w/s-subagent/subagents/agent-1.jsonl"
+mkdir -p "$kept/-w/s-subagent/subagents"
+printf '%s\n' '{"type":"user"}' "$env_line" >"$kept/-w/s-run.jsonl"
+printf '%s\n' "$env_line" '{"type":"user"}' "$instr_line" >"$kept/-w/s-loaded.jsonl"
+printf '%s\n' "$env_line" '{"type":"user"}' "$nested_line" >"$kept/-w/s-nested.jsonl"
+printf '%s\n' '{"type":"user"}' >"$kept/-w/s-noenv.jsonl"
+printf '%s\n' "$env_line" >"$kept/-w/s-subagent.jsonl"
+printf '%s\n' "$env_line" "$instr_line" >"$kept/-w/s-subagent/subagents/agent-1.jsonl"
 for v in loaded nested noenv missing subagent; do
 	sed "s/\"session_id\":\"s-run\"/\"session_id\":\"s-$v\"/" "$canned/run-capture.jsonl" >"$canned/run-capture-$v.jsonl"
 done
 # The control call: its trace names a session of its own, and its effect —
-# run in the control's working directory, as the call is — plants that
-# session's transcript, recording the planted CLAUDE.md by its physical
-# path alone, beside another file, or no file at all.
+# run in the control's working directory, as the call is — plants the
+# runs' transcripts kept above and that session's own, recording the
+# planted CLAUDE.md by its physical path alone, beside another file, or no
+# file at all.
 trace_init=$(printf '%s' "$trace_init_default" | sed 's/"s-run"/"s-control"/')
 run_trace 'ok' >"$canned/run-control.jsonl"
 trace_init=$trace_init_default
 cat >"$canned/plant-control" <<EOF
-# plant-control <planted | another | none> — the control session's transcript
+# plant-control <planted | another | none> — the runs' transcripts, and the control session's
 mkdir -p '$transcripts/-control'
+cp -R '$kept/.' '$transcripts/'
 f=\$(pwd -P)/CLAUDE.md
 {
 	printf '%s\n' '$env_line'
@@ -780,6 +794,7 @@ check "live: the append line reads the deltas" 1 "$(lines '✔ append       stil
 check "live: the append-history line reads the save" 1 "$(lines "✔ append-history one more topics_history row, the newest carrying the file's 20 seed lines and the one before it the pre-image's 10")"
 check "live: the teardown's install line" 1 "$(lines '✔ install      untouched')"
 check "live: servers, isolation, writes, bash-commands, summary-git and setup-address pass — the node alone, reads inside, writes under state/, the declared commands allowed, no commit, no wrong node address" 6 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (servers|isolation|writes|bash-commands|summary-git|setup-address) ')"
+check "live: the isolation line names the roots a run is handed — state/, the checkout, the runs' working directory" 1 "$(lines "✔ isolation    every Read, Glob and Grep stayed under $pstate, $fx or the runs' working directory ")"
 check "live scrubs through the CLI" 3 "$(printf '%s\n' "$(logged 'claude plugin uninstall ymer@ymer')" "$(logged 'claude plugin marketplace remove ymer')" "$(logged 'claude mcp remove ymer-node')" | grep -c '^1$')"
 check "live brings the node up under its own project and port, from its own copy of the compose file" 1 "$(logged "$scratch_dc up -d")"
 check "live never runs compose against the named file itself" 0 "$(logged "-f $HERMETIC_PROBE_COMPOSE_FILE")"
@@ -1121,11 +1136,20 @@ check "live second server exits 1" 1 "$rc"
 check "live second server: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
 check "live second server: capture itself still passes" 1 "$(lines '✔ capture')"
 
-# ── 24 · live, a read outside the probe dir ───────────────────────────
+# ── 24 · live, a read outside state/, under the probe dir or beyond ───
 live_seeded /ymer:kaizen-capture run-capture-outside.jsonl
 probe "$fx" live
 check "live outside read exits 1" 1 "$rc"
-check "live outside read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
+check "live outside read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
+check "live outside read: the isolation line says where to admit a legitimate read" 1 "$(lines "a read a skill legitimately needs elsewhere is admitted by widening isolation's arm in scripts/hermetic-probe-live")"
+# a read under the probe dir outside state/: the rest of the probe dir is
+# no root a run is handed, whatever it holds
+for v in cfg-transcript cfg-account probe-dir; do
+	live_seeded /ymer:kaizen-capture "run-capture-$v.jsonl"
+	probe "$fx" live
+	check "live read under the probe dir, $v: exits 1" 1 "$rc"
+	check "live read under the probe dir, $v: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
+done
 
 # ── 25 · live, a compound Bash command opening with the declared one ──
 live_seeded /ymer:kaizen-capture run-capture-compound.jsonl
@@ -1312,20 +1336,23 @@ check "live shell write: summary-git still passes" 1 "$(lines '✔ summary-git')
 check "live shell write: writes still passes" 1 "$(lines '✔ writes')"
 
 # ── 37 · live, a read climbing out of an allowed prefix, and an absolute ─
-# Glob pattern: the probe dir's `..`, the checkout's `..`, and a Glob
+# Glob pattern: state/'s `..`, the checkout's `..`, and a Glob
 # naming its root in `pattern` with no path key for the read to find
 live_seeded /ymer:kaizen-capture run-capture-climb.jsonl
 probe "$fx" live
 check "live climbing read exits 1" 1 "$rc"
-check "live climbing read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
+check "live climbing read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
 live_seeded /ymer:kaizen-capture run-capture-climb-root.jsonl
 probe "$fx" live
 check "live climbing read from the checkout exits 1" 1 "$rc"
-check "live climbing read from the checkout: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
+check "live climbing read from the checkout: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
 live_seeded /ymer:kaizen-capture run-capture-glob.jsonl
 probe "$fx" live
 check "live absolute glob exits 1" 1 "$rc"
-check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
+check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
+live_seeded /ymer:kaizen-capture run-capture-dots-in-name.jsonl
+probe "$fx" live
+check "live read of a dotted name under state/: isolation passes" 1 "$(lines '✔ isolation')"
 
 # ── 37b · live, a brace inside an input's string ──────────────────────
 # a Glob whose brace pattern precedes its path, and a `{}` ahead of a git
@@ -1333,7 +1360,7 @@ check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ iso
 live_seeded /ymer:kaizen-capture run-capture-glob-brace.jsonl
 probe "$fx" live
 check "live brace glob exits 1" 1 "$rc"
-check "live brace glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $tmp/probe, $fx and the runs' working directory ")"
+check "live brace glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
 live_case
 live_queue
 reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-git-brace.jsonl"
@@ -1386,8 +1413,10 @@ check "live control recording another: the line names the other file" 1 "$(lines
 
 # ── 37e · live, the runs' working directory under the home directory ──
 # the probe's temp dir follows TMPDIR, and a TMPDIR under HOME is refused
-# before anything runs, naming the variable to move
-mkdir -p "$tmp/fakehome/t"
+# before anything runs, naming the variable to move — and before the
+# stage's start wipes cfg/projects/, so earlier sessions' transcripts stay
+mkdir -p "$tmp/fakehome/t" "$transcripts/-keep"
+printf '%s\n' "$env_line" >"$transcripts/-keep/s.jsonl"
 live_case
 live_queue
 out=$(cd "$fx" && HOME=$tmp/fakehome TMPDIR=$tmp/fakehome/t HERMETIC_PROBE_TOKENS=$fx.tokens HERMETIC_PROBE_DIR=$tmp/probe sh scripts/hermetic-probe live 2>&1)
@@ -1398,6 +1427,8 @@ check "live working directory under HOME: the fix names TMPDIR" 1 "$(lines 'poin
 check "live working directory under HOME brings no node up" 0 "$(logged 'docker-compose')"
 check "live working directory under HOME runs nothing headless" 0 "$(logged 'claude -p')"
 check "live working directory under HOME: the temp dir is removed" 0 "$(find "$tmp/fakehome/t" -mindepth 1 | wc -l | tr -d ' ')"
+check "live working directory under HOME: earlier sessions' transcripts survive" 1 "$(find "$transcripts" -name s.jsonl | wc -l | tr -d ' ')"
+check "live working directory under HOME prints no transcripts line" 0 "$(lines 'transcripts  ')"
 
 # ── 37f · live, a read under the run's own working directory ──────────
 # the first setup run's effect, run where the call runs, writes the
@@ -1421,6 +1452,48 @@ rc=$?
 check "static under a missing TMPDIR exits 2" 2 "$rc"
 check "static under a missing TMPDIR: the line names TMPDIR" 1 "$(lines 'point TMPDIR at a writable directory')"
 check "static under a missing TMPDIR runs no stage" 0 "$(lines '✔ values')"
+
+# ── 37h · live, cfg/projects/ wiped at the stage's start ──────────────
+# a set left by earlier sessions — two project dirs, one transcript with
+# a subagent's beside it — goes whole; one of them records a loaded
+# instructions file as the old ones did, which the instructions check
+# never opens, since it finds transcripts by session id. The login's
+# account record beside them stays, and the runs' own transcripts, written
+# after the wipe, are the ones the instructions check reads. With no
+# cfg/projects/ at all the line removes none, and a wipe that cannot
+# finish fails its line naming the directory
+rm -rf "$transcripts"
+mkdir -p "$transcripts/-old-live/s-old/subagents" "$transcripts/-hand-probe"
+printf '%s\n' "$env_line" "$instr_line" >"$transcripts/-old-live/s-old.jsonl"
+printf '%s\n' "$env_line" >"$transcripts/-old-live/s-old/subagents/agent-1.jsonl"
+printf '%s\n' "$env_line" >"$transcripts/-hand-probe/s-hand.jsonl"
+printf '{"oauthAccount":{"emailAddress":"someone@example.invalid"}}\n' >"$tmp/probe/cfg/.claude.json"
+cp "$tmp/probe/cfg/.claude.json" "$tmp/account-before.json"
+live_case
+live_queue
+probe "$fx" live
+check "live wipe exits 0" 0 "$rc"
+check "live wipe: the transcripts line counts what went" 1 "$(lines "✔ transcripts  removed 3 transcript(s) in 2 project dir(s) from $tmp/probe/cfg/projects")"
+check "live wipe: the earlier sessions' project dirs are gone" '0 0' "$(printf '%s %s' "$(test -e "$transcripts/-old-live" && echo 1 || echo 0)" "$(test -e "$transcripts/-hand-probe" && echo 1 || echo 0)")"
+check "live wipe: the login's account record is untouched" 0 "$(cmp -s "$tmp/account-before.json" "$tmp/probe/cfg/.claude.json"; echo $?)"
+check "live wipe: the login line still passes" 1 "$(lines '✔ login')"
+check "live wipe: the runs' own transcripts, written after it, are read" 1 "$(lines '✔ instructions no run loaded an instructions file — 10 transcript(s) read')"
+rm -rf "$transcripts"
+live_case
+live_queue
+probe "$fx" live
+check "live with no cfg/projects exits 0" 0 "$rc"
+check "live with no cfg/projects: the transcripts line removes none" 1 "$(lines "✔ transcripts  removed 0 transcript(s) in 0 project dir(s) from $tmp/probe/cfg/projects")"
+mkdir -p "$transcripts/-locked"
+printf '%s\n' "$env_line" >"$transcripts/-locked/s-locked.jsonl"
+chmod a-w "$transcripts/-locked"
+live_case
+live_queue
+probe "$fx" live
+chmod -R u+w "$transcripts"
+check "live wipe that cannot finish exits 1" 1 "$rc"
+check "live wipe that cannot finish: the transcripts line names the directory and the fix" 1 "$(lines "✘ transcripts  could not remove all of $tmp/probe/cfg/projects — remove it by hand")"
+check "live wipe that cannot finish: the runs still run" 1 "$(lines '✔ instructions')"
 
 # ── 38 · the model pin: one probe_model, in the entry alone ───────────
 # the eval and live stages read the entry's pin, so a second assignment in
