@@ -4,11 +4,12 @@
 # inside the probe dir's cfg/, and the plugins run headless against that
 # node in two arms. With no state folder named, setup creates the store
 # skeletons, fails its state-folder check and reports the coordinator by
-# reach, capture records a friction, and summary stops at its guard. With
-# the probe dir's state/ — a plain folder, not a git work tree — named as
-# the state folder, setup converges on a re-run and repairs drift, and
-# summary drains into state/, opens a friction-batch there and appends to
-# it, each save a file in state/ and a row in the node's topics_history.
+# reach, capture records a friction in the pool, and mint stops at its
+# guard. With the probe dir's state/ — a plain folder, not a git work tree
+# — named as the state folder, setup converges on a re-run and repairs
+# drift, and mint drains into state/, draws a bug ahead of open frictions
+# and folds the bug's recurrence into its unstarted topic, each save a
+# file in state/ and a row in the node's topics_history.
 # Last, tutor stops at its guard twice and writes nothing: with no ymer,
 # and with its subject-index tables dropped.
 # State is asserted through the scratch node's own MCP over curl, never
@@ -132,12 +133,12 @@ file_occurrences() { # file_occurrences <file> <text> — how often <text> occur
 	fi
 }
 
-file_created() { # file_created <file> — the file's `created:` date as YYYYMMDD, or UNPARSEABLE
-	node_number "$(sed -n 's/^created: //p' "$1" 2>/dev/null | head -n 1 | tr -d '-')"
+file_started() { # file_started <file> — the file's `started:` date as YYYYMMDD, or UNPARSEABLE
+	node_number "$(sed -n 's/^started: //p' "$1" 2>/dev/null | head -n 1 | tr -d '-')"
 }
 
-batch_files() { # batch_files — every friction-batch request.md under state/, one per line
-	find "$state" -type f -path '*/meta/*-friction-batch/request.md' 2>/dev/null
+topic_files() { # topic_files <drained_to> — every request.md in that topic's folder under state/, one per line
+	find "$state/$1" -type f -name request.md 2>/dev/null || true
 }
 
 # The declared commands — the Bash commands a run may run — one ERE per
@@ -247,7 +248,7 @@ live_result() { # live_result <n>
 # report with no role line reads as its plain lines. The check then asks
 # for its words on one line through report_words, case aside, and a red
 # names a wrong or missing fact. A read that looks for one token anywhere
-# in the result — the run's success subtype, summary's door — keeps the
+# in the result — the run's success subtype, mint's door — keeps the
 # raw line, which no decoration splits.
 # The reads run in the C locale: the marks and the ` — ` separator share
 # their leading bytes, so each mark is matched as its whole byte sequence,
@@ -284,8 +285,8 @@ report_lines() { # report_lines <n> — run <n>'s report, one line per role line
 
 # The lines on stdin carrying every word, case aside, each where no name
 # character touches either end: letters, digits, `_`, `-` and `/` on
-# either side, and `:` before the word only — so `7 tables` is not read
-# in `17 tables`, `reachable` not in `unreachable`, `ymer` not in
+# either side, and `:` before the word only — so `8 tables` is not read
+# in `18 tables`, `reachable` not in `unreachable`, `ymer` not in
 # `ymer-node` or a skill's `/ymer:<skill>`, while a dressed `node:` still
 # reads as `node`. A word may hold a space; the report's blanks are
 # collapsed to one.
@@ -795,10 +796,10 @@ stage_live() {
 	live_run 1 '/ymer:setup'
 	tables=$(node_tables)
 	fronts=$(node_count 'SELECT count(*) FROM fronts')
-	if [ "$tables" = 7 ] && [ "$fronts" = 1 ]; then
-		pass setup "7 tables created, 1 front row"
+	if [ "$tables" = 8 ] && [ "$fronts" = 1 ]; then
+		pass setup "8 tables created, 1 front row"
 	else
-		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows (expected 7 and 1) — read $runs/1.jsonl"
+		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows (expected 8 and 1) — read $runs/1.jsonl"
 	fi
 	if live_calls 1 | grep -q '^mcp__ymer-node__notebook'; then
 		pass setup-node "setup wrote through the node's notebook tool"
@@ -836,34 +837,34 @@ stage_live() {
 		fail setup-report "the report has no line carrying \`✘\`, \`state_folder\` and \`not set\`, or none carrying \`✔\`, \`ymer\`, \`no connection\` and \`tasks\` — read the result line of $runs/1.jsonl"
 	fi
 
-	# the prompt seeds a real friction, so the row is one summary can drain:
-	# an empty capture is a correct row that nothing drains
-	live_run 2 '/ymer:kaizen-capture
+	# the prompt seeds a real friction, so the drop is one mint can drain:
+	# an empty capture is a correct drop that nothing drains
+	live_run 2 '/ymer:capture
 
 Source: `readme_edit`. The work just finished, in the repo `demo`: one
 README paragraph was reworded. It had to be done twice — the first
 rewrite linked a heading, "Installing", that the README does not have,
 and the broken link was found only by re-reading the file afterwards; a
 link check before the edit would have caught it.'
-	frictions=$(node_count "SELECT count(*) FROM frictions WHERE kind = 'friction'")
-	if [ "$frictions" = 1 ]; then
-		pass capture "1 frictions row of kind friction"
+	drops=$(node_count "SELECT count(*) FROM pool WHERE kind = 'friction'")
+	if [ "$drops" = 1 ]; then
+		pass capture "1 pool drop of kind friction"
 	else
-		fail capture "after /ymer:kaizen-capture the node holds $frictions frictions rows of kind friction (expected 1 — the prompt names a real friction, so an empty row is a miss) — read $runs/2.jsonl"
+		fail capture "after /ymer:capture the node holds $drops pool drops of kind friction (expected 1 — the prompt names a real friction, so an empty drop is a miss) — read $runs/2.jsonl"
 	fi
 
-	# summary with no state folder stops at its guard naming setup, and
-	# drains, mints and saves nothing: the friction stays open for the
+	# mint with no state folder stops at its guard naming setup, and
+	# drains, creates and saves nothing: the friction stays open for the
 	# second arm's drain
-	live_run 3 '/ymer:kaizen-summary'
-	open=$(node_count "SELECT count(*) FROM frictions WHERE kind = 'friction' AND status = 'open'")
+	live_run 3 '/ymer:mint'
+	open=$(node_count "SELECT count(*) FROM pool WHERE kind = 'friction' AND status = 'open'")
 	minted=$(node_count 'SELECT count(*) FROM tasks')
 	saved=$(node_count 'SELECT count(*) FROM topics_history')
 	if live_result 3 | grep -q -F '/ymer:setup'; then named=names; else named='does not name'; fi
 	if [ "$open" = 1 ] && [ "$minted" = 0 ] && [ "$saved" = 0 ] && [ "$named" = names ]; then
-		pass summary-stop "stopped naming /ymer:setup — the friction still open, no task, no topics_history row"
+		pass mint-stop "stopped naming /ymer:setup — the friction still open in the pool, no task, no topics_history row"
 	else
-		fail summary-stop "after /ymer:kaizen-summary with no state folder: $open open frictions, $minted tasks, $saved topics_history rows, and the result line $named /ymer:setup (expected 1, 0, 0, names) — read $runs/3.jsonl"
+		fail mint-stop "after /ymer:mint with no state folder: $open open friction drops, $minted tasks, $saved topics_history rows, and the result line $named /ymer:setup (expected 1, 0, 0, names) — read $runs/3.jsonl"
 	fi
 
 	# The second arm: state/ named as the state folder through the line the
@@ -908,11 +909,11 @@ link check before the edit would have caught it.'
 	# characters, so a line saying `re-added`, `auto-created` or
 	# `created/added` reads neither word and passes — a false claim only,
 	# since converge and converge-calls read the node itself.
-	node_lines=$(report_match 4 '✔' node reachable '7 tables' claude_code)
+	node_lines=$(report_match 4 '✔' node reachable '8 tables' claude_code)
 	if [ -n "$node_lines" ] && ! { printf '%s\n' "$node_lines" | report_words created; printf '%s\n' "$node_lines" | report_words added; } | grep -q .; then
-		pass converge-report "the node line reads reachable, 7 tables and the front, nothing created or added"
+		pass converge-report "the node line reads reachable, 8 tables and the front, nothing created or added"
 	else
-		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\`, \`7 tables\` and \`claude_code\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
+		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\`, \`8 tables\` and \`claude_code\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
 	fi
 	# the folder's own line: state/ printed as configured, read as a folder
 	# that is not a git work tree, passed, its history named on the same line
@@ -925,8 +926,8 @@ link check before the edit would have caught it.'
 	# Each of the three seeded steps runs only when its seed took: a step
 	# whose seed failed is reported not run, never asserted over state the
 	# seed left as it was — a due_date never dropped reads "put back" on
-	# its own, and a second batch never inserted leaves one file either way.
-	# A seed the node refused: its own fail line, and the step not run.
+	# its own, and a recurrence never inserted leaves the bug's topic as it
+	# was. A seed the node refused: its own fail line, and the step not run.
 	seed_failed() {
 		fail "$1-seed" "$2"
 		notrun "$1" "its seed failed — see $1-seed"
@@ -944,107 +945,115 @@ link check before the edit would have caught it.'
 		seed_failed drift "DROP COLUMN due_date did not remove tasks.due_date on the node — read $runs/node.log"
 	fi
 
-	# the drain into state/, read as the artefacts it deposits: a task at new
-	# in the project the area derives, the friction drained to a topic whose
-	# request.md topics_history row its drained_to resolves to — the row's
-	# own key rearranged as <area>/YYYY/MM-DD-<topic>/ — and the file itself
-	# at state/<drained_to>request.md
-	live_run 6 '/ymer:kaizen-summary'
-	tasks=$(node_count "SELECT count(*) FROM tasks WHERE status = 'new' AND project LIKE '% Roadmap'")
+	# the drain into state/, read as the artefacts it deposits: a task at
+	# claimed in the project the area derives, the friction drained to a
+	# topic whose request.md topics_history row its drained_to resolves to
+	# — the row's own key rearranged as <area>/YYYY/MM-DD-<topic>/ — and the
+	# file itself at state/<drained_to>request.md
+	live_run 6 '/ymer:mint'
+	tasks=$(node_count "SELECT count(*) FROM tasks WHERE status = 'claimed' AND project LIKE '% Roadmap'")
 	rows=$(node_count "SELECT count(*) FROM topics_history WHERE artifact = 'request.md'")
-	drained=$(node_count "SELECT count(DISTINCT f.id) FROM frictions f JOIN topics_history h ON f.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE f.status = 'drained' AND f.kind = 'friction' AND h.artifact = 'request.md'")
-	to=$(node_text "SELECT drained_to FROM frictions WHERE status = 'drained' AND kind = 'friction'")
+	drained=$(node_count "SELECT count(DISTINCT f.id) FROM pool f JOIN topics_history h ON f.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE f.status = 'drained' AND f.kind = 'friction' AND h.artifact = 'request.md'")
+	to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND kind = 'friction'")
 	if [ -f "$state/${to}request.md" ]; then file=present; else file=absent; fi
 	if [ "$tasks" != UNPARSEABLE ] && [ "$tasks" -ge 1 ] && [ "$rows" != UNPARSEABLE ] && [ "$rows" -ge 1 ] && [ "$drained" = 1 ] && [ "$file" = present ]; then
-		pass summary "$tasks tasks row(s) at new in a Roadmap project, $rows request.md topics_history row(s), the friction drained to $to, its request.md in state/"
+		pass mint "$tasks tasks row(s) at claimed in a Roadmap project, $rows request.md topics_history row(s), the friction drained to $to, its request.md in state/"
 	else
-		fail summary "after /ymer:kaizen-summary: $tasks tasks at new in a Roadmap project, $rows request.md topics_history rows, $drained frictions drained to a row their drained_to resolves to, request.md at state/$to $file (expected ≥1, ≥1, 1, present) — read $runs/6.jsonl"
+		fail mint "after /ymer:mint: $tasks tasks at claimed in a Roadmap project, $rows request.md topics_history rows, $drained friction drops drained to a row their drained_to resolves to, request.md at state/$to $file (expected ≥1, ≥1, 1, present) — read $runs/6.jsonl"
 	fi
 
-	# The friction-batch is read on both halves of its save: the file in
-	# state/ and its rows in topics_history. The newest row must carry the
-	# file's own seed lines — a row that lags the file is a save that never
-	# happened. The history is append-only, so the batch is counted as
-	# topics, never as rows: run 6 may already have opened it, and run 7's
-	# append then adds a row to the same topic.
-	batch_where="FROM topics_history WHERE topic LIKE '%friction-batch' AND artifact = 'request.md'"
-	batch_rows_sql="SELECT count(*) $batch_where"
-	batch_topics_sql="SELECT count(DISTINCT area || '/' || topic) $batch_where"
-	drained_sql="SELECT count(*) FROM frictions WHERE source = 'hermetic_probe' AND status = 'drained'"
-	below_bar='## Below the bar for their own topic'
-	moot_bar='## Moot, or judged not worth doing'
-	row_occurrences() { # row_occurrences <text> <offset> — the SQL counting <text> in the batch's row <offset> back from the newest
-		echo "SELECT (length(body) - length(replace(body, '$1', ''))) / length('$1') $batch_where ORDER BY id DESC LIMIT 1 OFFSET $2"
-	}
-	seed="INSERT INTO frictions (front, source, context, body) VALUES"
+	# Bugs first: ten open frictions and one open bug seeded together, and
+	# the mint after them draws the bug — drained to a topic of its own,
+	# the frictions left open. The bug's topic is read on both halves of
+	# its save: the file in state/ and its rows in topics_history, found by
+	# the bug's drained_to rearranged as run 6's is. The bug's title is
+	# what its line in request.md quotes (capture's drop-as-a-line grammar:
+	# a drop with a title renders as `bug: <title> (#id)`), so it is counted
+	# once in the file and in the newest row — a row that lags the file is a
+	# save that never happened. The history is append-only, so the topic is
+	# addressed by its key, never by a row count: run 8's fold adds a row
+	# to the same topic.
+	bug_title='Probe gauge reads its dial backwards'
+	bug_body='The probe gauge showed every seeded reading reversed.'
+	recur_clause='the gauge stuck at noon on the second seeded pass'
+	front_sql='(SELECT slug FROM fronts LIMIT 1)'
+	seed="INSERT INTO pool (front, source, context, kind, title, body) VALUES"
 	i=0
 	while [ "$i" -lt 10 ]; do
 		i=$((i + 1))
-		seed="$seed ((SELECT slug FROM fronts LIMIT 1), 'hermetic_probe', 'probe/seed', 'seed friction $i below the bar')"
-		[ "$i" -lt 10 ] && seed="$seed,"
+		seed="$seed ($front_sql, 'hermetic_probe', 'probe/seed', 'friction', NULL, 'seed friction $i below the bar'),"
 	done
-	batch_ok=0
-	if node_execute "$seed"; then
-		live_run 7 '/ymer:kaizen-summary'
-		files=$(batch_files | wc -l | tr -d ' ')
-		f=$(batch_files | head -n 1)
-		below=$(file_occurrences "$f" "$below_bar")
-		moot=$(file_occurrences "$f" "$moot_bar")
-		batches=$(node_count "$batch_topics_sql")
-		row_lines=$(node_count "$(row_occurrences 'seed friction' 0)")
-		file_lines=$(file_occurrences "$f" 'seed friction')
-		if [ "$files" = 1 ] && [ "$below" = 1 ] && [ "$moot" = 1 ] && [ "$batches" = 1 ] &&
-			[ "$file_lines" != UNPARSEABLE ] && [ "$row_lines" = "$file_lines" ]; then
-			pass batch "one friction-batch in state/ and in topics_history, both headings once, its newest row carrying its $file_lines seed lines"
-			batch_ok=1
+	seed="$seed ($front_sql, 'hermetic_probe', 'probe/seed', 'bug', '$bug_title', '$bug_body')"
+	bug_id_sql="SELECT id FROM pool WHERE source = 'hermetic_probe' AND kind = 'bug' AND anchor_id IS NULL"
+	seeds_open_sql="SELECT count(*) FROM pool WHERE status = 'open' AND kind = 'friction' AND source = 'hermetic_probe'"
+	bug_ok=0
+	bug_id=UNPARSEABLE
+	if node_execute "$seed" && bug_id=$(node_count "$bug_id_sql") && [ "$bug_id" != UNPARSEABLE ]; then
+		live_run 7 '/ymer:mint'
+		bug_to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND id = $bug_id")
+		resolved=$(node_count "SELECT count(DISTINCT p.id) FROM pool p JOIN topics_history h ON p.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE p.status = 'drained' AND p.kind = 'bug' AND p.id = $bug_id AND h.artifact = 'request.md'")
+		seeds_open=$(node_count "$seeds_open_sql")
+		files=$(topic_files "$bug_to" | wc -l | tr -d ' ')
+		f=$state/${bug_to}request.md
+		if [ -f "$f" ]; then file=present; else file=absent; fi
+		bug_where="FROM topics_history WHERE area || '/' || substr(topic, 1, 4) || '/' || substr(topic, 6) || '/' = '$bug_to' AND artifact = 'request.md'"
+		bug_rows_sql="SELECT count(*) $bug_where"
+		row_occurrences() { # row_occurrences <text> <offset> — the SQL counting <text> in the bug topic's row <offset> back from the newest
+			echo "SELECT (length(body) - length(replace(body, '$1', ''))) / length('$1') $bug_where ORDER BY id DESC LIMIT 1 OFFSET $2"
+		}
+		file_lines=$(file_occurrences "$f" "$bug_title")
+		row_lines=$(node_count "$(row_occurrences "$bug_title" 0)")
+		if [ "$resolved" = 1 ] && [ "$file" = present ] && [ "$files" = 1 ] && [ "$seeds_open" = 10 ] &&
+			[ "$file_lines" = 1 ] && [ "$row_lines" = "$file_lines" ]; then
+			pass bug-first "the bug drawn ahead of ten open frictions, drained to $bug_to — one request.md there quoting its title once, in state/ and in its newest topics_history row — the ten seed frictions still open"
+			bug_ok=1
 		else
-			fail batch "$files friction-batch files after ten below-bar seeds, the below-the-bar heading $below time(s), the moot heading $moot, $batches friction-batch topics in topics_history, seed lines $file_lines in the file and $row_lines in the newest row (expected 1, 1, 1, 1, and the two equal) — read $runs/7.jsonl"
+			fail bug-first "after /ymer:mint over ten seed frictions and one bug: $resolved bug drained to a request.md row its drained_to resolves to, request.md at state/$bug_to $file, $files request.md file(s) in that folder, $seeds_open seed frictions open, the bug's title $file_lines time(s) in the file and $row_lines in the newest row (expected 1, present, 1, 10, 1 and the two equal) — read $runs/7.jsonl"
 		fi
 	else
-		seed_failed batch "the node refused the ten seed rows — read $runs/node.log"
+		seed_failed bug-first "the node refused the seed drops — ten frictions and a bug — or holds no bug id for them — read $runs/node.log"
 	fi
 
-	# The append is read as a delta over the batch: more seeds drained and
-	# more seed lines in the file than before run 8, the opening date kept,
-	# the headings still once and still one file — and the save as one more
-	# row, the newest carrying the file's lines and the one before it the
-	# pre-image, the lines the file held before the append.
-	# The `_before` reads follow the seed: it inserts open frictions rows,
-	# which move neither the drained count nor the batch file.
-	if [ "$batch_ok" != 1 ]; then
-		notrun append "the batch step did not pass — see batch"
+	# The fold is read as a delta over the bug's topic: a recurrence of the
+	# bug, anchored on it by id, drained by the next mint into the same
+	# topic — nobody has started it, so the drop is folded into its
+	# request.md — still one file, the recurrence's clause in it where it
+	# was not before, the started date kept; and the save as one more row,
+	# the newest carrying the file's clauses and the one before it the
+	# pre-image, the clauses the file held before the fold.
+	# The `_before` reads follow the seed: it inserts one open drop, which
+	# moves neither the file nor the history.
+	recur_seed="INSERT INTO pool (front, source, context, kind, anchor_id, body) VALUES ($front_sql, 'hermetic_probe', 'probe/seed', 'bug', $bug_id, '$recur_clause')"
+	if [ "$bug_ok" != 1 ]; then
+		notrun append "the bug-first step did not pass — see bug-first"
 		notrun append-history "the append step did not run — see append"
-	elif ! node_execute "$seed"; then
-		seed_failed append "the node refused the second ten seed rows — read $runs/node.log"
+	elif ! node_execute "$recur_seed"; then
+		seed_failed append "the node refused the recurrence seed drop — read $runs/node.log"
 		notrun append-history "the append step did not run — see append"
 	else
-		drained_before=$(node_count "$drained_sql")
-		lines_before=$(file_occurrences "$f" 'seed friction')
-		created_before=$(file_created "$f")
-		rows_before=$(node_count "$batch_rows_sql")
-		live_run 8 '/ymer:kaizen-summary'
-		files=$(batch_files | wc -l | tr -d ' ')
-		drained_after=$(node_count "$drained_sql")
-		lines_after=$(file_occurrences "$f" 'seed friction')
-		created_after=$(file_created "$f")
-		below=$(file_occurrences "$f" "$below_bar")
-		moot=$(file_occurrences "$f" "$moot_bar")
-		if [ "$files" = 1 ] && [ "$below" = 1 ] && [ "$moot" = 1 ] &&
-			[ "$drained_before" != UNPARSEABLE ] && [ "$drained_after" != UNPARSEABLE ] && [ "$drained_after" -gt "$drained_before" ] &&
+		lines_before=$(file_occurrences "$f" "$recur_clause")
+		started_before=$(file_started "$f")
+		rows_before=$(node_count "$bug_rows_sql")
+		live_run 8 '/ymer:mint'
+		files=$(topic_files "$bug_to" | wc -l | tr -d ' ')
+		recur_to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND anchor_id = $bug_id")
+		lines_after=$(file_occurrences "$f" "$recur_clause")
+		started_after=$(file_started "$f")
+		if [ "$files" = 1 ] && [ "$recur_to" = "$bug_to" ] &&
 			[ "$lines_before" != UNPARSEABLE ] && [ "$lines_after" != UNPARSEABLE ] && [ "$lines_after" -gt "$lines_before" ] &&
-			[ "$created_before" != UNPARSEABLE ] && [ "$created_after" = "$created_before" ]; then
-			pass append "still one friction-batch file, created $created_before kept, seeds drained $drained_before → $drained_after, seed lines in the file $lines_before → $lines_after, both headings once"
+			[ "$started_before" != UNPARSEABLE ] && [ "$started_after" = "$started_before" ]; then
+			pass append "still one request.md in $bug_to, started $started_before kept, the recurrence drained to the bug's topic, its clause in the file $lines_before → $lines_after"
 		else
-			fail append "$files friction-batch files, created $created_before → $created_after, seeds drained $drained_before → $drained_after, seed lines in the file $lines_before → $lines_after, headings $below and $moot (expected 1, unchanged, more, more, 1 and 1) — read $runs/8.jsonl"
+			fail append "$files request.md file(s) in $bug_to, started $started_before → $started_after, the recurrence drained to $recur_to, its clause in the file $lines_before → $lines_after (expected 1, unchanged, $bug_to, more) — read $runs/8.jsonl"
 		fi
-		rows_after=$(node_count "$batch_rows_sql")
-		newest=$(node_count "$(row_occurrences 'seed friction' 0)")
-		previous=$(node_count "$(row_occurrences 'seed friction' 1)")
+		rows_after=$(node_count "$bug_rows_sql")
+		newest=$(node_count "$(row_occurrences "$recur_clause" 0)")
+		previous=$(node_count "$(row_occurrences "$recur_clause" 1)")
 		if [ "$rows_before" != UNPARSEABLE ] && [ "$rows_after" = $((rows_before + 1)) ] &&
 			[ "$newest" = "$lines_after" ] && [ "$previous" = "$lines_before" ]; then
-			pass append-history "one more topics_history row, the newest carrying the file's $lines_after seed lines and the one before it the pre-image's $lines_before"
+			pass append-history "one more topics_history row, the newest carrying the file's $lines_after recurrence clause(s) and the one before it the pre-image's $lines_before"
 		else
-			fail append-history "topics_history rows $rows_before → $rows_after, seed lines $newest in the newest row and $previous in the one before it, against $lines_after in the file after and $lines_before before (expected one more row, and the two pairs equal) — read the execute calls in $runs/8.jsonl"
+			fail append-history "topics_history rows $rows_before → $rows_after, recurrence clauses $newest in the newest row and $previous in the one before it, against $lines_after in the file after and $lines_before before (expected one more row, and the two pairs equal) — read the execute calls in $runs/8.jsonl"
 		fi
 	fi
 
@@ -1094,7 +1103,7 @@ link check before the edit would have caught it.'
 	refused=''
 	commits=''
 	write_runs=' 6 7 8 '
-	summary_runs=' 3 6 7 8 '
+	mint_runs=' 3 6 7 8 '
 	setup_runs=' 1 4 5 '
 	addressed=''
 	loaded=''
@@ -1137,7 +1146,7 @@ link check before the edit would have caught it.'
 			/* | '~'*) echo "$p" ;;
 			esac
 		done | grep -q . && outside="$outside $n"
-		# a file write belongs to the second arm's summary runs alone, and
+		# a file write belongs to the second arm's mint runs alone, and
 		# lands under state/: any other run's write, a write naming a path
 		# outside state/ or climbing out of it, and a write whose path the
 		# read cannot find all count
@@ -1170,7 +1179,7 @@ link check before the edit would have caught it.'
 			grep -v -E -f "$hook/declared" >"$tmp/other" || [ $? -eq 1 ] || echo "hook/declared unreadable" >>"$tmp/other"
 		grep -q . "$tmp/other" && shell="$shell $n"
 		denied_bash "$n" | grep -q . && refused="$refused $n"
-		case $summary_runs in
+		case $mint_runs in
 		*" $n "*) live_calls "$n" | grep '^Bash ' | grep -q 'git commit' && commits="$commits $n" ;;
 		esac
 		# a setup report names the node only where it runs: a port it
@@ -1203,9 +1212,9 @@ link check before the edit would have caught it.'
 		fail isolation "run(s)$outside read outside $state, $root and the runs' working directory $cwd, the only roots a run is handed — read the call and its permission_denials in $runs/<n>.jsonl; a read a skill legitimately needs elsewhere is admitted by widening isolation's arm in scripts/hermetic-probe-live"
 	fi
 	if [ -z "$writes" ]; then
-		pass writes "file writes only in the second arm's summary runs, and only under $state"
+		pass writes "file writes only in the second arm's mint runs, and only under $state"
 	else
-		fail writes "a file write outside the second arm's summary runs or outside $state in run(s)$writes — read $runs/<n>.jsonl"
+		fail writes "a file write outside the second arm's mint runs or outside $state in run(s)$writes — read $runs/<n>.jsonl"
 	fi
 	if [ -z "$shell" ]; then
 		pass bash-commands "no Bash command beyond \`claude mcp get <name>\` and the state folder's \`rev-parse\` ran in any run${refused:+ — refused, never run, in run(s)$refused}"
@@ -1213,9 +1222,9 @@ link check before the edit would have caught it.'
 		fail bash-commands "a Bash command other than \`claude mcp get <name>\` or the state folder's \`rev-parse\` in run(s)$shell — read its command in $runs/<n>.jsonl"
 	fi
 	if [ -z "$commits" ]; then
-		pass summary-git "no git commit attempted in any summary run"
+		pass mint-git "no git commit attempted in any mint run"
 	else
-		fail summary-git "summary attempted a git commit, with the state folder unset or no git work tree, in run(s)$commits — read $runs/<n>.jsonl"
+		fail mint-git "mint attempted a git commit, with the state folder unset or no git work tree, in run(s)$commits — read $runs/<n>.jsonl"
 	fi
 	if [ -z "$addressed" ]; then
 		pass setup-address "every setup report names the node at its own port or at no address"

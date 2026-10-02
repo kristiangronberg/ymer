@@ -245,92 +245,92 @@ pstate=$tmp/probe/state # the live stage's state/, under the probe dir every liv
 # setup's report with no state folder named, in the lines the skill's own
 # grammar gives; the second variant is the wording a denied read
 # produced, which the report check must not accept
-setup_report="Setup — ymer environment\n\n  ✔ node          reachable — 7 tables created, front \`claude_code\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  ✔ ymer          no connection in this session — work tracked in the node's \`tasks\` table\n  – Meta Roadmap  not checked"
+setup_report="Setup — ymer environment\n\n  ✔ node          reachable — 8 tables created, front \`claude_code\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  ✔ ymer          no connection in this session — work tracked in the node's \`tasks\` table\n  – Meta Roadmap  not checked"
 run_trace "$setup_report" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' Read "{\"file_path\":\"$live/plugins/ymer/skills/setup/SKILL.md\"}" >"$canned/run-setup1.jsonl"
 run_trace "$(printf '%s' "$setup_report" | sed 's/not set — set it/not readable from this session — set it/')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-unreadable.jsonl"
-run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO frictions VALUES (1)"}}' >"$canned/run-capture.jsonl"
-# summary with no state folder: it reads the backlog and stops naming setup
-run_trace 'No state folder is named, so nothing was drained. Run /ymer:setup.' $notebook '{"action":"query","data":{"sql":"SELECT slug FROM fronts"}}' >"$canned/run-summary-stop.jsonl"
-# summary's healthy trace in the second arm carries the declared commands
+run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO pool VALUES (1)"}}' >"$canned/run-capture.jsonl"
+# mint with no state folder: it reads the pool and stops naming setup
+run_trace 'No state folder is named, so nothing was drained. Run /ymer:setup.' $notebook '{"action":"query","data":{"sql":"SELECT slug FROM fronts"}}' >"$canned/run-mint-stop.jsonl"
+# mint's healthy trace in the second arm carries the declared commands
 # — the state folder's rev-parse bare and with its path quoted — reads
 # inside state/, one path under it, one naming state/ itself and one
 # relative, a write under state/, and the history row it saves
-save_sql="INSERT INTO topics_history (topic, area, artifact, body, phase, front) SELECT 't', 'meta', 'request.md', new.body, 'kaizen_summary', 'claude_code' FROM (SELECT 'b' AS body) AS new"
-run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE frictions SET status = 1"}}' $notebook "{\"action\":\"execute\",\"data\":{\"sql\":\"$save_sql\"}}" Bash '{"command":"claude mcp get ymer"}' Bash '{"command":"claude mcp get ymer 2>&1"}' Bash "{\"command\":\"git -C $pstate rev-parse --is-inside-work-tree\"}" Bash "{\"command\":\"git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree\"}" Write "{\"file_path\":\"$pstate/meta/2026/09-21-friction-batch/request.md\",\"content\":\"x\"}" Read "{\"file_path\":\"$pstate/meta/2026/09-21-friction-batch/request.md\"}" Glob "{\"pattern\":\"*.md\",\"path\":\"$pstate\"}" Glob '{"pattern":"*.md"}' >"$canned/run-summary.jsonl"
-# the same summary writing beside state/ rather than into it
-run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE frictions SET status = 1"}}' Write "{\"file_path\":\"$tmp/probe/cwd/request.md\",\"content\":\"x\"}" >"$canned/run-summary-outside.jsonl"
+save_sql="INSERT INTO topics_history (topic, area, artifact, body, phase, front) SELECT 't', 'meta', 'request.md', new.body, 'mint', 'claude_code' FROM (SELECT 'b' AS body) AS new"
+run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE pool SET status = 1"}}' $notebook "{\"action\":\"execute\",\"data\":{\"sql\":\"$save_sql\"}}" Bash '{"command":"claude mcp get ymer"}' Bash '{"command":"claude mcp get ymer 2>&1"}' Bash "{\"command\":\"git -C $pstate rev-parse --is-inside-work-tree\"}" Bash "{\"command\":\"git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree\"}" Write "{\"file_path\":\"$pstate/demo/2026/09-21-probe-bug/request.md\",\"content\":\"x\"}" Read "{\"file_path\":\"$pstate/demo/2026/09-21-probe-bug/request.md\"}" Glob "{\"pattern\":\"*.md\",\"path\":\"$pstate\"}" Glob '{"pattern":"*.md"}' >"$canned/run-mint.jsonl"
+# the same mint writing beside state/ rather than into it
+run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE pool SET status = 1"}}' Write "{\"file_path\":\"$tmp/probe/cwd/request.md\",\"content\":\"x\"}" >"$canned/run-mint-outside.jsonl"
 # the re-run's report, healthy on the result line while a narration line
 # mid-run says `tables created`: only a read of the result line passes it
-trace_narration='All seven tables created earlier are present; composing the report.'
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2.jsonl"
+trace_narration='All eight tables created earlier are present; composing the report.'
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2.jsonl"
 trace_narration=''
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — git work tree, history in git" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-git.jsonl"
-run_trace "  ✔ node          reachable — 7 tables created, front \`claude_code\` added" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — git work tree, history in git" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-git.jsonl"
+run_trace "  ✔ node          reachable — 8 tables created, front \`claude_code\` added" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created.jsonl"
 # setup's reports dressed the way a model dresses them — a sentence
 # before, bold role names, ` — ` separators, backticked values, a code
 # fence, a Details section after, a decoration or a double blank inside a
 # phrase the check reads — right in every fact, so the report checks must
 # pass them; the re-run's Details line says created and added, off the
 # node's line, and does not decide the node's line
-run_trace "Now compiling the full report.\n\n**Setup — ymer environment**\n\n\`\`\`\n✔ **node** — reachable — 7 tables created, front \`claude_code\` added\n✘ **state_folder** — not **set** — set it with /plugin configure ymer@ymer\n✔ **ymer** — no  connection in this session (no \`ymer\` MCP server configured) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked\n\`\`\`\n\nDetails:\n- **state_folder**: the option is unset." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-decorated.jsonl"
-run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 7 tables present (fronts, frictions, tasks, tasks_log, topics_history, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed — front \`claude_code\` already registered\n✔ **state_folder** — \`$pstate\` — not a git work tree, history in the node's \`topics_history\`\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-node\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
+run_trace "Now compiling the full report.\n\n**Setup — ymer environment**\n\n\`\`\`\n✔ **node** — reachable — 8 tables created, front \`claude_code\` added\n✘ **state_folder** — not **set** — set it with /plugin configure ymer@ymer\n✔ **ymer** — no  connection in this session (no \`ymer\` MCP server configured) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked\n\`\`\`\n\nDetails:\n- **state_folder**: the option is unset." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-decorated.jsonl"
+run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 8 tables present (fronts, kinds, pool, tasks, tasks_log, topics_history, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed — front \`claude_code\` already registered\n✔ **state_folder** — \`$pstate\` — not a git work tree, history in the node's \`topics_history\`\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-node\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
 # no coordinator line, and the Meta Roadmap line naming ymer's missing
 # connection and tasks in its place: the coordinator is not reported
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables created, front \`claude_code\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  – Meta Roadmap  not checked — no connection to ymer; process work routes to \`Meta Roadmap\` in \`tasks\`" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-ymer.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 8 tables created, front \`claude_code\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  – Meta Roadmap  not checked — no connection to ymer; process work routes to \`Meta Roadmap\` in \`tasks\`" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-ymer.jsonl"
 # the re-run's node line naming a change the re-run never made: tables
 # created, or a front row added — and the line saying created beside a
 # Details line that restates the node's facts without it
-run_trace "  ✔ node          reachable — 7 tables created, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-only.jsonl"
-run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\` added\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-added.jsonl"
-run_trace "  ✔ node          reachable — 7 tables created, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nDetails:\n- ✔ **node**: reachable, 7 tables, front \`claude_code\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-recap.jsonl"
+run_trace "  ✔ node          reachable — 8 tables created, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-only.jsonl"
+run_trace "  ✔ node          reachable — 8 tables, front \`claude_code\` added\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-added.jsonl"
+run_trace "  ✔ node          reachable — 8 tables created, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nDetails:\n- ✔ **node**: reachable, 8 tables, front \`claude_code\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-recap.jsonl"
 # the re-run's report naming the node by address: a port the node does
 # not run on, as a URL, as a bare port and after the node's server name,
 # and the probe's own port
-run_trace "  ✔ node          reachable at http://127.0.0.1:8012/mcp — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-url.jsonl"
-run_trace "  ✔ node          reachable on port 8012 — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-port.jsonl"
-run_trace "  ✔ node          reachable at ymer-node:8012 — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-host.jsonl"
-run_trace "  ✔ node          reachable at http://127.0.0.1:8112/mcp — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-right-url.jsonl"
+run_trace "  ✔ node          reachable at http://127.0.0.1:8012/mcp — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-url.jsonl"
+run_trace "  ✔ node          reachable on port 8012 — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-port.jsonl"
+run_trace "  ✔ node          reachable at ymer-node:8012 — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-host.jsonl"
+run_trace "  ✔ node          reachable at http://127.0.0.1:8112/mcp — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-right-url.jsonl"
 # the first run's and the drift run's reports naming a port the node does
 # not run on, each otherwise the run it stands in for — the drift run's in
 # the role grammar a real drift run prints, the port on the node's line
 run_trace "$(printf '%s' "$setup_report" | sed 's/reachable —/reachable on port 8012 —/')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' Read "{\"file_path\":\"$live/plugins/ymer/skills/setup/SKILL.md\"}" >"$canned/run-setup1-wrong-port.jsonl"
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables, front \`claude_code\`, node on port 8012 (added tasks.due_date)\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3-wrong-port.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 8 tables, front \`claude_code\`, node on port 8012 (added tasks.due_date)\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3-wrong-port.jsonl"
 run_trace 'tasks.due_date added' $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3.jsonl"
 # the first run's report with a role line the model wrapped, its
 # continuation lines indented under it and one opening on the ` — `
 # separator; and with list bullets, a nested bullet under one role line
 # and a fence nested under another, the facts that line needs after the
 # fence — right in every fact, so setup-report must pass both
-run_trace "## Setup — ymer environment\n\n\`\`\`\n✔ node          reachable — 7 tables created, front \`claude_code\` added\n✘ state_folder  not set — set it with /plugin configure ymer@ymer, or\n                 reinstall with the install line and the option\n✔ ymer          no connection in this session\n                 — work tracked in the\n                 node's \`tasks\` table\n–  Meta Roadmap  not checked\n\`\`\`\n\nOne blocker: the state_folder option is not set." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-wrapped.jsonl"
-run_trace "**Setup — ymer environment**\n\n- ✔ node — reachable — 7 tables created, front \`claude_code\` added\n- ✘ state_folder — not set — set it with \`/plugin configure ymer@ymer\`\n  - If you did set a folder and still read not set, check which plugin it is set on.\n- ✔ ymer — no connection in this session. Add it with:\n  \`\`\`\n  claude mcp add --transport http --scope user ymer <its address>\n  \`\`\`\n  until then, work is tracked in the node's \`tasks\` table\n- – Meta Roadmap — not checked\n\nNext step: set the state_folder option." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-nested.jsonl"
+run_trace "## Setup — ymer environment\n\n\`\`\`\n✔ node          reachable — 8 tables created, front \`claude_code\` added\n✘ state_folder  not set — set it with /plugin configure ymer@ymer, or\n                 reinstall with the install line and the option\n✔ ymer          no connection in this session\n                 — work tracked in the\n                 node's \`tasks\` table\n–  Meta Roadmap  not checked\n\`\`\`\n\nOne blocker: the state_folder option is not set." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-wrapped.jsonl"
+run_trace "**Setup — ymer environment**\n\n- ✔ node — reachable — 8 tables created, front \`claude_code\` added\n- ✘ state_folder — not set — set it with \`/plugin configure ymer@ymer\`\n  - If you did set a folder and still read not set, check which plugin it is set on.\n- ✔ ymer — no connection in this session. Add it with:\n  \`\`\`\n  claude mcp add --transport http --scope user ymer <its address>\n  \`\`\`\n  until then, work is tracked in the node's \`tasks\` table\n- – Meta Roadmap — not checked\n\nNext step: set the state_folder option." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-nested.jsonl"
 # the re-run's node line naming a count or a state that only contains the
-# right one: 17 tables, unreachable
-run_trace "  ✔ node          reachable — 17 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-17-tables.jsonl"
-run_trace "  ✔ node          unreachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-unreachable.jsonl"
+# right one: 18 tables, unreachable
+run_trace "  ✔ node          reachable — 18 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-18-tables.jsonl"
+run_trace "  ✔ node          unreachable — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-unreachable.jsonl"
 # the re-run's report fenced, the node's role line last and a sentence
 # saying created and added straight after the closing fence: the block's
 # own fence ends the role line, so the sentence never decides it; and the
 # role names dressed with a colon, which still read as the role names
-run_trace "Setup — ymer environment\n\n\`\`\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n  ✔ node          reachable — 7 tables, front \`claude_code\`\n\`\`\`\nNothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-fenced.jsonl"
-run_trace "Setup — ymer environment\n\n- ✔ **node**: reachable — 7 tables, front \`claude_code\`\n- ✔ **state_folder**: \`$pstate\` — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-colon.jsonl"
+run_trace "Setup — ymer environment\n\n\`\`\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n  ✔ node          reachable — 8 tables, front \`claude_code\`\n\`\`\`\nNothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-fenced.jsonl"
+run_trace "Setup — ymer environment\n\n- ✔ **node**: reachable — 8 tables, front \`claude_code\`\n- ✔ **state_folder**: \`$pstate\` — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-colon.jsonl"
 # the re-run's report naming ports that are not the node's address — a
 # container's port in the prose after the lines, a database's port on the
 # node's own line — and a wrong node URL in that prose
-run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nInside Docker the container listens on port 8012." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-container-port.jsonl"
-run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`, db_port 5432\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-db-port.jsonl"
-run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nReady. The node answers at http://127.0.0.1:8012/mcp." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-prose-url.jsonl"
+run_trace "  ✔ node          reachable — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nInside Docker the container listens on port 8012." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-container-port.jsonl"
+run_trace "  ✔ node          reachable — 8 tables, front \`claude_code\`, db_port 5432\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-db-port.jsonl"
+run_trace "  ✔ node          reachable — 8 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nReady. The node answers at http://127.0.0.1:8012/mcp." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-prose-url.jsonl"
 # the re-run's node line carried onto a continuation line that names a
 # wrong port: the node's role line is read whole, its continuations joined
-run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`\n                 (repaired: tasks was missing due_date — node on port 8012)\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrapped-port.jsonl"
+run_trace "  ✔ node          reachable — 8 tables, front \`claude_code\`\n                 (repaired: tasks was missing due_date — node on port 8012)\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrapped-port.jsonl"
 # the node's role mark in emoji presentation — the mark, then U+FE0F —
 # on a line naming a wrong port: the mark is the same mark
-run_trace "  ✔️ node          reachable — 7 tables, front \`claude_code\`, node on port 8012\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-emoji-port.jsonl"
+run_trace "  ✔️ node          reachable — 8 tables, front \`claude_code\`, node on port 8012\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-emoji-port.jsonl"
 # the state folder's reading aimed at another folder: the path is the
 # stage's own, so any other is no declared command
 run_trace 'read' Bash '{"command":"git -C /Users/someone/state rev-parse --is-inside-work-tree"}' >"$canned/run-capture-revparse.jsonl"
-run_trace 'committed' Bash '{"command":"git commit -m x"}' >"$canned/run-summary-git.jsonl"
+run_trace 'committed' Bash '{"command":"git commit -m x"}' >"$canned/run-mint-git.jsonl"
 # a `{}` ahead of the commit: a read cut at the first `}` would hide it
-run_trace 'committed' Bash '{"command":"echo {} && git commit -m x"}' >"$canned/run-summary-git-brace.jsonl"
+run_trace 'committed' Bash '{"command":"echo {} && git commit -m x"}' >"$canned/run-mint-git-brace.jsonl"
 run_trace 'written' Write '{"file_path":"notes.md","content":"x"}' >"$canned/run-capture-write.jsonl"
 run_trace 'appended' Bash '{"command":"echo x >> notes.txt"}' >"$canned/run-capture-bash.jsonl"
 run_trace 'read' Bash '{"command":"claude mcp get ymer 2>&1; echo done"}' >"$canned/run-capture-compound.jsonl"
@@ -381,7 +381,7 @@ run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach.j
 # refused, or whose no-such-tool answer names another tool reached its
 # server; and the call above, with no result at all, is a reach too
 trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-node</tool_use_error>' true)
-run_trace 'recorded' mcp__ymer-node '{}' $notebook '{"action":"execute","data":{"sql":"INSERT INTO frictions VALUES (1)"}}' >"$canned/run-capture-no-such-tool.jsonl"
+run_trace 'recorded' mcp__ymer-node '{}' $notebook '{"action":"execute","data":{"sql":"INSERT INTO pool VALUES (1)"}}' >"$canned/run-capture-no-such-tool.jsonl"
 trace_results=$(tool_result t1 'found' false)
 run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-answered.jsonl"
 trace_results=$(tool_result t1 'Claude requested permissions to use mcp__foo__bar, but you have not granted it yet.' true)
@@ -390,7 +390,7 @@ trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: m
 run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-misnamed.jsonl"
 trace_results=''
 trace_init='{"type":"system","subtype":"init","session_id":"s-run","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"},{"name":"other","status":"connected","source":"claudeai"}]}'
-run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO frictions VALUES (1)"}}' >"$canned/run-capture-connector.jsonl"
+run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO pool VALUES (1)"}}' >"$canned/run-capture-connector.jsonl"
 trace_init=$trace_init_default
 # a compound behind an escaped quote: the stage reads the command as the
 # whole JSON string, so what it holds runs on past the quoted name to the `;`
@@ -469,37 +469,39 @@ node_tables() { # node_tables <n> — a tables answer counting <n>
 node_text_rows() { # node_text_rows <text> — a query answer whose first cell is the text <text>
 	printf '{"result":{"content":[{"text":"{\\"columns\\":[\\"t\\"],\\"rows\\":[[\\"%s\\"]]}","type":"text"}],"isError":false}}' "$1"
 }
-# The files a summary run leaves in state/, written by the claude shim's
-# effect for that run: the topic run 6 drains to, the friction-batch run 7
-# opens, and run 8's append to it — ten seed lines under the first heading
-# each time, the opening date kept.
+# The files a mint run leaves in state/, written by the claude shim's
+# effect for that run: the topic run 6 drains to, the bug's topic run 7
+# opens — its line quoting the bug's title once — and run 8's fold of the
+# bug's recurrence into it, the started date kept.
 drained_to='demo/2026/09-21-probe-topic/'
-batch_dir=$pstate/meta/2026/09-21-friction-batch
-batch_body() { # batch_body <created> <seed lines> — a friction-batch request.md
-	printf -- '---\nsource: kaizen-summary\ntask: 1\ncreated: %s\n---\n\n# friction-batch\n\n## Below the bar for their own topic\n\n' "$1"
+bug_to='demo/2026/09-21-probe-bug/'
+bug_dir=$pstate/$bug_to
+bug_title='Probe gauge reads its dial backwards'
+recur_clause='the gauge stuck at noon on the second seeded pass'
+bug_body() { # bug_body <started> <recurrences> — the bug topic's request.md
+	printf -- '---\nsource: mint\ntask: 2\nstarted: %s\n---\n\n# probe-bug\n\n**Root cause.** The gauge is wired in reverse.\n\nDrops, verbatim from the pool:\n\n- 2026-09-21 · hermetic_probe@probe/seed — bug: %s (#12)\n' "$1" "$bug_title"
 	i=0
 	while [ "$i" -lt "$2" ]; do
 		i=$((i + 1))
-		printf -- '- #%s seed friction %s below the bar\n' "$i" "$i"
+		printf -- '- 2026-09-21 · hermetic_probe@probe/seed — bug: recurrence of #12 — %s (#%s)\n' "$recur_clause" $((12 + i))
 	done
-	printf '\n## Moot, or judged not worth doing\n'
 }
-batch_body 2026-09-21 10 >"$canned/batch-10.md"
-batch_body 2026-09-21 20 >"$canned/batch-20.md"
-batch_body 2026-09-22 20 >"$canned/batch-20-redated.md"
-# summary_effects <run 3> <run 6> <run 7> <run 8> — what each summary run
+bug_body 2026-09-21 0 >"$canned/bug-0.md"
+bug_body 2026-09-21 1 >"$canned/bug-1.md"
+bug_body 2026-09-22 1 >"$canned/bug-1-redated.md"
+# mint_effects <run 3> <run 6> <run 7> <run 8> — what each mint run
 # leaves on disk, replacing any queued before; `:` leaves nothing
-summary_effects() {
-	shim_drop effects 'claude -p /ymer:kaizen-summary'
-	for e in "$@"; do effect 'claude -p /ymer:kaizen-summary' "$e"; done
+mint_effects() {
+	shim_drop effects 'claude -p /ymer:mint'
+	for e in "$@"; do effect 'claude -p /ymer:mint' "$e"; done
 }
 effect_drain="mkdir -p '$pstate/$drained_to' && printf 'x\n' >'$pstate/${drained_to}request.md'"
-effect_batch="mkdir -p '$batch_dir' && cp '$canned/batch-10.md' '$batch_dir/request.md'"
-effect_append="cp '$canned/batch-20.md' '$batch_dir/request.md'"
+effect_bug="mkdir -p '$bug_dir' && cp '$canned/bug-0.md' '${bug_dir}request.md'"
+effect_append="cp '$canned/bug-1.md' '${bug_dir}request.md'"
 
 # ── fixtures ──────────────────────────────────────────────────────────
 # fixture <dir> — a marketplace shaped like this one: the plugin ymer
-# (skills setup, kaizen-capture, kaizen-summary, tutor — each skill the
+# (skills setup, capture, mint, tutor — each skill the
 # live stage runs) and its README, the probe's
 # scripts and KEEP file copied in, a one-token token file beside it (outside
 # the corpus, as the real one is), as a git repo.
@@ -508,7 +510,7 @@ fixture() {
 	mkdir -p "$1/plugins/ymer/.claude-plugin"
 	printf '{ "name": "ymer", "version": "0.0.1" }\n' >"$1/plugins/ymer/.claude-plugin/plugin.json"
 	printf 'Install it, then run /ymer:setup — see [installing](%s).\n' '../../README.md#installing' >"$1/plugins/ymer/README.md"
-	for s in ymer/setup ymer/kaizen-capture ymer/kaizen-summary ymer/tutor; do
+	for s in ymer/setup ymer/capture ymer/mint ymer/tutor; do
 		mkdir -p "$1/plugins/${s%/*}/skills/${s#*/}"
 		printf -- '---\nname: %s\n---\nA skill; its door is /ymer:setup.\n' "${s#*/}" >"$1/plugins/${s%/*}/skills/${s#*/}/SKILL.md"
 	done
@@ -536,11 +538,11 @@ fixture_cases() { # fixture_cases <dir> — two eval cases
 seed_ok='{"result":{"content":[{"text":"{}","type":"text"}],"isError":false}}'
 # The body a write the node refuses on a foreign key answers with.
 node_fk_refused='{"result":{"content":[{"text":"SQLite error: FOREIGN KEY constraint failed","type":"text"}],"isError":true}}'
-# live_queue [<frictions count>] — every answer the live stage's happy
+# live_queue [<friction drops count>] — every answer the live stage's happy
 # path consumes, in the order the stage asks, and every file its runs
 # leave behind; the count capture leaves behind defaults to 1. A queue line
 # is consumed by the first request carrying its key, an answer line stays;
-# answers are searched after the queue and in order. The first summary run
+# answers are searched after the queue and in order. The first mint run
 # is the first arm's, which stops and leaves nothing; the install between
 # the arms writes the option into cfg/, the way the CLI does.
 live_queue() {
@@ -557,14 +559,14 @@ live_queue() {
 	queue 'claude -p Reply with' "@$canned/run-control.jsonl"
 	effect 'claude -p Reply with' "sh '$canned/plant-control' planted"
 	queue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl"
-	queue '"action":"tables"' "$(node_tables 7)"
+	queue '"action":"tables"' "$(node_tables 8)"
 	queue 'FROM fronts"' "$(node_rows 1)"
 	queue "tbl_name = 'topics_history'" "$(node_rows 4)"
 	queue "WHERE name = 'topics'" "$(node_rows 0)"
 	queue 'INTO tutor_engagements' "$node_fk_refused"
-	queue 'claude -p /ymer:kaizen-capture' "@$canned/run-capture.jsonl"
+	queue 'claude -p /ymer:capture' "@$canned/run-capture.jsonl"
 	queue "kind = 'friction'\"" "$(node_rows "${1:-1}")"
-	queue 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-stop.jsonl"
+	queue 'claude -p /ymer:mint' "@$canned/run-mint-stop.jsonl"
 	queue "status = 'open'\"" "$(node_rows 1)"
 	queue 'FROM tasks"' "$(node_rows 0)"
 	queue 'FROM topics_history"' "$(node_rows 0)"
@@ -576,20 +578,22 @@ live_queue() {
 	queue 'pragma_table_info' "$(node_rows 0)"
 	queue 'claude -p /ymer:setup' "@$canned/run-setup3.jsonl"
 	queue 'pragma_table_info' "$(node_rows 1)"
-	answer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary.jsonl"
-	summary_effects ':' "$effect_drain" "$effect_batch" "$effect_append"
-	queue "FROM tasks WHERE status = 'new'" "$(node_rows 1)"
+	answer 'claude -p /ymer:mint' "@$canned/run-mint.jsonl"
+	mint_effects ':' "$effect_drain" "$effect_bug" "$effect_append"
+	queue "FROM tasks WHERE status = 'claimed'" "$(node_rows 1)"
 	queue "FROM topics_history WHERE artifact = 'request.md'" "$(node_rows 1)"
-	queue 'JOIN topics_history h ON' "$(node_rows 1)"
-	queue 'SELECT drained_to FROM frictions' "$(node_text_rows "$drained_to")"
-	queue "SELECT count(DISTINCT area ||" "$(node_rows 1)"
-	queue 'LIMIT 1 OFFSET 0' "$(node_rows 10)"
-	queue "source = 'hermetic_probe' AND status = 'drained'" "$(node_rows 10)"
-	queue "SELECT count(*) FROM topics_history WHERE topic LIKE" "$(node_rows 1)"
-	queue "source = 'hermetic_probe' AND status = 'drained'" "$(node_rows 20)"
-	queue "SELECT count(*) FROM topics_history WHERE topic LIKE" "$(node_rows 2)"
-	queue 'LIMIT 1 OFFSET 0' "$(node_rows 20)"
-	queue 'LIMIT 1 OFFSET 1' "$(node_rows 10)"
+	queue 'f JOIN topics_history h ON' "$(node_rows 1)"
+	queue "SELECT drained_to FROM pool WHERE status = 'drained' AND kind" "$(node_text_rows "$drained_to")"
+	queue "kind = 'bug' AND anchor_id IS NULL" "$(node_rows 12)"
+	queue "SELECT drained_to FROM pool WHERE status = 'drained' AND id" "$(node_text_rows "$bug_to")"
+	queue 'p JOIN topics_history h ON' "$(node_rows 1)"
+	queue "kind = 'friction' AND source = 'hermetic_probe'" "$(node_rows 10)"
+	queue 'LIMIT 1 OFFSET 0' "$(node_rows 1)"
+	queue "SELECT count(*) FROM topics_history WHERE area ||" "$(node_rows 1)"
+	queue "SELECT drained_to FROM pool WHERE status = 'drained' AND anchor_id" "$(node_text_rows "$bug_to")"
+	queue "SELECT count(*) FROM topics_history WHERE area ||" "$(node_rows 2)"
+	queue 'LIMIT 1 OFFSET 0' "$(node_rows 1)"
+	queue 'LIMIT 1 OFFSET 1' "$(node_rows 0)"
 	queue 'claude -p /ymer:tutor' "@$canned/run-tutor-ymer.jsonl"
 	queue 'FROM tutor_subjects"' "$(node_rows 0)"
 	queue 'FROM tutor_engagements"' "$(node_rows 0)"
@@ -634,7 +638,7 @@ probe "$fx" static
 check "static clean exits 0" 0 "$rc"
 check "static clean: manifests pass" 1 "$(lines '✔ manifests')"
 check "static clean: values pass" 1 "$(lines '✔ values')"
-check "static clean: references pass — the fixture's and the live stage's own" 1 "$(lines '✔ references   30 slash references, 1 relative links, 0 plugin-root paths')"
+check "static clean: references pass — the fixture's and the live stage's own" 1 "$(lines '✔ references   31 slash references, 1 relative links, 0 plugin-root paths')"
 check "static validates the root and the plugin" 2 "$(logged 'claude plugin validate --strict')"
 # a nested checkout and a dangling link in the tree: git lists the one as
 # `nested/` and the other by name, grep can read neither, and both are
@@ -919,12 +923,13 @@ check "live: the login line" 1 "$(lines '✔ login')"
 check "live: the scrub line" 1 "$(lines '✔ scrub')"
 check "live: the node line" 1 "$(lines '✔ node         up on http://127.0.0.1:8112/mcp, notebook empty')"
 check "live: the install line" 1 "$(lines '✔ install      marketplace from')"
-check "live: setup, setup-node, setup-history, setup-tutor, setup-report, capture, summary-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, summary, batch, append, append-history, tutor-ymer, tutor-stop" 19 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (setup|setup-node|setup-history|setup-tutor|setup-report|capture|summary-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|summary|batch|append|append-history|tutor-ymer|tutor-stop) ')"
-check "live: the summary line names the drained topic and its file" 1 "$(lines "✔ summary      1 tasks row(s) at new in a Roadmap project, 1 request.md topics_history row(s), the friction drained to $drained_to, its request.md in state/")"
-check "live: the append line reads the deltas" 1 "$(lines '✔ append       still one friction-batch file, created 20260921 kept, seeds drained 10 → 20, seed lines in the file 10 → 20, both headings once')"
-check "live: the append-history line reads the save" 1 "$(lines "✔ append-history one more topics_history row, the newest carrying the file's 20 seed lines and the one before it the pre-image's 10")"
+check "live: setup, setup-node, setup-history, setup-tutor, setup-report, capture, mint-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, mint, bug-first, append, append-history, tutor-ymer, tutor-stop" 19 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (setup|setup-node|setup-history|setup-tutor|setup-report|capture|mint-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|mint|bug-first|append|append-history|tutor-ymer|tutor-stop) ')"
+check "live: the mint line names the drained topic and its file" 1 "$(lines "✔ mint         1 tasks row(s) at claimed in a Roadmap project, 1 request.md topics_history row(s), the friction drained to $drained_to, its request.md in state/")"
+check "live: the bug-first line names the bug's topic" 1 "$(lines "✔ bug-first    the bug drawn ahead of ten open frictions, drained to $bug_to — one request.md there quoting its title once, in state/ and in its newest topics_history row — the ten seed frictions still open")"
+check "live: the append line reads the deltas" 1 "$(lines "✔ append       still one request.md in $bug_to, started 20260921 kept, the recurrence drained to the bug's topic, its clause in the file 0 → 1")"
+check "live: the append-history line reads the save" 1 "$(lines "✔ append-history one more topics_history row, the newest carrying the file's 1 recurrence clause(s) and the one before it the pre-image's 0")"
 check "live: the teardown's install line" 1 "$(lines '✔ install      untouched')"
-check "live: servers, isolation, writes, bash-commands, summary-git and setup-address pass — the node alone, reads inside, writes under state/, the declared commands allowed, no commit, no wrong node address" 6 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (servers|isolation|writes|bash-commands|summary-git|setup-address) ')"
+check "live: servers, isolation, writes, bash-commands, mint-git and setup-address pass — the node alone, reads inside, writes under state/, the declared commands allowed, no commit, no wrong node address" 6 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (servers|isolation|writes|bash-commands|mint-git|setup-address) ')"
 check "live: the isolation line names the roots a run is handed — state/, the checkout, the runs' working directory" 1 "$(lines "✔ isolation    every Read, Glob and Grep stayed under $pstate, $fx or the runs' working directory ")"
 check "live scrubs through the CLI" 3 "$(printf '%s\n' "$(logged 'claude plugin uninstall ymer@ymer')" "$(logged 'claude plugin marketplace remove ymer')" "$(logged 'claude mcp remove ymer-node')" | grep -c '^1$')"
 check "live brings the node up under its own project and port, from its own copy of the compose file" 1 "$(logged "$scratch_dc up -d")"
@@ -1004,15 +1009,15 @@ live_case
 live_queue 0
 probe "$fx" live
 check "live failed step exits 1" 1 "$rc"
-check "live failed step: the capture line names the count and the kind" 1 "$(lines '✘ capture      after /ymer:kaizen-capture the node holds 0 frictions rows of kind friction')"
+check "live failed step: the capture line names the count and the kind" 1 "$(lines '✘ capture      after /ymer:capture the node holds 0 pool drops of kind friction')"
 check "live failed step: the later steps still ran" 1 "$(lines '✔ append ')"
 check "live failed step: teardown still ran" 1 "$(logged "$scratch_dc down")"
 
 # ── 18 · live, a run that did not end in success ──────────────────────
-live_seeded /ymer:kaizen-capture run-capture-failed.jsonl
+live_seeded /ymer:capture run-capture-failed.jsonl
 probe "$fx" live
 check "live failed run exits 1" 1 "$rc"
-check "live failed run: the run line names it" 1 "$(lines "✘ run-2        run 2 (/ymer:kaizen-capture) did not end in success — read $tmp/probe/runs/2.jsonl")"
+check "live failed run: the run line names it" 1 "$(lines "✘ run-2        run 2 (/ymer:capture) did not end in success — read $tmp/probe/runs/2.jsonl")"
 check "live failed run: the later steps still ran" 1 "$(lines '✔ append ')"
 
 # ── 19 · live, setup's report without its grammar's lines ─────────────
@@ -1020,7 +1025,7 @@ live_seeded /ymer:setup run-setup1-unreadable.jsonl
 probe "$fx" live
 check "live unreadable-settings report exits 1" 1 "$rc"
 check "live unreadable-settings report: the setup-report line" 1 "$(lines '✘ setup-report the report has no line carrying')"
-check "live unreadable-settings report: setup itself still passes" 1 "$(lines '✔ setup        7 tables created, 1 front row')"
+check "live unreadable-settings report: setup itself still passes" 1 "$(lines '✔ setup        8 tables created, 1 front row')"
 
 # ── 19b · live, the subject index's foreign key not enforced ──────────
 live_case
@@ -1029,7 +1034,7 @@ requeue 'INTO tutor_engagements' "$seed_ok"
 probe "$fx" live
 check "live unenforced foreign key exits 1" 1 "$rc"
 check "live unenforced foreign key: the setup-tutor line names it" 1 "$(lines '✘ setup-tutor  an engagement row naming no subject was not refused on its foreign key')"
-check "live unenforced foreign key: setup itself still passes" 1 "$(lines '✔ setup        7 tables created, 1 front row')"
+check "live unenforced foreign key: setup itself still passes" 1 "$(lines '✔ setup        8 tables created, 1 front row')"
 
 # ── 19c · live, tutor past its guard ──────────────────────────────────
 live_case
@@ -1080,25 +1085,25 @@ check "live tutor tables not dropped: tutor-stop never passes" 0 "$(lines '✔ t
 # ── 20 · live, the drain not resolving to its topic ───────────────────
 live_case
 live_queue
-requeue 'JOIN topics_history h ON' "$(node_rows 0)"
+requeue 'f JOIN topics_history h ON' "$(node_rows 0)"
 probe "$fx" live
 check "live unresolved drain exits 1" 1 "$rc"
-check "live unresolved drain: the summary line names the four reads" 1 "$(lines "✘ summary      after /ymer:kaizen-summary: 1 tasks at new in a Roadmap project, 1 request.md topics_history rows, 0 frictions drained to a row their drained_to resolves to, request.md at state/$drained_to present")"
+check "live unresolved drain: the mint line names the four reads" 1 "$(lines "✘ mint         after /ymer:mint: 1 tasks at claimed in a Roadmap project, 1 request.md topics_history rows, 0 friction drops drained to a row their drained_to resolves to, request.md at state/$drained_to present")"
 # the row resolves, and the file is not where drained_to says
 live_case
 live_queue
-summary_effects ':' ':' "$effect_batch" "$effect_append"
+mint_effects ':' ':' "$effect_bug" "$effect_append"
 probe "$fx" live
 check "live drain with no file exits 1" 1 "$rc"
-check "live drain with no file: the summary line names the file absent" 1 "$(lines "request.md at state/$drained_to absent")"
+check "live drain with no file: the mint line names the file absent" 1 "$(lines "request.md at state/$drained_to absent")"
 
-# ── 20b · live, the first arm's summary drained with no state folder ──
+# ── 20b · live, the first arm's mint drained with no state folder ─────
 live_case
 live_queue
 requeue "status = 'open'\"" "$(node_rows 0)"
 probe "$fx" live
 check "live first-arm drain exits 1" 1 "$rc"
-check "live first-arm drain: the summary-stop line names the open count" 1 "$(lines '✘ summary-stop after /ymer:kaizen-summary with no state folder: 0 open frictions, 0 tasks, 0 topics_history rows')"
+check "live first-arm drain: the mint-stop line names the open count" 1 "$(lines '✘ mint-stop    after /ymer:mint with no state folder: 0 open friction drops, 0 tasks, 0 topics_history rows')"
 
 # ── 21 · live, the re-run's report the fresh-creation way ─────────────
 live_case
@@ -1249,8 +1254,8 @@ for t in wrapped nested; do
 done
 
 # ── 21l · live, the re-run's node line holding the right words inside others ──
-# `17 tables` is not `7 tables`, and `unreachable` is not `reachable`
-for t in 17-tables unreachable; do
+# `18 tables` is not `8 tables`, and `unreachable` is not `reachable`
+for t in 18-tables unreachable; do
 	live_case
 	live_queue
 	requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-$t.jsonl" "@$canned/run-setup3.jsonl"
@@ -1305,27 +1310,27 @@ check "live report naming a wrong port behind an emoji-presentation mark exits 1
 check "live report naming a wrong port behind an emoji-presentation mark: the setup-address line names the run" 1 "$(lines '✘ setup-address a setup report names a node port other than 8112 in run(s) 4 ')"
 
 # ── 22 · live, a git commit, a file write and a foreign server's tool ──
-# a queue line ahead of live_queue's answers first; summary's second-arm
+# a queue line ahead of live_queue's answers first; mint's second-arm
 # answer is persistent, so it is replaced
-live_seeded /ymer:kaizen-capture run-capture-write.jsonl
-reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-git.jsonl"
+live_seeded /ymer:capture run-capture-write.jsonl
+reanswer 'claude -p /ymer:mint' "@$canned/run-mint-git.jsonl"
 probe "$fx" live
 check "live git commit exits 1" 1 "$rc"
-check "live git commit: the summary-git line names the second arm's summary runs" 1 "$(lines '✘ summary-git  summary attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
-check "live git commit: the bash-commands line names the summary runs" 1 "$(lines "$bash_other 6 7 8")"
-check "live file write: the writes line names the capture run" 1 "$(lines '✘ writes       a file write outside the second arm'"'"'s summary runs or outside')"
+check "live git commit: the mint-git line names the second arm's mint runs" 1 "$(lines '✘ mint-git     mint attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
+check "live git commit: the bash-commands line names the mint runs" 1 "$(lines "$bash_other 6 7 8")"
+check "live file write: the writes line names the capture run" 1 "$(lines '✘ writes       a file write outside the second arm'"'"'s mint runs or outside')"
 check "live file write: the writes line names run 2 alone" 1 "$(lines "in run(s) 2 — read $tmp/probe/runs/<n>.jsonl")"
 live_case
 live_queue
-reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-outside.jsonl"
+reanswer 'claude -p /ymer:mint' "@$canned/run-mint-outside.jsonl"
 probe "$fx" live
 check "live write beside state/ exits 1" 1 "$rc"
-check "live write beside state/: the writes line names the summary runs" 1 "$(lines "outside $pstate in run(s) 6 7 8")"
-live_seeded /ymer:kaizen-capture run-capture-revparse.jsonl
+check "live write beside state/: the writes line names the mint runs" 1 "$(lines "outside $pstate in run(s) 6 7 8")"
+live_seeded /ymer:capture run-capture-revparse.jsonl
 probe "$fx" live
 check "live rev-parse on another folder exits 1" 1 "$rc"
 check "live rev-parse on another folder: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
-live_seeded /ymer:kaizen-capture run-capture-reach.jsonl
+live_seeded /ymer:capture run-capture-reach.jsonl
 probe "$fx" live
 check "live foreign tool exits 1" 1 "$rc"
 check "live foreign tool: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
@@ -1334,32 +1339,32 @@ check "live foreign tool: the servers line names the run" 1 "$(lines '✘ server
 # a call the CLI answered with no such tool reached nothing: servers
 # passes and names the run and the tool; a foreign call answered, refused,
 # or answered no such tool under another name reached its server
-live_seeded /ymer:kaizen-capture run-capture-no-such-tool.jsonl
+live_seeded /ymer:capture run-capture-no-such-tool.jsonl
 probe "$fx" live
 check "live call to no such tool exits 0" 0 "$rc"
 check "live call to no such tool: servers passes, naming the run and the tool" 1 "$(lines '✔ servers      every run'"'"'s init line names ymer-node alone, and no other server'"'"'s tool was called — a call to no such tool, reaching nothing, in run(s) 2 (mcp__ymer-node)')"
-live_seeded /ymer:kaizen-capture run-capture-reach-answered.jsonl
+live_seeded /ymer:capture run-capture-reach-answered.jsonl
 probe "$fx" live
 check "live foreign tool answered exits 1" 1 "$rc"
 check "live foreign tool answered: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
-live_seeded /ymer:kaizen-capture run-capture-reach-refused.jsonl
+live_seeded /ymer:capture run-capture-reach-refused.jsonl
 probe "$fx" live
 check "live foreign tool refused exits 1" 1 "$rc"
 check "live foreign tool refused: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
-live_seeded /ymer:kaizen-capture run-capture-reach-misnamed.jsonl
+live_seeded /ymer:capture run-capture-reach-misnamed.jsonl
 probe "$fx" live
 check "live foreign tool answered no such tool under another name exits 1" 1 "$rc"
 check "live foreign tool answered no such tool under another name: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
 
 # ── 23 · live, a second server in a run's init line ───────────────────
-live_seeded /ymer:kaizen-capture run-capture-connector.jsonl
+live_seeded /ymer:capture run-capture-connector.jsonl
 probe "$fx" live
 check "live second server exits 1" 1 "$rc"
 check "live second server: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
 check "live second server: capture itself still passes" 1 "$(lines '✔ capture')"
 
 # ── 24 · live, a read outside state/, under the probe dir or beyond ───
-live_seeded /ymer:kaizen-capture run-capture-outside.jsonl
+live_seeded /ymer:capture run-capture-outside.jsonl
 probe "$fx" live
 check "live outside read exits 1" 1 "$rc"
 check "live outside read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
@@ -1367,14 +1372,14 @@ check "live outside read: the isolation line says where to admit a legitimate re
 # a read under the probe dir outside state/: the rest of the probe dir is
 # no root a run is handed, whatever it holds
 for v in cfg-transcript cfg-account probe-dir; do
-	live_seeded /ymer:kaizen-capture "run-capture-$v.jsonl"
+	live_seeded /ymer:capture "run-capture-$v.jsonl"
 	probe "$fx" live
 	check "live read under the probe dir, $v: exits 1" 1 "$rc"
 	check "live read under the probe dir, $v: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
 done
 
 # ── 25 · live, a compound Bash command opening with the declared one ──
-live_seeded /ymer:kaizen-capture run-capture-compound.jsonl
+live_seeded /ymer:capture run-capture-compound.jsonl
 probe "$fx" live
 check "live compound command exits 1" 1 "$rc"
 check "live compound command: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
@@ -1383,7 +1388,7 @@ check "live compound command: the bash-commands line names the run" 1 "$(lines "
 # the stage reads the command as the whole JSON string, escaped quotes
 # included, so the `;` after the quoted name is in what it matches, and
 # the name match fails it
-live_seeded /ymer:kaizen-capture run-capture-quoted.jsonl
+live_seeded /ymer:capture run-capture-quoted.jsonl
 probe "$fx" live
 check "live quoted compound command exits 1" 1 "$rc"
 check "live quoted compound command: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
@@ -1392,11 +1397,11 @@ check "live quoted compound command: the bash-commands line names the run" 1 "$(
 # the attempt is in the trace, but the result event's permission_denials
 # says it never ran, whichever layer refused it: bash-commands passes and
 # names the run as refused, naming no refuser
-live_seeded /ymer:kaizen-capture run-capture-refused.jsonl
+live_seeded /ymer:capture run-capture-refused.jsonl
 probe "$fx" live
 check "live refused compound exits 0" 0 "$rc"
 check "live refused compound: bash-commands passes, naming the refused run" 1 "$(lines '✔ bash-commands no Bash command beyond `claude mcp get <name>` and the state folder'"'"'s `rev-parse` ran in any run — refused, never run, in run(s) 2')"
-live_seeded /ymer:kaizen-capture run-capture-true-refused.jsonl
+live_seeded /ymer:capture run-capture-true-refused.jsonl
 probe "$fx" live
 check "live refused habit exits 0" 0 "$rc"
 check "live refused habit: bash-commands passes, naming the refused run" 1 "$(lines '✔ bash-commands no Bash command beyond `claude mcp get <name>` and the state folder'"'"'s `rev-parse` ran in any run — refused, never run, in run(s) 2')"
@@ -1406,19 +1411,19 @@ check "live refused habit: bash-commands passes, naming the refused run" 1 "$(li
 # again after it counts, and so does a refused call whose id the read
 # cannot find; a refused call never ran whatever its input's key order,
 # while a declared command that ran with its command not first fails closed
-live_seeded /ymer:kaizen-capture run-capture-refused-then-ran.jsonl
+live_seeded /ymer:capture run-capture-refused-then-ran.jsonl
 probe "$fx" live
 check "live compound refused, then run: exits 1" 1 "$rc"
 check "live compound refused, then run: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
-live_seeded /ymer:kaizen-capture run-capture-refused-id-moved.jsonl
+live_seeded /ymer:capture run-capture-refused-id-moved.jsonl
 probe "$fx" live
 check "live refusal with its call's id moved exits 1" 1 "$rc"
 check "live refusal with its call's id moved: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
-live_seeded /ymer:kaizen-capture run-capture-description-refused.jsonl
+live_seeded /ymer:capture run-capture-description-refused.jsonl
 probe "$fx" live
 check "live refused habit, description first: exits 0" 0 "$rc"
 check "live refused habit, description first: bash-commands passes, naming the refused run" 1 "$(lines '✔ bash-commands no Bash command beyond `claude mcp get <name>` and the state folder'"'"'s `rev-parse` ran in any run — refused, never run, in run(s) 2')"
-live_seeded /ymer:kaizen-capture run-capture-description.jsonl
+live_seeded /ymer:capture run-capture-description.jsonl
 probe "$fx" live
 check "live declared command, description first: exits 1" 1 "$rc"
 check "live declared command, description first: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
@@ -1493,102 +1498,149 @@ check "live failed drift seed exits 1" 1 "$rc"
 check "live failed drift seed: the drift-seed line" 1 "$(lines '✘ drift-seed   DROP COLUMN due_date did not remove tasks.due_date')"
 check "live failed drift seed: drift is not run" 1 "$(lines '– drift        not run — its seed failed — see drift-seed')"
 check "live failed drift seed: drift never passes" 0 "$(lines '✔ drift')"
-check "live failed drift seed: the later steps still ran" 1 "$(lines '✔ batch')"
+check "live failed drift seed: the later steps still ran" 1 "$(lines '✔ bug-first')"
 check "live failed drift seed: the stale trace is gone, not read" 0 "$(test -e "$tmp/probe/runs/5.jsonl" && echo 1 || echo 0)"
 check "live failed drift seed: bash-commands reads the runs that ran" 1 "$(lines '✔ bash-commands')"
 
-# ── 33 · live, the first friction seed fails: batch not run, append waits ─
+# ── 33 · live, the bug-first seed fails: bug-first not run, append waits ─
+# the node refusing the seed drops, and taking them while holding no bug id
+# for them: either way the step is reported not run, never asserted
 live_case
 live_queue
 queue 'seed friction 1 below' 'rc=1'
 probe "$fx" live
-check "live failed batch seed exits 1" 1 "$rc"
-check "live failed batch seed: the batch-seed line" 1 "$(lines '✘ batch-seed   the node refused the ten seed rows')"
-check "live failed batch seed: batch is not run" 1 "$(lines '– batch        not run — its seed failed — see batch-seed')"
-check "live failed batch seed: append waits on batch" 1 "$(lines '– append       not run — the batch step did not pass — see batch')"
-check "live failed batch seed: append-history waits on append" 1 "$(lines '– append-history not run — the append step did not run — see append')"
-check "live failed batch seed: append never passes" 0 "$(lines '✔ append')"
+check "live failed bug seed exits 1" 1 "$rc"
+check "live failed bug seed: the bug-first-seed line" 1 "$(lines '✘ bug-first-seed the node refused the seed drops — ten frictions and a bug')"
+check "live failed bug seed: bug-first is not run" 1 "$(lines '– bug-first    not run — its seed failed — see bug-first-seed')"
+check "live failed bug seed: append waits on bug-first" 1 "$(lines '– append       not run — the bug-first step did not pass — see bug-first')"
+check "live failed bug seed: append-history waits on append" 1 "$(lines '– append-history not run — the append step did not run — see append')"
+check "live failed bug seed: append never passes" 0 "$(lines '✔ append')"
+check "live failed bug seed: no mint run after the seed" 8 "$(logged 'claude -p /')"
+live_case
+live_queue
+requeue "kind = 'bug' AND anchor_id IS NULL" "$(node_rows '')"
+probe "$fx" live
+check "live bug seed with no bug id exits 1" 1 "$rc"
+check "live bug seed with no bug id: the bug-first-seed line" 1 "$(lines '✘ bug-first-seed the node refused the seed drops — ten frictions and a bug — or holds no bug id for them')"
+check "live bug seed with no bug id: bug-first is not run" 1 "$(lines '– bug-first    not run — its seed failed — see bug-first-seed')"
 
-# ── 34 · live, the second friction seed fails: append not run ─────────
+# ── 34 · live, the recurrence seed fails: append not run ──────────────
 live_case
 live_queue
-queue 'seed friction 1 below' "$seed_ok"
-queue 'seed friction 1 below' 'rc=1'
+queue "$recur_clause" 'rc=1'
 probe "$fx" live
-check "live failed append seed exits 1" 1 "$rc"
-check "live failed append seed: batch passed" 1 "$(lines '✔ batch')"
-check "live failed append seed: the append-seed line" 1 "$(lines '✘ append-seed  the node refused the second ten seed rows')"
-check "live failed append seed: append is not run" 1 "$(lines '– append       not run — its seed failed — see append-seed')"
-check "live failed append seed: append-history is not run" 1 "$(lines '– append-history not run — the append step did not run — see append')"
-check "live failed append seed: append never passes" 0 "$(lines '✔ append')"
+check "live failed recurrence seed exits 1" 1 "$rc"
+check "live failed recurrence seed: bug-first passed" 1 "$(lines '✔ bug-first')"
+check "live failed recurrence seed: the append-seed line" 1 "$(lines '✘ append-seed  the node refused the recurrence seed drop')"
+check "live failed recurrence seed: append is not run" 1 "$(lines '– append       not run — its seed failed — see append-seed')"
+check "live failed recurrence seed: append-history is not run" 1 "$(lines '– append-history not run — the append step did not run — see append')"
+check "live failed recurrence seed: append never passes" 0 "$(lines '✔ append')"
 
-# ── 35 · live, the append a no-op, a rewrite that moved the date, and ──
-# an append the history never saw
+# ── 34b · live, bugs not drawn first ──────────────────────────────────
+# a seed friction drawn beside the bug, the bug left open, and the bug's
+# newest row lagging its file: each fails bug-first, and the append waits
 live_case
 live_queue
-summary_effects ':' "$effect_drain" "$effect_batch" ':'
-requeue "source = 'hermetic_probe' AND status = 'drained'" "$(node_rows 10)" "$(node_rows 10)"
+requeue "kind = 'friction' AND source = 'hermetic_probe'" "$(node_rows 9)"
 probe "$fx" live
-check "live no-op append exits 1" 1 "$rc"
-check "live no-op append: the append line reads the deltas" 1 "$(lines '✘ append       1 friction-batch files, created 20260921 → 20260921, seeds drained 10 → 10, seed lines in the file 10 → 10, headings 1 and 1')"
-check "live no-op append: batch still passes" 1 "$(lines '✔ batch')"
+check "live friction drawn beside the bug exits 1" 1 "$rc"
+check "live friction drawn beside the bug: the bug-first line names the open count" 1 "$(lines "✘ bug-first    after /ymer:mint over ten seed frictions and one bug: 1 bug drained to a request.md row its drained_to resolves to, request.md at state/$bug_to present, 1 request.md file(s) in that folder, 9 seed frictions open, the bug's title 1 time(s) in the file and 1 in the newest row")"
+check "live friction drawn beside the bug: append waits on bug-first" 1 "$(lines '– append       not run — the bug-first step did not pass — see bug-first')"
 live_case
 live_queue
-summary_effects ':' "$effect_drain" "$effect_batch" "cp '$canned/batch-20-redated.md' '$batch_dir/request.md'"
+mint_effects ':' "$effect_drain" ':' ':'
+requeue "SELECT drained_to FROM pool WHERE status = 'drained' AND id" "$(node_text_rows '')"
+requeue 'p JOIN topics_history h ON' "$(node_rows 0)"
 probe "$fx" live
-check "live rewritten batch exits 1" 1 "$rc"
-check "live rewritten batch: the append line names the moved date" 1 "$(lines '✘ append       1 friction-batch files, created 20260921 → 20260922, seeds drained 10 → 20')"
-# the file appended to, and no row saved for it: every file delta holds,
+check "live bug left open exits 1" 1 "$rc"
+check "live bug left open: the bug-first line names the missing drain" 1 "$(lines "✘ bug-first    after /ymer:mint over ten seed frictions and one bug: 0 bug drained to a request.md row its drained_to resolves to, request.md at state/UNPARSEABLE absent, 0 request.md file(s) in that folder, 10 seed frictions open, the bug's title UNPARSEABLE time(s) in the file")"
+live_case
+live_queue
+requeue 'LIMIT 1 OFFSET 0' "$(node_rows 0)" "$(node_rows 1)"
+probe "$fx" live
+check "live bug row lagging its file exits 1" 1 "$rc"
+check "live bug row lagging its file: the bug-first line names both counts" 1 "$(lines "the bug's title 1 time(s) in the file and 0 in the newest row")"
+check "live bug row lagging its file: append waits on bug-first" 1 "$(lines '– append       not run — the bug-first step did not pass — see bug-first')"
+
+# ── 35 · live, the fold a no-op, a rewrite that moved the date, the ────
+# recurrence drained elsewhere or not at all, and a fold the history
+# never saw
+live_case
+live_queue
+mint_effects ':' "$effect_drain" "$effect_bug" ':'
+probe "$fx" live
+check "live no-op fold exits 1" 1 "$rc"
+check "live no-op fold: the append line reads the deltas" 1 "$(lines "✘ append       1 request.md file(s) in $bug_to, started 20260921 → 20260921, the recurrence drained to $bug_to, its clause in the file 0 → 0")"
+check "live no-op fold: bug-first still passes" 1 "$(lines '✔ bug-first')"
+live_case
+live_queue
+mint_effects ':' "$effect_drain" "$effect_bug" "cp '$canned/bug-1-redated.md' '${bug_dir}request.md'"
+probe "$fx" live
+check "live rewritten bug topic exits 1" 1 "$rc"
+check "live rewritten bug topic: the append line names the moved date" 1 "$(lines "✘ append       1 request.md file(s) in $bug_to, started 20260921 → 20260922, the recurrence drained to $bug_to, its clause in the file 0 → 1")"
+live_case
+live_queue
+requeue "SELECT drained_to FROM pool WHERE status = 'drained' AND anchor_id" "$(node_text_rows 'demo/2026/09-22-probe-recurrence/')"
+probe "$fx" live
+check "live recurrence drained to a topic of its own exits 1" 1 "$rc"
+check "live recurrence drained to a topic of its own: the append line names where it went" 1 "$(lines "the recurrence drained to demo/2026/09-22-probe-recurrence/, its clause in the file 0 → 1 (expected 1, unchanged, $bug_to, more)")"
+live_case
+live_queue
+requeue "SELECT drained_to FROM pool WHERE status = 'drained' AND anchor_id" "$(node_text_rows '')"
+probe "$fx" live
+check "live recurrence left open exits 1" 1 "$rc"
+check "live recurrence left open: the append line reads no drain" 1 "$(lines "the recurrence drained to UNPARSEABLE, its clause in the file 0 → 1")"
+# the file folded into, and no row saved for it: every file delta holds,
 # and the history read alone tells it from a save
 live_case
 live_queue
-requeue "SELECT count(*) FROM topics_history WHERE topic LIKE" "$(node_rows 1)" "$(node_rows 1)" "$(node_rows 1)"
-requeue 'LIMIT 1 OFFSET 0' "$(node_rows 10)" "$(node_rows 10)"
+requeue "SELECT count(*) FROM topics_history WHERE area ||" "$(node_rows 1)" "$(node_rows 1)"
+requeue 'LIMIT 1 OFFSET 0' "$(node_rows 1)" "$(node_rows 0)"
 probe "$fx" live
-check "live unsaved append exits 1" 1 "$rc"
-check "live unsaved append: the append-history line names the rows" 1 "$(lines '✘ append-history topics_history rows 1 → 1, seed lines 10 in the newest row')"
-check "live unsaved append: append's deltas still pass" 1 "$(lines '✔ append ')"
+check "live unsaved fold exits 1" 1 "$rc"
+check "live unsaved fold: the append-history line names the rows" 1 "$(lines '✘ append-history topics_history rows 1 → 1, recurrence clauses 0 in the newest row')"
+check "live unsaved fold: append's deltas still pass" 1 "$(lines '✔ append ')"
 
 # ── 36 · live, a Bash command that is no declared one ─────────────────
-live_seeded /ymer:kaizen-capture run-capture-bash.jsonl
+live_seeded /ymer:capture run-capture-bash.jsonl
 probe "$fx" live
 check "live shell write exits 1" 1 "$rc"
 check "live shell write: the bash-commands line names the run" 1 "$(lines "$bash_other 2")"
-check "live shell write: summary-git still passes" 1 "$(lines '✔ summary-git')"
+check "live shell write: mint-git still passes" 1 "$(lines '✔ mint-git')"
 check "live shell write: writes still passes" 1 "$(lines '✔ writes')"
 
 # ── 37 · live, a read climbing out of an allowed prefix, and an absolute ─
 # Glob pattern: state/'s `..`, the checkout's `..`, and a Glob
 # naming its root in `pattern` with no path key for the read to find
-live_seeded /ymer:kaizen-capture run-capture-climb.jsonl
+live_seeded /ymer:capture run-capture-climb.jsonl
 probe "$fx" live
 check "live climbing read exits 1" 1 "$rc"
 check "live climbing read: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
-live_seeded /ymer:kaizen-capture run-capture-climb-root.jsonl
+live_seeded /ymer:capture run-capture-climb-root.jsonl
 probe "$fx" live
 check "live climbing read from the checkout exits 1" 1 "$rc"
 check "live climbing read from the checkout: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
-live_seeded /ymer:kaizen-capture run-capture-glob.jsonl
+live_seeded /ymer:capture run-capture-glob.jsonl
 probe "$fx" live
 check "live absolute glob exits 1" 1 "$rc"
 check "live absolute glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
-live_seeded /ymer:kaizen-capture run-capture-dots-in-name.jsonl
+live_seeded /ymer:capture run-capture-dots-in-name.jsonl
 probe "$fx" live
 check "live read of a dotted name under state/: isolation passes" 1 "$(lines '✔ isolation')"
 
 # ── 37b · live, a brace inside an input's string ──────────────────────
 # a Glob whose brace pattern precedes its path, and a `{}` ahead of a git
 # commit: a read cut at the first `}` saw neither the path nor the commit
-live_seeded /ymer:kaizen-capture run-capture-glob-brace.jsonl
+live_seeded /ymer:capture run-capture-glob-brace.jsonl
 probe "$fx" live
 check "live brace glob exits 1" 1 "$rc"
 check "live brace glob: the isolation line names the run" 1 "$(lines "✘ isolation    run(s) 2 read outside $pstate, $fx and the runs' working directory ")"
 live_case
 live_queue
-reanswer 'claude -p /ymer:kaizen-summary' "@$canned/run-summary-git-brace.jsonl"
+reanswer 'claude -p /ymer:mint' "@$canned/run-mint-git-brace.jsonl"
 probe "$fx" live
 check "live brace before a git commit exits 1" 1 "$rc"
-check "live brace before a git commit: the summary-git line" 1 "$(lines '✘ summary-git  summary attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
+check "live brace before a git commit: the mint-git line" 1 "$(lines '✘ mint-git     mint attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
 
 # ── 37c · live, the instructions check over the runs' transcripts ─────
 # a file loaded after the first turn, a nested file reached through a
@@ -1596,24 +1648,24 @@ check "live brace before a git commit: the summary-git line" 1 "$(lines '✘ sum
 # a subagent's load beside a clean main transcript: each reds the line
 # naming the run and what was read, and the checks over the run's trace
 # still read it
-live_seeded /ymer:kaizen-capture run-capture-loaded.jsonl
+live_seeded /ymer:capture run-capture-loaded.jsonl
 probe "$fx" live
 check "live file loaded exits 1" 1 "$rc"
 check "live file loaded: the instructions line names the run, the file and its transcript" 1 "$(lines "✘ instructions run(s) 2 loaded an instructions file — first /someone/.claude/CLAUDE.md in $transcripts/-w/s-loaded.jsonl")"
 check "live file loaded: capture itself still passes" 1 "$(lines '✔ capture')"
-live_seeded /ymer:kaizen-capture run-capture-nested.jsonl
+live_seeded /ymer:capture run-capture-nested.jsonl
 probe "$fx" live
 check "live nested file loaded exits 1" 1 "$rc"
 check "live nested file loaded: the instructions line names the run, the file and its transcript" 1 "$(lines "✘ instructions run(s) 2 loaded an instructions file — first /someone/project/CLAUDE.md in $transcripts/-w/s-nested.jsonl")"
-live_seeded /ymer:kaizen-capture run-capture-noenv.jsonl
+live_seeded /ymer:capture run-capture-noenv.jsonl
 probe "$fx" live
 check "live transcript recording no environment exits 1" 1 "$rc"
 check "live transcript recording no environment: the instructions line names the run and the transcript" 1 "$(lines "✘ instructions run(s) 2 left a transcript the check cannot vouch for, missing or recording no environment — first $transcripts/-w/s-noenv.jsonl")"
-live_seeded /ymer:kaizen-capture run-capture-missing.jsonl
+live_seeded /ymer:capture run-capture-missing.jsonl
 probe "$fx" live
 check "live transcript missing exits 1" 1 "$rc"
 check "live transcript missing: the instructions line names what it looked for" 1 "$(lines "✘ instructions run(s) 2 left a transcript the check cannot vouch for, missing or recording no environment — first $transcripts/*/s-missing.jsonl")"
-live_seeded /ymer:kaizen-capture run-capture-subagent.jsonl
+live_seeded /ymer:capture run-capture-subagent.jsonl
 probe "$fx" live
 check "live subagent's load exits 1" 1 "$rc"
 check "live subagent's load: the instructions line names the subagent's transcript" 1 "$(lines "✘ instructions run(s) 2 loaded an instructions file — first /someone/.claude/CLAUDE.md in $transcripts/-w/s-subagent/subagents/agent-1.jsonl")"
@@ -1657,7 +1709,7 @@ check "live working directory under HOME prints no transcripts line" 0 "$(lines 
 # capture run's trace, which reads a file in that working directory by
 # its physical path — outside the probe dir, admitted as the run's own
 live_case
-queue 'claude -p /ymer:kaizen-capture' "@$canned/run-capture-cwd.jsonl"
+queue 'claude -p /ymer:capture' "@$canned/run-capture-cwd.jsonl"
 effect 'claude -p /ymer:setup' "sh '$canned/cwd-read-trace' '$trace_init_default' '$canned/run-capture-cwd.jsonl'"
 live_queue
 probe "$fx" live

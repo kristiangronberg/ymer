@@ -149,7 +149,7 @@ selects nothing: it fires no close.
    `fast-forward` or `merge <sha>` — the tree the suite last blessed has
    changed: run the branch green once more before the squash, the
    project's test suite over the one tree this merge can touch (per-tree
-   mechanics: → Developer edits); its result rides step 4's `Catch-up:`
+   mechanics: → Developer edits); its result rides step 3's `Catch-up:`
    line. An **ordinary** conflict — disjoint hunks in one file, changes
    that compose, one side a pure superset of the other — is resolved on
    the branch, Claude-run, and the merge concluded. A conflict that would
@@ -186,20 +186,11 @@ selects nothing: it fires no close.
    every ship deletes it, and the close continues; the empty preview is
    that outcome's verify, and the chain above is never started.
 
-3. **The pool look** (Claude-run; → The pool look) — the refs exist and
-   the ship section is not yet written, which is the one moment both
-   lanes share. Four keys derived from the record and the ship's own
-   refs, every hit not yet closed read against the increment, the
-   moves and the keys onto the ship section's `Pool:` line, and a
-   write whose outcome did not land stopping the close — the section
-   owns all of it.
-
-4. **Prepend the ship section** to `review.md` — `## Shipped —
+3. **Prepend the ship section** to `review.md` — `## Shipped —
    <date>` with, where the topic has a branch, the squash ref and step
    2's catch-up outcome on its own `Catch-up:` line, carrying its
    `re-green:` clause where that outcome moved the branch — a meta topic
-   runs neither — then the branch deletion, the task close, the pool
-   look's moves and keys on its `Pool:` line, and each
+   runs neither — then the branch deletion, the task close, and each
    pending push. The `Machinery
    commits:` line is **additive, never an alternative**: it names every
    machinery ref this increment carries, marked per tree — every
@@ -210,12 +201,12 @@ selects nothing: it fires no close.
    subset a facilitator copies, and the operative rule is *every* ref.
    A meta topic has no squash ref; one that made no machinery diff
    carries no refs line at all.
-5. **Close the topic's task** (*ship topic* — binding: the operations
+4. **Close the topic's task** (*ship topic* — binding: the operations
    contract): closed as completed, the note naming the topic ID. The
    call's return carries the task's status after it — read that; a
    required outcome that did not happen stops the boundary, never
    skipped silently.
-6. **Commit the phase's writes** in the state folder, pathspec-scoped
+5. **Commit the phase's writes** in the state folder, pathspec-scoped
    (concurrent sessions leave staged work a bare commit would sweep
    in). The state folder is a **shared tree** like every machinery
    tree, and its commit is keyed the same way — **scoped to what
@@ -270,7 +261,7 @@ selects nothing: it fires no close.
    elsewhere, outside this pathspec, stay listed by an unscoped
    `status` and are not a stop either — other topics' in-flight work,
    leave them (concurrent edits: the substrate contract).
-7. **Delete the branch** (Claude-run; `-D` is expected: git considers a
+6. **Delete the branch** (Claude-run; `-D` is expected: git considers a
    squash-merged branch unmerged):
 
    ```
@@ -278,5 +269,6 @@ selects nothing: it fires no close.
    git branch --list <topic>    # verify: empty
    ```
 
-8. **Kaizen block:** invoke the `ymer:kaizen-capture` skill — source
-   `review`. Battery, row grammar, and the write live in that skill alone.
+7. **Capture block:** invoke the `ymer:capture` skill — source
+   `review`. The battery, the drop grammar and the write live in that
+   skill alone.

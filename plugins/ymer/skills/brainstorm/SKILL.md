@@ -1,6 +1,6 @@
 ---
 name: brainstorm
-description: Use to explore an idea, problem, or inbox item into a chosen direction — phase 1 of the development process.
+description: Use to explore an idea, a problem, or a topic drawn from the pool into a chosen direction — phase 1 of the development process.
 ---
 
 # Brainstorming
@@ -31,50 +31,47 @@ How the session was invoked decides the first step:
 - `/ymer:brainstorm new <topic>` — the user declares the topic new: skip the clean-miss confirmation (case 4 below). Keep the duplicate guard: if the name DOES exactly match an open task or a topic directory, stop and ask rather than create a duplicate.
 - `/ymer:brainstorm` with no topic — ask what the topic is, then resolve it.
 
-Look the name up in the repo's Roadmap project — every topic, in-flight or untriaged, is a task there — against the existing `<state folder>/<repo>/*/*-<topic>` directories, AND against the repo's inbox (*look up topic* + *list inbox items* — binding: the operations contract; a matching item joins the topic; its name is a suggestion, not binding). In a code repo, also read the current branch (`git branch --show-current`, read-only): a non-main branch is the proposed sketch source, whatever its name — see Branch Intake below; on an iteration arrival the branch carries the reviewed increment instead, and only the commits the record does not name are a sketch source at all, which case 2 states.
+Look the name up in the repo's Roadmap project — every topic in flight is a task there — and against the existing `<state folder>/<repo>/*/*-<topic>` directories (*look up topic* — binding: the operations contract). In a code repo, also read the current branch (`git branch --show-current`, read-only): a non-main branch is the proposed sketch source, whatever its name — see Branch Intake below; on an iteration arrival the branch carries the reviewed increment instead, and only the commits the record does not name are a sketch source at all, which case 2 states.
 
 **Topic resolution reads three coordinates, not one** (term: the plugin glossary): the task's status the lookup just returned, the topic folder — present or not, and whether it holds `request*.md` — and, where the folder exists, the artifact heads: `review.md`'s first recognizer top-down (review § Recognizers), and whether `brainstorm.md` or `spec.md` carries the `Interview pending —` marker at its head (development-process § Artifacts). A marker on top of `review.md` is **live** when the phase it names has no `<topic ID>: <phase>` commit over the topic folder since the commit that last touched `review.md`; the command that reads that range, and the rule trusting it only over a committed floor, are review § Input item 2's, run with the phase the marker names substituted for `implement`; a dirty `review.md` in the state folder leaves no committed floor, so surface it and stop rather than read the range. The three coordinates land on one of seven **arrivals**, and the arrival decides the phase's first action — nothing is recalled and nothing declared. Then classify the name match:
 
-1. **Match is an open inbox item** (or no task but a matching topic directory) → existing intake; proceed with no extra question. REUSE an existing directory — nothing ever moves; do not mint a new date. A `brainstorm.md` there carrying the `Interview pending —` marker at its head is the pending interview below, whatever the task's status — a close torn before its mint or its *start topic* left it so — and the close's step 1 mints or starts the task as usual.
-2. **Exact match on a `doing` task** (the topic is already in the pipeline — an untriaged match is case 1) → read the other two coordinates before asking anything:
-   - **No folder** → a **split child**. The mint at a split creates the child's task and no folder (→ the operations contract, "Split topics"), and every other door writes the folder before its task reaches `doing`, so a folder-less `doing` task is a child by construction. Read the child's **fork** first — the parent's child-list entry names it — and size the brainstorm to it: "none — narrow and go" is a doc that narrows the parent's and closes, a real fork is an interview in full; an entry phase the entry names is advisory, never state. Create the folder under today's date; write `request.md` through *start topic*'s template (binding: the operations contract) with `started:` today — no rename and no relink, the task already is the topic; and write this child's own `brainstorm.md`, narrowing the parent's, which the task's description names and which is this topic's **direction doc** until its own exists. That doc opens with four things: the parent link as a relative path, worded "split child of"; the parent's child-list entry, which is this child's scope; the inherited verdicts it narrows — discarded options, the reframe verdict; and the task's id with its project and status. No why-this-phase sentence — the file's existence says `/ymer:brainstorm` ran. No question, no *start topic*, no *mint item*.
-   - **A live marker naming brainstorm** on top of `review.md` → an **iteration**: the marker is the brief. Read `review.md` first — the finding, and the entries below it — then rewrite `brainstorm.md` in place; there is never a second doc. On a code-repo topic the branch here carries the reviewed increment, not a sketch: run the record-names-it test over `git log main..HEAD` (write-plan § Grounding; implement § Readiness Gate item 4), and where every commit is one the record names, neither branch intake nor the reset hand-off runs. Commits the record does not name are a sketch on top: branch intake captures those alone, and the reset hand-off targets the newest record-named commit rather than main.
+1. **A drawn topic** — an exact match on a `doing` task whose folder holds nothing but the `request.md` the `mint` skill wrote when it drew the topic (or no task but a matching topic directory) → existing intake; proceed with no extra question (→ Drawn-topic Intake). REUSE the existing directory — nothing ever moves; do not mint a new date. A `brainstorm.md` there carrying the `Interview pending —` marker at its head is the pending interview below, whatever the task's status — a close torn before its mint left it so — and the close's step 1 mints the task as usual where none exists.
+2. **Exact match on a `doing` task** (the topic is already in the pipeline — a drawn topic whose folder holds only its `request.md` is case 1) → read the other two coordinates before asking anything:
+   - **No folder** → a **split child**. The mint at a split creates the child's task and no folder (→ the operations contract, "Split topics"), and every other door writes the folder before its task exists or as it is created, so a folder-less `doing` task is a child by construction. Read the child's **fork** first — the parent's child-list entry names it — and size the brainstorm to it: "none — narrow and go" is a doc that narrows the parent's and closes, a real fork is an interview in full; an entry phase the entry names is advisory, never state. Create the folder under today's date; write `request.md` through the operations contract's template (§ The topic's artifacts) with `started:` today — the task already is the topic; and write this child's own `brainstorm.md`, narrowing the parent's, which the task's description names and which is this topic's **direction doc** until its own exists. That doc opens with four things: the parent link as a relative path, worded "split child of"; the parent's child-list entry, which is this child's scope; the inherited verdicts it narrows — discarded options, the reframe verdict; and the task's id with its project and status. No why-this-phase sentence — the file's existence says `/ymer:brainstorm` ran. No question, no *mint task*.
+   - **A live marker naming brainstorm** on top of `review.md` → an **iteration**: the marker is the brief. Read `review.md` first — the finding, and the entries below it — then rewrite `brainstorm.md` in place; there is never a second doc. On a code-repo topic the branch here carries the reviewed increment, not a sketch: run the record-names-it test over `git log main..HEAD` (write-plan § Grounding; implement § Readiness Gate item 4), and where every commit is one the record names, neither branch intake nor the reset hand-off runs. Commits the record does not name are a sketch on top: branch intake records those alone, and the reset hand-off targets the newest record-named commit rather than main.
    - **A live marker naming another phase** → stop and name that phase; mid-route, `plan.md`'s ticks and the topic's phase commits since the marker say where the route now stands (review § Input items 1–2). The `Interview pending —` marker at the head of `spec.md` names define the same way: stop and name it, `/ymer:define <topic>` written out.
    - **A pending interview** — `brainstorm.md` carrying the `Interview pending —` marker at its head → resume the interview at the first unanswered prepared question, with no extend-or-abort question: the prepared questions are the agenda, more may join them, and the resume's rules — premises re-verified, an iteration's finding read first, an unattended resume closing again — are development-process § Artifacts'. On an iteration topic — `review.md` topped by the marker naming brainstorm that the pending close consumed — the resume keeps the iteration arm's branch reads too: the record-names-it test over `git log main..HEAD`, never branch intake over the reviewed increment, and the reset hand-off targeting the newest record-named commit rather than main.
    - **In flight** — the folder is there, no marker is live, and neither artifact head carries the `Interview pending —` marker → stop and ask: extend the existing `brainstorm.md` in its existing directory, or abort — the topic may want a different phase instead. This is the one arrival whose answer is not in view: only the user knows whether the recorded direction is to be extended.
-3. **Near match** (substring or slug variant of a task, directory, or inbox item name) → one disambiguation question: "did you mean `<X>`, or is this new?"
-4. **Clean miss** → one confirmation question: "`<name>` is not in the roadmap or inbox — new topic?" A **closed topic** — a completed or cancelled task, with or without a folder — is a clean miss too: the name is free, so confirm here, name the old folder as prior art, and give the new topic a new date and its own task (*mint item* at `doing` at the close, as for any topic invented here). Reopening a closed task is the user's reopen, never a phase's.
+3. **Near match** (substring or slug variant of a task or directory name) → one disambiguation question: "did you mean `<X>`, or is this new?"
+4. **Clean miss** → one confirmation question: "`<name>` is not in the roadmap — new topic?" A **closed topic** — a completed or cancelled task, with or without a folder — is a clean miss too: the name is free, so confirm here, name the old folder as prior art, and give the new topic a new date and its own task (*mint task* at `doing` at the close, as for any topic invented here). Reopening a closed task is the user's reopen, never a phase's. A task the user hands in as the idea's text is a clean miss as well: the session mints the topic's own task, and the old one is the user's to close.
 5. **Repo not onboarded** (no `<state folder>/<repo>/` subtree / no Roadmap project in the binding) → every topic is new; say so, and onboard per the binding at the end as usual.
 
 The resolution is never silent — the announcement states which case applied:
 
-- "Topic: `<name>` — matched open inbox item."
+- "Topic: `<name>` — drawn topic, its `request.md` from mint."
 - "Topic: `<name>` — new (not in the roadmap)."
 - "Topic: `<name>` — new, forced via `new` keyword."
-- "Topic: `<name>` — discovered set: inbox item + branch `<branch>`."
+- "Topic: `<name>` — discovered set: drawn topic + branch `<branch>`."
 - "Topic: `<name>` — split child of `<parent>`."
 - "Topic: `<name>` — iteration, marker of `<date>`."
 - "Topic: `<name>` — pending interview of `<date>`, <n> questions."
 
-**Hold: every topic-resolution question** — the missing topic name, `new`'s duplicate guard, the in-flight arrival's extend-or-abort, the near match, the clean miss, the discovered set (*Defaults and holds*: development-process). Unattended — the session's question tool absent from its tools, or the call that puts the question refused — the session stops at the first such question with nothing written, its report naming the question; `/ymer:brainstorm new <topic>` is the unattended door for a new topic, and an inbox item puts no question at all.
+**Hold: every topic-resolution question** — the missing topic name, `new`'s duplicate guard, the in-flight arrival's extend-or-abort, the near match, the clean miss, the discovered set (*Defaults and holds*: development-process). Unattended — the session's question tool absent from its tools, or the call that puts the question refused — the session stops at the first such question with nothing written, its report naming the question; `/ymer:brainstorm new <topic>` is the unattended door for a new topic, and a drawn topic puts no question at all.
 
 **A `request.md` in a reused topic directory is this topic's intake — read
-it, whoever wrote it.** Inbox intake is one way such a file gets there
-(below); `/ymer:kaizen-summary` writing a picked friction straight into a
-topic folder is the other, and it mints the topic's task itself. In
-both cases the file carries the whole brief — the root cause and the
-verbatim evidence — so read it before anything else. Several files named
-`request-<slug>.md` mean several items or frictions fed one topic; read
-them all.
+it, whoever wrote it.** `/ymer:mint` writes one when it draws a topic
+from the pool, and a split child's first phase writes one from its
+task's description. Either way the file carries the whole brief — the
+drops verbatim, and the cause or direction mint read into them — so read
+it before anything else.
 
-## Inbox Intake (when the topic starts from an inbox item)
+## Drawn-topic Intake (when mint drew the topic)
 
-Incoming intake — feature, bug, or learning — waits as open items in the repo's inbox (binding: the operations contract). When Topic Resolution's lookup surfaces a matching item, or the user points the session at one:
+Brainstorm has two doors: an idea the user brings, and a topic `/ymer:mint` drew from the pool. A drawn topic arrives with its task already at `doing` and its folder holding the `request.md` mint wrote:
 
-1. Read the item (*read item*) — it is brainstorm input with the same standing as a sketch: a starting point, not a decision already made. The item's own measurements — and those in any `request*.md` the topic folder already holds — are re-derived before they size the topic (a minted count is the producer's sweep, not this session's), and their inherited `inferred:` marks are the re-verify feed (register rules: the sweep skill's Claims section).
-2. During Topic Resolution, the item's name is a suggestion, not binding — the topic may get a sharper name, and it gets its own date as usual.
-3. **Start the topic now** (*start topic* — binding: the operations contract): create the topic directory (unless resolution found an existing one), capture the item's content into it as `request.md` in the binding's format **unless the directory already holds a `request*.md`** — a kaizen-door topic arrives with its intake already written, and overwriting it would replace the root cause and the verbatim frictions with a description that merely points back at this folder. Then move the task into the pipeline — renamed to the topic slug, and relinked to the topic's repo when the folder lives in a different subtree than the minting project. The task does not close: it *is* the topic now, and it carries it to ship. A brainstorm that starts from several items at once promotes one and *retires* the rest, each note naming the topic (binding: the operations contract).
-4. Starting holds for every outcome, including "not pursuing this": `request.md` stays in the topic directory, the direction doc records the decision, and the task closes — *retire topic* as cancelled, the why in its note. The same request is never triaged twice.
+1. Read `request.md` — it is brainstorm input with the same standing as a sketch: a starting point, not a decision already made. Its measurements are re-derived before they size the topic (a count in a drop is the capturer's, not this session's), and its `inferred:` marks — mint's root cause among them — are the re-verify feed (register rules: the sweep skill's Claims section).
+2. The task already is the topic: no rename, no move, and no second task. The topic keeps mint's name and date.
+3. Every outcome holds the same way, including "not pursuing this": `request.md` stays in the topic directory, the direction doc records the decision, and the task closes — *retire topic* as cancelled, the why in its note.
 
 ## Branch Intake (code repos, when the session starts on a topic branch)
 
@@ -101,7 +98,7 @@ Incoming intake — feature, bug, or learning — waits as open items in the rep
 
 ### Unattended: closing around the interview
 
-A pending close is a finished close around a hold, not a torn one. It runs everything before the interview — topic resolution, intake, and the probes the questions rest on — and stops with nothing written wherever topic resolution or intake puts a question (the holds above). It then writes `brainstorm.md`: the title, the `Interview pending —` marker, the opener beat as far as it can be written — the problem in one paragraph and what the work buys, no solution shape; on a split child, the four things its arrival names — the intake's references, the `## Interview` section in the shape development-process § Artifacts gives, and a `## Verified state` section for the probes it ran; the reframe's prior-art material may be prepared under the question it informs. On an iteration, where `brainstorm.md` already stands, the marker and the section join it and its text stays as it is. At the close, step 1 runs *start topic* where the session took an inbox item in and *mint item* at `doing` where `/ymer:brainstorm new` invented the topic, so the resume reads a `doing` task; no other mint, no edge, no outward ruling, no reset hand-off. None of the convergence beats run — they run at the resume, against the candidate the interview forms — and consolidation, the self-review and the review gate are never reached. Step 2 commits under the pending message, then the kaizen block and the report (→ Next Phase).
+A pending close is a finished close around a hold, not a torn one. It runs everything before the interview — topic resolution, intake, and the probes the questions rest on — and stops with nothing written wherever topic resolution or intake puts a question (the holds above). It then writes `brainstorm.md`: the title, the `Interview pending —` marker, the opener beat as far as it can be written — the problem in one paragraph and what the work buys, no solution shape; on a split child, the four things its arrival names — the intake's references, the `## Interview` section in the shape development-process § Artifacts gives, and a `## Verified state` section for the probes it ran; the reframe's prior-art material may be prepared under the question it informs. On an iteration, where `brainstorm.md` already stands, the marker and the section join it and its text stays as it is. At the close, step 1 runs *mint task* at `doing` where `/ymer:brainstorm new` invented the topic — a drawn topic's task is `doing` already — so the resume reads a `doing` task; no other mint, no capture, no edge, no outward ruling, no reset hand-off. None of the convergence beats run — they run at the resume, against the candidate the interview forms — and consolidation, the self-review and the review gate are never reached. Step 2 commits under the pending message, then the capture block and the report (→ Next Phase).
 
 ### First-principles & prior-art reframe
 
@@ -135,11 +132,11 @@ Three beats, and the third is the point:
    discarded-options sections) — the verdict is what the next phase needs, not
    the survey behind it.
 
-**Adopt the shape, drop the baggage.** When you take a canonical solution, take
+**Adopt the shape, shed the baggage.** When you take a canonical solution, take
 its *shape*, not its every part. For each element of the standard answer, keep it
-only if the context that makes it standard holds *here*; otherwise drop it as
-YAGNI and say so. Every drop names the constraint that justifies it — and that
-constraint should already be written down (a CLAUDE.md fact, a standing doc,
+only if the context that makes it standard holds *here*; otherwise leave it out
+as YAGNI and say so. Every element left out names the constraint that justifies
+it — and that constraint should already be written down (a CLAUDE.md fact, a standing doc,
 the glossary). A deciding constraint that lives nowhere is itself a finding worth
 surfacing. The guard cuts both ways: do not import complexity you have no use
 for, and do not reject a proven shape merely because it was not invented here.
@@ -189,8 +186,9 @@ dispose:
 - **blocking gap** → a **learning task** with a dependency edge to
   this topic, its reason on the edge — the one edge the check itself
   records, riding the discovered-dependency clause (the operations contract).
-- **falling-behind gap** → a learning task, no edge — the pipeline
-  proceeds; edges and priority stay the user's triage.
+- **falling-behind gap** → a **learning** drop in the pool, through the
+  `ymer:capture` skill — no task, no edge; the pipeline proceeds, and
+  `/ymer:mint` creates the learning task when it draws the drop.
 - **enrichment gap** → no task, no edge. The leaf is written now, in
   the beat: append an unchecked entry to the subject's knowledge
   doc (entry format, index, **and every write rule that section
@@ -202,11 +200,11 @@ dispose:
   tutor's opening, never this beat's.
 
 Learning tasks live in the **Learning project** — task shape, status
-map, and mint targeting are the operations contract's; producer
-duties are the mint skill's; decomposing a subject stays with tutor's
-opening. None of that is restated here. Record in the direction doc:
-the subjects touched, each gap's disposition, and the why behind any
-edge. The mints and edges land at close step 1.
+map, and mint targeting are the operations contract's; a learning
+drop's grammar is the capture skill's; decomposing a subject stays with
+tutor's opening. None of that is restated here. Record in the direction
+doc: the subjects touched, each gap's disposition, and the why behind
+any edge. The mints, edges and captures land at close step 1.
 
 ## Scratch Doc → Consolidate
 
@@ -236,10 +234,10 @@ After consolidating, look at the doc with fresh eyes. Calibration: **only flag w
 3. **Sketch preserved and mined?** `sketch.md` holds the verbatim attempt (plus the user's notes), and `brainstorm.md` quotes what the direction relies on — nothing idea-bearing lives only in the working tree, about to be reset away.
 4. **Dropped scratch content accounted for?** Read plain `git -C <state folder> diff -- <repo>/YYYY/MM-DD-<topic>/brainstorm.md` — worktree vs. the copy staged before the rewrite. (Not `git diff --cached`: that is index-vs-HEAD, which for a freshly staged doc shows the whole pre-image as additions and no deletions at all.) The diff's deletions ARE the drop candidates: each must reappear in the consolidated doc as chosen, discarded-with-why, or an open question — dropped is a destination, not an absence.
 5. **Open questions explicit?** The next phase should not have to rediscover what we already know we don't know.
-6. **Topic started?** (Only when the session started from an inbox item — at a split child the task already is the topic, so the item does not apply.) The item's task is `doing`, renamed to the topic slug, linked to the topic's repo — and its content lives in the topic directory as `request.md`. The task is **not** closed: closing it at the start is the retired behaviour.
+6. **Intake kept?** (Only on a drawn topic or a split child.) The task is still `doing` under its own name, and the `request.md` the topic arrived with stands as it was written — read, never rewritten.
 7. **Verified-state claims stamped?** (Only when the doc carries the section.) Every claim in it carries its stamp, every absence or zero its `control:` — an unstampable claim moves out of the section or drops.
 8. **Load-bearing direction claims probed or marked?** A claim the direction rests on — a justification, a decision premise, a scope exclusion, **an open question's premise** — outside any evidence section either carries its probe (a stamp) or the literal marker `inferred:` (register rules: the sweep skill's Claims section); evidence sections stay item 7's territory. The open questions are the next phase's agenda, so a measurement-shaped premise inside one ("no precedent exists", "many callers") sets the choice that phase inherits — probe it or mark it like any other.
-9. **Durable knowledge routed?** A principle, constraint, or fact established this session that outlives the topic reaches its chartered store now — the front's initial instructions, a plugin skill, the repo's docs or glossary, one of the coordinator's docs, a product page (through a vision row — the beat never writes one), a task or a backlog row — or this doc's open questions record an explicit handoff naming the store; never left implicit in the direction prose. Calibration: only what would change behaviour in a future session, never what a store already records (the full map, and the stop-and-pick rule when nothing fits: development-process § Knowledge placement).
+9. **Durable knowledge routed?** A principle, constraint, or fact established this session that outlives the topic reaches its chartered store now — the front's initial instructions, a plugin skill, the repo's docs or glossary, one of the coordinator's docs, a product page (through a vision drop — the beat never writes one), a task, or a drop in the pool — or this doc's open questions record an explicit handoff naming the store; never left implicit in the direction prose. Calibration: only what would change behaviour in a future session, never what a store already records (the full map, and the stop-and-pick rule when nothing fits: development-process § Knowledge placement).
 
 Fix issues inline and move on — no re-review loop.
 
@@ -258,8 +256,9 @@ development-process).
 
 *Read with this section: `mechanics.md` § Commit the Artifacts, Then Reset (after the doc is approved) (the mechanics).*
 
-**Kaizen block:** invoke the `ymer:kaizen-capture` skill — source
-`brainstorm`. Battery, row grammar, and the write live in that skill alone.
+**Capture block:** invoke the `ymer:capture` skill — source
+`brainstorm`. The battery, the drop grammar and the write live in that
+skill alone.
 
 ## Next Phase (terminal state)
 
@@ -270,19 +269,20 @@ A pending close (→ The Interview) names no next phase: the report names the pe
 ## Remember
 
 - One question at a time, recommendation first; the interview is a hold — unattended, prepare it into `brainstorm.md` under the `Interview pending —` marker and close around it
-- Reframe against first principles and the field's prior art when the direction just extends what's already there — adopt the shape, drop the baggage; the verdict is the payoff
-- Product alignment at convergence: a formed candidate direction that shapes a user-operated surface is checked against the product-design principles — gate answers and verdict go in the direction doc; vision-worthy material goes to the backlog as vision rows
+- Reframe against first principles and the field's prior art when the direction just extends what's already there — adopt the shape, shed the baggage; the verdict is the payoff
+- Product alignment at convergence: a formed candidate direction that shapes a user-operated surface is checked against the product-design principles — gate answers and verdict go in the direction doc; vision-worthy material is captured as vision drops
 - Learning prerequisites at convergence: per touched subject, the
   operator-bar question; blocking gap → learning task + edge,
-  falling-behind → learning task, enrichment → knowledge-doc leaf
-  written in the beat — the mints and edges land at close step 1
+  falling-behind → learning drop, enrichment → knowledge-doc leaf
+  written in the beat — the mints, edges and captures land at close
+  step 1
 - Resolve the topic before anything else, announce the result, and reuse an existing topic directory — never mint a duplicate
 - The sketch is input, not a commitment — `sketch.md` preserves it verbatim, `brainstorm.md` gets the mined fragments
-- An inbox item's content lands in the topic directory as `request.md` and its task becomes the topic — renamed, moved into the pipeline, never closed at the start
+- A drawn topic's `request.md` is its intake, read first and never rewritten; its task already is the topic, `doing` since mint drew it
 - A settled direction may split the topic: a child task at `doing` per child, the parent's own task retired with a note naming them, the doc's child list authoritative (→ the operations contract § Split topics)
 - Scratch stays scratch until the user says settled — then stage it before the consolidating rewrite, so plain `git diff` can surface what the rewrite dropped
 - The doc records discarded options and why — future phases shouldn't re-litigate them
-- On a topic branch everything is input — branch intake renames the branch first, then captures the diff and the progression story from `<base>`, the merge-base; the intake gate applies only to branchless sketches. On an iteration arrival only the commits the record does not name are input, and `<base>` is the newest record-named commit (→ Topic Resolution, case 2)
+- On a topic branch everything is input — branch intake renames the branch first, then records the diff and the progression story from `<base>`, the merge-base; the intake gate applies only to branchless sketches. On an iteration arrival only the commits the record does not name are input, and `<base>` is the newest record-named commit (→ Topic Resolution, case 2)
 - Commit the artifacts (topic dir) before the reset hand-off — the reset only ever destroys what `sketch.md` and the state-folder commit already preserve
 - Holds are the user's: push/pull and destructive steps are hand-offs
   (preview, run, verify), never Claude-run or defaulted; the rest of

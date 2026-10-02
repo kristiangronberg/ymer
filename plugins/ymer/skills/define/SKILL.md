@@ -40,15 +40,15 @@ item 2's, run with the phase the marker names substituted for
 `implement`. The arrival the three coordinates land on decides this
 phase's opening:
 
-- an **inbox item** — an open task, with no folder or a folder holding
-  nothing but its `request*.md` — or a **closed topic**, its task
-  completed or cancelled: not a topic define takes, so stop and name
+- a **drawn topic** — a `doing` task whose folder holds nothing but its
+  `request.md` — or a task that is not in flight — open, or a **closed
+  topic**, its task completed or cancelled: not a topic define takes, so stop and name
   **brainstorm** ("External requests never skip phases":
   development-process § Process ground rules);
 - a `doing` task with **no folder** — a **split child**: create the
-  folder under today's date, write `request.md` through *start topic*'s
-  template with `started:` today — no rename and no relink, the task
-  already is the topic — and bind the parent's **direction doc**, which
+  folder under today's date, write `request.md` through the operations
+  contract's template (§ The topic's artifacts) with `started:` today —
+  the task already is the topic — and bind the parent's **direction doc**, which
   the task's description names, in `spec.md`'s opening paragraph;
 - a **live marker naming define** — an **iteration**: step 1's read
   order applies, and the pass is recorded under § The Spec's re-define
@@ -436,8 +436,8 @@ close — review post-hoc at the phase commit
 (`git -C <state folder> show <sha>`)** (*Defaults and holds*:
 development-process).
 
-**Kaizen block:** invoke the `ymer:kaizen-capture` skill — source `define`.
-Battery, row grammar, and the write live in that skill alone.
+**Capture block:** invoke the `ymer:capture` skill — source `define`.
+The battery, the drop grammar and the write live in that skill alone.
 
 ## Next Phase
 

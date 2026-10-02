@@ -47,7 +47,7 @@ of this term, never a second definition.
 The core plugin's own glossary file — the one home for the terms its
 skills speak: the phases and their artifacts, the topic and pipeline
 vocabulary, the claims and sweep discipline, the learning track, and the
-kaizen loop. Read on demand by the skills that need it; a term two or
+capture and mint loop over the pool. Read on demand by the skills that need it; a term two or
 more plugins speak is defined here in the root instead, and stated
 operatively in each plugin's prose.
 

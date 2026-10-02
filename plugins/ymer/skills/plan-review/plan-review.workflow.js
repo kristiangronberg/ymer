@@ -57,7 +57,7 @@ const facts = (input && input.facts) || {}
 
 // `facts` is this script's whole trust boundary: it has no filesystem access, so
 // every precondition arrives here unchecked, and Boolean(undefined) is false — an
-// omitted key would silently drop its lens and report that drop exactly like a
+// omitted key would silently drop its lens and report that omission exactly like a
 // genuinely false precondition, a postcondition no reader can act on. So require
 // every key explicitly and throw before anything spawns (this runs before
 // phase('Review'), so the throw costs no tokens; the host re-invokes with a
@@ -226,7 +226,7 @@ This is the single most common failure class — be exhaustive here.`,
     body: `- The plan must carry a content-ownership map: one explicit disposition per content unit of the source files — a destination, or dropped with a why. A content-moving plan with no map is a critical finding: demand the map.
 - Audit the map for totality against the SOURCE: open the files being moved or deleted and walk their content unit by unit — dropped is a destination, not an absence, so a unit with no row is a finding.
 - Flag mixed rows: a row must be wholly placed or wholly dropped (granularity follows content, not files); a row that hides an operative rule — a safety warning, a behavioral constraint — inside a wholesale "archived"/"moved" disposition must split.
-- "Dropped" means the content leaves every reachable surface of the project: archiving to a private repo the project never hands out is a drop, not a placement.`,
+- "Dropped" means the content leaves every reachable surface of the project: archiving to a private repo the project never hands out counts as dropped, not placed.`,
   },
   {
     key: 'amendment-ripple',
@@ -456,7 +456,7 @@ async function runReviewLens(lens) {
 }
 
 // --- Applicability gate: drop lenses whose precondition fails, BEFORE spawning.
-// The drop set is derived from the declarations above — there is no hand-maintained
+// The set of dropped lenses is derived from the declarations above — there is no hand-maintained
 // list, and a lens added later carries its own applicability. A dropped lens is
 // reported with the precondition that failed, never silently (charter: Review
 // effort).

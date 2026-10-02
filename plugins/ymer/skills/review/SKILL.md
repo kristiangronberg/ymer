@@ -121,8 +121,9 @@ what it skips — lives in code-review's Applying-fixes section; this
 phase inherits it unrestated. Two rules are review's own: every
 plan-fidelity finding is reported, never applied — deviation from the
 plan is this phase's disposition subject — and the phase **trusts the
-fixes**: a disappointing fix is kaizen material aimed at code-review,
-never grounds to re-do the fix by hand or to shrink the apply set.
+fixes**: a disappointing fix is a friction to capture, aimed at
+code-review, never grounds to re-do the fix by hand or to shrink the
+apply set.
 
 **Write `review.md` now** — the moment the findings exist and the fixes
 have landed, before the running session does anything else: implement's
@@ -225,18 +226,21 @@ A correct answer earns confirmation and moves on.
 When a **subject-level** gap surfaces — the gap is in the subject rather
 than in this topic's specifics, corroborated by the calibration pass
 (the doc's entry unchecked, or the subject undocumented), whether a
-missed answer exposed it or the calibration pass itself did — mint a
-Learning-project task **the moment it surfaces** (*mint item*, the mint
-skill's discipline; binding: the operations contract), say that it was
-minted, and continue. When that gap is **blocking-grade** — the
-developer cannot safely operate the shipped result without it — record
-the edge too (*order topics*: the Learning task blocks this topic's
-task, with its reason), and say so in-session. The task and its edge are
-durable the moment they are made and carry this topic in their
-evidence, so they survive a session that never reaches a close —
-interrupted, or iterated — and a later re-run's three looks find
-them rather than minting twice. Follow-through on the task is the
-user's, never this session's.
+missed answer exposed it or the calibration pass itself did — capture
+it **the moment it surfaces** as a **learning** drop (the `ymer:capture`
+skill, source `review`), say that it was captured, and continue. When
+that gap is **blocking-grade** — the developer cannot safely operate the
+shipped result without it — the work starts now instead: mint its
+Learning-project task (*mint task*; binding: the operations contract)
+and record the edge (*order topics*: the Learning task blocks this
+topic's task, with its reason), and say so in-session. The drop, the
+task and its edge are durable the moment they are made and carry this
+topic in their evidence, so they survive a session that never reaches a
+close — interrupted, or iterated — and a later re-run finds them:
+capture's recurrence check finds the drop, so a second capture lands as
+a recurrence pointing at it rather than a second story, and a look at
+the Learning project's tasks finds the task, so it is never minted twice. Follow-through is
+the user's, never this session's.
 
 **Surprises** — anything surprising, or breaking a pattern the system
 or the suite has established — are flagged **loudly where they arise**
@@ -246,8 +250,8 @@ inside its stop's what-it-showed line. There is no separate section: the
 stops carry their own record.
 
 **The record grows as the walkthrough runs.** As each stop closes —
-covered or skipped, and after any Learning mint or edge made at the
-teaching bound — append its line to the `## Review — <date>` entry the
+covered or skipped, and after any learning capture, mint or edge made
+at the teaching bound — append its line to the `## Review — <date>` entry the
 lens pass opened, under its Walkthrough list (grammar: → The Close),
 before the next stop opens. The covered set is never held in context
 alone: a session that dies here must leave the stops it actually
@@ -289,13 +293,15 @@ picks from a taxonomy. Five outcomes:
   **no close** — the session continues, and the edit rides the record
   like any other (→ The Close, for the `Delta pass:` a ship close owes
   it).
-- **lifted, blocking** — separate work the ship must wait for: *mint
-  item* (the project is where the fix lives; the mint skill's three
-  looks apply; read the mint back — binding: the operations contract), then
-  *order topics* — the lifted task blocks this topic's task, the
-  finding as the reason — and the close is **wait**.
-- **lifted, non-blocking** — separate work with no edge: *mint item*,
-  read back, nothing else.
+- **lifted, blocking** — separate work the ship must wait for, so its
+  work starts now: *mint task* (the project is where the fix lives; read
+  the mint back — binding: the operations contract), then *order
+  topics* — the lifted task blocks this topic's task, the finding as the
+  reason — and the close is **wait**.
+- **lifted, non-blocking** — separate work nobody is starting now:
+  capture it as a drop through the `ymer:capture` skill, source
+  `review` — an `idea`, or a `bug` where what the finding saw is broken —
+  and nothing else: no task, no edge.
 - **declined** — the finding is weighed and left as it stands: a trade-off
   the developer takes deliberately, or a record that is correct as written
   and changes nothing. The `- F<n>` line carries the why and nothing else —
@@ -306,7 +312,7 @@ picks from a taxonomy. Five outcomes:
 
 **Append each disposition as it settles** — the finding's `- F<n> …`
 line naming its outcome and the calls already made: the minted task,
-the recorded edge, the amendment a decide-forward already wrote — to
+the captured drop, the recorded edge, the amendment a decide-forward already wrote — to
 the same open entry, before the next finding is taken up. Same reason
 as the stops: what is settled is on disk.
 
@@ -348,80 +354,6 @@ ship unreviewed. Anything else is an iteration — say so, take it as a
 disposition, and let the route rule name the phase (or decide-forward
 name the amendment) rather than shipping it unseen.
 
-## The pool look
-
-*Read with this section: `cases.md` § The pool look (the cases).*
-
-The ship close's one write to the pool, run at ship step 3 (→ Phase
-Close) — after the refs exist and before the ship section is written,
-which is the one moment both lanes share: the lightweight close-out owes
-the same section, so it owes the same look. Four keys, derived from
-what is already in view and never recalled:
-
-1. **Cited** — the task ids the topic folder's `*.md` carry, this
-   topic's own id excluded (*ship topic* owns that one): the full
-   UUID, the compound `name-<uuid>`, and the 8-4 prefix. A full or
-   compound hit is read by id (*search pool*, by name). A prefix or a
-   slug is a **lead**, not a hit — read the citing sentence and look
-   the item up by the subject it names (*search pool*, by subject),
-   never a pool listing to expand the prefix; a sentence naming no
-   subject is a miss that still counts as a cited id. The prefix
-   branch is transitional: the mint skill's citation rule forbids new
-   prefixes, so the record's tail of them shrinks on its own.
-2. **Removals** — the deleted and renamed paths of the refs the ship
-   section's `Squash:` and `Machinery commits:` lines will name, per
-   tree — never a `Catch-up:` merge ref, whose combined diff shows
-   nothing a side took whole — plus the tokens the direction doc's
-   "What the direction makes unnecessary" section retired:
-
-   ```
-   git -C <tree> show --diff-filter=DR --name-status <ref>
-   ```
-
-   Rename detection is on by default and `--name-status` keeps the
-   old path, which is the one an item would have cited. Each basename
-   and token is read both ways through *search pool* — by name, then
-   widened by subject.
-3. **Beyond-spec** — each fix the record marks as outside the spec:
-   `implemented.md`'s deviations and its noticed-but-not-done list, a
-   plan's "beyond the spec", a disposition on a pre-existing finding.
-   The lightweight lane has no `implemented.md`, so its substrate is
-   the direction doc and this file's dispositions. Searched on the
-   fix's own tokens, the same two ways.
-4. **Subject** — one *search pool* by subject on the topic's name and
-   its one-paragraph idea. It always runs, whatever the other three
-   yielded, and a hit citing this topic by name is an inbound
-   citation taking the same readings as any other.
-
-**Read each hit that is not closed against the shipped increment** —
-any status short of closed, the `doing` and `asking` ones the bounds
-below cap included (`asking` is the server's word for a task awaiting
-its answer; `open` in those bounds is its open group and nothing
-wider) — the increment and its removals are the evidence, never a
-general sense that the item has stopped mattering — and write one of
-four readings:
-
-- **resolved** — the increment delivered what the item asks:
-  *resolve item*, its result naming the topic ID and the ref that
-  delivered it.
-- **mooted** — a removal **the record names** made it pointless: a
-  path this ship's refs deleted or renamed, or a token the direction
-  doc's removal section names. *Retire topic*, its result citing that
-  path or token — a rename names both, the old path and the new.
-  Anything less is an annotate carrying a moot note, and the reopen
-  stays the user's.
-- **amended** — the increment narrowed or falsified what the item
-  carries: *annotate item* (discipline: the mint skill), the name
-  re-led to the live residual.
-- **untouched** — nothing written. It is the default reading of a
-  wide by-subject return, where most hits are unrelated.
-
-The moves and the keys ride the ship section's `Pool:` line, written
-with the section (→ The Close), each moved item under the group its
-operation names — `resolved`, `retired`, `annotated`. An operation
-whose required outcome did not land stops the close, exactly as *ship
-topic*'s does (the README's failure rule).
-
 ## The Close
 
 *Read with this section: `cases.md` § The Close (the cases).*
@@ -441,7 +373,6 @@ append the entry's two ref lines instead:
 Squash: <sha | none> · branch <topic> deleted · task closed completed   [`none` where step 2's preview was empty — no squash ran (→ Phase Close, ship step 2)]
 Catch-up: <fast-forward | merge <sha> (resolution: <note>) | already up to date> · re-green: green   [code-repo topics — step 2's merge; the clause where the outcome moved the branch — only `green` reaches it (→ Phase Close, ship step 2)]
 Machinery commits: <tree> <sha…> · <tree> <sha…>   [additive, per machinery tree, wherever the increment carries any]
-Pool: resolved — <name-uuid>, … · retired — <name-uuid> (<the removal>), … · annotated — <name-uuid>, … · keys: cited <n>, removals <n>, beyond-spec <n>, subject   [unconditional on a ship close, both lanes; `none` replaces the three groups where nothing moved (→ The pool look)]
 Pending: git push · git push from <tree> · git push from <tree>   [each push that applies]
     [a meta topic has no branch, so no Squash line and no Catch-up
      line — it never runs step 2: task closed completed rides the
@@ -457,7 +388,7 @@ Findings & dispositions:
 - F1 <file:line> — <finding> — iterated in scope: <what was done>
 - F2 <file:line> — <finding> — decide-forward: <the decision taken, one clause> · amended <artifact> <handle>
 - F3 <file:line> — <finding> — lifted, blocking → <task> (edge recorded)
-- F4 <file:line> — <finding> — lifted, non-blocking → <task>
+- F4 <file:line> — <finding> — lifted, non-blocking → <kind> drop #<id>
 - F5 <file:line> — <finding> — declined: <why it stands>
 Walkthrough — stops in story order, skips named:
 - S1 <where>: <what this stop showed> — covered
@@ -466,7 +397,7 @@ Fitness: <the closing does-it-do-the-job question, and the answer>
 Where-to-look:
 - when <X misbehaves>, check <Y>
 - never <X> — <consequence>
-Tails: Learning minted: none · Calibration: none
+Tails: Learning: none · Calibration: none
 Reviewed: branch @ <sha> · <tree> <sha> <sha> · <tree> <sha>     [iterate and wait closes — what this entry's pass covered]
 Unreviewed: branch <sha> · <tree> <sha> <sha> · <tree> <sha>     [the same closes, always — `none` where the close committed nothing]
 ```
@@ -511,10 +442,12 @@ unseen:
 
 **Tails** (each defaulting to none):
 
-- **Learning minted** — the Learning-project tasks minted mid-session
-  at the teaching bound, named, and for a blocking-grade gap the edge
-  recorded beside its task. The mint already happened and stands on its
-  own; this tail names it in the record rather than routing it.
+- **Learning** — the learning gaps met mid-session at the teaching
+  bound: each learning drop captured, by its id, and for a
+  blocking-grade gap the Learning-project task minted with its edge
+  recorded beside it. The capture or the mint already happened and
+  stands on its own; this tail names it in the record rather than
+  routing it.
 - **Calibration** — any subject whose knowledge doc stayed unreachable
   through the close, so its calibration ran from the artifacts alone —
   or `uncalibrated (empty index)` when there were no rows to match, or
@@ -538,8 +471,8 @@ writes a thin `review.md` whose entry names the lane taken *with* a ship
 section, so done-ness reads the same for every topic.
 
 **The record is never a staging area.** Next-iteration work rides the
-task pool — a mint, an edge, an iteration marker — never a list in
-`review.md` waiting for a drain nobody owns.
+roadmap or the pool — a mint, an edge, an iteration marker, a captured
+drop — never a list in `review.md` waiting for a drain nobody owns.
 
 ## Iterate — the re-entry close
 
@@ -582,17 +515,15 @@ something the developer never saw.
    the covered set matches what actually happened.
 3. Every disposition's consequence landed: an in-scope fix is in the
    tree, a blocking lift-out has its task *and* its edge (read back:
-   the mint shows in the pool, the edge among what blocks the topic,
-   with its reason), a non-blocking one its task (its mint read back). A
+   the mint shows in its project, the edge among what blocks the topic,
+   with its reason), a non-blocking one its captured drop. A
    **declined** finding has no consequence by construction — this item
    passes over it; what its line owes is the why, and the why is on the
    line.
-4. The pool look ran and every write it made landed: each hit it
-   resolved, retired or annotated is on the `Pool:` line under its
-   group, the keys clause closing it (grammar: → The Close), and an
-   annotate was read back on the item's description as *annotate item*
-   requires. This item passes over a close that is not a ship: the
-   look runs only there.
+4. Every drop this session handed to capture landed: its id is on the
+   line that sent it — a non-blocking lift-out's `- F<n>` line, a
+   learning gap's entry in the Learning tail — and a capture stopped at
+   its guard is a finding, never a line written as if it had landed.
 5. The fitness question was asked once, over the whole increment, and
    its answer is recorded.
 6. An iterate close prepended the marker above findings that stayed and
@@ -606,8 +537,8 @@ something the developer never saw.
    appended the same two lines; a ship that followed a wait close
    confirmed the entry it ships is complete — fitness answered, stops
    accounted for — before the section went on top.
-7. Tails routed: every mid-session Learning mint named — with its edge
-   recorded when the gap was blocking-grade — and every unreached or
+7. Tails routed: every mid-session learning capture named, and every
+   Learning mint — with its edge recorded, the gap blocking-grade — and every unreached or
    absent knowledge doc named under Calibration.
 8. Every tree that ships is green — the lens pass's own post-fix runs
    still stand, or a close-time run covers the edits made since, the
@@ -630,10 +561,10 @@ Fix issues inline and move on — no re-review loop.
 *Read with this section: `mechanics.md` § Phase Close — three closes (the mechanics).*
 
 **Ship** — Claude-run end to end except the push. A meta topic skips
-steps 1, 2, and 7 (topic kinds: development-process § Topic kinds); the
+steps 1, 2, and 6 (topic kinds: development-process § Topic kinds); the
 machinery commit, where this session made machinery edits, stands where
-steps 1–2 stand, run before step 3 — whose removals key reads its
-refs — its ref joining `implemented.md`'s refs in the ship
+steps 1–2 stand, run before step 3 — the ship section, which names its
+ref — its ref joining `implemented.md`'s refs in the ship
 section. Work no pass has seen takes its `Delta pass:` here, before step
 1 — everything after the entry's lens-pass coverage anchor
 (→ The Close).
@@ -643,7 +574,7 @@ commit is this close's project-checkout commit, and its ref rides
 `Unreviewed: branch <sha>`. Then append the entry's ref lines (both,
 always: `Reviewed:`, and `Unreviewed:` naming the close's own commits no
 pass covered, or `none` — grammar: → The Close), then prepend the
-marker (→ Iterate), then steps 6 and 8. The branch and `implemented.md`
+marker (→ Iterate), then steps 5 and 7. The branch and `implemented.md`
 stand for the next iteration, the branch's own tree clean and this
 session's edits committed on it; the task stays
 `doing`.
@@ -652,8 +583,8 @@ session's edits committed on it; the task stays
 it, its ref on `Unreviewed: branch <sha>`; the `## Review` entry then
 stands complete with no ship section
 and the same two lines appended; the blocking edge was recorded at its
-disposition (read it back: *order topics*' postcondition). Then steps 6
-and 8. The task stays `doing` and shows blocked in the available-to-work
+disposition (read it back: *order topics*' postcondition). Then steps 5
+and 7. The task stays `doing` and shows blocked in the available-to-work
 view until the lifted task resolves; the next review session's pre-flight
 reads the edge, then runs the `Delta pass:` over the subject § The Close
 defines for it — never ship unseen — and ships. Note the asymmetry that
@@ -663,7 +594,7 @@ next lens pass to catch what it misses.
 ## Next Phase
 
 None — review is the last phase; the development process ends here.
-Stop after the kaizen block. The terminal report lists every pending
+Stop after the capture block. The terminal report lists every pending
 step with its command written out (report rule: *Defaults and holds*):
 after a ship, the push — `git push`, from the project repo, and a push
 per machinery tree this session committed — `git push` from
@@ -687,7 +618,7 @@ tree's main is ahead of origin the moment its commit lands.
   when it does
 - With `--fix`: apply what has one right answer, surface what decides
   something, never apply a plan-fidelity finding; trust the fixes — a
-  bad one is kaizen material, never grounds to shrink the apply set —
+  bad one is a friction to capture, never grounds to shrink the apply set —
   and the fixes ride their own commit(s) — a state-folder fix the phase's
   own state-folder commit — their re-green result recorded on the fixes line, a
   red one being a finding like any other
@@ -708,8 +639,9 @@ tree's main is ahead of origin the moment its commit lands.
   declared at the open; all three are named in the record
 - Questions only a reader who followed could answer, or none — never
   ritual comprehension; one referent, hard stop; a miss earns a short
-  inline teaching; a subject-level gap mints a Learning task the moment
-  it surfaces, a blocking-grade one records its edge
+  inline teaching; a subject-level gap is captured as a learning drop
+  the moment it surfaces, and a blocking-grade one mints its Learning
+  task and records its edge
 - The facilitator proposes each disposition with its consequence in
   plain terms; the developer answers about the code, never picks from
   the taxonomy; a blocking lift-out blocks this topic's ship
@@ -731,9 +663,7 @@ tree's main is ahead of origin the moment its commit lands.
   the entry's coverage anchor — the pass's own fix commits, the
   `Unreviewed:` refs, and every edit since (→ The Close) — before the
   section goes on top
-- The ship close looks at the pool before the section goes on top: four
-  keys derived from the record and the ship's own refs, every open hit
-  read against the increment — resolved, mooted, amended, untouched —
-  and the moves plus the keys on the `Pool:` line, where `none` is a
-  measured zero
+- Work the review finds and nobody starts now is captured as a drop —
+  a non-blocking lift-out, a learning gap; only a blocking lift-out or a
+  blocking-grade gap mints a task
 - The ship section is what "shipped" reads; the push is the hold

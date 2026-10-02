@@ -35,16 +35,16 @@ folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
 `Interview pending —` marker at its head (development-process
 § Artifacts). The arrival those three coordinates land on decides the
-opening. An **open task** — with no folder, or a folder holding
-nothing but its `request*.md` — is an **inbox item**, intake nobody has
-brainstormed: stop and name **brainstorm** ("External requests never
-skip phases": development-process § Process ground rules). A **closed
-topic**, its task completed or cancelled, is not this topic: stop
-and name brainstorm the same way. A `doing` task with **no folder** is a
-**split child**: create the folder under today's date, write
-`request.md` through *start topic*'s template (binding: the operations
-contract) with `started:` today — no rename and no relink, the task
-already is the topic — and bind the parent's **direction doc**, which
+opening. A **drawn topic** — a `doing` task whose folder holds nothing
+but its `request.md` — is intake nobody has brainstormed: stop and name
+**brainstorm** ("External requests never skip phases":
+development-process § Process ground rules). A task that is not in
+flight — open, or a **closed topic**, its task completed or cancelled —
+is not this topic: stop and name brainstorm the same way. A `doing` task
+with **no folder** is a **split child**: create the folder under today's
+date, write `request.md` through the operations contract's template
+(§ The topic's artifacts) with `started:` today — the task already is
+the topic — and bind the parent's **direction doc**, which
 the task's description names, in the map's first paragraph. A marker on
 top of `review.md` that review § Input item 2's read finds **live**
 names the phase the topic re-enters at, and no route names scout: stop
@@ -119,11 +119,11 @@ rebuild that moves a real one.
 
 *Read with this section: `cases.md` § Next Phase (the cases).*
 
-- **Kaizen block — both paths:** invoke the `ymer:kaizen-capture` skill —
-  source `scout`; battery, row grammar, and the write live in that skill
-  alone. Runs at scout's close even when define continues in-session:
-  each phase tail captures its own.
-- **Standalone session:** after the kaizen block, stop and name the next phase — **define** in a fresh session. Do not invoke the next skill: one phase per session, the map is the compaction boundary.
+- **Capture block — both paths:** invoke the `ymer:capture` skill —
+  source `scout`; the battery, the drop grammar and the write live in
+  that skill alone. Runs at scout's close even when define continues
+  in-session: each phase tail captures its own.
+- **Standalone session:** after the capture block, stop and name the next phase — **define** in a fresh session. Do not invoke the next skill: one phase per session, the map is the compaction boundary.
 
 ## Remember
 

@@ -7,9 +7,10 @@ The mechanics of the development-process skill, moved here byte for byte from `S
 One directory per topic — `<state folder>/<repo>/YYYY/MM-DD-<topic>/` — holds
 every phase's artifact under phase-predictable names: `brainstorm.md`,
 `sketch.md`, `survey.md`, `spec.md`, `plan.md`, `implemented.md`,
-`review.md`. A topic that started from an inbox item also holds
-`request.md` — the item's content, captured when brainstorm started the
-topic from it (the inbox holds only untriaged items). A topic folder may
+`review.md`. A topic `/ymer:mint` drew from the pool, or a split child,
+also holds `request.md` — its intake as it arrived, written once by
+whatever started the topic (template: the operations contract). A topic
+folder may
 also hold committed **sweep artifacts** — re-runnable measurement
 scripts kept beside the map or plan whose numbers they generate (claims
 rules: the sweep skill) — optional companions whose names stay ad hoc;

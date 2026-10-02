@@ -226,9 +226,10 @@ Fix issues inline and move on — no re-review loop.
    record (every phase has one): what the plan and the code don't
    already say. Deviations from the plan during implementation and why;
    mishaps or surprises; anything noticed but deliberately not done
-   (follow-up candidates for the inbox — mint each one: *mint item*,
-   binding: the operations contract, read the mint back; discipline: the
-   mint skill); the final
+   (follow-ups — capture them, one invocation of the `ymer:capture`
+   skill, source `implement`, handing each over as an observed drop —
+   an `idea` for work left undone, a `bug` for something seen broken —
+   and list each here with the id capture reports); the final
    verification result (suite green, live smoke); the **pre-flight**
    gate #4 ran — own commits found, main's delta, the stash entry where
    the tree was dirty, and the catch-up's outcome: a fast-forward, the
@@ -321,9 +322,9 @@ Fix issues inline and move on — no re-review loop.
    either — other topics' in-flight work, leave them (concurrent edits:
    the substrate contract).
 
-6. **Kaizen block:** invoke the `ymer:kaizen-capture` skill — source
-   `implement`. Battery, row grammar, and the write live in that skill
-   alone.
+6. **Capture block:** invoke the `ymer:capture` skill — source
+   `implement`. The battery, the drop grammar and the write live in that
+   skill alone.
 
 ## Next Phase
 
@@ -358,11 +359,11 @@ compaction boundary: do not invoke the next skill.
 
 - The plan is the method — this skill gates, guards, and closes
 - A box is ticked only by a verification that actually ran — and, on a code-repo topic, only once the task's bytes are committed on the branch; the task's boxes tick together at its commit, and a task that writes no file has no bytes and no commit, so it ticks on its verification alone
-- Mechanical drift is fixed and edited into the plan; an approach change is an iteration — decide-forward in place when the decision is already made, otherwise the session stops, and the stop is a close: machinery commit (per tree), the marker plus its `Unreviewed:` line into `review.md`, state-folder commit, kaizen block — and no `implemented.md`
+- Mechanical drift is fixed and edited into the plan; an approach change is an iteration — decide-forward in place when the decision is already made, otherwise the session stops, and the stop is a close: machinery commit (per tree), the marker plus its `Unreviewed:` line into `review.md`, state-folder commit, capture block — and no `implemented.md`
 - Nothing outside the plan gets built — record it, don't do it
 - No user gate at the end: the close runs straight through, lens pass included, and the human meets the real diff in review
 - The phase ends with the branch carrying a commit per task that wrote files (a meta topic has none), plus a machinery commit wherever the session edited machinery — one machinery tree or several, committed per tree — public-register message; then the lens pass over what was just committed, its fixes on their own commit(s), and its findings into `review.md`'s `## Review` entry — no squash, no merge, no branch delete, no task close, those are review's ship
 - The lens pass's procedure is review's, operated here by pointer (review § The lens pass); this close owns only where the pass sits, its fix commits, and the entry it writes
-- `implemented.md` records deviations, mishaps, follow-ups (each minted), verification, the pre-flight's stash and catch-up, and the durable refs — every task commit, plus every machinery commit ref, per tree, the lens pass's own fix commits excepted: those ride the `## Review` entry's fixes line
+- `implemented.md` records deviations, mishaps, follow-ups (each captured as a drop), verification, the pre-flight's stash and catch-up, and the durable refs — every task commit, plus every machinery commit ref, per tree, the lens pass's own fix commits excepted: those ride the `## Review` entry's fixes line
 - Every pre-flight in a project checkout stashes what it finds and then catches up, with no exception for a session that picks the plan up mid-way: it restarts at a task boundary with a clean branch behind it
 - Next is review, in a fresh session; the task stays `doing` until its closure

@@ -21,7 +21,9 @@ restate the principles.
 *Read with this section: `cases.md` § The product page (the cases).*
 
 Known products cache their answers on a **product page** — the
-`<Product> Roadmap` project's description in the coordinator. Before
+`<Product> Roadmap` project's description in the coordinator, its
+skeleton and fixed header stated in the operations contract's binding.
+Before
 running the gate and checks for a known product, fetch it by a name
 search for `<Product> Roadmap` asking for the description, never by the
 read that echoes the project's whole linked task list. A session whose

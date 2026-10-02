@@ -4,13 +4,13 @@
     "name": "Kristian Grönberg"
   },
   "metadata": {
-    "description": "Plugins for working with ymer.ax, layered: the core plugin `ymer` holds the practice every user runs — its phases, kaizen and setup — and a domain plugin specializes it. Using any plugin requires a Ymer Node you run and one folder for your state, any folder, under version control or not; a ymer.ax account is optional, and the default where a session reaches it. Install `ymer` and run `/ymer:setup` to create what is missing and report what it found."
+    "description": "Plugins for working with ymer.ax, layered: the core plugin `ymer` holds the practice every user runs — its phases, capture and mint, and setup — and a domain plugin specializes it. Using any plugin requires a Ymer Node you run and one folder for your state, any folder, under version control or not; a ymer.ax account is optional, and the default where a session reaches it. Install `ymer` and run `/ymer:setup` to create what is missing and report what it found."
   },
   "plugins": [
     {
       "name": "ymer",
       "source": "./plugins/ymer",
-      "description": "The directed way of working, as skills you invoke: brainstorm a topic into a direction, scout the ground, define what it means, plan it, harden the plan, implement it, review and ship — plus the supporting moves the phases lean on, kaizen's capture and summary over your working process, and the setup that checks the environment every plugin works from."
+      "description": "The directed way of working, as skills you invoke: brainstorm a topic into a direction, scout the ground, define what it means, plan it, harden the plan, implement it, review and ship — plus the supporting moves the phases lean on, capture and mint over the pool of work nobody has started yet, and the setup that checks the environment every plugin works from."
     }
   ]
 }

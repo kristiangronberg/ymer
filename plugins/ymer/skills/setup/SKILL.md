@@ -21,11 +21,11 @@ converges everything setup owns — skeletons, settings and floors — with no
 migration step and nothing to version. Two things sit outside that
 promise. The ymer connection is yours, it lives outside any plugin, and
 re-running can only report on it. And what this skill writes once — each
-table's `_meta` grammar row (→ The grammar rows) and the `Meta Roadmap`
-project's description (→ The `Meta Roadmap` project) — is its owner's
-from then on and never rewritten, so when a release changes what one of
-them says, an install that already has it catches up only by hand, in a
-hand step that release names.
+table's `_meta` grammar row (→ The grammar rows), the `kinds` rows
+(→ The kinds) and the `Meta Roadmap` project's description (→ The `Meta
+Roadmap` project) — is its owner's from then on and never rewritten: a
+release that words one of them differently changes what a new install
+gets, and nothing an existing one holds.
 
 ## What decides where things go — the reach rule
 
@@ -68,11 +68,12 @@ claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
 Name that command only on Claude Code. On a harness with no such door,
 say that the node is unreachable from this session and leave it there.
 
-**The skeletons.** Seven tables, created in this order — `fronts`,
-`frictions`, `tasks`, `tasks_log`, `topics_history`, `tutor_subjects`,
-`tutor_engagements`. The order is load-bearing: `frictions` and
-`topics_history` key on `fronts(slug)`, `tasks_log` on `tasks(id)`, and
-`tutor_engagements` on `tutor_subjects(subject)`.
+**The skeletons.** Eight tables, created in this order — `fronts`,
+`kinds`, `pool`, `tasks`, `tasks_log`, `topics_history`, `tutor_subjects`,
+`tutor_engagements`. The order is load-bearing: `pool` keys on
+`fronts(slug)` and `kinds(kind)`, `topics_history` on `fronts(slug)`,
+`tasks_log` on `tasks(id)`, and `tutor_engagements` on
+`tutor_subjects(subject)`.
 
 Read what is there first, with the `notebook` `tables` action, and then
 work table by table. **The node runs one statement per `execute` call and
@@ -90,37 +91,52 @@ CREATE TABLE fronts (
 )
 ```
 
-`frictions` — the kaizen backlog:
+`kinds` — the kinds a drop in the pool is captured under, each row
+carrying its kind's rule (→ The kinds):
 
 ```sql
-CREATE TABLE "frictions" (
+CREATE TABLE kinds (
+  kind        TEXT    PRIMARY KEY,
+  test_order  INTEGER UNIQUE,
+  description TEXT    NOT NULL
+)
+```
+
+`pool` — the one store of drops waiting to be drawn into work:
+
+```sql
+CREATE TABLE pool (
   id          INTEGER PRIMARY KEY,
   captured_on TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%d','now')),
   front       TEXT    NOT NULL REFERENCES fronts(slug),
   source      TEXT    NOT NULL,
   context     TEXT    NOT NULL,
-  kind        TEXT    NOT NULL DEFAULT 'friction' CHECK (kind IN ('friction','recurrence','vision','empty')),
+  kind        TEXT    NOT NULL DEFAULT 'friction' REFERENCES kinds(kind),
+  title       TEXT,
   body        TEXT    NOT NULL,
-  anchor_id   INTEGER REFERENCES "frictions"(id),
+  anchor_id   INTEGER REFERENCES pool(id),
   anchor_text TEXT,
   product     TEXT,
   status      TEXT    NOT NULL DEFAULT 'open' CHECK (status IN ('open','drained')),
   drained_to  TEXT,
   drained_at  TEXT,
   created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
-  CHECK (kind <> 'recurrence' OR anchor_id IS NOT NULL OR anchor_text IS NOT NULL),
   CHECK (kind <> 'vision' OR product IS NOT NULL),
   CHECK (status <> 'drained' OR drained_to IS NOT NULL)
 )
 ```
 
 ```sql
-CREATE INDEX frictions_anchor ON frictions (anchor_id)
+CREATE INDEX pool_anchor ON pool (anchor_id)
 ```
 
 ```sql
-CREATE INDEX frictions_status_kind ON frictions (status, kind)
+CREATE INDEX pool_status_kind ON pool (status, kind)
 ```
+
+`title` stays nullable: the kinds whose bodies run long carry one, and a
+reader scans `COALESCE(title, body)`, so a drop written without one still
+reads.
 
 `tasks` — the coordinator where a session reaches no ymer. The status
 vocabulary is ymer's own, under a `CHECK`, so promoting a row into ymer
@@ -241,7 +257,7 @@ owner extended — the columns their front added, the rules their work runs
 by — and that text lives nowhere else. Replacing it destroys it silently,
 on a run whose whole promise is that it changes nothing already right.
 
-The seven texts, each the grammar of its table:
+The eight texts, each the grammar of its table:
 
 > **`table:fronts`** — The fronts: one row per surface a session runs on.
 > `slug` is the token every front-bound row names, snake_case, and the
@@ -254,38 +270,49 @@ The seven texts, each the grammar of its table:
 > front. A front may add columns of its own and document them here. A new
 > front is one INSERT here plus whatever names its slug to its sessions.
 
-> **`table:frictions`** — The frictions store: one row per friction, a
-> hindsight observation of process waste recorded as its root cause,
-> never the symptom, blameless (name the artifact or system). Kaizen's
-> backlog — the one store, no archive, no clusters file, no staging: a
-> row leaves it only by being drained, priority binds at drain time, and
-> the count of open rows is the debt gauge. Kaizen captures are today's
-> main producer, at session tails on every front; any
-> client may insert, and this description is the grammar for one with no
-> skill to read. Minimal insert: front, source, context, body;
-> captured_on (YYYY-MM-DD), kind and status default. front = the front
-> that wrote the row, a fronts slug — NOT NULL and a foreign key, so a
-> forgotten front is refused rather than filed as someone else's. source
-> = the snake_case name of the skill that invoked the capture, or
-> 'standalone' when nothing did. context = what the work belonged to,
-> <area>/<subject>: <repo>/<topic> for a session working one topic,
-> meta/<subject> for process work or a study session with no repo. kind:
-> friction (default, one per capture) | recurrence = the same root cause
-> biting again: set anchor_id to the row it recurs (an enforced foreign
-> key; drained rows still count), or anchor_text when no single row is
-> the anchor (a named-cause slug), body then carrying at most one short
-> where-it-bit clause | vision = material about where a product is
-> heading rather than how the work went, product names it, several per
-> session allowed | empty = a capture that found nothing, body '∅ no
-> friction', never drained, excluded by kind. status: open | drained.
-> Only a kaizen summary drains: it sets
-> status='drained', drained_to = the topic, task id or friction-batch
-> that took the row, and drained_at. Rows are never deleted: pointers
-> must keep resolving and drained rows stay as evidence. Frequency = rows
-> sharing an anchor (COALESCE(anchor_id, anchor_text)); a recurrence
-> after its anchor was drained is the sharpest signal kaizen produces.
-> This row is the grammar's home; the table's definition is
-> sqlite_master, and every backup carries both.
+> **`table:kinds`** — The kinds a drop in the pool is recorded under, one
+> row per kind; pool.kind is a foreign key into kind. description is the
+> kind's rule: what fits it, and what the drop's title and body say.
+> test_order is the order the kinds are tried in: the first whose
+> description fits the observation wins, so an observation that fits two
+> lands the same way every time. empty has none — it records that the
+> work was looked back on and nothing was found, and is never tried
+> against an observation. A front may add a kind of its own with a row
+> here.
+
+> **`table:pool`** — The pool: one row per drop, one observation waiting
+> to be drawn into work, recorded as it was observed and never analysed
+> on the way in. The one store — no archive, no staging: a drop leaves
+> the open pool only by being drained, which changes its status and
+> deletes nothing, priority binds when a drop is drawn, and nothing in
+> the pool is work anyone has committed to. Any client may insert, and
+> this description is the grammar for one with nothing else to read.
+> Minimal insert: front, source, context, body; captured_on (YYYY-MM-DD),
+> kind and status default. front = the front that wrote the row, a
+> fronts slug — NOT NULL and a foreign key, so a forgotten front is
+> refused rather than filed as someone else's. source = the snake_case
+> name of the step that wrote the drop, or 'standalone' when nothing
+> invoked it. context = what the work belonged to, <area>/<subject>:
+> <repo>/<topic> for a session working one topic, meta/<subject> for
+> process work or a study session with no repo. kind = a kinds row,
+> friction by default, picked by trying the kinds in test_order and
+> taking the first whose description fits. title = the drop in a plain
+> phrase, written for the kinds whose descriptions ask for one; a scan
+> reads COALESCE(title, body). body = what was observed. product names
+> the product a vision drop is about, and a vision drop requires it. A
+> drop of any kind is a recurrence when it carries an anchor: anchor_id
+> = the row it recurs (an enforced foreign key; drained rows still
+> count), or anchor_text when no single row is the anchor (a named-cause
+> slug), the body then one short clause saying where it bit this time.
+> status: open | drained — drawing a drop drains it, setting
+> status='drained', drained_to = where it went (a topic as
+> <area>/YYYY/MM-DD-<topic>/, or a task id), and drained_at. An empty
+> drop is never drained. Rows are never deleted: pointers must keep
+> resolving and drained rows stay as evidence. Frequency = rows sharing
+> an anchor (COALESCE(anchor_id, anchor_text)); a recurrence after its
+> anchor was drained is the sharpest signal the pool gives. This row is
+> the grammar's home; the table's definition is sqlite_master, and every
+> backup carries both.
 
 > **`table:tasks`** — The coordinator where a session reaches no ymer:
 > one row per unit of work, shaped as the minimum of ymer's task model so
@@ -293,8 +320,10 @@ The seven texts, each the grammar of its table:
 > status is ymer's own vocabulary under a CHECK — new | reopened |
 > claimed | asking | completed | cancelled — with the groups open = new +
 > reopened, doing = claimed + asking, closed = completed + cancelled; a
-> fresh mint lands at new. project is the Roadmap the row would be minted
-> into in ymer, derived from area with no lookup: area meta → 'Meta
+> topic's task is created at claimed, because a task exists only where
+> work starts, and a learning task at new. project is the Roadmap the
+> row would be minted into in ymer, derived from area with no lookup:
+> area meta → 'Meta
 > Roadmap', any other area → the area with its first letter upper-cased
 > plus ' Roadmap'; a learning-gap task carries 'Learning'. It is a
 > routing label, so where one product spans several areas it is corrected
@@ -357,7 +386,46 @@ The seven texts, each the grammar of its table:
 > capstone or on abandonment; the engagement doc stays the durable record
 > and holds every other state.
 
-**An existing table is verified, never rebuilt.** For each of the seven
+**The kinds.** `kinds` carries one row per kind, and the rows are the
+rules a drop is captured by — written once like the grammar rows, and
+with the same `INSERT OR IGNORE`, so a kind its owner reworded keeps the
+owner's words and a missing one is added. One statement per row:
+
+```sql
+INSERT OR IGNORE INTO kinds (kind, test_order, description) VALUES ('bug', 1, '<the text below>')
+```
+
+`empty` takes `NULL` for `test_order`. The six rows, in test order:
+
+> **`bug`** (1) — Something does not work as it claims: a product, a
+> tool, an instruction that cannot be followed as written, or the machine
+> and network the work runs on. Write what was seen. Title: what is
+> broken.
+
+> **`learning`** (2) — Someone should learn something: a gap in a
+> person's knowledge that the work exposed. One line: the subject, and
+> why.
+
+> **`vision`** (3) — Where a product is heading — not how the work went,
+> and not a piece of work: material for that product's direction. Name
+> the product in product. Title: the direction in a phrase.
+
+> **`idea`** (4) — Work worth doing that fixes nothing broken: a
+> follow-up left undone, something wanted, a thing a term names that is
+> not built yet. Title: the work in a phrase.
+
+> **`friction`** (5) — Everything worked as written, yet the work wasted
+> effort: rework, waiting, an unclear instruction, a lost handoff. One
+> line: the root cause, naming the artifact or system, never a person.
+
+> **`empty`** (none) — The work was looked back on and nothing was
+> found. Body: ∅ no friction. Never drained.
+
+The order is the point: bug comes first so that whatever does not work
+as written is never filed as waste, and friction comes last because it
+is what remains when everything worked.
+
+**An existing table is verified, never rebuilt.** For each of the eight
 that already exists, read it with the `notebook` `schema` action and
 check the required columns **by name and type** — nothing else. A
 missing one is added:
@@ -398,7 +466,8 @@ already someone's.
 The required columns, by table:
 
 - `fronts` — `slug`, `capabilities`, `notes`
-- `frictions` — every column of the definition above
+- `kinds` — `kind`, `test_order`, `description`
+- `pool` — every column of the definition above
 - `tasks` — `id`, `name`, `description`, `status`, `project`, `area`,
   `estimated_effort_minutes`, `due_date`, `result`, `external_ref`,
   `created_at`, `updated_at`, `closed_at`
@@ -472,7 +541,7 @@ its one statement,
 describes the node as a state store, and the retirement is done only when
 both are gone.
 
-**This session's front row.** `frictions.front` is a foreign key, so a
+**This session's front row.** `pool.front` is a foreign key, so a
 capture on a front with no row is refused. Resolve this session's slug —
 the one its own instructions name, and where they name none the default
 for the harness it is running on, `claude_code` on Claude Code and
@@ -700,15 +769,15 @@ The node's line counts its tables and names the front: the number this
 run created, with `created`, when it created any, and otherwise the
 number the node holds; and `added` after the front only when this run
 wrote the front's row. So a first run on an empty node reads
-`` 7 tables created, front `claude_code` added `` and a re-run on a
-healthy machine reads bare, `` 7 tables, front `claude_code` ``: the line
+`` 8 tables created, front `claude_code` added `` and a re-run on a
+healthy machine reads bare, `` 8 tables, front `claude_code` ``: the line
 names what this run changed and nothing else, so a reader can tell a
 repair from a machine that was already right.
 
 ```
 Setup — ymer environment
 
-  ✔ node          reachable — 7 tables, front `claude_code`
+  ✔ node          reachable — 8 tables, front `claude_code`
   ✔ state_folder  /Users/you/state — git work tree, history in git
   ✔ ymer          reachable
   ✔ Meta Roadmap  exists

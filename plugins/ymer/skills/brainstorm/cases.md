@@ -4,7 +4,7 @@ The cases of the brainstorm skill, moved here byte for byte from `SKILL.md`, whi
 
 ## Topic Resolution (do this first)
 
-One idea often surfaces in several places at once — an open inbox item, a topic directory, a sketch branch. List everything the lookup found as one **discovered set** and confirm it with a single question: "Found: inbox item `<name>`, current branch `<branch>`. All this topic?" On yes, take all of it in — the inbox item per Inbox Intake, the branch per Branch Intake. Never confirm the pieces one by one. At a split child, an iteration, or a pending interview (case 2) no confirmation fires: the set is already in view, and on an iteration the branch is the reviewed increment rather than a sketch.
+One idea often surfaces in several places at once — a drawn topic, a topic directory, a sketch branch. List everything the lookup found as one **discovered set** and confirm it with a single question: "Found: drawn topic `<name>`, current branch `<branch>`. All this topic?" On yes, take all of it in — the drawn topic per Drawn-topic Intake, the branch per Branch Intake. Never confirm the pieces one by one. At a split child, an iteration, or a pending interview (case 2) no confirmation fires: the set is already in view, and on an iteration the branch is the reviewed increment rather than a sketch.
 
 The common case (1) adds zero questions; the ambiguous cases and the discovered set add at most one. Resolution is a lookup, not an interview.
 
@@ -26,15 +26,15 @@ here. Never during divergence: evaluation criteria during ideation clamp
 the divergence a brainstorm exists for.
 
 **The beat writes nothing on the page.** Material worth keeping that no
-settled section already holds leaves the session as **vision rows** in
-the backlog — several per capture allowed, the one exemption from
-capture's one-friction rule; row grammar and drain are the kaizen
-skills'. The row is the durable hand-off, so writing one is not optional
-because the direction doc also records it.
+settled section already holds leaves the session as **vision** drops in
+the pool, through the `ymer:capture` skill — several per capture
+allowed; the drop grammar is capture's, and the drawing mint's. The drop
+is the durable hand-off, so writing one is not optional because the
+direction doc also records it.
 
 A new token destined for another repo's vocabulary — a capability
 grammar, a cross-repo name — is checked against that repo's glossary
-`_Avoid_` bans before it rides a vision row, a page write or an
+`_Avoid_` bans before it rides a vision drop, a page write or an
 annotation: the minting moment is the last one with no gate before the
 word propagates, and a banned shape once reached two stores.
 

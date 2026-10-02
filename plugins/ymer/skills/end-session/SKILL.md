@@ -24,7 +24,7 @@ Sweep the whole session for unfinished business and present it as a short list:
   step — offer to commit them now. Who commits what, and how to treat foreign
   dirty paths, is settled already (the substrate contract).
 
-Discuss the list: for each item the user decides handle now, drop, or defer. If a loose end is a half-finished piece of work that a future session should continue, recommend recording it where the successor will look — its topic's task, or the topic folder — before ending: end-session closes a session, it does not feed a successor.
+Discuss the list: for each item the user decides handle now, let go, or defer. If a loose end is a half-finished piece of work that a future session should continue, recommend recording it where the successor will look — its topic's task, or the topic folder — before ending: end-session closes a session, it does not feed a successor.
 
 **"Nothing unfinished" is a normal outcome.** Say so and move on — do not invent items to fill the list.
 
@@ -45,11 +45,12 @@ development-process).
 **Report the result explicitly** — what was routed where, or that nothing
 needed changing. Knowledge changes are never silent.
 
-## 3. Kaizen
+## 3. Capture
 
-**Kaizen block:** invoke the `ymer:kaizen-capture` skill — source
-`end_session`; it declines when this session already captured at a
-phase tail. Battery, row grammar, and the write live in that skill alone.
+**Capture block:** invoke the `ymer:capture` skill — source
+`end_session`; it runs no second battery when this session already
+captured at a phase tail. The battery, the drop grammar and the write
+live in that skill alone.
 
 ## 4. All-Clear (terminal state)
 

@@ -3,7 +3,7 @@
 This repository is the `ymer` Claude Code plugin marketplace. The
 plugins under `plugins/` are **layered**: the core plugin, `ymer`,
 holds the practice every user runs — its skills the practice's moves,
-the kaizen loop and the setup check among them — and a domain plugin
+the capture and mint loop and the setup check among them — and a domain plugin
 specializes that practice for one kind of work, naming itself
 `ymer-<domain>` and calling the core's skills the way `/ymer:brainstorm`
 names one.

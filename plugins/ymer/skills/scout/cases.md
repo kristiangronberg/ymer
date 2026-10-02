@@ -32,7 +32,7 @@ In a **prose corpus** — a suite or meta topic, where what the survey maps is w
 
 ## Next Phase
 
-- **Invoked from a define session** (define opens with scouting when no `survey.md` exists): after the review gate, **this phase's own `: scout` commit, and the kaizen block** (the
+- **Invoked from a define session** (define opens with scouting when no `survey.md` exists): after the review gate, **this phase's own `: scout` commit, and the capture block** (the
 close above runs in full — `survey.md` must not sit uncommitted across
 the define interview), hand control back — define continues in-session.
 That fusion is by design.

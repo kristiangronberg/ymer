@@ -93,8 +93,10 @@ use or carries `as-of <basis>` (→ Claims below).
 *Read with this section: `cases.md` § Claims — stamps, controls, and the sweep artifact (the cases).*
 
 Reporting rules for claims wherever they appear — survey maps,
-evidence sections, grounding facts, specs, minted intake items (a
-task's description, a topic's `request.md`). Corpus-agnostic: a
+evidence sections, grounding facts, specs, intake (a task's
+description, a topic's `request.md`). A drop in the pool carries the
+lighter rule its capture states — what was observed, the rest marked
+`inferred:`, nothing probed. Corpus-agnostic: a
 web absence stamps its query and controls it with a known-hit query; a
 database zero stamps its probe.
 

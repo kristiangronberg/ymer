@@ -219,8 +219,8 @@ exposition-on-demand beats every quiz, so pre-tests as interrogation
 and standing per-station probes stay dropped there; for study-shaped
 material the learning.md record corpus proved the beat cycle, so
 self-explanation and elaborative interrogation are admitted as its
-probe pool — a named refinement of the original drop, never a silent
-reversal. Prediction→observation is pre-testing's hands-on form; the
+probe pool — a named refinement of the original exclusion, never a
+silent reversal. Prediction→observation is pre-testing's hands-on form; the
 study beat's predict-first step is its study form; interleaving lives
 in the retrieval opener's cross-station phrasing, not as a standing
 type. The **hard stop** (point 17) and the ask-hygiene points (22–23)
@@ -314,9 +314,9 @@ engagement doc is the durable record, as `review.md` is for a
 shipped topic. **After close, retention rides study sittings** over
 the shared knowledge doc — the tutor owns no spacing machinery.
 
-**Kaizen block:** invoke the `ymer:kaizen-capture` skill — source `tutor`,
-context `meta/<subject>`, the engagement's subject. Battery, row grammar,
-and the write live in that skill alone.
+**Capture block:** invoke the `ymer:capture` skill — source `tutor`,
+context `meta/<subject>`, the engagement's subject. The battery, the
+drop grammar and the write live in that skill alone.
 
 ### Abandonment
 
@@ -324,13 +324,13 @@ An engagement that peters out stays honestly open until resumed or
 **abandoned** — an explicit close without capstone: a closing sitting-log
 entry (`Abandoned <date> — <why>`), then its `tutor_engagements` row is
 deleted. A delivered
-learning task goes back to `todo` — or closes as cancelled with the why
-when the gap is moot — never left `doing`. The why is recorded;
+learning task goes back to the open group — or closes as cancelled with
+the why when the gap is moot — never left `doing`. The why is recorded;
 the docs are kept.
 
-**Kaizen block:** invoke the `ymer:kaizen-capture` skill — source `tutor`,
-context `meta/<subject>`, the engagement's subject. Battery, row grammar,
-and the write live in that skill alone.
+**Capture block:** invoke the `ymer:capture` skill — source `tutor`,
+context `meta/<subject>`, the engagement's subject. The battery, the
+drop grammar and the write live in that skill alone.
 
 ## The Engagement Doc (a ymer doc)
 
@@ -439,11 +439,11 @@ nothing to read on and do not apply.
    entries. The dimmest-read stays in-session — durable retrieval
    targets come from the doc's box dates (oldest checked first). No
    evidence line — there is no engagement doc to append to;
-   `ymer:kaizen-capture` is the study sitting's process-observation channel.
+   `ymer:capture` is the study sitting's process-observation channel.
 
-**Kaizen block:** invoke the `ymer:kaizen-capture` skill — source `tutor`,
-context `meta/<subject>`, the study sitting's subject. Battery, row
-grammar, and the write live in that skill alone.
+**Capture block:** invoke the `ymer:capture` skill — source `tutor`,
+context `meta/<subject>`, the study sitting's subject. The battery, the
+drop grammar and the write live in that skill alone.
 
 ## Discovery Menu (bare invocation)
 
@@ -456,7 +456,7 @@ most one pick, write nothing. Two bounded sources, no search:
    engagement; the `subject` column is the join).
 2. The Learning project's open tasks — one listing of that project's
    open group (binding: the operations contract) — listed
-   verbatim: every `todo` task, names as they stand; renames and
+   verbatim: every open task, names as they stand; renames and
    edges are triage's, never the menu's. An engagement's delivery
    target sits at `doing`, so it never lists beside its engagement.
 
@@ -590,14 +590,13 @@ Knowledge doc (tutor skill): one line per item. A box is checked only by demonst
   subject-index rows, and the delivered learning task's status —
   nothing else; glossaries are define's (a later define session may
   harvest terms — pull, not push). A sitting — engagement or study —
-  that surfaces bar-worthy evidence may **mint a learning task**: the
-  mint skill's discipline (three looks, evidence register) applies.
-  The prerequisite check's append stays the one sanctioned outside write
-  on the knowledge doc: brainstorm's prerequisite check adds unchecked
-  entries to an **existing** knowledge doc — never creating one, never
-  opening an engagement.
-  `/ymer:kaizen-summary`'s learning-gap drain appends nothing: it mints a
-  learning task instead
+  that surfaces a new subject gap captures it as a **learning** drop
+  (the `ymer:capture` skill); a task is created when `/ymer:mint` draws
+  it. The prerequisite check's append stays the one sanctioned outside
+  write on the knowledge doc: brainstorm's prerequisite check adds
+  unchecked entries to an **existing** knowledge doc — never creating
+  one, never opening an engagement. Mint's learning exit appends
+  nothing: it creates a learning task instead
 - After close, retention rides study sittings — no spacing machinery
   here
 - Playgrounds or the learner's own branch; in-sitting commands are the

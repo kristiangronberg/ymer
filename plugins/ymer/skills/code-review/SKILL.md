@@ -15,8 +15,8 @@ fragment record live in the topic folder.
 Three deliberate additions on top of the seed: the Smells lens, the
 Plan-fidelity lens, and the Conventions lens widened to the plan-named
 coding-standards skill. Nothing in a review run is set by hand — the tier is
-keyed by risk profile and routing inside it is derived; evolution rides kaizen
-evidence, not ad-hoc edits.
+keyed by risk profile and routing inside it is derived; evolution rides
+captured evidence, not ad-hoc edits.
 
 **Announce at start:** "I'm using the code-review skill to review the diff."
 
@@ -52,7 +52,7 @@ this ladder points there rather than restating it.
 **Nothing in this run is set by hand.** The tier is keyed by risk profile;
 inside the tier, the roster comes from Phase 0.5's applicability gate and each
 candidate's verify lane from the lens that produced it. There is no per-run
-sizing question and no hand-maintained drop list. A rule that would have to be
+sizing question and no hand-maintained exclusion list. A rule that would have to be
 phrased "judge whether…" belongs in neither place.
 
 ## Phase 0 — Gather the diff

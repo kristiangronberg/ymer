@@ -1,13 +1,13 @@
 schema_version: "1.1"
-name: kaizen-summary-door
-description: With no Ymer Node reachable, /ymer:kaizen-summary fires, announces itself, and stops at its guard naming the node.
+name: mint-door
+description: With no Ymer Node reachable, /ymer:mint fires, announces itself, and stops at its guard naming the node.
 plugins: ["../../plugins/ymer"]
 runs: 1
 execution:
   max_turns: 20
   timeout_seconds: 300
   allowed_tools: [Skill, Read, Glob, Grep]
-  prompt: "/ymer:kaizen-summary"
+  prompt: "/ymer:mint"
 graders:
   - name: fired-plugin
     type: regex
@@ -16,11 +16,11 @@ graders:
   - name: fired-command
     type: regex
     target: trace
-    pattern: '"slash_commands":\[[^\]]*"ymer:kaizen-summary"'
+    pattern: '"slash_commands":\[[^\]]*"ymer:mint"'
   - name: fired-announce
     type: regex
     target: trace
-    pattern: 'Kaizen — summary session\.'
+    pattern: 'Mint — drawing from the pool\.'
   - name: no-mcp-server
     type: regex
     target: trace

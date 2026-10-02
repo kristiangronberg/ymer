@@ -44,7 +44,7 @@ pending step (the procedure's § 4. Pending; define's own close:
 
 A pending close is a finished close around a hold, not a torn one. It
 runs the fused scout whole where no `survey.md` exists — its own
-`: scout` commit and kaizen block, its optional scope question not put —
+`: scout` commit and capture block, its optional scope question not put —
 then steps 1–4, and builds the question list as above. It writes
 `spec.md`: the title, the `Interview pending —` marker, the metadata
 paragraph, a `## What we mean (draft)` section stating the topic as far
@@ -55,7 +55,7 @@ refusal mid-interview stand in their own section, each named by its
 question's `Answered:` line. On an iteration, where `spec.md`
 already stands, the marker and the section join it and its text stays as
 it is. No glossary write and no outward ruling: the close is the state-folder
-commit under the pending message, the kaizen block, and the report
+commit under the pending message, the capture block, and the report
 (→ Next Phase); the review gate is never reached.
 
 ## The Glossary
@@ -272,18 +272,18 @@ Promotion, in later define sessions:
   entry's **definition** untouched — but write its redefinition-in-flight
   marker (→ Redefinition in flight): the bounce *is* the moment the
   redefinition goes in flight, and the gap before the define session picks
-  the topic up is exactly the window in which the entry misleads. Mint the new topic's task at `doing` (*mint item* — binding: the operations contract; the direction is already chosen, so the topic enters the pipeline rather than the inbox — and read the mint back) so the bounce is not lost, carrying the deferred definition sentence in the task's description — the task stands in for the spec's glossary delta in this mode — and stop, naming
+  the topic up is exactly the window in which the entry misleads. Mint the new topic's task at `doing` (*mint task* — binding: the operations contract; the direction is already chosen, so the topic's work starts now — and read the mint back) so the bounce is not lost, carrying the deferred definition sentence in the task's description — the task stands in for the spec's glossary delta in this mode — and stop, naming
   define as the next phase
   (fresh session). The direction is already chosen, so the topic enters
   the pipeline at define — brainstorm is skipped, and the interview keeps
   its normal escape back to brainstorm.
-- **An ordinary deferral uses the same substitution.** A new term whose
+- **An ordinary deferral is captured instead.** A new term whose
   referent is not real yet (→ The referent gate) is not written here
-  either: mint the topic carrying the term and its definition sentence
-  at `todo` (*mint item*, mint discipline's three looks first — no
-  direction is chosen yet, so it lands in the inbox rather than the
-  pipeline, unlike the bounce above), and stop without writing the
-  entry.
+  either: capture it as an **idea** drop in the pool through the
+  `ymer:capture` skill, source `define` — its title the thing the term
+  names, its body the term and its definition sentence — and stop
+  without writing the entry. No direction is chosen yet and no work
+  starts now, so no task is minted, unlike the bounce above.
 
 ## User Review Gate
 
@@ -293,17 +293,16 @@ project-repo or machinery-tree commit runs, and the spec's glossary delta
 records no ref. The state-folder commit below is then the close's only commit, and
 nothing here is a judgment call.
 
-**Rulings on an item outside the topic** (the outward-write rule:
-the operations contract) run before the state-folder commit, so `spec.md` can record
-what was written. An item in the pool the interview ruled on — scoping
-or narrowing it, falsifying a claim it carries, or affirming it with
-re-measured evidence — is annotated here (*annotate item*; discipline:
-the mint skill), the ruling as the evidence and the name re-led where
-the claim narrowed; `spec.md` names the item and what the annotation
-carried. Any status short of closed qualifies, annotating having no
-status effect. A bare citation with no ruling writes nothing, and the
-topic's own item is never a case. An operation whose required outcome
-did not land stops the close (the README's failure rule).
+**Rulings on another topic in flight** (the outward-write rule: the
+operations contract) run before the state-folder commit, so `spec.md`
+can record what was written. A topic still `doing` that the interview
+ruled on — scoping or narrowing it, falsifying a claim it carries, or
+affirming it with re-measured evidence — is annotated here (*annotate
+task*), the ruling as the evidence; `spec.md` names the task and what
+the annotation carried. A ruling on anything else writes nothing
+outward, and neither does a bare citation with no ruling; the topic's
+own task is never a case. An operation whose required outcome did not
+land stops the close (the operations contract's failure rule).
 
 ## Next Phase
 

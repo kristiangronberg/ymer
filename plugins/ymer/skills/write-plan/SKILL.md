@@ -75,10 +75,10 @@ the commit
 that last touched `review.md`; the command that reads that range, and
 the rule trusting it only over a committed floor, are review § Input
 item 2's, run with the phase the marker names substituted for
-`implement`. An **inbox item** — an open task, with no folder or a
-folder holding nothing but its `request*.md` — and a **closed topic**,
-its task completed or cancelled, are both topics this phase does not
-plan: stop and name **brainstorm** ("External requests never skip
+`implement`. A **drawn topic** — a `doing` task whose folder holds
+nothing but its `request.md` — and a task that is not in flight — open,
+or a **closed topic**, its task completed or cancelled — are all topics
+this phase does not plan: stop and name **brainstorm** ("External requests never skip
 phases": development-process § Process ground rules). A `doing` task
 with no folder is a **split child** (→ Save plans to); in a code repo
 its branch is born here, `git switch -c <topic> main`, the way an
@@ -123,8 +123,8 @@ Before defining tasks, map out which files will be created or modified and what 
 
 **Content-ownership map — required whenever the plan relocates or deletes content-bearing files.** Such a plan carries a map **total over the source**: every content unit of the moved or deleted files gets an explicit disposition row — a destination, or **Dropped** with a why. Dropped is a destination, not an absence; a source unit with no row is a plan failure (canonical term: the plugin glossary). Two rules:
 
-- **No mixed rows** — a row is wholly placed or wholly dropped. Granularity follows content, not files: a row that mixes survivors and drops (e.g. an "archived working record" hiding an operative safety rule) must split until it doesn't.
-- **Dropped means gone from every reachable surface** — archiving to the state store is a drop from the project's perspective; an operative rule may not leave the project riding a wholesale "archived" row.
+- **No mixed rows** — a row is wholly placed or wholly dropped. Granularity follows content, not files: a row that mixes survivors and dropped units (e.g. an "archived working record" hiding an operative safety rule) must split until it doesn't.
+- **Dropped means gone from every reachable surface** — archiving to the state store counts as dropped from the project's perspective; an operative rule may not leave the project riding a wholesale "archived" row.
 
 - Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility.
 - You reason best about code you can hold in context at once, and your edits are more reliable when files are focused. Prefer smaller, focused files over large ones that do too much.
@@ -215,7 +215,7 @@ Expected: FAIL — observed at authoring 2026-07-31: `** (MatchError) no match o
 **Delta gate steps** (shape and falsifiability rules: sweep rule 4). A step that incrementally edits countable text brackets the edit with an adjacent before/after measurement pair; the delta is derived by running the matcher over the step's payload file, and the derivation rides the delta assertion:
 
 ```
-- [ ] **T2S1: Capture the before-count**
+- [ ] **T2S1: Measure the before-count**
 
 Run: `grep -c -F 'legacy_name' lib/my_app/thing.ex`
 Expected: prints a count — record it as BEFORE (authoring measured 4 on 2026-07-31)
@@ -326,8 +326,9 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 ## Next Phase
 
-**Kaizen block first:** invoke the `ymer:kaizen-capture` skill — source
-`write_plan`; battery, row grammar, and the write live in that skill alone.
+**Capture block first:** invoke the `ymer:capture` skill — source
+`write_plan`; the battery, the drop grammar and the write live in that
+skill alone.
 It runs before plan-review is invoked — each phase tail captures its
 own — and it is what keeps a session that skips plan-review from
 skipping capture too.

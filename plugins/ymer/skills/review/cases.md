@@ -258,31 +258,6 @@ Blocking blocks **this topic's ship**, not production in the abstract:
 main is what gets pushed, so "shipped but must not go to production" is
 a fiction the process cannot see.
 
-## The pool look
-
-The domain is the **pool** in its bare sense — every product's, not
-only this topic's repo, so a machinery ship routinely resolves a
-product item. A learning task or a personal task a search returns is
-out of domain and untouched, however well it matches; and a by-subject
-miss is no lead, never an absence — that key widens, it does not index.
-**The topic's own task is never a hit** under any of the four keys,
-however it matches — the by-subject key returns it on every
-ship and it is still not one: no phase annotates a topic's own task
-mid-flight, and *ship topic* is its only write in this close
-(the operations contract).
-
-Two bounds hold whatever the reading. *Resolve item* and
-*retire topic* apply to **open items only**: a `doing` or an `asking`
-hit is capped at *annotate item* — a `doing` hit is a topic with a
-folder and possibly a branch, whose own pre-flight is where its status
-is decided, and an `asking` task cannot be completed at all. And a hit
-already closed is nothing, neither annotated nor reopened, so two
-ships citing one item on one day compose. Each item takes one write
-and no relatedness link: the result text carries the join. The mint
-skill's retiring-and-folding duty (its § Annotating) binds on every
-item this step closed, and a citer that fold annotates rides the
-`annotated —` group like any other annotate.
-
 ## The Close
 
 No exposition summaries — the code, the plan, and the spec carry the
@@ -304,29 +279,6 @@ list comma-joins, a tree's refs space-join while the trees themselves
 results. `<where>` is a
 `path:line` or a function name; a skipped stop names which kind of skip.
 
-**The `Pool:` line records what the pool look moved** (→ The pool
-look). It rides the ship section immediately before `Pending:`,
-which is the one position every shape shares — after the `Machinery
-commits:` line wherever the increment has one, and otherwise under
-whichever line the section's order leaves above it: `Catch-up:` on a
-code-repo topic, the task-close line on a meta one. Three kind-groups carry the moves,
-`·`-joined, each kind written once however many members it covers and a
-memberless group absent: `resolved — …`, `retired — …`, `annotated —
-…`. Members are compound `name-<uuid>` citations — the form a read
-action resolves without a listing (discipline: the mint skill) —
-comma-joined inside their group, and a retire names its removal in
-parentheses: the path deleted or renamed, or the token retired. Where
-nothing moved, `none` replaces all three groups.
-
-**The keys clause closes the line and is unconditional** — `keys: cited
-<n>, removals <n>, beyond-spec <n>, subject` — counting the ids the
-cited key found, the removed paths plus retired tokens, and the fixes
-the record marks as beyond the spec, then naming `subject` for the one
-by-subject read, which always runs. That clause is what makes `none` a
-measured zero rather than a step nobody ran. The line itself is
-unconditional on a ship close, on both lanes, so a ship section carrying
-none predates the look.
-
 **The lens-pass line carries the pass's coverage**, and it is the
 entry's **first body line** under the heading — which is what the
 pre-flight fork reads (→ Input, item 2). The slot after `over` names
@@ -344,7 +296,7 @@ seeds it with nothing: the review session's own findings
 `none` per the blanket rule above, the first finding replacing it —
 the same bytes a pass that ran and found nothing writes. The entry's
 later sections are
-untouched by the drop; the review session fills the walkthrough, the
+untouched by a dropped pass; the review session fills the walkthrough, the
 fitness answer, the where-to-look map and the tails as always.
 
 `Fixes applied (--fix):` is its own following line — every applied fix
@@ -441,8 +393,9 @@ the others, writing the same marker into this same file. Each owns its
 own steps, and states them once (implement § Drift Valve;
 plan-review § Steps, step 5).
 
-A Learning task minted mid-session is untouched by this exit: it
-carries its own evidence, so it needs no line beside the marker.
+A learning drop captured, or a Learning task minted, mid-session is
+untouched by this exit: it carries its own evidence, so it needs no
+line beside the marker.
 
 A *mechanical* doubt does not contest the record — it is a finding, and
 takes a disposition. Neither is a finding whose new decision the

@@ -39,13 +39,15 @@ _Avoid_: Confirmed note, amendment note, decision marker
 A piece of provenly known ground — something the knowledge docs record the
 learner can already do — that the tutor drops to and bridges up from when a
 climb stalls on missing background. Distinct from write-plan's line-level
-anchors (the file references grounding a plan).
+anchors (the file references grounding a plan) and from a recurrence's
+anchor (the drop it recurs).
 
-### annotate item
-The roadmap/inbox operation that appends new evidence to an open item,
-status untouched. Home: the operations contract's operations table;
-discipline (register on appended evidence, looks 2–3): the mint skill.
-_Avoid_: update item, amend task
+### annotate task
+The roadmap operation that appends new evidence — a ruling made about
+it — to the task of a topic in flight, status untouched; nothing that
+is not `doing` is annotated. Home: the operations contract's operations
+table.
+_Avoid_: annotate item, update item, amend task
 
 ### arc
 An engagement's station sequence as held in the engagement doc: titles,
@@ -55,7 +57,7 @@ detail fleshed out just-in-time at the sitting that runs it.
 ### arrival
 One of the seven shapes topic resolution lands on when it reads a topic's
 task status, folder, `review.md`'s first recognizer and the heads of
-`brainstorm.md` and `spec.md` at a phase's opening — inbox item, split
+`brainstorm.md` and `spec.md` at a phase's opening — drawn topic, split
 child, in flight, iteration, live marker naming another phase, pending
 interview, closed topic — which decides the phase's first action without
 a question.
@@ -77,15 +79,10 @@ _Avoid_: games/art exception
 
 ## B
 
-### backlog
-Defined in the `kaizen-capture` skill, its one home.
-_Avoid_: improvements pool (retired with the two-file store), staging
-
 ### binding
 The mapping from the contract's names to one environment's facts: each
-roadmap/inbox operation (look up topic, search pool, list inbox items,
-read item, mint item, annotate item, start topic, order topics, ship
-topic, retire topic, resolve item) to the backend's tool and outcome —
+roadmap operation (look up topic, mint task, annotate task, order
+topics, ship topic, retire topic) to the backend's tool and outcome —
 the transition or group as a word, the postcondition and the read-back,
 never a call
 shape — and each environment-contract role to its value. A **binding
@@ -109,9 +106,16 @@ edge the check itself records. Expected rare.
 ### branch intake
 Brainstorm's opening move on a code-repo topic: the current non-main branch
 is detected as the proposed sketch source, confirmed together with any
-matching inbox item as one discovered set, and captured into
+matching drawn topic as one discovered set, and recorded in
 `sketch.md` (combined diff plus commit log).
 _Avoid_: sketch intake (that is the branchless working-tree flow)
+
+### bug
+Defined in the `capture` skill, its one home — one kind of drop:
+something does not work as it claims — a product, a tool, an
+instruction that cannot be followed as written, or the machine and
+network the work runs on.
+_Avoid_: defect (review's finding sense), issue, incident
 
 ## C
 
@@ -135,10 +139,17 @@ The final station of an engagement: the learner performs the goal contract's
 core solo — no hints, in a playground or their own branch. The integration
 moment; rolling checks at station closes cover everything before it.
 
+### capture
+Defined in the `capture` skill, its one home.
+
+### capture block
+Defined in the `capture` skill, its one home.
+_Avoid_: kaizen block
+
 ### carve topic
-Defined in the `kaizen-summary` skill, its one home.
+Defined in the `mint` skill, its one home.
 _Avoid_: carving session, lift-out, digest, carve-out (the ExDoc and
-plan-scope sense), drain (that is `/ymer:kaizen-summary`'s act)
+plan-scope sense), drain (that is `/ymer:mint`'s act)
 
 ### catch-up
 The merge of current main into a topic branch, run on a clean tree — dirt
@@ -169,7 +180,7 @@ a repositories-root-plus-name path (retired — the sites stayed
 literal until each file's lift)
 
 ### cluster
-Defined in the `kaizen-summary` skill, its one home.
+Defined in the `mint` skill, its one home.
 
 ### code-repo topic
 Defined in the development-process charter — the topic-kinds definition.
@@ -182,8 +193,8 @@ as they would to a colleague — teach-it-back, scoped to ONE chain.
 The totality audit a content-moving plan carries: one explicit disposition per
 content unit of the files it relocates or deletes — a destination, or dropped
 with a why. Dropped is a destination, not an absence — a row never mixes
-survivors and drops, and dropped means gone from every reachable surface of
-the project.
+survivors and dropped units, and dropped means gone from every reachable
+surface of the project.
 
 ### convergence beat
 One of brainstorm's three situational moves run against a formed candidate
@@ -245,12 +256,19 @@ child before it writes one, the parent's (the operations contract
 _Avoid_: direction document, parent doc
 
 ### discovered set
-Everything topic resolution's lookup found for one name — an open inbox
-item, a topic folder, a sketch branch — taken in as one topic on one
+Everything topic resolution's lookup found for one name — a drawn
+topic, a topic folder, a sketch branch — taken in as one topic on one
 confirming question, never piece by piece; at a split child, an iteration
 or a pending interview the set is already in view and no confirmation
 fires.
 _Avoid_: found set, matches (bare)
+
+### drop
+One thing in the pool, waiting to be drawn: an observation of a kind,
+with its body, its context, and optionally an anchor to the drop it
+recurs. Mint draws a drop, and the drop is drained. Home: the `capture`
+skill.
+_Avoid_: item (the retired inbox's noun), row (bare)
 
 ## E
 
@@ -272,8 +290,8 @@ One per engagement, indexed in the subject index; several engagements may share
 one knowledge doc.
 
 ### enrichment gap
-A prerequisite-check disposition: a subject gap worth capturing but not
-worth a task — it neither blocks operating the result nor marks an area
+A prerequisite-check disposition: a subject gap worth recording but not
+worth a task or a drop — it neither blocks operating the result nor marks an area
 chosen for depth. Recorded in the beat as an unchecked knowledge-doc
 leaf; no task, no edge.
 
@@ -318,8 +336,9 @@ sittings.
 ### falling-behind gap
 A prerequisite-check disposition, the common one: a subject gap where
 the pipeline proceeds unblocked but the user wants depth enough to dive
-in and develop the area themselves. Minted as a learning task without
-an edge; edges and priority stay the user's triage.
+in and develop the area themselves. Captured as a learning drop — no
+task and no edge; mint creates its learning task when it draws the
+drop.
 
 ### fitness question
 Review's closing beat: the does-it-do-the-job question(s) asked once over
@@ -337,12 +356,14 @@ _Avoid_: target shape, heading, roadmap (that is the task list),
 now/next/later, milestones
 
 ### friction
-Defined in the `kaizen-capture` skill, its one home.
+Defined in the `capture` skill, its one home — one kind of drop:
+everything worked as written, yet the work wasted effort.
 _Avoid_: finding (plan-review's and scout's investigation results),
 improvement (the fix, not the observed waste)
 
 ### friction-batch
-Defined in the `kaizen-summary` skill, its one home.
+Defined in the `mint` skill, its one home — a shape mint may choose
+for a set of small frictions.
 _Avoid_: fix-now topic, the batch
 
 ### front
@@ -398,7 +419,7 @@ environment's ruling: the substrate contract.
 An engagement's exit criteria, fixed at the opening: concrete,
 solo-demonstrable usable skills, ticked only by demonstration, amendable at
 sitting boundaries with a dated note. Bare "contract" keeps meaning the
-roadmap/inbox contract.
+operations contract.
 
 ## H
 
@@ -460,11 +481,10 @@ _Avoid_: lane (b), manual stage, manual-approval stage
 
 ## I
 
-### inbox
-A repo's untriaged intake — the topics whose brainstorm has not run. Not a
-separate store: it is one status of the repo's topic tasks, the same objects
-the roadmap is the other status of. Ordered by the user at triage.
-_Avoid_: backlog (the word is taken — it is kaizen's store), task pool
+### idea
+Defined in the `capture` skill, its one home — one kind of drop: work
+worth doing that fixes nothing broken — a follow-up left undone,
+something wanted, a thing a term names that is not built yet.
 
 ### inferred claim
 A load-bearing claim asserted from reasoning rather than measurement,
@@ -497,8 +517,11 @@ _Avoid_: route-back (retired name), objection exit, going back
 
 ## K
 
-### kaizen block
-Defined in the `kaizen-capture` skill, its one home.
+### kind
+The category a drop is captured under — bug, learning, vision, idea,
+friction, or empty — chosen by first fit in that order. Home: the
+`capture` skill, which states the grammar; the node's `kinds` rows
+carry each kind's rule.
 
 ### knowledge doc
 The per-subject ymer doc recording what the user has provenly learned and
@@ -509,6 +532,11 @@ both.
 _Avoid_: subject doc, subject knowledge doc
 
 ## L
+
+### learning
+Defined in the `capture` skill, its one home — one kind of drop:
+someone should learn something, a gap in a person's knowledge that the
+work exposed.
 
 ### Learning project
 The single cross-repo project in the coordinator holding every learning
@@ -522,8 +550,8 @@ solo-demonstrable bar: its name is a goal-contract-shaped capability
 one-liner ("K8s: enough to deploy and debug a single-node service"),
 adopted as the goal contract's core when a tutor engagement picks it
 up, and closed only by demonstration — normally the capstone, never
-self-assessment. Distinct from kaizen's learning-gap friction (the
-captured observation that may mint one).
+self-assessment. Distinct from a learning drop (the captured
+observation mint draws into one).
 
 ### lens
 One agent's assigned mandate within a fan-out — the dimension it reviews, the
@@ -561,7 +589,7 @@ sessions: an environment-contract role of the front-instructions kind
 whose value is the set, possibly empty, bound in the front's initial
 instructions or the node table they point at, each verified as a git
 work tree by the plugin's setup skill. A plugin's installed cache is
-never one — a friction with a shipped skill goes to the backlog, never
+never one — a friction with a shipped skill goes to the pool, never
 to an edit of the cache; a marketplace checkout added by path is one.
 A shared tree on trunk and on every branch the topic does not own
 (→ shared tree); on this topic's own branch, a project checkout
@@ -590,11 +618,13 @@ Defined in the development-process charter — the topic-kinds definition.
 _Avoid_: machinery-editing meta topic (a session fact, not a kind),
 prose-only meta topic, meta/plans topic
 
-### mint item
-The roadmap/inbox operation that makes a task appear in a repo's pool,
-carrying its evidence. Home: the operations contract's operations table;
-discipline (the three looks, the evidence rules): the mint skill.
-_Avoid_: file a task, create an item, queue
+### mint task
+The roadmap operation that creates a task where work starts now —
+never for future work, which is captured as a drop instead — carrying
+its evidence; the `mint` skill, drawing from the pool, is its main
+caller. Home: the operations contract, which names the moments that
+mint.
+_Avoid_: mint item, start topic, file a task, create an item, queue
 
 ## N
 
@@ -609,7 +639,7 @@ it — they follow the public register's grammar instead.
 The proficiency threshold the prerequisite check tests per subject:
 able to guide, hold a real dialogue about, and troubleshoot the shipped
 result — operator, not author. Below it a gap is blocking; depth beyond
-it is the learning track's own ambition. Distinct from kaizen's "below
+it is the learning track's own ambition. Distinct from mint's "below
 the bar", which prices whether a friction earns its own topic.
 
 ### oracle
@@ -675,7 +705,7 @@ _Avoid_: pending record
 
 ### phase close
 The sequence of durable writes that ends a phase — artifact writes,
-roadmap operations, state-folder and machinery commits, the kaizen block — run as one
+roadmap operations, state-folder and machinery commits, the capture block — run as one
 continuous execution, ordered so every step leaves a readable outcome and
 state changes land before announcements.
 _Avoid_: terminal sequence, close sequence
@@ -690,21 +720,13 @@ no gate reads PENDING: a final-state count still short there is FAIL
 _Avoid_: plan done, all boxes ticked
 
 ### pool
-The set of topic tasks a Roadmap project holds, at every status: the
-inbox and the roadmap are its two open views, and its closed tasks are
-the product's ledger. A repo's pool is its Roadmap project's; bare, the
-union over the registry's Roadmap projects.
-_Avoid_: task pool (as a synonym for inbox), backlog (the word is
-taken — it is kaizen's store)
-
-### pool look
-The step in review's ship close, on both lanes, that derives search keys
-from the topic's record and the ship's own refs, reads every pool hit
-not yet closed against the shipped increment, and writes the pool —
-resolve, retire, annotate — recording the moves and the keys on the ship
-section's `Pool:` line. Home: review § The pool look.
-_Avoid_: pool sweep, obsolescence sweep (kaizen's, over backlog rows),
-inbox look, pool scan
+The one store of everything waiting to be drawn — drops in the node's
+`pool` table, written by the `capture` skill and drawn by the `mint`
+skill; nothing in it is work anyone has committed to. Mint draws a
+drop, and the drop is drained. Home: the `capture` skill.
+_Avoid_: backlog, inbox, staging, improvements pool, task pool, search
+pool; pool for a Roadmap project's tasks — say "a Roadmap project's
+tasks", or "the roadmap" for the ones in flight
 
 ### positive control
 A known hit the matcher must print before its zero is trusted — the proof
@@ -729,7 +751,8 @@ _Avoid_: preflight
 Brainstorm's convergence beat asking which subjects the settled
 direction touches and whether the user is at the operator bar for
 each; its outcomes are the three gap dispositions — blocking,
-falling-behind, enrichment — landed as mints and edges at the close.
+falling-behind, enrichment — landed as mints, edges and captures at the
+close.
 Applicability with a skip clause, minutes not analysis; decomposing a
 subject stays with tutor's opening.
 _Avoid_: readiness check (pre-flight's phase-entry sense and
@@ -741,16 +764,17 @@ checked against the product-design principles — the product page's
 settled sections supply cached answers and push back on contradiction —
 yielding the gate's answers (user type; instrumental or autotelic) plus
 the reframe's three-outcome verdict, recorded in the direction doc;
-vision-worthy material goes to the backlog as vision rows. Fires when
+vision-worthy material is captured as vision drops. Fires when
 the topic shapes a surface a user operates.
 _Avoid_: alignment phase (a beat inside brainstorm, not a phase)
 
 ### product page
 The one page a product has — its Roadmap project's description: the
-fixed header (the task/status contract for other surfaces, plus the
-governance line), then the settled sections. Product-keyed, so several
-repos may share one; found by name convention (`<Product> Roadmap`);
-skeleton and binding in the operations contract. Phases read it; only
+fixed header (the task/status contract for every surface that reads
+the page, which sends new work to the pool, plus the governance line),
+then the settled sections. Product-keyed, so several repos may share
+one; found by name convention (`<Product> Roadmap`); the skeleton, its
+fixed header and the binding are the operations contract's. Phases read it; only
 governed sessions — carve topics, onboarding — write it, and never prune
 what they did not write.
 _Avoid_: Product Vision, vision doc (the retired doc class),
@@ -763,7 +787,7 @@ explicitly below mastery, which takes years of hands-on.
 _Avoid_: very good at it
 
 ### progression story
-The topic branch's commit log as captured into `sketch.md` — the sequence of
+The topic branch's commit log as recorded in `sketch.md` — the sequence of
 attempts and messages review reads as signal about how the sketch evolved,
 as the contrast between the sketch and the shipped code.
 
@@ -800,8 +824,10 @@ before the boundary closes. Client discipline, not call shape: a
 consumer keeps its read-backs written as intent.
 _Avoid_: verification call, confirm, re-read
 
-### recurrence row
-Defined in the `kaizen-capture` skill, its one home.
+### recurrence
+Defined in the `capture` skill, its one home — any drop carrying an
+anchor to the drop it recurs, whatever its kind.
+_Avoid_: recurrence row
 
 ### redefinition-in-flight marker
 The required one-line forward marker an entry carries while its
@@ -828,8 +854,8 @@ Brainstorm's convergence beat for a direction reached by extending what is
 there or by a first-of-its-kind choice: set the direction aside, solve from
 first principles, name the field's canonical shape, and return one of three
 verdicts — stay the course, adjust within the direction, the direction is
-wrong — taking a canonical shape's form and dropping every part whose
-justifying context does not hold here, each drop naming a written
+wrong — taking a canonical shape's form and leaving out every part whose
+justifying context does not hold here, each omission naming a written
 constraint.
 _Avoid_: prior-art review, first-principles pass, rethink
 
@@ -842,13 +868,6 @@ red result entering the findings list. Defined in the review skill —
 state it.
 _Avoid_: regreen, re-test, green re-run
 
-### resolve item
-The roadmap/inbox operation that closes an open item as completed
-because a ship delivered what it asks, its result naming the topic ID
-and ship ref; never deleted. Home: the operations contract's operations
-table; the reading that reaches it is the pool look's.
-_Avoid_: complete item, deliver item, close item, fulfil item
-
 ### resume
 Picking a parked dialogue back up: an engagement at a sitting's open, per
 the engagement doc's resume contract — the arc's next pending station,
@@ -860,10 +879,8 @@ _Avoid_: pick up, pick-up, continue
 
 ### retire topic
 The operation for every non-ship exit — not pursuing, split parent,
-settled below the bar, an item rejected before it ever became a topic,
-an open item a ship mooted (the result naming the removal): the task —
-a topic's, or an item's that never became one — closes as cancelled
-with the why recorded; never deleted.
+settled below the bar: the topic's task closes as cancelled with the
+why recorded; never deleted.
 _Avoid_: reject item, drop, abandon
 
 ### review
@@ -887,12 +904,11 @@ _Avoid_: risk concentration, risk class
 
 ### roadmap
 A repo's in-flight pipeline topics — the topics between brainstorm and ship.
-Not a separate store: it is one status of the repo's topic tasks, the same
-objects the inbox is the other status of. A pointer, not a record — all
-detail lives in the topic folder, and the pipeline rung is derived from it,
-never stored.
-_Avoid_: router table, roadmap.md (the retired file binding), backlog (the
-word is taken — it is kaizen's store)
+Not a separate store: it is the `doing` view of its Roadmap project's
+tasks, a task existing only where a topic's work has started. A pointer,
+not a record — all detail lives in the topic folder, and the pipeline
+rung is derived from it, never stored.
+_Avoid_: router table, roadmap.md (the retired file binding), backlog
 
 ## S
 
@@ -903,14 +919,6 @@ guides the way back when asked or when it dries up. Distinct from the
 tutor-read detour (tutoring contract point 9).
 _Avoid_: scope creep
 
-### search pool
-The roadmap/inbox operation that reads the pool as a whole — every
-product's — by an id, a compound name or a name fragment, or by a
-subject through whatever the coordinator has; the matching items with
-their status and projects. A by-subject miss is no lead, never an
-absence. Home: the operations contract's operations table.
-_Avoid_: pool search, pool scan, semantic search (bare), raw call
-
 ### settled section
 One of a product page's sections below the header — Forward direction;
 Users; Stance; Slow layers / what churns; What it refuses to be — holding
@@ -920,7 +928,7 @@ or the direction?", and a change is a conscious act through a governed
 session, never silent drift. A section may sit empty; a stub is a valid
 page.
 _Avoid_: landing zone (the retired collection container — collected
-material rides the backlog as vision rows), cached answers (what a
+material rides the pool as vision drops), cached answers (what a
 section holds, not what it is)
 
 ### settle signal
@@ -944,10 +952,9 @@ A topic reaching main: the Claude-run squash-merge of the topic
 branch with a public-register message, inside review's close — one of
 review's three closes beside iterate and wait; the task closes as
 completed and `review.md`'s ship section records the squash ref plus
-any machinery commit refs the increment carries, per tree, and the pool
-look's moves and keys — a meta topic has no branch, so no squash ref.
-Each tree's push stays a hold.
-_Avoid_: land
+any machinery commit refs the increment carries, per tree — a meta
+topic has no branch, so no squash ref. Each tree's push stays a hold.
+_Avoid_: land, pool look, resolve item
 
 ### silent zero
 A matcher returning no output for a reason unrelated to the corpus — a
@@ -965,12 +972,13 @@ Better more sittings than pausing mid-sitting.
 ### sketch
 The user's pre-session attempt at the idea — code, pseudo-code or a draft —
 arriving as uncommitted work, a branch or a document: brainstorm input with
-the standing of an inbox item, a starting point and never a decision; mined
-into the direction doc, captured whole into the sketch record.
+the standing of a drawn topic's `request.md`, a starting point and never a
+decision; mined into the direction doc, recorded whole in the sketch
+record.
 _Avoid_: prototype, spike, draft (bare)
 
 ### sketch record
-The verbatim, uncurated capture of a sketch — the diff or the document, the
+The verbatim, uncurated record of a sketch — the diff or the document, the
 untracked files, the progression story, the paths — kept beside the
 direction doc and read by exactly one phase, review, as the contrast between
 the user's attempt and the shipped code; sketch.md on Claude Code.
@@ -1009,13 +1017,6 @@ in place, as against point-in-time artifacts; every other document uses it
 by pointer and never restates it. In an Elixir repo the standing prose
 home is `docs/`, published (placement doctrine: the standards skill).
 _Avoid_: standing reference doc, standing prose document
-
-### start topic
-The operation that takes an item into the pipeline: its task moves out of
-the inbox, is renamed to the topic slug, is relinked to the repo whose
-subtree holds the topic folder, and its content lands there as
-`request.md`. The task is not closed — it *is* the topic from here to ship.
-_Avoid_: consume, add row, triage (that is the user's ordering of the pool)
 
 ### state folder
 The one folder a front keeps its topics' artifacts in, laid out
@@ -1123,6 +1124,14 @@ stays available for a procedure's structural form — a workflow fan-out
 versus a single agent; implement's drift valve and the sweep skill's gate
 shape are unrelated compounds)
 
+### title
+A drop's plain-worded lead — what was observed, in a phrase that
+survives without the session's jargon and works nothing out — written
+for the bug, idea and vision drops, whose bodies run long; a scan reads
+the title where a drop has one and the body where it has none. Home:
+the `capture` skill.
+_Avoid_: triage lead, summary line, TL;DR, headline
+
 ### topic branch
 The single git branch a code-repo topic lives on, named with the bare topic
 slug (no date): sketch → reset to main → pipeline phases → implementation →
@@ -1160,14 +1169,6 @@ Defined in the development-process charter — the machinery-traceability
 ground rule (§ Process ground rules), which names every one.
 _Avoid_: charter store, ref store, store (bare — `chartered store` is the
 knowledge-placement contract's word)
-
-### triage lead
-The plain-worded, example-led opening of an item's description for the
-human triage reader — what went wrong or what is wanted, in words that
-survive without the session's jargon; slugs, register marks and mechanism
-follow it, never replace it. A risk-call item's lead also carries how often
-and how bad, each stamped or marked inferred.
-_Avoid_: summary line, TL;DR, headline
 
 ### tutoring contract
 The numbered ruleset every /tutor sitting runs under — the spike-distilled
@@ -1210,9 +1211,13 @@ per-candidate for correctness and plan-fidelity candidates, batched for
 cleanup ones, host-inline where the lens already quoted both the rule and the
 line that breaks it. Derived, never chosen.
 
-### vision row
-Defined in the `kaizen-capture` skill, its one home.
-_Avoid_: vision candidate, landing-zone entry, vision friction
+### vision
+Defined in the `capture` skill, its one home — one kind of drop: where
+a product is heading, rather than how the work went or a piece of work;
+material for that product's direction, reaching its page only through a
+carve topic.
+_Avoid_: vision row, vision candidate, landing-zone entry, vision
+friction
 
 ## W
 

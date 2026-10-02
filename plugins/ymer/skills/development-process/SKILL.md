@@ -48,11 +48,11 @@ and skip phases whose output you already hold:
 - Only an idea or an itch → `/ymer:brainstorm <topic>` — the name is resolved
   against the repo's roadmap first; `/ymer:brainstorm new <topic>` declares it
   new up front.
-- An incoming feature request or bug report waiting in the repo's inbox
-  (binding: the operations contract) → `/ymer:brainstorm`, pointed at the item —
-  always, however sharp the request reads ("External requests never skip
-  phases", under Process ground rules below). Brainstorm starts the topic
-  from the item — its content lands in the topic directory as `request.md`.
+- Work waiting in the pool — a feature, a bug, a learning gap, captured
+  as a drop → `/ymer:mint` draws the top one and starts it as a topic
+  with its `request.md`, then `/ymer:brainstorm <topic>` — always,
+  however sharp the drop reads ("External requests never skip phases",
+  under Process ground rules below).
 - A large or unfamiliar area to orient in first → standalone `/ymer:scout`.
 - `/ymer:review` always runs after implement, on every topic: the lens pass —
   pre-executed at implement's close and read from the record here —
@@ -232,9 +232,9 @@ in a pull store, routed by trigger description or pointer.
 | repo `CLAUDE.md` (cwd-scoped push) | that repo's repo-safe operational facts, conventions, gotchas |
 | repo `CLAUDE.local.md` (cwd-scoped push, gitignored) | private per-repo facts kept out of a shared or employer-visible working copy |
 | the plugin's skills (pull) | process knowledge — each rule lives in the skill that owns the moment it fires |
-| the coordinator's tasks and projects | work state — the roadmap routers and the intake inboxes — plus each product's **product page**, the governed prose in its Roadmap project's description (binding: the operations contract) |
+| the coordinator's tasks and projects | work state — the roadmap of work in flight — plus each product's **product page**, the governed prose in its Roadmap project's description (binding: the operations contract) |
 | the coordinator's docs | reference knowledge reusable across projects — tool/language notes, the knowledge docs (the learning track's substrate — the tutor skill). Dividing line: useful independent of one repo's current code → a coordinator doc; about specific files/decisions of a repo → that repo's docs |
-| backlog (the `frictions` table, the node's notebook) | frictions only (the kaizen skills) |
+| the pool (the `pool` table, the node's notebook) | work nobody has started — drops of every kind, written by the `capture` skill and drawn by the `mint` skill |
 
 Knowledge with no fitting store means stop and pick (or charter) one with
 the user — never open a scratch store.
@@ -247,8 +247,8 @@ the next phase must read it, which is why a brainstorm may close by
 recording an explicit handoff naming the store instead. Where no reader is
 bound — a session close, a phase whose artifact nothing downstream must
 read — routing now is the only discharge, which is why end-session is
-route-only. Handing the knowledge to the user as an inbox item is routing
-rather than an escape: a task is one of the stores above.
+route-only. Capturing the knowledge as a drop in the pool is routing
+rather than an escape: the pool is one of the stores above.
 
 ## Process ground rules
 
@@ -257,8 +257,8 @@ rather than an escape: a task is one of the stores above.
 - **One phase per session; the artifact is the compaction boundary.** A
   phase ends by naming the next one, never by invoking it — the two
   fusions under The map are the only exceptions.
-- **External requests never skip phases.** Inbox items — features and bugs
-  alike — always enter at brainstorm, however sharp they read: brainstorm and
+- **External requests never skip phases.** A drawn topic — feature and
+  bug alike — always enters at brainstorm, however sharp it reads: brainstorm and
   define regularly catch what the request's author missed, and "well-written"
   is not "thought through". The straight-to-write-plan entry is for specs
   produced inside the process or by the user themselves.
@@ -273,7 +273,7 @@ rather than an escape: a task is one of the stores above.
   is the **one lane switch** past review — it skips the pipeline's whole
   back half with the user's approval; review itself never skips. The
   completion contract stays intact. A *fresh* below-bar friction now rides
-  `/ymer:kaizen-summary`'s friction-batch topic into this same lightweight path,
+  `/ymer:mint`'s friction-batch topic into this same lightweight path,
   rather than being fixed in-session — the pipeline gets the scrutiny, and
   the batch's brainstorm decides how cheap the route is.
 
@@ -289,14 +289,14 @@ rather than an escape: a task is one of the stores above.
   governs questions: Claude's uncertainty over a mechanical execution
   choice whose answer is clear (which text lands where, prose or code,
   in what order) is decided, never asked — a miss is felt at the gates
-  or rides friction → backlog, cheaper than the interruption; a genuine
+  or rides a friction into the pool, cheaper than the interruption; a genuine
   difficulty, non-obvious choice, or trade-off in executing a plan is
   surfaced — that is where things go wrong, and the user needs to know.
   For a git action *clear* has one reading and no other: a written rule
   determines the command, the tree, and the outcome (*Defaults and
   holds*, below).
   A rule found on the wrong side is retired on its friction evidence —
-  the backlog is the audit; no proactive pass.
+  the pool is the audit; no proactive pass.
 - **Defaults and holds.** Every gated moment (plugin glossary) carries one
   inline line naming what happens when the user's input has not arrived by
   phase close — `Default: <action> — review post-hoc at <surface>.` or
@@ -371,7 +371,7 @@ rather than an escape: a task is one of the stores above.
   every remaining question into its own artifact under the
   `Interview pending —` marker — a **pending interview** (plugin
   glossary; the artifact's shape: § Artifacts) — commits, and closes
-  around the interview as a pending step: the kaizen block runs, the
+  around the interview as a pending step: the capture block runs, the
   terminal report names the resume command written out, and the same
   phase resumes at the first unanswered question when its
   topic resolution meets the marker. The fallback rule above governs
@@ -422,16 +422,8 @@ rather than an escape: a task is one of the stores above.
   or carried `as-of <basis>`. Pointed at by brainstorm, scout, define,
   and write-plan; implement binds its gate rules alone, and
   plan-review's binding rides its review workflow rather than its
-  SKILL.md; the mint skill points at its claims rules. Ad-hoc sweeps
-  ride its description trigger.
-- `mint` — the producer discipline for the *mint item* and *annotate
-  item* operations: three mandatory looks before the call (pool
-  search; the source topic's decision record; ship state), the claims
-  register bound to the item's evidence, and a plain-worded triage
-  lead. Pointed at by brainstorm's prerequisite check and its rulings
-  duty, define's rulings duty, implement's close, review's dispositions
-  and its ship close's pool look, and the operations
-  contract itself; ad-hoc mints ride its description trigger.
+  SKILL.md; the operations contract points at its claims rules for a
+  minted task's evidence. Ad-hoc sweeps ride its description trigger.
 - `product-design` — the product-design principles (gate + per-principle
   checks + anchors) for shaping any surface a user operates, with humans
   and LLMs as first-class user types. Pointed at by brainstorm's
@@ -452,15 +444,16 @@ rather than an escape: a task is one of the stores above.
 - `/ymer:end-session` — deliberate session close-out: loose-ends sweep,
   then knowledge review (the instruction files + the coordinator), then
   the all-clear. For a session with no successor.
-- `/ymer:kaizen-capture` and `/ymer:kaizen-summary` — continuous improvement over
-  the process itself, shipped in this plugin beside the phases. Capture
-  (the kaizen block at
-  covered skills' tails, or standalone) records one friction per capture
-  in the backlog, the `frictions` table in the node's notebook;
-  summary surveys the backlog whole and drains exactly one
-  thing from it — into its own topic folder or the friction-batch
-  (minting the topic's task at `todo` beside a folder it wrote, since a
-  topic with no task has no node), or as a learning task in the Learning
-  project — no folder, task only. Supporting skills, not phases; capture
-  writes nothing in git, and summary commits only the folder it wrote.
+- `/ymer:capture` and `/ymer:mint` — the loop that feeds the pipeline,
+  shipped in this plugin beside the phases. Capture (the capture block
+  at covered skills' tails, the moments a phase notices future work, or
+  standalone) records what the work observed as drops in the pool, the
+  `pool` table in the node's notebook — every observed bug, learning
+  gap, piece of product direction and idea, and one friction per tail;
+  mint surveys the pool whole and draws exactly one thing from it — the
+  top drop, bugs first, formed into a topic by its product's Forward
+  direction, with its folder and its task created at `doing`; the
+  friction-batch; or a learning task in the Learning project — no
+  folder, task only. Supporting skills, not phases; capture writes
+  nothing in git, and mint commits only the folder it wrote.
 - A front's own editor or tooling skills — unrelated to the pipeline.

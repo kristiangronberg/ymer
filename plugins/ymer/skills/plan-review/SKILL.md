@@ -186,7 +186,7 @@ the one that was not.
    and what the workflow buys over a single reviewer — mandate independence —
    is buying less than it costs, since three narrow mandates handed to one
    fresh-context reviewer is not the broad mandate that stalls (→ Operational
-   notes). **3 is a calibration of that principle, revised on kaizen evidence —
+   notes). **3 is a calibration of that principle, revised on captured evidence —
    never a bare threshold.** code-review's ladder carries no floor: its tiers
    differ in depth of scrutiny, not in orchestration machinery.
 
@@ -431,9 +431,9 @@ the one that was not.
    the close (fallback rule: same section); a close the ask never
    reached reports it as not-run and takes that default.
 
-6. **Kaizen block:** invoke the `ymer:kaizen-capture` skill — source
-   `plan_review`. Battery, row grammar, and the write live in that skill
-   alone.
+6. **Capture block:** invoke the `ymer:capture` skill — source
+   `plan_review`. The battery, the drop grammar and the write live in
+   that skill alone.
 
 ## Next Phase
 

@@ -287,7 +287,7 @@ The open-decision stop's four close steps (the stop itself: `SKILL.md
      pathspec-scoped exactly like the Phase Close's step 5,
      whose target list, composite shape where such a file carries a
      foreign edit, and same-list verify this pointer carries whole.
-  4. **Kaizen block:** invoke the `ymer:kaizen-capture` skill — source
+  4. **Capture block:** invoke the `ymer:capture` skill — source
      `implement`, exactly as the Phase Close's own last step. A close is
      a close: the session shape likeliest to have produced friction is
      the last one that should capture none.

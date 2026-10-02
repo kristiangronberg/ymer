@@ -24,8 +24,8 @@ plugins/ymer/.claude-plugin/plugin.json	"name": "Kristian Grönberg"
 # An example value in setup's report
 plugins/ymer/skills/setup/SKILL.md	/Users/you/state
 # The eval cases assert on the child's tool names
-evals/kaizen-capture-door/case.yaml	"name":"mcp__
-evals/kaizen-summary-door/case.yaml	"name":"mcp__
+evals/capture-door/case.yaml	"name":"mcp__
+evals/mint-door/case.yaml	"name":"mcp__
 evals/setup-door/case.yaml	"name":"mcp__
 evals/tutor-door/case.yaml	"name":"mcp__
 # The probe's own files: its defaults, the scratch node's address, the

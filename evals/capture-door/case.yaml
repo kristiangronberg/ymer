@@ -1,6 +1,6 @@
 schema_version: "1.1"
-name: kaizen-capture-door
-description: With no Ymer Node reachable, /ymer:kaizen-capture fires, announces itself, and stops at its guard naming the node.
+name: capture-door
+description: With no Ymer Node reachable, /ymer:capture fires, announces itself, and stops at its guard naming the node.
 plugins: ["../../plugins/ymer"]
 runs: 1
 execution:
@@ -8,7 +8,7 @@ execution:
   timeout_seconds: 300
   allowed_tools: [Skill, Read, Glob, Grep]
   prompt: |
-    /ymer:kaizen-capture
+    /ymer:capture
 
     Source: `readme_edit`. The work just finished: one README paragraph was
     reworded and re-read; nothing else happened in this session.
@@ -20,11 +20,11 @@ graders:
   - name: fired-command
     type: regex
     target: trace
-    pattern: '"slash_commands":\[[^\]]*"ymer:kaizen-capture"'
+    pattern: '"slash_commands":\[[^\]]*"ymer:capture"'
   - name: fired-announce
     type: regex
     target: trace
-    pattern: 'Kaizen capture from:'
+    pattern: 'Capture from:'
   - name: no-mcp-server
     type: regex
     target: trace

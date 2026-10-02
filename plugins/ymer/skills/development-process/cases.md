@@ -73,7 +73,8 @@ on the wrong axis.
 ## Review effort — the ladder and its keys
 
 Two properties follow, and both are the point. There is **no hand-maintained
-drop list** anywhere — the drop set is derived from which preconditions fail.
+exclusion list** anywhere — the lenses left out are derived from which
+preconditions fail.
 And a lens added later **carries its own applicability**, so nobody must
 classify it into every tier's list.
 
@@ -88,7 +89,7 @@ in *orchestration machinery* rather than in depth of scrutiny, it carries an
 fixed cost — spin-up, the journal, stall/retry failure modes, a heavier
 synthesis author — dominates what it buys, whatever the risk profile said. The
 floor's number is a **calibration** stated with its reasoning at the skill that
-owns it, and revised on kaizen evidence; it is never written as a bare
+owns it, and revised on captured evidence; it is never written as a bare
 threshold. Ladders whose tiers differ only in scrutiny have no floor.
 
 ## Iteration — the route and its executor
