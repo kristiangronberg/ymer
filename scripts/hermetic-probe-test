@@ -639,6 +639,7 @@ check "static clean exits 0" 0 "$rc"
 check "static clean: manifests pass" 1 "$(lines '✔ manifests')"
 check "static clean: values pass" 1 "$(lines '✔ values')"
 check "static clean: references pass — the fixture's and the live stage's own" 1 "$(lines '✔ references   31 slash references, 1 relative links, 0 plugin-root paths')"
+check "static clean: hosting passes" 1 "$(lines '✔ hosting      no plugins/*/bin')"
 check "static validates the root and the plugin" 2 "$(logged 'claude plugin validate --strict')"
 # a nested checkout and a dangling link in the tree: git lists the one as
 # `nested/` and the other by name, grep can read neither, and both are
@@ -753,6 +754,20 @@ queue 'claude plugin validate --strict' 'rc=1'
 probe "$fx" static
 check "failing manifest exits 1" 1 "$rc"
 check "failing manifest: the manifests check names the path" 1 "$(lines '✘ manifests    validate --strict fails on: .')"
+
+# ── 7a · static, a plugin with a top-level bin/ ───────────────────────
+# claude.ai refuses to host it; the rest of the tree stays clean, so the
+# hosting check is the one that fails
+fx=$tmp/f7a
+fixture "$fx"
+mkdir -p "$fx/plugins/ymer/bin"
+printf '#!/bin/sh\n' >"$fx/plugins/ymer/bin/tool"
+shim_reset
+probe "$fx" static
+check "a plugin bin/ exits 1" 1 "$rc"
+check "a plugin bin/: the hosting check names it" 1 "$(lines '✘ hosting      a plugin ships a top-level bin/: plugins/ymer/bin')"
+check "a plugin bin/: the hosted-plugin rule is quoted" 1 "$(lines 'are not shown on the admin approval surface')"
+check "a plugin bin/: the other checks still pass" 1 "$(lines '✔ references')"
 
 # ── 7b · static, the verifier check ───────────────────────────────────
 # the fixture's stub test passes, then fails naming a case, then is gone:

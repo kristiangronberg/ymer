@@ -47,7 +47,7 @@ the one that was not.
    - `focus` — free text, only if the user asked to emphasise something this run
      (e.g. "lean hard on security" or "architecture"). Pass it through verbatim.
    - `verifierCommand` — the payload verifier as this session runs it:
-     `sh ${CLAUDE_PLUGIN_ROOT}/bin/payload-verify`, then one
+     `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify`, then one
      `--exempt <tree>` per machinery tree the front binds. The
      workflow's rewrite author runs it on the topic directory; a
      workflow script cannot resolve the plugin root itself.
@@ -146,7 +146,7 @@ the one that was not.
      beside the plan, and its fixes land in whichever surface carries
      the defect — plan or payload file. A pass that edited either
      surface closes by re-running the join:
-     `sh ${CLAUDE_PLUGIN_ROOT}/bin/payload-verify <the topic directory>`,
+     `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify <the topic directory>`,
      one `--exempt <tree>` after it per machinery tree the front binds.
      Nothing is implemented yet, so a
      correctly-authored plan reports every gate PENDING and exits 0;
@@ -225,7 +225,7 @@ the one that was not.
        "planPath": "<abs path>",
        "specPath": "<abs path or omit>",
        "focus": "<text or omit>",
-       "verifierCommand": "sh ${CLAUDE_PLUGIN_ROOT}/bin/payload-verify --exempt <tree>",
+       "verifierCommand": "sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify --exempt <tree>",
        "facts": {
          "hasCode": true,
          "touchesConcurrency": false,

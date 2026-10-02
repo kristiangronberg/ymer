@@ -14,7 +14,7 @@ export const meta = {
 //   planPath : absolute path to the plan file to review and rewrite (required)
 //   specPath : absolute path to the original spec/requirements, if separate (optional)
 //   focus    : free-text emphasis for this run, e.g. "lean hard on security" (optional)
-//   verifierCommand : the payload verifier's command line, resolved by the host — `sh <plugin root>/bin/payload-verify` plus one `--exempt <tree>` per machinery tree the front binds (required)
+//   verifierCommand : the payload verifier's command line, resolved by the host — `sh <plugin root>/scripts/payload-verify` plus one `--exempt <tree>` per machinery tree the front binds (required)
 //
 // NOTE: depending on the harness, the runtime may forward `args` either as a
 // parsed object or as a JSON-encoded *string*. Normalize both shapes here so a
@@ -95,7 +95,7 @@ if (!planPath) {
 }
 
 if (!verifierCommand) {
-  throw new Error('plan-review workflow requires args.verifierCommand (the payload verifier command line: sh <plugin root>/bin/payload-verify plus one --exempt per machinery tree the front binds — plan-review/SKILL.md Steps §1).')
+  throw new Error('plan-review workflow requires args.verifierCommand (the payload verifier command line: sh <plugin root>/scripts/payload-verify plus one --exempt per machinery tree the front binds — plan-review/SKILL.md Steps §1).')
 }
 
 const specLine = specPath

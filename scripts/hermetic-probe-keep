@@ -55,5 +55,5 @@ scripts/hermetic-probe-test	http://example.invalid:9999/mcp
 scripts/hermetic-probe-test	mcp__foo__bar
 # The payload verifier's ~-rooted targets: its own expansion and its
 # test's one case
-plugins/ymer/bin/payload-verify	~/
+plugins/ymer/scripts/payload-verify	~/
 scripts/payload-verify-test	~/target.md

@@ -1,6 +1,6 @@
 #!/bin/sh
 # hermetic-probe-static — the static stage, sourced by hermetic-probe:
-# four checks over every tracked file, no model.
+# five checks over every tracked file, no model.
 #
 #   manifests    `claude plugin validate --strict` on the root and each plugin
 #   values       no personal value in any file — the five value classes
@@ -14,7 +14,9 @@
 #                ${CLAUDE_PLUGIN_ROOT} path exists, and no plugin carries
 #                an evals/ of its own — the one evals/ is the marketplace
 #                root's
-#   verifier     scripts/payload-verify-test passes — the plugin's payload
+#   hosting      no plugin carries a top-level bin/ — claude.ai refuses to
+#                host one, so the desktop app's marketplace sync fails
+#   verifier    scripts/payload-verify-test passes — the plugin's payload
 #                verifier against its fixtures, and its placeholder list
 #                against the plugin glossary
 #
@@ -272,7 +274,19 @@ stage_static() {
 		fail references "a reference does not resolve — fix each site:$broken"
 	fi
 
-	# 4. verifier
+	# 4. hosting — claude.ai refuses a hosted plugin carrying a top-level
+	# bin/, and the marketplace sync then fails with no reason given
+	hosted=''
+	for b in "$root"/plugins/*/bin; do
+		[ -e "$b" ] && hosted="$hosted ${b#"$root"/}"
+	done
+	if [ -z "$hosted" ]; then
+		pass hosting "no plugins/*/bin"
+	else
+		fail hosting "a plugin ships a top-level bin/:$hosted — move its executables elsewhere (scripts/, run as sh <plugin root>/scripts/<name>). claude.ai: \"claude.ai-hosted plugins may not ship bin/ executables because they are added to PATH on the CLI but are not shown on the admin approval surface. Declare executable entry points via hooks, commands, or mcpServers instead.\""
+	fi
+
+	# 5. verifier
 	if [ ! -f "$root/scripts/payload-verify-test" ]; then
 		fail verifier "no scripts/payload-verify-test — restore it; without it the plugin's payload verifier ships untested"
 	elif sh "$root/scripts/payload-verify-test" >"$tmp/pvt" 2>&1; then

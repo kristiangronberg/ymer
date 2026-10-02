@@ -67,7 +67,7 @@ the addressing (Edit anchors) and the verification (`Run:`/`Expected:`
 lines). Beside the
 payload files, **`payloads/manifest`** declares one **payload gate**
 per payload — `<step-id> <target-path> [expected]` — evaluated by the
-**payload verifier** the plugin ships (`bin/payload-verify` under the
+**payload verifier** the plugin ships (`scripts/payload-verify` under the
 plugin root, run through `sh` on the topic directory with one
 `--exempt <tree>` per machinery tree the front binds — the state folder
 is read off the topic directory's own shape; its header documents the

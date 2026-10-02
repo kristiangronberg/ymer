@@ -1,6 +1,6 @@
 #!/bin/sh
 # payload-verify-test — self-test for the ymer plugin's payload verifier,
-# plugins/ymer/bin/payload-verify. The hermetic probe's static stage runs
+# plugins/ymer/scripts/payload-verify. The hermetic probe's static stage runs
 # it; run it by hand after any edit to the verifier. It works in a temp
 # directory and touches no real topic.
 #
@@ -35,7 +35,7 @@
 set -u
 
 here=$(cd "$(dirname "$0")" && pwd)
-verify=$here/../plugins/ymer/bin/payload-verify
+verify=$here/../plugins/ymer/scripts/payload-verify
 glossary=$here/../plugins/ymer/glossary.md
 # physical: mktemp's path can sit under a symlink, and the verifier
 # compares resolved paths

@@ -53,7 +53,7 @@ installed → proceed with the plan alone.
 - **Tasks in order, steps as written.** Run every verification step
   literally — including "run the test to verify it fails". Skipping a
   verification and assuming its outcome is an implementation failure.
-  A step's `<the payload verifier>` is `sh ${CLAUDE_PLUGIN_ROOT}/bin/payload-verify`
+  A step's `<the payload verifier>` is `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify`
   run on the topic directory, with one `--exempt <tree>` per machinery
   tree the front binds.
 
