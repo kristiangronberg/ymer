@@ -8,14 +8,50 @@
 # init event names the plugin and the slash command, and the skill's own
 # announce line appears in the trace), it stopped (no write tool, no MCP
 # tool, and — read here — no run error such as the turn cap), and it named
-# its door in its last message. The model is the entry script's pin, so a
-# model rollout is never mistaken for a plugin regression; the run uses
-# the credential of the config dir this script runs under, in the runner's
-# own isolation.
+# its door — setup anywhere in the run, the others in their last message.
+# The model is the entry script's pin, so a model rollout is never
+# mistaken for a plugin regression; the run uses the credential of the
+# config dir this script runs under, in the runner's own isolation.
 #
-# The runner writes its own results under evals/results/ (ignored by git);
-# this stage keeps its JSON result and the runner's output there too, as
-# evals/results/hermetic-probe.json and hermetic-probe.log.
+# The runner writes its own results under evals/results/ (ignored by git),
+# one directory per run named for its start time; this stage keeps its
+# JSON result and the runner's output there too, as
+# evals/results/hermetic-probe.json and hermetic-probe.log. A red keeps
+# its evidence: the runner keeps every run's temp dir, the trace of each
+# run that did not pass is copied into the run's own results directory as
+# <case>.trace.jsonl, and every kept temp dir is removed, green or red,
+# and on an interrupted run too: when the stage is ended before its own
+# removal pass, the entry script's EXIT trap removes them instead.
+
+# Every temp dir the runner kept, named on its own `⚠ kept <dir>:` line in
+# <log>, whether or not a result was written. It seals what the plugin
+# under test wrote in <dir>/sealed at mode 000 and leaves <dir> read-only,
+# so both are opened before the removal. Only a directory shaped like the
+# runner's own — a last component named e-* or claude-eval-*, holding
+# out/ — is ever removed. Runs once the runner returns, or instead from
+# the EXIT trap when the stage was ended before that. The dirs that
+# outlived their removal are named on a `kept` fail line. The log is read
+# in the C locale, so a byte that is not valid UTF-8 never stops the read.
+eval_remove_kept() { # eval_remove_kept <log>
+	left=''
+	[ -f "$1" ] || return 0
+	LC_ALL=C sed -n 's/^⚠ kept \([^ ]*\): .*/\1/p' "$1" >"$tmp/eval-kept"
+	while IFS= read -r d; do
+		case ${d##*/} in
+		e-?* | claude-eval-?*) ;;
+		*) continue ;;
+		esac
+		if [ -d "$d/out" ]; then
+			chmod 700 "$d" 2>/dev/null || true
+			if [ -d "$d/sealed" ]; then chmod 700 "$d/sealed" 2>/dev/null || true; fi
+			rm -rf "$d" 2>/dev/null || true
+			if [ -e "$d" ]; then left="$left $d"; fi
+		fi
+	done <"$tmp/eval-kept"
+	if [ -n "$left" ]; then
+		fail kept "the runner's kept temp dir(s)$left outlived their removal — remove each: chmod 700 <dir> <dir>/sealed && rm -rf <dir>"
+	fi
+}
 
 stage_eval() {
 	echo "hermetic probe — eval"
@@ -35,13 +71,55 @@ stage_eval() {
 	result=$root/evals/results/hermetic-probe.json
 	log=$root/evals/results/hermetic-probe.log
 	rm -f "$result" "$log"
+	# from here until the removal below, the EXIT trap removes the dirs
+	# this log names, so an interrupted run leaves none behind
+	eval_log=$log
 	if claude plugin eval "$root" --trust-plugin --ablation none --runs 1 \
-		--model "$probe_model" --no-publish --max-cost-usd 5 --json "$result" \
+		--model "$probe_model" --no-publish --max-cost-usd 5 --keep-temp --json "$result" \
 		>"$log" 2>&1; then
 		rc=0
 	else
 		rc=$?
 	fi
+
+	# Each run that did not pass — a grader red or a run error — keeps its
+	# trace, copied before its temp dir goes. The result is pretty-printed
+	# one key per line, and the indent tells a run's own keys from its
+	# graders': a run's `passed`, `error` and `tracePath` sit at twelve
+	# spaces, in that order, its graders' `passed` deeper, and the case's
+	# `dir` at six. The run's own results directory is the `startedAt` at
+	# the result's root, two spaces in, with `:` and `.` made `-`, as the
+	# runner names it.
+	copied=0
+	traces=''
+	if [ -f "$result" ]; then
+		ts=$(sed -n 's/^  "startedAt": "\(.*\)",*$/\1/p' "$result" | sed 's/[:.]/-/g')
+		traces=$root/evals/results/${ts:-unknown-run}
+		awk '
+			/^      "dir": "/ { c = $0; sub(/^      "dir": "evals\//, "", c); sub(/",*$/, "", c) }
+			/^            "passed": / { p = ($0 ~ /true/); e = 0 }
+			/^            "error": / { e = ($0 !~ /"error": null,*$/) }
+			/^            "tracePath": "/ {
+				t = $0
+				sub(/^            "tracePath": "/, "", t)
+				sub(/",*$/, "", t)
+				if (!p || e) print c "\t" t
+			}
+		' "$result" >"$tmp/eval-red"
+		while IFS='	' read -r case_name trace; do
+			if [ -f "$trace" ]; then
+				mkdir -p "$traces"
+				cp "$trace" "$traces/$case_name.trace.jsonl"
+				copied=$((copied + 1))
+			fi
+		done <"$tmp/eval-red"
+	fi
+
+	# every kept temp dir goes now, ahead of every line below; one that
+	# outlives its removal is named here, and the EXIT trap has nothing
+	# left to do
+	eval_remove_kept "$log"
+	eval_log=''
 
 	if [ ! -f "$result" ]; then
 		abort runner "claude plugin eval wrote no result (exit $rc) — read $log"
@@ -50,15 +128,17 @@ stage_eval() {
 	total=$(sed -n 's/^ *"casesTotal": \([0-9]*\),*$/\1/p' "$result")
 	passed=$(sed -n 's/^ *"casesPassed": \([0-9]*\),*$/\1/p' "$result")
 	errors=$(grep -c '^ *"error": null,*$' "$result" || true)
+	kept_note=''
+	[ "$copied" = 0 ] || kept_note=" — traces kept in $traces/"
 
 	if grep -q '^ *"partial": true' "$result"; then
-		fail runner "the run is partial — read $result (partialReason) and run again"
+		fail runner "the run is partial — read $result (partialReason) and run again$kept_note"
 	elif [ "$total" != "$cases" ]; then
-		fail cases "$cases case.yaml files, $total cases ran — a case failed to load; read $log"
+		fail cases "$cases case.yaml files, $total cases ran — a case failed to load; read $log$kept_note"
 	elif [ "$errors" != "$cases" ]; then
-		fail runs "$((cases - errors)) of $cases runs ended abnormally (a turn cap or timeout) — read the error fields in $result"
+		fail runs "$((cases - errors)) of $cases runs ended abnormally (a turn cap or timeout) — read the error fields in $result$kept_note"
 	elif [ "$rc" != 0 ] || [ "$passed" != "$cases" ]; then
-		fail cases "$passed of $cases cases passed (exit $rc) — each failed grader's explanation is in $result"
+		fail cases "$passed of $cases cases passed (exit $rc) — each failed grader's explanation is in $result$kept_note"
 	else
 		pass cases "$cases cases, $cases passed on $probe_model — fired, stopped, door named"
 	fi

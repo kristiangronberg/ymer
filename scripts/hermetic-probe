@@ -40,7 +40,7 @@
 #                                to run                default /tmp
 #
 # Every assertion is structural: a validator's exit code, a sweep over the
-# tracked files, the eval runner's kept trace, the scratch node's own MCP,
+# tracked files, a red's kept trace, the scratch node's own MCP,
 # or a headless run's stream-json — never a judge model, never the host-side
 # database file. The report is one line per check, in order: ✔ a pass,
 # ✘ a failure naming its one fix, – not run naming what it waits on.
@@ -109,17 +109,28 @@ abort() {
 }
 
 # The one EXIT trap: a live node that may have come up gets its teardown
-# whatever the exit status, then the temp dir goes. The teardown brings the
-# node down only while compose still resolves the probe's own project name;
-# otherwise it runs no `down`, keeps the scratch node's data and state
-# folder for inspection, and fails naming the command to run by hand.
+# whatever the exit status, the eval runner's kept temp dirs go when the
+# eval stage was interrupted before it removed them, and then the temp
+# dir goes. The teardown brings the node down only while compose still
+# resolves the probe's own project name; otherwise it runs no `down`,
+# keeps the scratch node's data and state folder for inspection, and
+# fails naming the command to run by hand.
 # live_teardown is defined by the live stage file; node_up is set once
 # docker-before and data/ exist and before `up` runs, so a failed `up`
-# still reaches the teardown.
+# still reaches the teardown. eval_remove_kept is defined by the eval
+# stage file, which sets eval_log from the runner's start until its own
+# removal pass. This shell runs the trap when SIGINT or SIGTERM ends it,
+# so an interrupt reaches it too. A SIGTERM to this shell's pid alone,
+# rather than to its process group, leaves the runner running on as an
+# orphan: the trap removes what the log names by then, and a dir the
+# runner keeps after it is named nowhere.
 cleanup() {
 	rc=$?
 	if [ "$node_up" = 1 ]; then
 		live_teardown
+	fi
+	if [ -n "${eval_log:-}" ]; then
+		eval_remove_kept "$eval_log"
 	fi
 	rm -rf "$tmp"
 	exit $rc

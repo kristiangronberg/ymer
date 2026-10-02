@@ -30,11 +30,17 @@ graders:
     target: trace
     match: not_contains
     pattern: '"name":"mcp__'
+  # The door is read from the whole run, not from the last message as the
+  # other cases read theirs: a run may print the claude mcp add line in an
+  # earlier message and refer back to it ("the command above") in its last.
+  # Only the model's own text blocks are read, so a tool result carrying
+  # the line — a Read of the skill or the README — never stands in for
+  # showing it to the user.
   - name: door-named
     type: regex
-    target: last_message
+    target: trace
     flags: i
-    pattern: 'claude mcp add --transport http --scope user ymer-node'
+    pattern: '"type":"text","text":"([^"\\]|\\.)*claude mcp add --transport http --scope user ymer-node'
   - name: never-write
     type: tool_used
     tool: Write

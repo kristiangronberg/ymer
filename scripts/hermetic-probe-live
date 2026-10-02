@@ -227,18 +227,32 @@ live_result() { # live_result <n>
 # A skill's report is read for the facts its lines carry, never for its
 # form. The model running a skill keeps a report's content and varies its
 # dress from run to run — bold role names, backticked values, ` — `
-# between the parts, a code fence, a sentence before or after the lines —
-# and a check that matched the dress would read red on a right report and
-# send the reader into the trace for nothing. So every check on a
-# report's lines reads them through report_lines, which takes the result
-# out of its JSON string into lines of its own, drops the fence lines,
-# strips Markdown's backslash escapes, `*` and backticks and collapses
-# runs of blanks; the check then
-# asks for its words on one line, case aside, and a red names a wrong or
-# missing fact. A read that looks for one token anywhere in the result —
-# the run's success subtype, summary's door — keeps the raw line, which
-# no decoration splits.
-report_lines() { # report_lines <n> — run <n>'s report, one line per line, undressed
+# between the parts, a code fence, a sentence before or after the lines,
+# a role line wrapped onto the lines under it — and a check that matched
+# the dress would read red on a right report and send the reader into the
+# trace for nothing. So every check on a report's lines reads them through
+# report_lines, which takes the result out of its JSON string into lines
+# of its own, drops the fence lines, strips Markdown's backslash escapes,
+# `*`, backticks and the emoji-presentation selector U+FE0F (so `✔️`
+# is the mark `✔`), collapses runs of blanks, and joins each role line's
+# continuation lines onto it (both terms: the glossary). A role line opens
+# with a role mark — ✔, ✘ or – — past any indent and list bullet; each
+# non-blank line under it with no mark there continues it, and a blank
+# line or the next role line ends the run. A fence opening at the line's
+# start is the block's own and ends the run like a blank; an indented
+# fence sits inside a list item and is dropped without ending it — so a
+# block whose own closing fence is indented reads that fence as nested,
+# and prose straight after it joins the last role line: a known gap, unseen
+# in real reports, worth covering once a run writes one. A
+# report with no role line reads as its plain lines. The check then asks
+# for its words on one line through report_words, case aside, and a red
+# names a wrong or missing fact. A read that looks for one token anywhere
+# in the result — the run's success subtype, summary's door — keeps the
+# raw line, which no decoration splits.
+# The reads run in the C locale: the marks and the ` — ` separator share
+# their leading bytes, so each mark is matched as its whole byte sequence,
+# never inside a bracket expression.
+report_lines() { # report_lines <n> — run <n>'s report, one line per role line or plain line, undressed
 	live_result "$1" | sed -E -n 's/.*"result":"(([^"\\]|\\.)*)".*/\1/p' |
 		awk '{
 			s = $0
@@ -257,29 +271,75 @@ report_lines() { # report_lines <n> — run <n>'s report, one line per line, und
 			}
 			print out
 		}' |
-		grep -v -E '^[[:space:]]*```' |
-		sed -E 's/\\([[:punct:]])/\1/g; s/[*`]//g; s/[[:space:]]+/ /g' || true
+		sed -E '/^```/s/.*//; /^[[:space:]]+```/d' |
+		sed -E 's/\\([[:punct:]])/\1/g; s/️//g; s/[*`]//g; s/[[:space:]]+/ /g' |
+		LC_ALL=C awk '
+			/^ ?$/ { if (run != "") print run; run = ""; print ""; next }
+			/^ ?(- )?(✔|✘|–)/ { if (run != "") print run; run = $0; next }
+			run != "" { sub(/^ /, ""); run = run " " $0; next }
+			{ print }
+			END { if (run != "") print run }
+		' || true
+}
+
+# The lines on stdin carrying every word, case aside, each where no name
+# character touches either end: letters, digits, `_`, `-` and `/` on
+# either side, and `:` before the word only — so `7 tables` is not read
+# in `17 tables`, `reachable` not in `unreachable`, `ymer` not in
+# `ymer-node` or a skill's `/ymer:<skill>`, while a dressed `node:` still
+# reads as `node`. A word may hold a space; the report's blanks are
+# collapsed to one.
+report_words() { # report_words <word>... — stdin's lines carrying every word on its own
+	printf '%s\n' "$@" >"$tmp/report.words"
+	LC_ALL=C awk '
+		# a word on the first byte of a line has nothing before it: a
+		# substr from 0 is read as from 1 by this awk, and would return
+		# the first letter of the word itself
+		function has(s, x,    p, i, b, a, rest) {
+			rest = s
+			p = 0
+			while ((i = index(rest, x)) > 0) {
+				b = (p + i > 1) ? substr(s, p + i - 1, 1) : ""
+				a = substr(s, p + i + length(x), 1)
+				if (b !~ /[a-z0-9_\/:-]/ && a !~ /[a-z0-9_\/-]/) return 1
+				p += i
+				rest = substr(s, p + 1)
+			}
+			return 0
+		}
+		NR == FNR { w[++nw] = tolower($0); next }
+		{
+			line = tolower($0)
+			for (k = 1; k <= nw; k++) if (!has(line, w[k])) next
+			print
+		}
+	' "$tmp/report.words" - || true
 }
 
 report_match() { # report_match <n> <word>... — the lines of run <n>'s report carrying every word, case aside
 	rpt_n=$1
 	shift
-	report_lines "$rpt_n" >"$tmp/report"
-	for rpt_w in "$@"; do
-		grep -i -F -- "$rpt_w" "$tmp/report" >"$tmp/report.next" || true
-		mv "$tmp/report.next" "$tmp/report"
-	done
-	cat "$tmp/report"
+	report_lines "$rpt_n" | report_words "$@"
 }
 
 # The node ports run <n>'s report names, one per line: a port after a
 # host naming this machine — loopback by IPv4, IPv6 or by name, or the
 # any-address form — or after the node's registered server name, in a URL
-# or bare, and a port given as a port. Known gap: a number standing alone,
-# with neither a host nor the word before it, is not read as a port.
+# or bare, read anywhere in the report, since a wrong address in the prose
+# after the lines is the one a user copies; and a port given as a port,
+# read from the node's own role line alone, so a container's port or a
+# `db_port` elsewhere is never taken for the node's. Known gaps, each
+# worth covering once a run writes one: a number standing alone, with
+# neither a host nor the word before it; a port given as `port — N`,
+# `Port=N` or `port number N`, or as the second number of `ports A and B`;
+# a port after this machine's `<hostname>.local`; and a container's port
+# named on the node's own role line, which reads as the node's — loud,
+# never a silent pass.
 report_ports() { # report_ports <n>
-	report_lines "$1" | grep -o -i -E '(127\.0\.0\.1|local[h]ost|0\.0\.0\.0|\[::1\]|ymer-node):[0-9]+' | sed 's/.*://' || true
-	report_lines "$1" | grep -o -i -E '(^|[^a-z])ports?:? *[0-9]+' | sed -E 's/.*[^0-9]//' || true
+	report_lines "$1" >"$tmp/report"
+	LC_ALL=C grep -o -i -E '(127\.0\.0\.1|local[h]ost|0\.0\.0\.0|\[::1\]|ymer-node):[0-9]+' "$tmp/report" | sed 's/.*://' || true
+	LC_ALL=C grep -i -E '^ ?(- )?(✔|✘|–) node([^[:alnum:]_/-]|$)' "$tmp/report" |
+		LC_ALL=C grep -o -i -E '(^|[^[:alnum:]_/-])ports?:? *[0-9]+' | sed -E 's/.*[^0-9]//' || true
 }
 
 # Tool calls a run made, one per line as `<tool> <input>`, read from the
@@ -844,8 +904,12 @@ link check before the edit would have caught it.'
 	# asserts, so a healthy line that names either word only to deny it
 	# (`nothing added`) reads red too; setup's own grammar gives a healthy
 	# re-run the bare line, and a red here is loud, never a silent pass.
+	# And the reverse, through report_words' boundary: `-` and `/` are name
+	# characters, so a line saying `re-added`, `auto-created` or
+	# `created/added` reads neither word and passes — a false claim only,
+	# since converge and converge-calls read the node itself.
 	node_lines=$(report_match 4 '✔' node reachable '7 tables' claude_code)
-	if [ -n "$node_lines" ] && ! printf '%s\n' "$node_lines" | grep -q -i -w -e created -e added; then
+	if [ -n "$node_lines" ] && ! { printf '%s\n' "$node_lines" | report_words created; printf '%s\n' "$node_lines" | report_words added; } | grep -q .; then
 		pass converge-report "the node line reads reachable, 7 tables and the front, nothing created or added"
 	else
 		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\`, \`7 tables\` and \`claude_code\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
@@ -994,8 +1058,9 @@ link check before the edit would have caught it.'
 	subjects=$(node_count 'SELECT count(*) FROM tutor_subjects')
 	engagements=$(node_count 'SELECT count(*) FROM tutor_engagements')
 	if live_executed 9; then wrote=wrote; else wrote='no write'; fi
-	# ymer as a word of its own: ymer-node, the Ymer Node and /ymer:<skill> name it too
-	if report_match 9 ymer docs | sed 's/[Yy][Mm][Ee][Rr] [Nn][Oo][Dd][Ee]//g' | grep -q -i -E '(^|[^/:[:alnum:]-])ymer($|[^:[:alnum:]-])'; then named=names; else named='does not name'; fi
+	# ymer as a word of its own: report_words leaves out ymer-node and
+	# /ymer:<skill>, and the Ymer Node, two words, is taken out first
+	if report_lines 9 | sed 's/[Yy][Mm][Ee][Rr] [Nn][Oo][Dd][Ee]//g' | report_words ymer docs | grep -q .; then named=names; else named='does not name'; fi
 	if [ "$subjects" = 0 ] && [ "$engagements" = 0 ] && [ "$wrote" = 'no write' ] && [ "$named" = names ]; then
 		pass tutor-ymer "stopped naming ymer as its docs' home — no execute call, both tutor tables empty"
 	else

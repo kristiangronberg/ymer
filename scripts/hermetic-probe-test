@@ -8,15 +8,18 @@
 # probe's own logic: the sweeps and their KEEP filter (a value beside an
 # allowed one, a value running on past one, a binary file, a nested
 # checkout in the corpus, an empty corpus, the token file's shape), the
-# reference rules, the runner's result read, the login assert, the scrub,
+# reference rules, the runner's result read — a failed run's trace kept,
+# every temp dir the runner kept removed — the login assert, the scrub,
 # prompt-before-flags and the strict MCP config, the node read-back,
 # teardown on failure — a failed `up` included — the compose copy's
 # project name checked before `up` and again before `down`, a wrong one
 # refused at either end, each live precondition's exit 2, a run that did
 # not end in success, the two arms and the option between them, the seeded
 # steps' not-run lines, the state reads' deltas over the node and state/,
-# the history read, setup's report read for its facts — dressed, and
-# naming a wrong node address — the behaviour checks — an input carrying a
+# the history read, setup's report read for its facts — dressed, its
+# role lines carried onto the lines under them, a word inside a longer
+# one, and naming a wrong node address or another port — tutor's stop
+# naming the node alone, the behaviour checks — an input carrying a
 # brace or an escaped quote included, a server call read by its result, a
 # refusal read by its call's id —
 # the runs' working directory outside the home tree — a TMPDIR under it
@@ -40,7 +43,8 @@ here=$(cd "$(dirname "$0")" && pwd)
 # physical, as the live stage normalises its probe dir: mktemp's path sits
 # under a symlink on macOS, and the report lines the cases read spell $tmp
 tmp=$(cd "$(mktemp -d)" && pwd -P)
-trap 'rm -rf "$tmp"' EXIT
+# opened first: a kept dir a red case leaves behind is sealed read-only
+trap 'chmod -R u+rwx "$tmp" 2>/dev/null; rm -rf "$tmp"' EXIT
 
 pass=0
 fail=0
@@ -98,14 +102,9 @@ for src in queue answers; do
 	fi
 	break
 done
-case $resp in
-rc=*) exit "${resp#rc=}" ;;
-@*) body=$(cat "${resp#@}") ;;
-*) body=$resp ;;
-esac
 # a call's side effect: the first line of $SHIM_DIR/effects whose key is a
 # substring of the argv, consumed, run as a shell command — what a real
-# run leaves on disk
+# run leaves on disk, a run that then exits non-zero included
 if [ -f "$SHIM_DIR/effects" ]; then
 	n=$(awk -v k="$key" -F'\t' '{ if (index(k, $1) > 0) { print NR; exit } }' "$SHIM_DIR/effects")
 	if [ -n "$n" ]; then
@@ -114,6 +113,11 @@ if [ -f "$SHIM_DIR/effects" ]; then
 		sh -c "$eff"
 	fi
 fi
+case $resp in
+rc=*) exit "${resp#rc=}" ;;
+@*) body=$(cat "${resp#@}") ;;
+*) body=$resp ;;
+esac
 if [ -n "$out" ]; then
 	printf '%s\n' "$body" >"$out"
 elif [ -n "$json" ]; then
@@ -170,21 +174,45 @@ printf '{\n  "loggedIn": false,\n  "authMethod": "none"\n}\n' >"$canned/auth-non
 # `claude mcp list` under a logged-in config dir: the login's own claude.ai
 # connectors, listed whether or not anything was ever added
 printf 'Checking MCP server health…\n\nclaude.ai Docs: %s - ✔ Connected\n' 'http://example.invalid:9999/mcp' >"$canned/mcp-list-connectors.txt"
-# The runner's result, pretty-printed one key per line as the real one is.
+# The runner's result, pretty-printed one key per line as the real one is,
+# at the real indents: the run's start time at the top, then per case its
+# dir, and per run its own `passed`, start time, `error` and `tracePath`
+# ahead of its graders, whose `passed` sits deeper. Case i passes when i
+# is within <passed> and ends normally when within <runs ending normally>;
+# a failed run's one grader passed, so only the run's own key says it
+# failed. Its trace is $evals_kept/e-<i>/out/trace.jsonl.
+evals_kept=$tmp/kept
 eval_result() { # eval_result <partial> <total> <passed> <runs ending normally>
-	printf '{\n  "schemaVersion": 1,\n  "partial": %s,\n  "cases": [\n' "$1"
+	printf '{\n  "schemaVersion": 1,\n  "startedAt": "2026-10-01T20:28:13.747Z",\n  "partial": %s,\n  "cases": [\n' "$1"
 	i=0
-	while [ "$i" -lt "$4" ]; do
+	while [ "$i" -lt "$2" ]; do
 		i=$((i + 1))
-		printf '    {\n      "name": "case-%s",\n      "arms": {\n        "with": [\n          {\n            "error": null,\n            "passed": true\n          }\n        ]\n      }\n    },\n' "$i"
+		if [ "$i" -le "$3" ]; then ok=true; else ok=false; fi
+		if [ "$i" -le "$4" ]; then err=null; else err='"timed out after 300s"'; fi
+		[ "$i" = 1 ] || printf '    },\n'
+		printf '    {\n      "name": "case-%s",\n      "dir": "evals/case-%s",\n      "arms": {\n        "with": [\n          {\n            "passed": %s,\n            "startedAt": "2026-10-01T20:28:14.001Z",\n            "error": %s,\n            "tracePath": "%s/e-%s/out/trace.jsonl",\n            "graders": [\n              {\n                "name": "door-named",\n                "passed": true\n              }\n            ]\n          }\n        ]\n      }\n' "$i" "$i" "$ok" "$err" "$evals_kept" "$i"
 	done
-	printf '    {\n      "name": "tail",\n      "arms": {\n        "with": [\n          {\n            "error": "timed out after 300s",\n            "passed": false\n          }\n        ]\n      }\n    }\n'
-	printf '  ],\n  "aggregates": {\n    "casesTotal": %s,\n    "casesPassed": %s\n  }\n}\n' "$2" "$3"
+	printf '    }\n  ],\n  "aggregates": {\n    "casesTotal": %s,\n    "casesPassed": %s\n  }\n}\n' "$2" "$3"
 }
 eval_result false 2 2 2 >"$canned/eval-ok.json"
 eval_result false 2 1 2 >"$canned/eval-fail.json"
 eval_result true 2 1 1 >"$canned/eval-partial.json"
 eval_result false 1 1 1 >"$canned/eval-short.json"
+eval_result false 2 0 1 >"$canned/eval-error.json"
+# keep-runs <i>... — what --keep-temp leaves for runs <i>: the run's dir
+# under $evals_kept with its trace in out/, what the plugin wrote sealed at
+# mode 000 in sealed/, the dir itself read-only, and the runner's notice
+# naming it on stderr
+cat >"$canned/keep-runs" <<EOF
+for i in "\$@"; do
+	d=$evals_kept/e-\$i
+	mkdir -p "\$d/out" "\$d/sealed/home" "\$d/sealed/tmp"
+	printf '{"type":"result","result":"case-%s trace"}\n' "\$i" >"\$d/out/trace.jsonl"
+	chmod 000 "\$d/sealed"
+	chmod 500 "\$d"
+	echo "⚠ kept \$d: home/ and tmp/ in it were written by the plugin under test and are sealed in \$d/sealed (mode 000; the kept directory is read-only) — open them with \\\`chmod 700 \$d \$d/sealed\\\` to inspect" >&2
+done
+EOF
 # stream-json runs: an init line naming the servers the run saw, one
 # tool_use block per <tool> <input> pair, the tool_result lines a case
 # sets, an optional narration line, and the result line last — the shape
@@ -263,10 +291,40 @@ run_trace "  ✔ node          reachable on port 8012 — 7 tables, front \`clau
 run_trace "  ✔ node          reachable at ymer-node:8012 — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-host.jsonl"
 run_trace "  ✔ node          reachable at http://127.0.0.1:8112/mcp — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-right-url.jsonl"
 # the first run's and the drift run's reports naming a port the node does
-# not run on, each otherwise the run it stands in for
+# not run on, each otherwise the run it stands in for — the drift run's in
+# the role grammar a real drift run prints, the port on the node's line
 run_trace "$(printf '%s' "$setup_report" | sed 's/reachable —/reachable on port 8012 —/')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' Read "{\"file_path\":\"$live/plugins/ymer/skills/setup/SKILL.md\"}" >"$canned/run-setup1-wrong-port.jsonl"
-run_trace 'tasks.due_date added — node on port 8012' $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3-wrong-port.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 7 tables, front \`claude_code\`, node on port 8012 (added tasks.due_date)\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3-wrong-port.jsonl"
 run_trace 'tasks.due_date added' $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3.jsonl"
+# the first run's report with a role line the model wrapped, its
+# continuation lines indented under it and one opening on the ` — `
+# separator; and with list bullets, a nested bullet under one role line
+# and a fence nested under another, the facts that line needs after the
+# fence — right in every fact, so setup-report must pass both
+run_trace "## Setup — ymer environment\n\n\`\`\`\n✔ node          reachable — 7 tables created, front \`claude_code\` added\n✘ state_folder  not set — set it with /plugin configure ymer@ymer, or\n                 reinstall with the install line and the option\n✔ ymer          no connection in this session\n                 — work tracked in the\n                 node's \`tasks\` table\n–  Meta Roadmap  not checked\n\`\`\`\n\nOne blocker: the state_folder option is not set." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-wrapped.jsonl"
+run_trace "**Setup — ymer environment**\n\n- ✔ node — reachable — 7 tables created, front \`claude_code\` added\n- ✘ state_folder — not set — set it with \`/plugin configure ymer@ymer\`\n  - If you did set a folder and still read not set, check which plugin it is set on.\n- ✔ ymer — no connection in this session. Add it with:\n  \`\`\`\n  claude mcp add --transport http --scope user ymer <its address>\n  \`\`\`\n  until then, work is tracked in the node's \`tasks\` table\n- – Meta Roadmap — not checked\n\nNext step: set the state_folder option." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-nested.jsonl"
+# the re-run's node line naming a count or a state that only contains the
+# right one: 17 tables, unreachable
+run_trace "  ✔ node          reachable — 17 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-17-tables.jsonl"
+run_trace "  ✔ node          unreachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-unreachable.jsonl"
+# the re-run's report fenced, the node's role line last and a sentence
+# saying created and added straight after the closing fence: the block's
+# own fence ends the role line, so the sentence never decides it; and the
+# role names dressed with a colon, which still read as the role names
+run_trace "Setup — ymer environment\n\n\`\`\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n  ✔ node          reachable — 7 tables, front \`claude_code\`\n\`\`\`\nNothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-fenced.jsonl"
+run_trace "Setup — ymer environment\n\n- ✔ **node**: reachable — 7 tables, front \`claude_code\`\n- ✔ **state_folder**: \`$pstate\` — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-colon.jsonl"
+# the re-run's report naming ports that are not the node's address — a
+# container's port in the prose after the lines, a database's port on the
+# node's own line — and a wrong node URL in that prose
+run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nInside Docker the container listens on port 8012." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-container-port.jsonl"
+run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`, db_port 5432\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-db-port.jsonl"
+run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nReady. The node answers at http://127.0.0.1:8012/mcp." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-prose-url.jsonl"
+# the re-run's node line carried onto a continuation line that names a
+# wrong port: the node's role line is read whole, its continuations joined
+run_trace "  ✔ node          reachable — 7 tables, front \`claude_code\`\n                 (repaired: tasks was missing due_date — node on port 8012)\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrapped-port.jsonl"
+# the node's role mark in emoji presentation — the mark, then U+FE0F —
+# on a line naming a wrong port: the mark is the same mark
+run_trace "  ✔️ node          reachable — 7 tables, front \`claude_code\`, node on port 8012\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-emoji-port.jsonl"
 # the state folder's reading aimed at another folder: the path is the
 # stage's own, so any other is no declared command
 run_trace 'read' Bash '{"command":"git -C /Users/someone/state rev-parse --is-inside-work-tree"}' >"$canned/run-capture-revparse.jsonl"
@@ -342,6 +400,13 @@ sed 's/"subtype":"success"/"subtype":"error_max_turns"/' "$canned/run-capture.js
 # setup named — each having only read the node
 run_trace "Tutor skill — stopped: no ymer docs tool in this session. The knowledge and engagement docs live in ymer, so nothing was opened." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-ymer.jsonl"
 run_trace "Tutor skill — stopped: the notebook has no tutor_subjects or tutor_engagements table. Run /ymer:setup, which creates both." $notebook '{"action":"query","data":{"sql":"SELECT name FROM sqlite_master"}}' >"$canned/run-tutor-stop.jsonl"
+# tutor's stop naming only the node, by its name and its server name:
+# neither names ymer, the docs' home
+run_trace "Tutor skill — stopped: no docs tool on the Ymer Node, and ymer-node has none." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-node-only.jsonl"
+# tutor's stop opening its line on a word it names, and one naming ymer
+# only behind a colon, which is no word of its own
+run_trace "Docs live in ymer, which this session cannot reach, so tutor stopped before opening anything." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-line-start.jsonl"
+run_trace "Tutor skill — stopped: no tutor tool answered; see docs:ymer for details." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-colon-before.jsonl"
 # The session transcripts the instructions check reads, under the probe
 # dir's cfg/projects/ and found by the session id on a trace's init line:
 # the one every canned run names, recording its environment and no
@@ -712,34 +777,100 @@ fixture "$fx"
 fixture_cases "$fx"
 shim_reset
 answer 'claude plugin eval' "@$canned/eval-ok.json"
+effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2"
 ANTHROPIC_API_KEY=not-for-children
 export ANTHROPIC_API_KEY
 probe "$fx" eval
 unset ANTHROPIC_API_KEY
 check "eval ok exits 0" 0 "$rc"
 check "eval ok: the cases line" 1 "$(lines '✔ cases        2 cases, 2 passed on claude-sonnet-5')"
-check "eval runs the root once, pinned, one run, no baseline, no publish" 1 "$(logged "claude plugin eval $fx --trust-plugin --ablation none --runs 1 --model claude-sonnet-5 --no-publish --max-cost-usd 5 --json $fx/evals/results/hermetic-probe.json")"
+check "eval runs the root once, pinned, one run, no baseline, no publish, temp dirs kept" 1 "$(logged "claude plugin eval $fx --trust-plugin --ablation none --runs 1 --model claude-sonnet-5 --no-publish --max-cost-usd 5 --keep-temp --json $fx/evals/results/hermetic-probe.json")"
 check "eval: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is set')"
 check "eval keeps the runner's log beside the result" 1 "$(test -f "$fx/evals/results/hermetic-probe.log" && echo 1)"
+# a green copies no trace and leaves no kept dir
+eval_runs=$fx/evals/results/2026-10-01T20-28-13-747Z
+check "eval ok: no trace copied" 0 "$(test -e "$eval_runs" && echo 1 || echo 0)"
+check "eval ok: every kept dir removed" 0 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+check "eval ok: no line names a trace" 0 "$(lines 'traces kept in')"
 
 # ── 9 · eval, a case fails ────────────────────────────────────────────
+# the failed run's trace is copied into the run's own results dir and the
+# fail line names it; the run that passed copies nothing; both kept dirs go
 shim_reset
 answer 'claude plugin eval' "@$canned/eval-fail.json"
+effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2"
 probe "$fx" eval
 check "eval fail exits 1" 1 "$rc"
-check "eval fail: names the result" 1 "$(lines "✘ cases        1 of 2 cases passed (exit 0) — each failed grader's explanation is in $fx/evals/results/hermetic-probe.json")"
+check "eval fail: names the result and the kept traces" 1 "$(lines "✘ cases        1 of 2 cases passed (exit 0) — each failed grader's explanation is in $fx/evals/results/hermetic-probe.json — traces kept in $eval_runs/")"
+check "eval fail: the failed run's trace, copied whole" '{"type":"result","result":"case-2 trace"}' "$(cat "$eval_runs/case-2.trace.jsonl" 2>/dev/null)"
+check "eval fail: the passed run's trace not copied" 0 "$(test -e "$eval_runs/case-1.trace.jsonl" && echo 1 || echo 0)"
+check "eval fail: every kept dir removed" 0 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+rm -rf "$eval_runs"
 
 # ── 10 · eval, a partial run and a run error ──────────────────────────
 shim_reset
 answer 'claude plugin eval' "@$canned/eval-partial.json"
+effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2"
 probe "$fx" eval
 check "eval partial exits 1" 1 "$rc"
-check "eval partial: the runner line" 1 "$(lines '✘ runner       the run is partial')"
+check "eval partial: the runner line names the kept traces" 1 "$(lines "✘ runner       the run is partial — read $fx/evals/results/hermetic-probe.json (partialReason) and run again — traces kept in $eval_runs/")"
+check "eval partial: the errored run's trace copied" 1 "$(test -f "$eval_runs/case-2.trace.jsonl" && echo 1)"
+check "eval partial: every kept dir removed" 0 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+rm -rf "$eval_runs"
 shim_reset
 answer 'claude plugin eval' "@$canned/eval-short.json"
 probe "$fx" eval
 check "eval short exits 1" 1 "$rc"
 check "eval short: a case failed to load" 1 "$(lines '✘ cases        2 case.yaml files, 1 cases ran')"
+# one run red on a grader and one ending on its timeout: both traces kept
+# in the one run's dir, which the line printed names
+shim_reset
+answer 'claude plugin eval' "@$canned/eval-error.json"
+effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2"
+probe "$fx" eval
+check "eval run error exits 1" 1 "$rc"
+check "eval run error: the runs line names the kept traces" 1 "$(lines "✘ runs         1 of 2 runs ended abnormally (a turn cap or timeout) — read the error fields in $fx/evals/results/hermetic-probe.json — traces kept in $eval_runs/")"
+check "eval run error: the grader-red run's trace copied" 1 "$(test -f "$eval_runs/case-1.trace.jsonl" && echo 1)"
+check "eval run error: the timed-out run's trace copied" 1 "$(test -f "$eval_runs/case-2.trace.jsonl" && echo 1)"
+check "eval run error: every kept dir removed" 0 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+rm -rf "$eval_runs"
+
+# ── 10b · eval, the runner writing no result ──────────────────────────
+# no result names no failed run, so nothing is copied, and the dir the
+# runner kept is still removed on the way out
+shim_reset
+answer 'claude plugin eval' 'rc=3'
+effect 'claude plugin eval' "sh '$canned/keep-runs' 1"
+probe "$fx" eval
+check "eval no result exits 2" 2 "$rc"
+check "eval no result: the runner line" 1 "$(lines "✘ runner       claude plugin eval wrote no result (exit 3) — read $fx/evals/results/hermetic-probe.log")"
+check "eval no result: the kept dir removed" 0 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+check "eval no result: no trace copied" 0 "$(test -e "$eval_runs" && echo 1 || echo 0)"
+
+# ── 10c · eval, a kept dir that outlives its removal ──────────────────
+# a kept dir its parent will not let go is named with the commands that
+# remove it; a notice naming a directory not shaped like the runner's own
+# never has it removed, nor one whose e- name sits above its last component
+shim_reset
+answer 'claude plugin eval' "@$canned/eval-ok.json"
+effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2 && chmod 500 '$evals_kept' && mkdir -p '$tmp/precious/out' '$tmp/e-mail/y/out' && echo '⚠ kept $tmp/precious: sealed' >&2 && echo '⚠ kept $tmp/e-mail/y: sealed' >&2"
+probe "$fx" eval
+chmod 700 "$evals_kept"
+check "eval kept dir left exits 1" 1 "$rc"
+check "eval kept dir left: the kept line names both dirs" 1 "$(lines "✘ kept         the runner's kept temp dir(s) $evals_kept/e-1 $evals_kept/e-2 outlived their removal — remove each: chmod 700 <dir> <dir>/sealed && rm -rf <dir>")"
+check "eval kept dir left: a directory not shaped like the runner's is never removed" 1 "$(test -d "$tmp/precious/out" && echo 1)"
+check "eval kept dir left: a directory named e- only above its last component is never removed" 1 "$(test -d "$tmp/e-mail/y/out" && echo 1)"
+rm -rf "$evals_kept"/e-* "$tmp/precious" "$tmp/e-mail"
+
+# ── 10d · eval, interrupted while the runner runs ─────────────────────
+# a run ended by a signal before the stage removed what the runner kept:
+# the exit trap removes the kept dirs on its way out
+shim_reset
+answer 'claude plugin eval' "@$canned/eval-ok.json"
+effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2 && kill -TERM \$(ps -o ppid= -p \$PPID | tr -d ' ')"
+probe "$fx" eval
+check "eval interrupted exits 143" 143 "$rc"
+check "eval interrupted: every kept dir removed" 0 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
 
 # ── 11 · eval, no cases ───────────────────────────────────────────────
 fx=$tmp/f11
@@ -907,6 +1038,28 @@ requeue 'FROM tutor_subjects"' "$(node_rows 1)"
 probe "$fx" live
 check "live tutor writing with no ymer exits 1" 1 "$rc"
 check "live tutor writing with no ymer: the tutor-ymer line names the rows" 1 "$(lines '✘ tutor-ymer   after /ymer:tutor with no ymer: 1 tutor_subjects rows, 0 tutor_engagements rows')"
+# a stop naming the node alone, as the Ymer Node and as ymer-node: tutor
+# never named ymer
+live_case
+live_queue
+requeue 'claude -p /ymer:tutor' "@$canned/run-tutor-node-only.jsonl" "@$canned/run-tutor-stop.jsonl"
+probe "$fx" live
+check "live tutor naming the node alone exits 1" 1 "$rc"
+check "live tutor naming the node alone: the tutor-ymer line" 1 "$(lines '✘ tutor-ymer   after /ymer:tutor with no ymer: 0 tutor_subjects rows, 0 tutor_engagements rows, no write, and the report does not name ymer and docs on one line')"
+# a stop whose line opens on docs still names ymer and docs on one line
+live_case
+live_queue
+requeue 'claude -p /ymer:tutor' "@$canned/run-tutor-line-start.jsonl" "@$canned/run-tutor-stop.jsonl"
+probe "$fx" live
+check "live tutor opening its line on docs exits 0" 0 "$rc"
+check "live tutor opening its line on docs: the tutor-ymer line" 1 "$(lines '✔ tutor-ymer')"
+# ymer behind a colon, as in docs:ymer, is not ymer named
+live_case
+live_queue
+requeue 'claude -p /ymer:tutor' "@$canned/run-tutor-colon-before.jsonl" "@$canned/run-tutor-stop.jsonl"
+probe "$fx" live
+check "live tutor naming ymer behind a colon exits 1" 1 "$rc"
+check "live tutor naming ymer behind a colon: the tutor-ymer line" 1 "$(lines '✘ tutor-ymer   after /ymer:tutor with no ymer: 0 tutor_subjects rows, 0 tutor_engagements rows, no write, and the report does not name ymer and docs on one line')"
 # a tutor table back after the run on a node without them: tutor made one
 live_case
 live_queue
@@ -1081,6 +1234,75 @@ requeue 'claude -p /ymer:setup' "@$canned/run-setup1-wrong-port.jsonl" "@$canned
 probe "$fx" live
 check "live first and drift reports naming the wrong port exit 1" 1 "$rc"
 check "live first and drift reports naming the wrong port: the setup-address line names both runs" 1 "$(lines '✘ setup-address a setup report names a node port other than 8112 in run(s) 1 5 ')"
+
+# ── 21k · live, setup's role lines carried onto the lines under them ──
+# a role line the model wrapped, and one followed by a nested bullet and
+# a nested fence: each joins its continuation lines, so the coordinator's
+# line reads whole and setup-report passes
+for t in wrapped nested; do
+	live_case
+	live_queue
+	requeue 'claude -p /ymer:setup' "@$canned/run-setup1-$t.jsonl" "@$canned/run-setup2.jsonl" "@$canned/run-setup3.jsonl"
+	probe "$fx" live
+	check "live first report $t exits 0" 0 "$rc"
+	check "live first report $t: the setup-report line" 1 "$(lines '✔ setup-report')"
+done
+
+# ── 21l · live, the re-run's node line holding the right words inside others ──
+# `17 tables` is not `7 tables`, and `unreachable` is not `reachable`
+for t in 17-tables unreachable; do
+	live_case
+	live_queue
+	requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-$t.jsonl" "@$canned/run-setup3.jsonl"
+	probe "$fx" live
+	check "live re-run reading $t exits 1" 1 "$rc"
+	check "live re-run reading $t: the converge-report line" 1 "$(lines '✘ converge-report the re-run'"'"'s report does not read')"
+	check "live re-run reading $t: setup-folder still passes" 1 "$(lines '✔ setup-folder')"
+done
+
+# ── 21m · live, the re-run's report fenced, or its role names dressed with a colon ──
+# a sentence straight after the block's closing fence never joins the
+# node's line, and `node:` reads as the role name `node`
+for t in fenced colon; do
+	live_case
+	live_queue
+	requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-$t.jsonl" "@$canned/run-setup3.jsonl"
+	probe "$fx" live
+	check "live re-run report $t exits 0" 0 "$rc"
+	check "live re-run report $t: the converge-report line" 1 "$(lines '✔ converge-report')"
+	check "live re-run report $t: the setup-folder line" 1 "$(lines '✔ setup-folder')"
+done
+
+# ── 21n · live, ports a setup report names that are not the node's address ──
+# a container's port in the prose and a database's port on the node's own
+# line are no node address; a wrong node URL in the prose is, and so is a
+# wrong port on a continuation of the node's own line
+for t in container-port db-port; do
+	live_case
+	live_queue
+	requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-$t.jsonl" "@$canned/run-setup3.jsonl"
+	probe "$fx" live
+	check "live report naming a $t exits 0" 0 "$rc"
+	check "live report naming a $t: the setup-address line" 1 "$(lines '✔ setup-address')"
+done
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-prose-url.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live report naming a wrong node URL in its prose exits 1" 1 "$rc"
+check "live report naming a wrong node URL in its prose: the setup-address line names the run" 1 "$(lines '✘ setup-address a setup report names a node port other than 8112 in run(s) 4 ')"
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-wrapped-port.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live report naming a wrong port on the node's continuation exits 1" 1 "$rc"
+check "live report naming a wrong port on the node's continuation: the setup-address line names the run" 1 "$(lines '✘ setup-address a setup report names a node port other than 8112 in run(s) 4 ')"
+live_case
+live_queue
+requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-emoji-port.jsonl" "@$canned/run-setup3.jsonl"
+probe "$fx" live
+check "live report naming a wrong port behind an emoji-presentation mark exits 1" 1 "$rc"
+check "live report naming a wrong port behind an emoji-presentation mark: the setup-address line names the run" 1 "$(lines '✘ setup-address a setup report names a node port other than 8112 in run(s) 4 ')"
 
 # ── 22 · live, a git commit, a file write and a foreign server's tool ──
 # a queue line ahead of live_queue's answers first; summary's second-arm

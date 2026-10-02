@@ -24,6 +24,15 @@ battery); a skill has at most one.
 
 ## C
 
+### continuation line
+A non-blank line of a skill's report, with no role mark at its start,
+directly under a role line or another continuation line; the live stage
+joins it to that role line, and a blank line or the next role line ends
+the run (→ role line).
+
+- _Used in_: marketplace
+- _Avoid_: wrapped line, overflow line
+
 ### coordinator
 What tracks a front's work and how topics are named there: ymer's
 `<Product> Roadmap` tasks where the session reaches ymer, the node's
@@ -160,6 +169,15 @@ never a second definition.
 
 - _Used in_: marketplace
 - _Avoid_: presence rule, fallback rule, configured switch
+
+### role line
+A line of a skill's report that opens with a role mark — `✔`, `✘` or
+`–` — past any indent and list bullet; the live stage reads each one as
+one fact-bearing line, its continuation lines joined.
+
+- _Used in_: marketplace
+- _Avoid_: check line (the probe's own lines), report line (any line,
+  prose included), status line
 
 ### router
 How a plugin's skills find machine-local state and the objects they
