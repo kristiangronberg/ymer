@@ -648,6 +648,15 @@ git strips the comments. Claude-authored commits (`-m`/`-F`) never see
 it — they follow the public register's grammar instead.
 
 ## O
+### operations contract
+The reference file this plugin ships for the roadmap and the state
+store: the roadmap model and its views, the operations with their
+required outcomes and postconditions, the status ladder, the topic's
+artifacts with the `request.md` template, split topics, and each
+operation's binding per coordinator. Skills cite it by its role phrase
+— "binding: the operations contract" — and never restate it; its one
+resolvable address is `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`.
+
 ### operator bar
 The proficiency threshold the prerequisite check tests per subject:
 able to guide, hold a real dialogue about, and troubleshoot the shipped

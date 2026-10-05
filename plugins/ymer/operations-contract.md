@@ -237,7 +237,7 @@ composes entirely from the operations above:
   fork is authored). An entry phase, where one is named, is advisory,
   never state: the entry ladder is the invoker's read at pick-up.
 - **Parent closure.** In the common case (split at brainstorm close) the
-  parent's own task closes — *retire topic*, its closing note naming
+  parent's own task closes — *retire topic*, its result naming
   the children — and the parent folder closes with its consolidated
   `brainstorm.md` naming them too. Splitting is a closure cause beside
   shipping and "not pursuing": a split parent ends as a folder with a
@@ -342,9 +342,11 @@ drop in the pool, and a task is created when it is drawn.
 ```
 
 **Look up topic** — the coordinator's own listing of one project's tasks,
-matched by name. Each task comes back with its status and the projects
-it sits in. A read, so no read-back: a by-name miss is visible in the
-returned count.
+matched by name, the name sent to the coordinator with the call — never
+matched over a returned page: a listing is capped, and a miss over a
+capped page cannot be told from truncation. Each task comes back with
+its status and the projects it sits in. A read, so no read-back: a
+by-name miss is visible in the returned count.
 
 **Ship topic** — closing the task as **completed**, its result naming the
 topic ID and saying it shipped. **Retire topic** — closing it as

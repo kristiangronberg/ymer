@@ -202,7 +202,7 @@ selects nothing: it fires no close.
    A meta topic has no squash ref; one that made no machinery diff
    carries no refs line at all.
 4. **Close the topic's task** (*ship topic* — binding: the operations
-   contract): closed as completed, the note naming the topic ID. The
+   contract): closed as completed, its result naming the topic ID. The
    call's return carries the task's status after it — read that; a
    required outcome that did not happen stops the boundary, never
    skipped silently.

@@ -71,7 +71,7 @@ Brainstorm has two doors: an idea the user brings, and a topic `/ymer:mint` drew
 
 1. Read `request.md` — it is brainstorm input with the same standing as a sketch: a starting point, not a decision already made. Its measurements are re-derived before they size the topic (a count in a drop is the capturer's, not this session's), and its `inferred:` marks — mint's root cause among them — are the re-verify feed (register rules: the sweep skill's Claims section).
 2. The task already is the topic: no rename, no move, and no second task. The topic keeps mint's name and date.
-3. Every outcome holds the same way, including "not pursuing this": `request.md` stays in the topic directory, the direction doc records the decision, and the task closes — *retire topic* as cancelled, the why in its note.
+3. Every outcome holds the same way, including "not pursuing this": `request.md` stays in the topic directory, the direction doc records the decision, and the task closes — *retire topic* as cancelled, the why in its result.
 
 ## Branch Intake (code repos, when the session starts on a topic branch)
 
@@ -279,7 +279,7 @@ A pending close (→ The Interview) names no next phase: the report names the pe
 - Resolve the topic before anything else, announce the result, and reuse an existing topic directory — never mint a duplicate
 - The sketch is input, not a commitment — `sketch.md` preserves it verbatim, `brainstorm.md` gets the mined fragments
 - A drawn topic's `request.md` is its intake, read first and never rewritten; its task already is the topic, `doing` since mint drew it
-- A settled direction may split the topic: a child task at `doing` per child, the parent's own task retired with a note naming them, the doc's child list authoritative (→ the operations contract § Split topics)
+- A settled direction may split the topic: a child task at `doing` per child, the parent's own task retired with a result naming them, the doc's child list authoritative (→ the operations contract § Split topics)
 - Scratch stays scratch until the user says settled — then stage it before the consolidating rewrite, so plain `git diff` can surface what the rewrite dropped
 - The doc records discarded options and why — future phases shouldn't re-litigate them
 - On a topic branch everything is input — branch intake renames the branch first, then records the diff and the progression story from `<base>`, the merge-base; the intake gate applies only to branchless sketches. On an iteration arrival only the commits the record does not name are input, and `<base>` is the newest record-named commit (→ Topic Resolution, case 2)

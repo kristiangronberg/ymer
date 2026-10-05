@@ -300,7 +300,8 @@ a superseded plan leaves it showing that nothing happened. A deferred
 While a redefinition is deferred the existing entry is neither silently
 wrong nor silently rewritten: it keeps its current definition and carries
 a required one-line marker, directly under the term head and above the
-definition (or above the autolink):
+definition (or above the autolink), with a blank line on each side, so
+it renders as its own paragraph:
 
 ```
 Redefinition in flight — <date> → <topic ID>: <what changes>
