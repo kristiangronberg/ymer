@@ -68,12 +68,12 @@ claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
 Name that command only on Claude Code. On a harness with no such door,
 say that the node is unreachable from this session and leave it there.
 
-**The skeletons.** Eight tables, created in this order — `fronts`,
-`kinds`, `pool`, `tasks`, `tasks_log`, `topics_history`, `tutor_subjects`,
-`tutor_engagements`. The order is load-bearing: `pool` keys on
-`fronts(slug)` and `kinds(kind)`, `topics_history` on `fronts(slug)`,
-`tasks_log` on `tasks(id)`, and `tutor_engagements` on
-`tutor_subjects(subject)`.
+**The skeletons.** Nine tables, created in this order — `fronts`,
+`kinds`, `pool`, `pool_scores`, `tasks`, `tasks_log`, `topics_history`,
+`tutor_subjects`, `tutor_engagements`. The order is load-bearing: `pool`
+keys on `fronts(slug)` and `kinds(kind)`, `pool_scores` on `pool(id)`,
+`topics_history` on `fronts(slug)`, `tasks_log` on `tasks(id)`, and
+`tutor_engagements` on `tutor_subjects(subject)`.
 
 Read what is there first, with the `notebook` `tables` action, and then
 work table by table. **The node runs one statement per `execute` call and
@@ -137,6 +137,21 @@ CREATE INDEX pool_status_kind ON pool (status, kind)
 `title` stays nullable: the kinds whose bodies run long carry one, and a
 reader scans `COALESCE(title, body)`, so a drop written without one still
 reads.
+
+`pool_scores` — the pool's scores, one row per scored drop, kept beside
+the pool rather than in it so that a drop's own row stays as it was
+observed. Each component is 1, 3 or 5, and a drop is scored once:
+
+```sql
+CREATE TABLE pool_scores (
+  drop_id          INTEGER PRIMARY KEY REFERENCES pool(id),
+  direction_value  INTEGER NOT NULL CHECK (direction_value IN (1, 3, 5)),
+  time_criticality INTEGER NOT NULL CHECK (time_criticality IN (1, 3, 5)),
+  risk_reduction   INTEGER NOT NULL CHECK (risk_reduction IN (1, 3, 5)),
+  size             INTEGER NOT NULL CHECK (size IN (1, 3, 5)),
+  why              TEXT    NOT NULL
+)
+```
 
 `tasks` — the coordinator where a session reaches no ymer. The status
 vocabulary is ymer's own, under a `CHECK`, so promoting a row into ymer
@@ -257,7 +272,7 @@ owner extended — the columns their front added, the rules their work runs
 by — and that text lives nowhere else. Replacing it destroys it silently,
 on a run whose whole promise is that it changes nothing already right.
 
-The eight texts, each the grammar of its table:
+The nine texts, each the grammar of its table:
 
 > **`table:fronts`** — The fronts: one row per surface a session runs on.
 > `slug` is the token every front-bound row names, snake_case, and the
@@ -313,6 +328,22 @@ The eight texts, each the grammar of its table:
 > anchor was drained is the sharpest signal the pool gives. This row is
 > the grammar's home; the table's definition is sqlite_master, and every
 > backup carries both.
+
+> **`table:pool_scores`** — The pool's scores: one row per scored drop,
+> written once when the drop is first scored and never revised. A pool
+> row with no row here is unscored, and an empty drop is never scored.
+> drop_id = the pool row scored, the key and a foreign key into pool(id).
+> Four components, each 1, 3 or 5 under a CHECK: direction_value — how
+> strongly the drop advances a product's next steps, the best match
+> across every product page; time_criticality — the cost of waiting;
+> risk_reduction — the risk its work removes, or the work it enables;
+> size — its scope and uncertainty, 1 small and 5 large or unclear. why
+> = the scorer's one line: what the drop matched, and anything that made
+> it hard to score. A score is never stored: it is computed when a drop
+> is drawn, the kind's weight times (direction_value + time_criticality
+> + risk_reduction) divided by size, so a changed weight re-ranks every
+> drop without rewriting a row. A changed rubric applies to drops scored
+> after it, and rows scored before it stand.
 
 > **`table:tasks`** — The coordinator where a session reaches no ymer:
 > one row per unit of work, shaped as the minimum of ymer's task model so
@@ -425,7 +456,7 @@ The order is the point: bug comes first so that whatever does not work
 as written is never filed as waste, and friction comes last because it
 is what remains when everything worked.
 
-**An existing table is verified, never rebuilt.** For each of the eight
+**An existing table is verified, never rebuilt.** For each of the nine
 that already exists, read it with the `notebook` `schema` action and
 check the required columns **by name and type** — nothing else. A
 missing one is added:
@@ -468,6 +499,7 @@ The required columns, by table:
 - `fronts` — `slug`, `capabilities`, `notes`
 - `kinds` — `kind`, `test_order`, `description`
 - `pool` — every column of the definition above
+- `pool_scores` — every column of the definition above
 - `tasks` — `id`, `name`, `description`, `status`, `project`, `area`,
   `estimated_effort_minutes`, `due_date`, `result`, `external_ref`,
   `created_at`, `updated_at`, `closed_at`
@@ -769,15 +801,15 @@ The node's line counts its tables and names the front: the number this
 run created, with `created`, when it created any, and otherwise the
 number the node holds; and `added` after the front only when this run
 wrote the front's row. So a first run on an empty node reads
-`` 8 tables created, front `claude_code` added `` and a re-run on a
-healthy machine reads bare, `` 8 tables, front `claude_code` ``: the line
+`` 9 tables created, front `claude_code` added `` and a re-run on a
+healthy machine reads bare, `` 9 tables, front `claude_code` ``: the line
 names what this run changed and nothing else, so a reader can tell a
 repair from a machine that was already right.
 
 ```
 Setup — ymer environment
 
-  ✔ node          reachable — 8 tables, front `claude_code`
+  ✔ node          reachable — 9 tables, front `claude_code`
   ✔ state_folder  /Users/you/state — git work tree, history in git
   ✔ ymer          reachable
   ✔ Meta Roadmap  exists

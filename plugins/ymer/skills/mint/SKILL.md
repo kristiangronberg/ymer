@@ -1,6 +1,6 @@
 ---
 name: mint
-description: Use to draw the next piece of work from the pool — survey every open drop, take the top one (bugs first), read its product's Forward direction to fold in the drops that belong with it, and drain them into exactly one thing: a topic plus its task in the product's Roadmap, the friction-batch, or a learning task.
+description: Use to draw the next piece of work from the pool — score the new drops, rank the pool, take the top drop, read its product's Forward direction to fold in the drops that belong with it, and drain them into exactly one thing: a topic plus its task in the product's Roadmap, the friction-batch, or a learning task.
 ---
 
 # Mint
@@ -117,9 +117,9 @@ placeholder on Claude Code, no path in the front's instructions on
 Cowork), two instructions naming two different folders, a named folder
 that is missing, out of this session's reach, or of a kind the reading
 above does not name, a ymer call that errors,
-a lapsed sign-in, a notebook that answers but lacks `tasks`, `tasks_log`
-or `topics_history` — stops the run with one instruction: **run
-`/ymer:setup`**, which ships in this plugin. Repair nothing here, never
+a lapsed sign-in, a notebook that answers but lacks `tasks`, `tasks_log`,
+`topics_history` or `pool_scores` — stops the run with one instruction:
+**run `/ymer:setup`**, which ships in this plugin. Repair nothing here, never
 guess a path, and never write a topic anywhere else: a run with no state
 folder drains nothing, and its drops stay open for the run after setup
 passes.
@@ -180,11 +180,13 @@ one version it was copied from.
 The tool and the action are the node's; the SQL is this plugin's own, over
 its own tables, so the statements below are the skill's to carry. The node
 runs **one statement per `execute` call** and drops the rest of a
-multi-statement call without a word.
+multi-statement call without a word. A result too large to come back
+whole — a notebook read or a `projects list` — is read whole from
+wherever the harness kept it, never from a preview of it.
 
 ## The run
 
-1. **Back up, then orient.** Take a notebook backup first — `notebook`
+1. **Back up, score, then orient.** Take a notebook backup first — `notebook`
    `create` — and note its id: the drain in step 4 changes drops no commit
    records. The backup is the whole-notebook safety net, not the drain's
    undo — `restore` puts back everything as it was and discards every drop
@@ -197,10 +199,17 @@ multi-statement call without a word.
    WHERE id IN (<the same ids>)
    ```
 
+   Then score (→ Scoring): every open drop on this front that is not
+   empty and has no `pool_scores` row gets one, before anything is ranked,
+   as far as this run's scoring reaches — a drop it leaves unscored waits
+   for a later run, named in the close. A pool with nothing new scores
+   nothing, and the run goes straight on.
+
    Then survey the pool whole — never a recent tail: something that
    recurs slowly would fall out of view exactly as it matures into work
-   worth doing. Whole means every open drop on this front is in view, the
-   aggregates first and then the drops, each through `notebook` `query`:
+   worth doing. Whole means every open drop on this front is counted and
+   every scored one ranked: the aggregates first and then the ranking,
+   each through `notebook` `query`:
 
    ```sql
    -- every front's open drops: this front's are the run's, the others'
@@ -252,23 +261,71 @@ multi-statement call without a word.
    ORDER BY drops DESC
    ```
 
-   Then the drops: every open drop that is not empty, as a lead, oldest
-   first, a hundred per page until a page comes back short. The lead is
-   the title where the drop has one and the body where it has none:
+   Then the ranking: every scored open drop on this front, highest score
+   first, twenty-five per page — read pages until the top drop is found
+   (→ The pick rule), never the whole list. The score is computed here at
+   every run and never stored. The `VALUES` list is the kind weights' one
+   home — a retune is an edit to it, and the next run ranks with it
+   without rewriting a row — and a kind it does not name, one a front
+   added, weighs 1. `anchor` finds a drop's line in the frequency
+   aggregate above, or its own `#<id>` line there when other drops recur
+   on it; frequency is shown beside the score and never folded into it:
 
    ```sql
-   SELECT id, captured_on, source, context, kind, product,
-          substr(COALESCE(title, body), 1, 200) AS lead
-   FROM pool
-   WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
-   ORDER BY id
-   LIMIT 100 OFFSET <n>
+   WITH weight(kind, w) AS (VALUES ('bug', 20), ('vision', 9), ('idea', 5), ('learning', 3), ('friction', 1))
+   SELECT p.id, p.kind, p.product, p.context,
+          round(COALESCE(w.w, 1) * (s.direction_value + s.time_criticality + s.risk_reduction) * 1.0 / s.size, 1) AS score,
+          COALESCE('#' || p.anchor_id, p.anchor_text) AS anchor,
+          s.why, substr(COALESCE(p.title, p.body), 1, 200) AS lead
+   FROM pool p
+   JOIN pool_scores s ON s.drop_id = p.id
+   LEFT JOIN weight w ON w.kind = p.kind
+   WHERE p.status = 'open' AND p.front = '<front>' AND p.kind <> 'empty'
+   ORDER BY score DESC, p.id
+   LIMIT 25 OFFSET <n>
    ```
 
    A drop that becomes a candidate for the pick is read whole, together
    with the drops anchored on it — `WHERE id = <id> OR anchor_id = <id>`,
    or `WHERE anchor_text = '<text>'` for a named cause. The aggregates
    count; clustering is still a judgement made by reading.
+
+   Its neighbours — open drops on this front that solve the same kind of
+   problem without sharing its anchor — are found by searching the pool
+   for the candidate's own terms, rarest first, `WHERE status = 'open'
+   AND front = '<front>' AND kind <> 'empty' AND (title LIKE '%<term>%'
+   OR body LIKE '%<term>%')`, and on the ranking pages already read. Its family drains
+   with it wherever the family's other drops rank (→ step 4).
+
+   Two exits take more than the top drop and its family, and the ranking
+   pages do not surface those members, so they are read for the pick. A
+   vision drop brings its product's whole vision cluster (→ Clustering),
+   read twenty-five at a time, each body cut to its first 600 characters,
+   until a page comes back short:
+
+   ```sql
+   SELECT id, captured_on, context, title, substr(body, 1, 600) AS body
+   FROM pool
+   WHERE kind = 'vision' AND status = 'open' AND front = '<front>'
+     AND lower(product) = lower('<product>')
+   ORDER BY id
+   LIMIT 25 OFFSET <n>
+   ```
+
+   A friction-batch pick (→ Three exits) gathers its set from the
+   ranking pages already read and from the open frictions scored small.
+   The scorer's `why` is where a drop whose cause looks already gone says
+   so — the moot ones. One page is a friction-batch's worth; read the
+   next only when the first leaves the friction-batch short:
+
+   ```sql
+   SELECT p.id, p.context, s.why, substr(COALESCE(p.title, p.body), 1, 200) AS lead
+   FROM pool p JOIN pool_scores s ON s.drop_id = p.id
+   WHERE p.kind = 'friction' AND p.status = 'open' AND p.front = '<front>'
+     AND s.size = 1
+   ORDER BY p.id
+   LIMIT 25 OFFSET <n>
+   ```
 
    Then find this front's topics nobody has started, in **every store
    this session reaches** — they answer different questions, and the
@@ -319,8 +376,8 @@ multi-statement call without a word.
    reminder at the moment it is relevant, never a gate. They are also
    what step 3's "one open friction-batch at a time" rule needs.
 
-2. **Pick the top drop** (→ The pick rule) — an open bug first, and
-   otherwise the judgement the pick rule describes.
+2. **Pick the top drop** (→ The pick rule) — the highest-scored drop an
+   exit can take, unless a written reason passes it over.
 
 3. **Form the pick, then create or append its artifact.** Read the
    product's **Forward direction** once — the first settled section of
@@ -364,7 +421,8 @@ multi-statement call without a word.
    The ids are the cluster's, never the anchor's alone: this front's
    portion of it — the anchor where its `front` is this one, and every
    open drop of this front anchored on it, by `anchor_id` or by the same
-   `anchor_text` for a named cause — the drops step 1 read together, plus
+   `anchor_text` for a named cause — the drops step 1 read together, the
+   vision cluster or friction-batch set step 1 gathered for the pick, plus
    the neighbours step 3 folded in. A pointer left open on a drained
    anchor reads as the sharpest signal next run, so after a drain an open
    pointer on a drained anchor means one of two things: captured after
@@ -424,8 +482,95 @@ multi-statement call without a word.
 
 6. **Close with the runnable reminder** (→ The close).
 
-The five subsections below are reference material for steps 2–4 and 6 —
+The six subsections below are reference material for steps 1–4 and 6 —
 the numbered flow ends here.
+
+### Scoring
+
+A drop's **score** ranks it: its kind's weight times the sum of three
+components — direction value, time criticality and risk reduction —
+divided by a fourth, size. Each component is 1, 3 or 5, written once
+into the drop's `pool_scores` row by a **scorer**: a subagent on the
+cheapest model the harness offers — `haiku` on Claude Code — whose whole
+world is its prompt. The score itself is computed by step 1's ranking
+query at every run and never stored. A row is never revised: a changed
+rubric, or a product's changed next steps, applies to drops scored after
+the change, and older rows keep the numbers they were given.
+
+The weights live in the ranking query's `VALUES` list — bug 20, vision 9,
+idea 5, learning 3, friction 1 — and the rubric, what every 1, 3 and 5
+means, lives in [`scorer.md`](scorer.md), the scorer's prompt. Each has
+that one home, and a retune is an edit there. Bugs lead because of their
+weight, not because of a rule above the formula.
+
+Invoking this skill is the request to dispatch scorers: a standing
+instruction to use subagents only when the user asks for them is met by
+the invocation itself.
+
+1. **The unscored drops** — their ids only, so this session reads none of
+   their text:
+
+   ```sql
+   SELECT p.id
+   FROM pool p LEFT JOIN pool_scores s ON s.drop_id = p.id
+   WHERE p.status = 'open' AND p.front = '<front>' AND p.kind <> 'empty'
+     AND s.drop_id IS NULL
+   ORDER BY p.id
+   ```
+
+   None listed → scoring is done for this run.
+2. **The next steps.** Where ymer is the coordinator, take every product
+   page's `## Next steps` section from a `projects list` name search for
+   `Roadmap` asking for each project's name and description — the list
+   step 3 and the routing read too. Write one block per product: its
+   name, then its bullets as they stand, or `none` where the heading is
+   there with no bullet under it. A page with no `## Next steps` heading
+   adds no block — it names no next step for a drop to match, and the
+   close names it, so a product page that lost its heading is seen. A
+   list call that fails or comes back cut short is a block that could not
+   be read: score nothing this run and go to step 4, so the run ranks the
+   rows already written and names what it left unscored. Scores are
+   written once, so an unreadable block must never be read as an empty
+   one. Where the node is the coordinator there are no pages
+   (the product-design skill § The product page), and the block says
+   there are no next steps.
+3. **Dispatch.** Split the ids into lists of at most 100, oldest first,
+   and hand each list to one scorer: the text of `scorer.md` verbatim,
+   then the next-steps block and the list. A scorer is a fresh subagent,
+   never a fork: a fork inherits this session's context and model, which
+   is exactly what scoring keeps out. A scorer reads text other sessions
+   wrote, so where the harness lets a dispatch name the subagent's tools,
+   give it the node's `notebook` tool and nothing else — no shell, no
+   file writes. Before the first dispatch, list the notebook's tables
+   (`notebook` `tables`). Dispatch up to four at a time, and wait for
+   every scorer's answer before step 4 — never rank while one is still
+   out.
+4. **Read back.** List the tables again where scorers ran: a table that
+   appeared or vanished meanwhile means a scorer wrote beyond its rows —
+   stop the run before ranking, name the difference, and hand it to
+   capture; the backup step 1 took is the way back. Then run step 1's
+   query again. An id it still lists was not written — a refused
+   statement, a malformed row, a scorer that stopped — and gets one more
+   try, scored in-session (→ Fallback), unless step 2 found a block it
+   could not read: then no id is scored this run. An id still listed after that
+   stays unscored until a later run; it is never ranked on a guess. The
+   draw is then made among the scored drops alone: where ids stay
+   unscored, say so before drawing — the ranking leaves them out — and
+   keep the ids for the close. Where the ranking holds no drop at all
+   while open drops wait unscored, stop: draw nothing, and say how many
+   wait and why scoring did not reach them. A judgement pick over
+   unscored drops is never the way around an empty ranking. Keep each
+   scorer's note on the drops that were hard to score: the close hands it
+   to capture.
+
+**Fallback — score in-session.** Where no subagent can be dispatched — the
+tool is absent, or a spawn is refused at the permission layer — this
+session scores the unscored drops itself: it reads `scorer.md` and
+follows it as a scorer would, ten drops at a time and at most 100 drops
+in one run, oldest first, step 4's one more try counted inside that
+bound. The rest stay unscored for a later run, under step 4's rules for
+drops left unscored, and the close says scoring ran in-session. The rows
+are the same rows, so the ranking stays one formula on every front.
 
 ### Clustering
 
@@ -450,36 +595,39 @@ Forward direction.
 
 ### The pick rule
 
-**Bugs first.** An open bug drop on this front — a recurrence of a bug
-included — is the top drop, ahead of every other kind: something that
-does not work as it claims costs every session that meets it. Among
-several bugs, the judgement below picks. A drop that might be a bug and
-might be trivial errs toward being drawn: drawing it is how the doubt is
-settled. The rules for a drop anchored to a topic that already exists,
-below, come first: a bug drop anchored to an unstarted topic folds into
-it, one anchored to a topic in flight — started and not yet shipped —
-stays open and is no candidate, and a bug that recurs after its topic
-shipped stays a candidate, the sharpest one.
+**The top drop is the highest-scored drop an exit can take.** Walk the
+ranking from its head; the first drop an exit can take is the top drop.
+The rules for a drop anchored to a topic that already exists, below,
+act on the drop the walk lands on. Anchored to an unstarted topic, it
+folds into that topic, and that fold is the run's one draw. Anchored to
+a topic in flight, it is passed by, and so is a vision drop no exit can
+place (→ Three exits); the walk goes on. A recurrence of something that
+shipped is never passed by under these rules, and it is drawn above a
+higher-ranked drop only through the written reason below. One formula
+ranks — no tier, threshold or ladder sits above it, and bugs lead
+because of their weight. A top drop that might be a bug and might be trivial errs toward
+being drawn: drawing it is how the doubt is settled.
 
-**Otherwise, pick the one drop or cluster whose removal would spare the
-most future waste.** Three things to weigh, in no fixed order:
+**Passing the top drop over takes a written reason.** The score is the
+default, never a cage: draw something else when reading the top drop
+shows the ranking is wrong about it. Weigh what the score cannot see:
 
 - **What each occurrence costs.** A silent failure costs more than a felt
   one — it looks exactly like a clean pass, and its cost lands later on a
   session with no way to know.
-- **How often it bites.** Drops sharing a root cause are evidence of
-  frequency. Evidence, not a ranking key: one drop describing an
-  expensive silent failure outranks six drops of mild friction.
+- **How often it bites.** The frequency shown beside the score is
+  evidence, not a ranking key: one drop describing an expensive silent
+  failure outranks six drops of mild friction.
 - **Whether the cause is understood well enough to act.** Drops naming a
   symptom whose cause is still fuzzy make a better topic once they have
   gathered more faces — a reason to pick something else this run, never a
   reason to never pick it.
+- **The sharpest signal.** An open recurrence whose anchor was drained
+  and whose topic has shipped, ranked below the top, may be drawn over
+  it.
 
-There is deliberately **no stored count, no threshold and no tiebreak
-ladder** beyond bugs first, so do not reinvent one. Ranking only matters
-when the pool's head sits unserved, and serving one thing per run
-answers that — which is also what keeps the singleton tail servable, the
-pick being a judgement over content rather than a count comparison.
+Write the reason into the pick's `request.md`, one line per drop passed
+over (→ `request.md`'s shape), and hand it to capture at the close.
 
 **A drop anchored to a topic that already exists** — two rules:
 
@@ -621,8 +769,8 @@ always routes to `Meta Roadmap`. It takes exactly two kinds of drop:
   work that follows gets the final say on whether it is done, including
   that it is not.
 
-**Bugs and vision drops are neither kind.** A bug is drawn first and as
-its own pick; a product's direction is not the friction-batch's edit
+**Bugs and vision drops are neither kind.** A bug is drawn as its own
+pick; a product's direction is not the friction-batch's edit
 surface. A product's vision drops drain as exit 1 above, as a **carve
 topic**: an ordinary topic in that product's area whose `request.md`
 names the product and carries the drops verbatim, and whose work writes
@@ -638,7 +786,7 @@ lives, once the topic is promoted.
 
 **Every other drop stays open, accumulating.** If the friction-batch
 swallowed everything, the pool would empty at every run and the
-frequency signal the pick rule rests on would be gone.
+frequency signal shown beside the score would be gone.
 
 **One open friction-batch at a time.** If step 1's listings found a
 `friction-batch` nobody has started, **append** this run's drops to
@@ -732,6 +880,8 @@ started: <YYYY-MM-DD>
 
 **Direction.** <how the pick moves the product the way its Forward direction says, or "no Forward direction to read">
 
+**Passed over.** #<id> (score <n>) — <the reason>
+
 Drops, verbatim from the pool:
 
 <drop as a line>
@@ -741,6 +891,15 @@ Drops, verbatim from the pool:
 The `inferred:` mark is the default on the root-cause line: mint
 synthesizes with no code in view, so the cause is reasoned rather than
 observed, while the verbatim drops below it stay unmarked observations.
+
+A **Passed over** line is written only where the pick passed the top
+drop over — one line per drop passed over, with the reason the pick rule
+asks for — so the topic's brainstorm reads why this pick and not the top
+one. A friction-batch carries its Passed over lines directly under its
+intro paragraph (`Frictions drawn by …`), before `## Below the bar for
+their own topic`. An append adds one line per newly passed-over drop
+beneath the Passed over lines already there, and leaves them and the
+rest of the file as they are.
 
 The friction-batch:
 
@@ -825,6 +984,8 @@ ORDER BY id DESC LIMIT 1
 Picked: <name> — <one line: what doing it removes or builds>
 Topic:  <area>/YYYY/MM-DD-<name>/ (state folder, history in <git | node `topics_history`>)
 Task:   <task name> (doing, <Product> Roadmap in <ymer | node `tasks`>)
+Scored: <n> new drops (<n> scorers | in this session | next steps unreadable)
+Unscored: <m> left out of the ranking (ids <the first ten>)
 Next:   /brainstorm <name>
 
 Still unstarted from earlier mints:
@@ -845,13 +1006,41 @@ derives them, and the close is where they get read. If that list grows
 long, the length is the signal — a felt failure earns a reminder, not a
 guard.
 
+`Scored:` says how many drops this run scored and by whom — scorers, or
+this session where scoring fell back (→ Scoring); `0 new drops` where
+there were none, and `next steps unreadable` where step 2 of Scoring
+scored nothing for that reason; `pages without next steps: <names>`
+follows wherever step 2 found a page with no `## Next steps` heading.
+`Unscored:` is written only where drops
+stayed unscored: how many and the first ten ids, so the reader knows
+this run's pick came from a ranking that leaves them out. A run that stopped
+on an empty ranking closes with these two lines and the reason, and
+picks nothing.
+
+**Capture block:** invoke the `ymer:capture` skill — source
+`mint`. The battery, the drop grammar and the write live in that skill
+alone. Hand it, by name, what this run's scoring showed:
+
+- every scorer's note on the drops that were hard to score, as the
+  scorer wrote it;
+- the ids left unscored, the first ten, as the `Unscored:` line names
+  them;
+- this session's own answer to "Did the scoring look reasonable — would
+  you have drawn the top drop yourself? If not, name the drop, the
+  component that looked wrong, and what it should have been." A top drop
+  passed over is always a "no", with its reason.
+
 ## Remember
 
 - Mint draws exactly one thing per run, and every exit deposits a
   durable artifact — mint applies no diff itself and discards nothing
-- Bugs first; otherwise the drop or cluster whose removal spares the most
-  future waste. The product's Forward direction forms the pick — its
-  neighbours and its shape — and never ranks it
+- Every run scores what is new, then draws the highest-scored drop an
+  exit can take — bugs lead by their weight, and passing the top drop
+  over takes a written reason. The product's Forward direction forms the
+  pick — its neighbours and its shape — and never ranks it
+- A score's components are written once and the score is computed at the
+  draw: the weights in step 1's `VALUES` list, the rubric in `scorer.md`,
+  each its one home
 - The coordinator is the default where this session reaches it: ymer
   else the node's `tasks` — resolved once, asked never. The state folder
   is required, and its history is git where it is a git work tree and

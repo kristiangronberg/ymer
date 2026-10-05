@@ -189,9 +189,14 @@ EOF
 # under acceptEdits a read-only command such as `true` or `echo` runs with
 # no rule matching it (CLI 2.1.283, measured), so every run also loads
 # hook/settings.json, and its hook is what makes the declared commands
-# binding. A tool call no rule and no mode admits is asked, and an
-# unattended run denies it; either way the attempt stays in the trace for
-# the checks below. state/ sits outside the working
+# binding. Reads of the plugins' own files are allowed by one rule over
+# the checkout's plugins/ — a skill reads the files beside its SKILL.md,
+# mint its scorer's prompt, and the runs' working directory is outside
+# the checkout, where a read is otherwise asked (`//` roots the rule at
+# the filesystem: CLI 2.1.289, measured). Agent is allowed, so mint's
+# scorers can be dispatched. A tool call no rule and no mode admits is
+# asked, and an unattended run denies it; either way the attempt stays in
+# the trace for the checks below. state/ sits outside the working
 # directory, where acceptEdits denies a write, so it is added as a
 # directory the run may edit (measured the same way). The MCP servers are
 # the flag's alone: a logged-in config dir carries the organisation's
@@ -208,7 +213,7 @@ live_run() { # live_run <n> <prompt>
 	mkdir -p "$cwd"
 	(cd "$cwd" && claude -p "$2" --output-format stream-json --verbose \
 		--permission-mode acceptEdits \
-		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree)' mcp__ymer-node__notebook \
+		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree)' mcp__ymer-node__notebook "Read(/$root/plugins/**)" Agent \
 		--add-dir "$state" --model "$probe_model" --max-turns 60 \
 		--strict-mcp-config --mcp-config "$mcp" --settings "$hook/settings.json") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
 	ran="$ran $1"
@@ -285,8 +290,8 @@ report_lines() { # report_lines <n> — run <n>'s report, one line per role line
 
 # The lines on stdin carrying every word, case aside, each where no name
 # character touches either end: letters, digits, `_`, `-` and `/` on
-# either side, and `:` before the word only — so `8 tables` is not read
-# in `18 tables`, `reachable` not in `unreachable`, `ymer` not in
+# either side, and `:` before the word only — so `9 tables` is not read
+# in `19 tables`, `reachable` not in `unreachable`, `ymer` not in
 # `ymer-node` or a skill's `/ymer:<skill>`, while a dressed `node:` still
 # reads as `node`. A word may hold a space; the report's blanks are
 # collapsed to one.
@@ -796,10 +801,10 @@ stage_live() {
 	live_run 1 '/ymer:setup'
 	tables=$(node_tables)
 	fronts=$(node_count 'SELECT count(*) FROM fronts')
-	if [ "$tables" = 8 ] && [ "$fronts" = 1 ]; then
-		pass setup "8 tables created, 1 front row"
+	if [ "$tables" = 9 ] && [ "$fronts" = 1 ]; then
+		pass setup "9 tables created, 1 front row"
 	else
-		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows (expected 8 and 1) — read $runs/1.jsonl"
+		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows (expected 9 and 1) — read $runs/1.jsonl"
 	fi
 	if live_calls 1 | grep -q '^mcp__ymer-node__notebook'; then
 		pass setup-node "setup wrote through the node's notebook tool"
@@ -854,17 +859,20 @@ link check before the edit would have caught it.'
 	fi
 
 	# mint with no state folder stops at its guard naming setup, and
-	# drains, creates and saves nothing: the friction stays open for the
-	# second arm's drain
+	# drains, creates, scores and saves nothing: the friction stays open for
+	# the second arm's drain, and no pool_scores row is written — a row is
+	# written once, so one laid down by a run that then stopped would stand
+	# for good
 	live_run 3 '/ymer:mint'
 	open=$(node_count "SELECT count(*) FROM pool WHERE kind = 'friction' AND status = 'open'")
 	minted=$(node_count 'SELECT count(*) FROM tasks')
 	saved=$(node_count 'SELECT count(*) FROM topics_history')
+	scores=$(node_count 'SELECT count(*) FROM pool_scores')
 	if live_result 3 | grep -q -F '/ymer:setup'; then named=names; else named='does not name'; fi
-	if [ "$open" = 1 ] && [ "$minted" = 0 ] && [ "$saved" = 0 ] && [ "$named" = names ]; then
-		pass mint-stop "stopped naming /ymer:setup — the friction still open in the pool, no task, no topics_history row"
+	if [ "$open" = 1 ] && [ "$minted" = 0 ] && [ "$saved" = 0 ] && [ "$scores" = 0 ] && [ "$named" = names ]; then
+		pass mint-stop "stopped naming /ymer:setup — the friction still open in the pool, no task, no topics_history row, no pool_scores row"
 	else
-		fail mint-stop "after /ymer:mint with no state folder: $open open friction drops, $minted tasks, $saved topics_history rows, and the result line $named /ymer:setup (expected 1, 0, 0, names) — read $runs/3.jsonl"
+		fail mint-stop "after /ymer:mint with no state folder: $open open friction drops, $minted tasks, $saved topics_history rows, $scores pool_scores rows, and the result line $named /ymer:setup (expected 1, 0, 0, 0, names) — read $runs/3.jsonl"
 	fi
 
 	# The second arm: state/ named as the state folder through the line the
@@ -909,11 +917,11 @@ link check before the edit would have caught it.'
 	# characters, so a line saying `re-added`, `auto-created` or
 	# `created/added` reads neither word and passes — a false claim only,
 	# since converge and converge-calls read the node itself.
-	node_lines=$(report_match 4 '✔' node reachable '8 tables' claude_code)
+	node_lines=$(report_match 4 '✔' node reachable '9 tables' claude_code)
 	if [ -n "$node_lines" ] && ! { printf '%s\n' "$node_lines" | report_words created; printf '%s\n' "$node_lines" | report_words added; } | grep -q .; then
-		pass converge-report "the node line reads reachable, 8 tables and the front, nothing created or added"
+		pass converge-report "the node line reads reachable, 9 tables and the front, nothing created or added"
 	else
-		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\`, \`8 tables\` and \`claude_code\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
+		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\`, \`9 tables\` and \`claude_code\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
 	fi
 	# the folder's own line: state/ printed as configured, read as a folder
 	# that is not a git work tree, passed, its history named on the same line
@@ -962,8 +970,44 @@ link check before the edit would have caught it.'
 		fail mint "after /ymer:mint: $tasks tasks at claimed in a Roadmap project, $rows request.md topics_history rows, $drained friction drops drained to a row their drained_to resolves to, request.md at state/$to $file (expected ≥1, ≥1, 1, present) — read $runs/6.jsonl"
 	fi
 
-	# Bugs first: ten open frictions and one open bug seeded together, and
-	# the mint after them draws the bug — drained to a topic of its own,
+	# scoring runs first: after the mint, every drop that is not empty holds
+	# a pool_scores row — written by a scorer, or by the run's own session
+	# where it could dispatch none — so the draw never ranked a drop it had
+	# not scored. The drops the mint's own capture wrote at its close, after
+	# scoring, carry source mint and wait for the next run's scoring
+	unscored=$(node_count "SELECT count(*) FROM pool p LEFT JOIN pool_scores s ON s.drop_id = p.id WHERE p.kind <> 'empty' AND p.source <> 'mint' AND s.drop_id IS NULL")
+	if [ "$unscored" = 0 ]; then
+		pass scored "every drop that is not empty holds a pool_scores row after /ymer:mint"
+	else
+		fail scored "after /ymer:mint $unscored drop(s) that are not empty hold no pool_scores row (expected 0) — read $runs/6.jsonl"
+	fi
+	# which path wrote those rows: a subagent call pinned to haiku in run 6
+	# and a subagent transcript beside the run's own is the scorer path. A
+	# run that scored in-session instead took the fallback the skill allows
+	# where no subagent can be dispatched — reported, never passed and never
+	# failed: the rows are the same rows, but the scorer path went unexercised
+	agents=$(live_calls 6 | grep '^Agent ' | grep -c -F '"model":"haiku"' || true)
+	subs=$(live_transcripts "$runs/6.jsonl" | grep -c '/subagents/' || true)
+	if [ "$agents" -ge 1 ] && [ "$subs" -ge 1 ]; then
+		pass dispatch "$agents haiku subagent call(s) in run 6, $subs subagent transcript(s)"
+	else
+		notrun dispatch "run 6 scored in-session — $agents haiku subagent call(s), $subs subagent transcript(s); the fallback is allowed, so the scorer path is unverified — read $runs/6.jsonl"
+	fi
+	# the mint's capture block ran at its close: capture writes at least one
+	# drop on every run, an empty one where it observed nothing, so a source
+	# mint drop after run 6 is the block's mark on the node
+	captured=$(node_count "SELECT count(*) FROM pool WHERE source = 'mint'")
+	if [ "$captured" != UNPARSEABLE ] && [ "$captured" -ge 1 ]; then
+		pass mint-capture "$captured source mint drop(s) after /ymer:mint — its capture block ran"
+	else
+		fail mint-capture "after /ymer:mint the node holds $captured source mint drops (expected ≥1 — capture writes at least an empty drop) — read $runs/6.jsonl"
+	fi
+
+	# The bug on top, by score: ten open frictions and one open bug seeded
+	# together, each with a pool_scores row seeded beside it — the bug 5,
+	# 5, 5 over size 1, each friction 1, 1, 1 over size 5 — so the ranking,
+	# never the scorer's model, decides the draw; and the mint after them
+	# draws the bug — drained to a topic of its own,
 	# the frictions left open. The bug's topic is read on both halves of
 	# its save: the file in state/ and its rows in topics_history, found by
 	# the bug's drained_to rearranged as run 6's is. The bug's title is
@@ -985,10 +1029,11 @@ link check before the edit would have caught it.'
 	done
 	seed="$seed ($front_sql, 'hermetic_probe', 'probe/seed', 'bug', '$bug_title', '$bug_body')"
 	bug_id_sql="SELECT id FROM pool WHERE source = 'hermetic_probe' AND kind = 'bug' AND anchor_id IS NULL"
+	score_seed="INSERT INTO pool_scores (drop_id, direction_value, time_criticality, risk_reduction, size, why) SELECT id, CASE kind WHEN 'bug' THEN 5 ELSE 1 END, CASE kind WHEN 'bug' THEN 5 ELSE 1 END, CASE kind WHEN 'bug' THEN 5 ELSE 1 END, CASE kind WHEN 'bug' THEN 1 ELSE 5 END, 'probe seed' FROM pool WHERE source = 'hermetic_probe' AND status = 'open' AND kind IN ('bug', 'friction')"
 	seeds_open_sql="SELECT count(*) FROM pool WHERE status = 'open' AND kind = 'friction' AND source = 'hermetic_probe'"
 	bug_ok=0
 	bug_id=UNPARSEABLE
-	if node_execute "$seed" && bug_id=$(node_count "$bug_id_sql") && [ "$bug_id" != UNPARSEABLE ]; then
+	if node_execute "$seed" && bug_id=$(node_count "$bug_id_sql") && [ "$bug_id" != UNPARSEABLE ] && node_execute "$score_seed"; then
 		live_run 7 '/ymer:mint'
 		bug_to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND id = $bug_id")
 		resolved=$(node_count "SELECT count(DISTINCT p.id) FROM pool p JOIN topics_history h ON p.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE p.status = 'drained' AND p.kind = 'bug' AND p.id = $bug_id AND h.artifact = 'request.md'")
@@ -1011,7 +1056,7 @@ link check before the edit would have caught it.'
 			fail bug-first "after /ymer:mint over ten seed frictions and one bug: $resolved bug drained to a request.md row its drained_to resolves to, request.md at state/$bug_to $file, $files request.md file(s) in that folder, $seeds_open seed frictions open, the bug's title $file_lines time(s) in the file and $row_lines in the newest row (expected 1, present, 1, 10, 1 and the two equal) — read $runs/7.jsonl"
 		fi
 	else
-		seed_failed bug-first "the node refused the seed drops — ten frictions and a bug — or holds no bug id for them — read $runs/node.log"
+		seed_failed bug-first "the node refused the seed drops — ten frictions and a bug — or holds no bug id for them, or refused their pool_scores rows — read $runs/node.log"
 	fi
 
 	# The fold is read as a delta over the bug's topic: a recurrence of the
@@ -1024,11 +1069,12 @@ link check before the edit would have caught it.'
 	# The `_before` reads follow the seed: it inserts one open drop, which
 	# moves neither the file nor the history.
 	recur_seed="INSERT INTO pool (front, source, context, kind, anchor_id, body) VALUES ($front_sql, 'hermetic_probe', 'probe/seed', 'bug', $bug_id, '$recur_clause')"
+	recur_score_seed="INSERT INTO pool_scores (drop_id, direction_value, time_criticality, risk_reduction, size, why) SELECT id, 5, 5, 5, 1, 'probe seed' FROM pool WHERE source = 'hermetic_probe' AND anchor_id = $bug_id"
 	if [ "$bug_ok" != 1 ]; then
 		notrun append "the bug-first step did not pass — see bug-first"
 		notrun append-history "the append step did not run — see append"
-	elif ! node_execute "$recur_seed"; then
-		seed_failed append "the node refused the recurrence seed drop — read $runs/node.log"
+	elif ! { node_execute "$recur_seed" && node_execute "$recur_score_seed"; }; then
+		seed_failed append "the node refused the recurrence seed drop or its pool_scores row — read $runs/node.log"
 		notrun append-history "the append step did not run — see append"
 	else
 		lines_before=$(file_occurrences "$f" "$recur_clause")

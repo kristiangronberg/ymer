@@ -450,8 +450,8 @@ rather than an escape: the pool is one of the stores above.
   standalone) records what the work observed as drops in the pool, the
   `pool` table in the node's notebook — every observed bug, learning
   gap, piece of product direction and idea, and one friction per tail;
-  mint surveys the pool whole and draws exactly one thing from it — the
-  top drop, bugs first, formed into a topic by its product's Forward
+  mint scores the new drops, ranks the pool and draws exactly one thing
+  from it — the top drop, formed into a topic by its product's Forward
   direction, with its folder and its task created at `doing`; the
   friction-batch; or a learning task in the Learning project — no
   folder, task only. Supporting skills, not phases; capture writes

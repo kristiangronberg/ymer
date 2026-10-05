@@ -49,10 +49,11 @@ small on purpose.
   friction, 5-Whys'd to a root cause. It analyses nothing beyond that.
   Seconds, not minutes.
 - **`/ymer:mint`** runs when you want the next piece of work, in a fresh
-  session. It surveys the whole pool, takes the top drop — bugs first —
-  reads that product's Forward direction to fold in the drops that
-  belong with it, and starts **exactly one thing**: a topic plus its task
-  in the product's roadmap, a batch of small fixes, or a learning task.
+  session. It scores every drop not yet scored, ranks the pool, takes
+  the top drop, reads that product's Forward direction to fold in the
+  drops that belong with it, and starts **exactly one thing**: a topic
+  plus its task in the product's roadmap, a batch of small fixes, or a
+  learning task.
 
 Everything else follows from one claim: **a task belongs where work
 starts.** Something you write down and leave alone accumulates evidence
@@ -82,8 +83,11 @@ What the loop deliberately does not do:
 
 - **It does not fix anything.** Mint writes an intake and creates a
   task; the work is ordinary work you do afterwards.
-- **It does not score.** Bugs come first; beyond that, no scores, no
-  counts, no tiebreak ladder. One thing per run, chosen by reading.
+- **It does not re-score.** Each new drop is scored once, by a cheap
+  model on four components, and mint computes the score from them when
+  it draws — so retuning a weight re-ranks the pool without touching a
+  row. Bugs lead by their weight, not by a rule, and passing the top drop
+  over takes a written reason. One thing per run.
 - **It does not grow a second store.** No archive, no clusters file, no
   staging area. A drop leaves the open pool only by being drained — its
   status changes and the row stays — and the count of open drops is the

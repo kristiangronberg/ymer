@@ -311,6 +311,8 @@ sit empty.
 
 ## Forward direction
 
+## Next steps
+
 ## Users
 
 ## Stance

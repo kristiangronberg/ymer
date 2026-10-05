@@ -1,7 +1,7 @@
 {
   "name": "ymer",
   "description": "The directed way of working, as skills you invoke: brainstorm a topic into a direction, scout the ground, define what it means, plan it, harden the plan, implement it, review and ship — plus the supporting moves the phases lean on, capture and mint over the pool of work nobody has started yet, and the setup that checks the environment every plugin works from. Requires a Ymer Node and a state folder; a ymer.ax account is optional.",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "author": {
     "name": "Kristian Grönberg"
   },

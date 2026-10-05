@@ -30,13 +30,22 @@ read that echoes the project's whole linked task list. A session whose
 coordinator is the node has no page for any product — the node keeps no
 projects — so the gate and the checks run fresh there, every time.
 
-Its **settled sections** (Forward direction; Users; Stance; Slow layers /
-what churns; What it refuses to be) hold cached answers — use them instead
-of re-deriving, and **push back** on a candidate direction that
-contradicts any of them, Forward direction included: surface the
-contradiction as a question — is the vision changing, or the direction?
-Changing a page is allowed but is a conscious, recorded act through a
-governed session, never silent drift.
+Its **settled sections** (Forward direction; Next steps; Users; Stance;
+Slow layers / what churns; What it refuses to be) hold cached answers —
+use them instead of re-deriving, and **push back** on a candidate
+direction that contradicts any of them, Forward direction included:
+surface the contradiction as a question — is the vision changing, or the
+direction? Changing a page is allowed but is a conscious, recorded act
+through a governed session, never silent drift.
+
+**Next steps** sit directly under Forward direction: one bullet per
+likely next destination the product's owner names, a line or two each —
+a guess, never a task, so several may stand, or none. Forward direction
+changes slowly and the next steps change as fast as the guess does. The
+`mint` skill scores how strongly a drop advances them, so a bullet is
+worth writing as a destination a drop can be matched against; an empty
+section is valid, and that product's drops then take the lowest
+direction value.
 
 ## The gate — always first
 

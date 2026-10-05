@@ -255,6 +255,11 @@ child before it writes one, the parent's (the operations contract
 § Split topics).
 _Avoid_: direction document, parent doc
 
+### direction value
+Defined in the `mint` skill, its one home — how strongly a drop advances
+any product's next steps: the best match across every product page, 1, 3
+or 5.
+
 ### discovered set
 Everything topic resolution's lookup found for one name — a drawn
 topic, a topic folder, a sketch branch — taken in as one topic on one
@@ -628,6 +633,14 @@ _Avoid_: mint item, start topic, file a task, create an item, queue
 
 ## N
 
+### next step
+One bullet of a product page's `Next steps` section, the settled section
+directly under Forward direction: a likely next destination the product
+owner names — a guess, never a task; several may stand, or none. Home:
+the operations contract's skeleton and the product-design skill § The
+product page.
+_Avoid_: likely next step, current focus, milestone, now/next/later
+
 ### nudge template
 The comment-only `commit.template` file (all `#` lines, memory prompts, no
 fill-in fields) that code repos point at for the user's own hand commits;
@@ -919,14 +932,27 @@ guides the way back when asked or when it dries up. Distinct from the
 tutor-read detour (tutoring contract point 9).
 _Avoid_: scope creep
 
+### score
+Defined in the `mint` skill, its one home — a drop's rank in the pool:
+its kind's weight times the sum of its direction value, time criticality
+and risk reduction, divided by its size, computed when mint ranks and
+never stored.
+_Avoid_: triage, rating, priority
+
+### scorer
+Defined in the `mint` skill, its one home — the cheap-model agent that
+scores drops for mint, its whole world the rubric, the next steps and a
+batch of drops.
+_Avoid_: triager, triage run
+
 ### settled section
 One of a product page's sections below the header — Forward direction;
-Users; Stance; Slow layers / what churns; What it refuses to be — holding
-cached product-design answers or direction with pushback force: a
-candidate direction that contradicts one raises "is the vision changing,
-or the direction?", and a change is a conscious act through a governed
-session, never silent drift. A section may sit empty; a stub is a valid
-page.
+Next steps; Users; Stance; Slow layers / what churns; What it refuses to
+be — holding cached product-design answers or direction with pushback
+force: a candidate direction that contradicts one raises "is the vision
+changing, or the direction?", and a change is a conscious act through a
+governed session, never silent drift. A section may sit empty; a stub is
+a valid page.
 _Avoid_: landing zone (the retired collection container — collected
 material rides the pool as vision drops), cached answers (what a
 section holds, not what it is)
@@ -1131,6 +1157,11 @@ for the bug, idea and vision drops, whose bodies run long; a scan reads
 the title where a drop has one and the body where it has none. Home:
 the `capture` skill.
 _Avoid_: triage lead, summary line, TL;DR, headline
+
+### top drop
+Defined in the `mint` skill, its one home — the highest-scored open drop
+on a front that an exit can take; mint draws it unless a written reason
+passes it over.
 
 ### topic branch
 The single git branch a code-repo topic lives on, named with the bare topic
