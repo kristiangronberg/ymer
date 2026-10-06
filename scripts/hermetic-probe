@@ -56,8 +56,9 @@ here=$(cd "$(dirname "$0")" && pwd)
 # to the CLI as the marketplace's address
 root=$(cd "$here/.." && pwd -P)
 
-# cfg/'s login is the one credential a live run may use, and the eval
-# runner bills whatever credential it finds: the key never reaches a child.
+# The eval runner and every live call bill whatever credential they find.
+# The key alone is kept out — it never reaches a child — and every other
+# credential the environment sets stays as set.
 unset ANTHROPIC_API_KEY
 
 usage() {

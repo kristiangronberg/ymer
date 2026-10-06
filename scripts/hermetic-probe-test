@@ -9,12 +9,14 @@
 # allowed one, a value running on past one, a binary file, a nested
 # checkout in the corpus, an empty corpus, the token file's shape), the
 # reference rules, the runner's result read — a failed run's trace kept,
-# every temp dir the runner kept removed — the login assert, the scrub,
+# every temp dir the runner kept removed — the login call — no login, an
+# error of another kind, no result line, a long text cut — the scrub,
 # prompt-before-flags and the strict MCP config, the node read-back,
 # teardown on failure — a failed `up` included — the compose copy's
 # project name checked before `up` and again before `down`, a wrong one
-# refused at either end, each live precondition's exit 2, a run that did
-# not end in success, the two arms and the option between them, the seeded
+# refused at either end, each live precondition's exit 2, a run that
+# ended in an error — stopped at max turns, or its login lapsed — the two
+# arms and the option between them, the seeded
 # steps' not-run lines, the state reads' deltas over the node and state/,
 # the history read, setup's report read for its facts — dressed, its
 # role lines carried onto the lines under them, a word inside a longer
@@ -169,8 +171,23 @@ bash_other='✘ bash-commands a Bash command other than `claude mcp get <name>` 
 # ── canned output ─────────────────────────────────────────────────────
 canned=$tmp/canned
 mkdir -p "$canned"
-printf '{\n  "loggedIn": true,\n  "authMethod": "claude.ai"\n}\n' >"$canned/auth-ok.json"
-printf '{\n  "loggedIn": false,\n  "authMethod": "none"\n}\n' >"$canned/auth-none.json"
+# The login call's traces, each its result line alone as the CLI writes
+# one: a login that answered; no login, an error whose subtype still reads
+# success; an error of another kind whose text runs onto a second line;
+# one whose text runs past the 200 characters the red line quotes; and an
+# error whose line names no terminal_reason. Three leave no result line:
+# an empty trace, one ending on a tool result that carries
+# "is_error":false, and one whose result line was cut off after its
+# "is_error":false.
+printf '%s\n' '{"type":"result","subtype":"success","is_error":false,"terminal_reason":"completed","result":"ok"}' >"$canned/login-ok.jsonl"
+printf '%s\n' '{"type":"result","subtype":"success","is_error":true,"terminal_reason":"api_error","result":"Not logged in · Please run /login"}' >"$canned/login-none.jsonl"
+printf '%s\n' '{"type":"result","subtype":"success","is_error":true,"terminal_reason":"api_error","result":"API Error: 529 Overloaded\nretry later"}' >"$canned/login-outage.jsonl"
+long200=$(printf '%200s' '' | tr ' ' y)
+printf '{"type":"result","subtype":"success","is_error":true,"terminal_reason":"api_error","result":"%s%s\\nsecond line"}\n' "$long200" yyyyy >"$canned/login-long.jsonl"
+printf '%s\n' '{"type":"result","subtype":"success","is_error":true,"result":"Something went wrong"}' >"$canned/login-no-reason.jsonl"
+: >"$canned/login-empty.jsonl"
+printf '%s\n' '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","content":"ok","is_error":false,"tool_use_id":"t1"}]}}' >"$canned/login-tool-last.jsonl"
+printf '%s' '{"type":"result","subtype":"success","is_error":false,"dura' >"$canned/login-cut.jsonl"
 # `claude mcp list` under a logged-in config dir: the login's own claude.ai
 # connectors, listed whether or not anything was ever added
 printf 'Checking MCP server health…\n\nclaude.ai Docs: %s - ✔ Connected\n' 'http://example.invalid:9999/mcp' >"$canned/mcp-list-connectors.txt"
@@ -399,7 +416,13 @@ trace_init=$trace_init_default
 # a compound behind an escaped quote: the stage reads the command as the
 # whole JSON string, so what it holds runs on past the quoted name to the `;`
 run_trace 'read' Bash '{"command":"claude mcp get \"ymer\"; cat ~/things-private"}' >"$canned/run-capture-quoted.jsonl"
-sed 's/"subtype":"success"/"subtype":"error_max_turns"/' "$canned/run-capture.jsonl" >"$canned/run-capture-failed.jsonl"
+# capture's run ending in an error, its calls kept and its result line
+# swapped for one the CLI writes: stopped at max turns, which carries no
+# result text, and a login lapsed mid-stage, whose subtype reads success
+sed '$d' "$canned/run-capture.jsonl" >"$canned/run-capture-failed.jsonl"
+printf '%s\n' '{"type":"result","subtype":"error_max_turns","is_error":true,"terminal_reason":"max_turns","num_turns":2,"permission_denials":[]}' >>"$canned/run-capture-failed.jsonl"
+sed '$d' "$canned/run-capture.jsonl" >"$canned/run-capture-expired.jsonl"
+printf '%s\n' '{"type":"result","subtype":"success","is_error":true,"terminal_reason":"api_error","result":"Failed to authenticate: OAuth session expired and could not be refreshed","permission_denials":[]}' >>"$canned/run-capture-expired.jsonl"
 # tutor at its guard: with no ymer, the docs' home named; with no tables,
 # setup named — each having only read the node
 run_trace "Tutor skill — stopped: no ymer docs tool in this session. The knowledge and engagement docs live in ymer, so nothing was opened." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-ymer.jsonl"
@@ -563,7 +586,7 @@ node_fk_refused='{"result":{"content":[{"text":"SQLite error: FOREIGN KEY constr
 # the one between the arms the front and state/.
 live_queue() {
 	queue 'curl -sS -o /dev/null' 'rc=7'
-	answer 'claude auth status' "@$canned/auth-ok.json"
+	answer 'claude -p Say the single word' "@$canned/login-ok.jsonl"
 	queue 'claude plugin list --json' '[]'
 	queue 'claude plugin marketplace list --json' '[]'
 	queue 'claude mcp list' 'No MCP servers configured. Use `claude mcp add` to add a server.'
@@ -937,13 +960,65 @@ export HERMETIC_PROBE_COMPOSE_FILE
 printf 'services: {}\n' >"$HERMETIC_PROBE_COMPOSE_FILE"
 
 # ── 13 · live, no login in cfg/ ───────────────────────────────────────
+# the login call answers as the CLI does with no login — an error whose
+# subtype reads success — and the stage stops at login, before the scrub
+# and the node, quoting the reason and the text, then the probe's own
+# re-login command
 live_case
 queue 'curl -sS -o /dev/null' 'rc=7'
-answer 'claude auth status' "@$canned/auth-none.json"
+answer 'claude -p Say the single word' "@$canned/login-none.jsonl"
 probe "$fx" live
 check "live without a login exits 2" 2 "$rc"
-check "live without a login names the login line, key unset" 1 "$(lines "✘ login        no claude.ai login in $tmp/probe/cfg — run: env -u ANTHROPIC_API_KEY CLAUDE_CONFIG_DIR=$tmp/probe/cfg claude auth login --claudeai")"
+check "live without a login quotes the reason and the text, then names the login line, key unset" 1 "$(lines "✘ login        the login call ended in an error — api_error: Not logged in · Please run /login — read $tmp/probe/runs/login.jsonl and $tmp/probe/runs/login.err — if the login lapsed, run: env -u ANTHROPIC_API_KEY CLAUDE_CONFIG_DIR=$tmp/probe/cfg claude auth login --claudeai")"
+check "live without a login runs no scrub" 0 "$(logged 'claude plugin uninstall')"
 check "live without a login brings no node up" 0 "$(logged 'docker-compose')"
+check "live without a login makes the login call alone" 1 "$(logged 'claude -p')"
+
+# ── 13b · live, the login call failing for another reason ─────────────
+# an outage rather than a lapsed login: the line quotes the text's first
+# line, which shows the real cause, and still ends on the re-login
+# command, conditioned on a lapse
+live_case
+queue 'curl -sS -o /dev/null' 'rc=7'
+answer 'claude -p Say the single word' "@$canned/login-outage.jsonl"
+probe "$fx" live
+check "live login call in an outage exits 2" 2 "$rc"
+check "live login call in an outage: the text's first line, then the login line" 1 "$(lines "✘ login        the login call ended in an error — api_error: API Error: 529 Overloaded — read $tmp/probe/runs/login.jsonl and $tmp/probe/runs/login.err — if the login lapsed, run: env -u ANTHROPIC_API_KEY")"
+check "live login call in an outage: the text's second line is not quoted" 0 "$(lines 'retry later')"
+check "live login call in an outage runs no scrub" 0 "$(logged 'claude plugin uninstall')"
+check "live login call in an outage brings no node up" 0 "$(logged 'docker-compose')"
+
+# ── 13c · live, the login call leaving no result line ─────────────────
+# an empty trace, one ending on a tool result that carries
+# "is_error":false, and one whose result line was cut off after it: none
+# ends on a whole result event, so each reads red
+for f in login-empty login-tool-last login-cut; do
+	live_case
+	queue 'curl -sS -o /dev/null' 'rc=7'
+	answer 'claude -p Say the single word' "@$canned/$f.jsonl"
+	probe "$fx" live
+	check "live login call, $f: exits 2" 2 "$rc"
+	check "live login call, $f: the line says no result line, names the trace and its stderr, then the login line" 1 "$(lines "✘ login        the login call left no result line — read $tmp/probe/runs/login.jsonl and $tmp/probe/runs/login.err — if the login lapsed, run: env -u ANTHROPIC_API_KEY")"
+	check "live login call, $f: runs no scrub" 0 "$(logged 'claude plugin uninstall')"
+	check "live login call, $f: brings no node up" 0 "$(logged 'docker-compose')"
+done
+
+# ── 13d · live, the login call's long text cut ────────────────────────
+live_case
+queue 'curl -sS -o /dev/null' 'rc=7'
+answer 'claude -p Say the single word' "@$canned/login-long.jsonl"
+probe "$fx" live
+check "live login call with a long text: its first 200 characters, then the trace" 1 "$(lines "api_error: $long200 — read $tmp/probe/runs/login.jsonl")"
+
+# ── 13e · live, the login call's error naming no reason ───────────────
+# a result line that says is_error true but carries no terminal_reason:
+# the line says so in the reason's place and still quotes the text
+live_case
+queue 'curl -sS -o /dev/null' 'rc=7'
+answer 'claude -p Say the single word' "@$canned/login-no-reason.jsonl"
+probe "$fx" live
+check "live login call with no terminal_reason exits 2" 2 "$rc"
+check "live login call with no terminal_reason: the line says so, then the text and the trace" 1 "$(lines "✘ login        the login call ended in an error — no terminal_reason: Something went wrong — read $tmp/probe/runs/login.jsonl")"
 
 # ── 14 · live, the port already answers ───────────────────────────────
 live_case
@@ -957,7 +1032,7 @@ live_queue
 probe "$fx" live
 check "live happy path exits 0" 0 "$rc"
 check "live happy path: every line passes" 0 "$(lines '✘')"
-check "live: the login line" 1 "$(lines '✔ login')"
+check "live: the login line says a call answered, not which credential" 1 "$(lines "✔ login        a one-turn call under $tmp/probe/cfg answered")"
 check "live: the scrub line" 1 "$(lines '✔ scrub')"
 check "live: the node line" 1 "$(lines '✔ node         up on http://127.0.0.1:8112/mcp, notebook empty')"
 check "live: the install line" 1 "$(lines '✔ install      marketplace from')"
@@ -985,10 +1060,12 @@ check "live: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is se
 check "live: teardown brings the node down" 1 "$(logged "$scratch_dc down")"
 check "live: data/ is gone after teardown" 0 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
 check "live: state/ is gone after teardown" 0 "$(test -e "$pstate" && echo 1 || echo 0)"
-check "live: the runs are kept, the control call's beside them" 11 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
+check "live: the runs are kept, the control call's and the login call's beside them" 12 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
 check "live: the instructions line" 1 "$(lines '✔ instructions no run loaded an instructions file — 10 transcript(s) read, each recording its environment, and the control run recorded its planted CLAUDE.md alone')"
 check "live: the control call, prompt before flags — one turn, no server, under the runs' hook" 1 "$(logged "claude -p Reply with the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}'" --settings $tmp/probe/hook/settings.json")"
-check "live: eleven headless calls, every one from a working directory outside the probe dir and the home directory" '11 0' "$(printf '%s %s' "$(wc -l <"$SHIM_DIR/cwds" | tr -d ' ')" "$(grep -c -e "^$tmp/probe" -e "^$HOME" "$SHIM_DIR/cwds")")"
+check "live: the login call, prompt before flags — one turn, no server, no hook" 1 "$(grep -c -x -F -- "claude -p Say the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}' "$SHIM_DIR/log")"
+check "live: the login call runs before the scrub" 1 "$(awk '/^claude plugin uninstall/ { exit } /^claude -p Say the single word ok\./ { n++ } END { print n + 0 }' "$SHIM_DIR/log")"
+check "live: twelve headless calls, every one from a working directory outside the probe dir and the home directory" '12 0' "$(printf '%s %s' "$(wc -l <"$SHIM_DIR/cwds" | tr -d ' ')" "$(grep -c -e "^$tmp/probe" -e "^$HOME" "$SHIM_DIR/cwds")")"
 # node.log is truncated at the stage's start like the traces: the two
 # `tables` reads are this invocation's — the node-up one and the teardown's
 check "live: node.log is this invocation's alone" 2 "$(grep -c '^>> tables {}' "$tmp/probe/runs/node.log")"
@@ -1091,12 +1168,25 @@ check "live failed step: the capture line names the count and the kind" 1 "$(lin
 check "live failed step: the later steps still ran" 1 "$(lines '✔ append ')"
 check "live failed step: teardown still ran" 1 "$(logged "$scratch_dc down")"
 
-# ── 18 · live, a run that did not end in success ──────────────────────
+# ── 18 · live, a run that ended in an error ───────────────────────────
+# stopped at max turns: the line names the reason, and with no result
+# text it quotes none
 live_seeded /ymer:capture run-capture-failed.jsonl
 probe "$fx" live
 check "live failed run exits 1" 1 "$rc"
-check "live failed run: the run line names it" 1 "$(lines "✘ run-2        run 2 (/ymer:capture) did not end in success — read $tmp/probe/runs/2.jsonl")"
+check "live failed run: the run line names it, its reason, its trace and its stderr" 1 "$(lines "✘ run-2        run 2 (/ymer:capture) ended in an error — max_turns — read $tmp/probe/runs/2.jsonl and $tmp/probe/runs/2.err")"
 check "live failed run: the later steps still ran" 1 "$(lines '✔ append ')"
+
+# ── 18b · live, a run whose login lapsed mid-stage ────────────────────
+# the login call answered, then a run's result line reads subtype
+# success beside is_error true: the run is red, quoting the reason and
+# the text, and the reads after it still run
+live_seeded /ymer:capture run-capture-expired.jsonl
+probe "$fx" live
+check "live run after a lapsed login exits 1" 1 "$rc"
+check "live run after a lapsed login: the run line quotes the reason and the text" 1 "$(lines "✘ run-2        run 2 (/ymer:capture) ended in an error — api_error: Failed to authenticate: OAuth session expired and could not be refreshed — read $tmp/probe/runs/2.jsonl and $tmp/probe/runs/2.err")"
+check "live run after a lapsed login: the login line passed" 1 "$(lines '✔ login')"
+check "live run after a lapsed login: the later steps still ran" 1 "$(lines '✔ append ')"
 
 # ── 19 · live, setup's report without its grammar's lines ─────────────
 live_seeded /ymer:setup run-setup1-unreadable.jsonl
@@ -1600,7 +1690,7 @@ check "live without the image names it" 1 "$(lines '✘ image        no ymer-nod
 # ── 30 · live, data/ not empty at bring-up: exit 2, teardown still runs ─
 live_case
 queue 'curl -sS -o /dev/null' 'rc=7'
-answer 'claude auth status' "@$canned/auth-ok.json"
+answer 'claude -p Say the single word' "@$canned/login-ok.jsonl"
 answer 'docker ps' 'ymer-node-install-ymer-node-1 127.0.0.1:8012->8012/tcp'
 answer '"method":"tools/list"' '{"result":{}}'
 queue '"action":"tables"' "$(node_tables 3)"

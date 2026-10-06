@@ -17,8 +17,8 @@
 # Docker), and through the files in state/; behaviour through each run's
 # stream-json.
 #
-# In order: the login in cfg/ (a claude.ai login, the one credential; a
-# missing one names the `claude auth login` line and exits 2), the scrub
+# In order: the login call (one model call under cfg/; a call that does
+# not answer names the `claude auth login` line and exits 2), the scrub
 # (marketplace, plugins, plugin cache, MCP server removed through the CLI
 # and each list asserted empty — the login's own claude.ai connectors
 # excepted, which the CLI lists under a logged-in config dir and which the
@@ -207,9 +207,10 @@ EOF
 # claude.ai connectors, which `claude mcp remove` cannot reach and which
 # would give the skills a ymer to find, so --strict-mcp-config keeps every
 # configured server out and --mcp-config passes the scratch node in. A run
-# that did not end in success gets a fail line of its own here; the state
-# and behaviour reads below still run over what it left, and the function
-# returns 0 so that `set -e` never ends the stage on a run.
+# whose result line says it ended in an error (live_error) gets a fail
+# line of its own here, naming why; the state and behaviour reads below
+# still run over what it left, and the function returns 0 so that `set -e`
+# never ends the stage on a run.
 nl='
 '
 live_run() { # live_run <n> <prompt>
@@ -221,17 +222,49 @@ live_run() { # live_run <n> <prompt>
 		--add-dir "$state" --model "$probe_model" --max-turns 60 \
 		--strict-mcp-config --mcp-config "$mcp" --settings "$hook/settings.json") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
 	ran="$ran $1"
-	if ! live_result "$1" | grep -q '"subtype":"success"'; then
-		fail "run-$1" "run $1 (${2%%"$nl"*}) did not end in success — read $runs/$1.jsonl"
+	if ! call_err=$(live_error "$1"); then
+		fail "run-$1" "run $1 (${2%%"$nl"*}) $call_err — read $runs/$1.jsonl and $runs/$1.err"
 	fi
 	return 0
 }
 
-# A run's result line — the last line of its trace, carrying the final
-# message as `result`: the one place a skill's report is read from, so
-# narration mid-run never decides a line.
-live_result() { # live_result <n>
+# A call's result line — the last line of its trace in runs/, carrying the
+# model's answer as `result` where there is one: the one place a skill's
+# report is read from, so narration mid-run never decides a line.
+live_result() { # live_result <n> — run <n>'s, or the login call's as login
 	tail -n 1 "$runs/$1.jsonl"
+}
+
+# Whether a headless call ended without error, read from its result line
+# and nothing else: the line must be the result event, closed by its `}`,
+# and carry "is_error":false — a positive match, so an empty trace, one cut
+# off mid-stream, the result line itself included, or one ending on any
+# other line reads as an error. Neither
+# the CLI's subtype nor the exit status of `claude -p` is read: a call
+# that never reached the model writes subtype success beside is_error
+# true, an expired login and a missing one alike (the missing one at CLI
+# 2.1.291, measured). On an error it prints what the line says: its
+# terminal_reason — api_error when the call never reached the model,
+# max_turns when it reached it and stopped — then the first line of its
+# `result`, cut to 200 characters (bytes under a C locale, which can split
+# a character at the cut), where the line carries one. The one read of a
+# result line's outcome, shared by the login call and every run.
+live_error() { # live_error <n> — true and silent when call <n> ended without error, else false and the error in words
+	rl=$(live_result "$1")
+	case $rl in
+	*'"type":"result"'*'}') ;;
+	*)
+		echo 'left no result line'
+		return 1
+		;;
+	esac
+	case $rl in
+	*'"is_error":false'*) return 0 ;;
+	esac
+	reason=$(printf '%s\n' "$rl" | sed -n 's/.*"terminal_reason":"\([^"]*\)".*/\1/p')
+	rtext=$(printf '%s\n' "$rl" | sed -E -n 's/.*"result":"(([^"\\]|\\.)*)".*/\1/p' | sed 's/\\n.*//' | cut -c 1-200)
+	printf 'ended in an error — %s%s\n' "${reason:-no terminal_reason}" "${rtext:+: $rtext}"
+	return 1
 }
 
 # A skill's report is read for the facts its lines carry, never for its
@@ -257,7 +290,7 @@ live_result() { # live_result <n>
 # report with no role line reads as its plain lines. The check then asks
 # for its words on one line through report_words, case aside, and a red
 # names a wrong or missing fact. A read that looks for one token anywhere
-# in the result — the run's success subtype, mint's door — keeps the
+# in the result line — whether the call ended in error, mint's door — keeps the
 # raw line, which no decoration splits.
 # The reads run in the C locale: the marks and the ` — ` separator share
 # their leading bytes, so each mark is matched as its whole byte sequence,
@@ -712,14 +745,40 @@ stage_live() {
 	fi
 	export CLAUDE_CONFIG_DIR=$cfg
 
-	# 1. login — the command the abort names runs outside the probe, where
+	# 1. login — the login call: one turn on the stage's model from the
+	# runs' working directory, with no MCP server and no hook (hook/ is
+	# written at step 5), its trace kept as runs/login.jsonl and its stderr
+	# as runs/login.err — the cause, when the call wrote no result line —
+	# and a red line names both. It runs before the scrub, the node and
+	# the install, so a login that cannot answer
+	# stops the stage before any of them. `claude auth status` is not the
+	# read: it reported a login whose OAuth session had expired as logged
+	# in, and every run under it then failed to authenticate, at $0. A call
+	# that never reaches the model writes subtype success beside is_error
+	# true and terminal_reason api_error, so live_error decides. The call
+	# runs on whatever credential the CLI finds under cfg/: the claude.ai
+	# login there, or one the maintainer's environment hands it — a token,
+	# or a cloud provider's switch — which the stage leaves as set; only
+	# the key is kept out, by the entry. So a pass says a call answered,
+	# not which credential answered it. The
+	# previous invocation's plugin is still enabled here, the scrub being
+	# next; it ships no hook and no server, so the call loads a skill
+	# listing and nothing that runs. An instrument like the control call:
+	# not in $ran, and its transcript is never read. Its prompt differs from
+	# the control call's, since the self-test answers each headless call by
+	# its prompt. The command the abort names runs outside the probe, where
 	# the key may be set: with it set, `auth login` reports success and
 	# lands nothing
-	auth=$(claude auth status --json 2>/dev/null || true)
-	case $auth in
-	*'"authMethod": "claude.ai"'*) pass login "claude.ai login in $cfg" ;;
-	*) abort login "no claude.ai login in $cfg — run: env -u ANTHROPIC_API_KEY CLAUDE_CONFIG_DIR=$cfg claude auth login --claudeai" ;;
-	esac
+	rm -rf "$cwd"
+	mkdir -p "$cwd"
+	(cd "$cwd" && claude -p 'Say the single word ok.' --output-format stream-json --verbose \
+		--model "$probe_model" --max-turns 1 \
+		--strict-mcp-config --mcp-config '{"mcpServers":{}}') </dev/null >"$runs/login.jsonl" 2>"$runs/login.err" || true
+	if call_err=$(live_error login); then
+		pass login "a one-turn call under $cfg answered"
+	else
+		abort login "the login call $call_err — read $runs/login.jsonl and $runs/login.err — if the login lapsed, run: env -u ANTHROPIC_API_KEY CLAUDE_CONFIG_DIR=$cfg claude auth login --claudeai"
+	fi
 
 	# 2. scrub — every list empty afterwards; the MCP list may still carry
 	# the login's claude.ai connectors, which no `mcp remove` reaches and

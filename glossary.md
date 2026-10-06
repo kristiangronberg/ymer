@@ -171,6 +171,16 @@ never a second definition.
 - _Used in_: marketplace
 - _Avoid_: presence rule, fallback rule, configured switch
 
+### result line
+The `"type":"result"` event a headless call writes as the last line of
+its stream-json trace, carrying whether the call ended in error, why it
+ended, and the final message as `result` where there is one. A trace
+that ends on any other line has no result line.
+
+- _Used in_: marketplace
+- _Avoid_: final message (the `result` field alone), final line, result
+  message
+
 ### role line
 A line of a skill's report that opens with a role mark — `✔`, `✘` or
 `–` — past any indent and list bullet; the live stage reads each one as
