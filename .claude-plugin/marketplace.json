@@ -4,13 +4,12 @@
     "name": "Kristian Grönberg"
   },
   "metadata": {
-    "description": "Plugins for working with ymer.ax, layered: the core plugin `ymer` holds the practice every user runs — its phases, capture and mint, and setup — and a domain plugin specializes it. Using any plugin requires a Ymer Node you run and one folder for your state, any folder, under version control or not; a ymer.ax account is optional, and the default where a session reaches it. Install `ymer` and run `/ymer:setup` to create what is missing and report what it found."
+    "description": "Plugins that make your work with Claude Code robust: each change is shaped before it is built and reviewed before it lands, it leaves a record the next session can build on, and nothing you notice along the way gets lost. Start with ymer, the core practice; domain plugins can build on it for particular kinds of work. You bring a Ymer Node running on your machine and a folder for your work, and connecting a ymer.ax account adds a shared roadmap. Install ymer, then run /ymer:setup, which creates what is missing and reports what it found."
   },
   "plugins": [
     {
       "name": "ymer",
-      "source": "./plugins/ymer",
-      "description": "The directed way of working, as skills you invoke: brainstorm a topic into a direction, scout the ground, define what it means, plan it, harden the plan, implement it, review and ship — plus the supporting moves the phases lean on, capture and mint over the pool of work nobody has started yet, and the setup that checks the environment every plugin works from."
+      "source": "./plugins/ymer"
     }
   ]
 }

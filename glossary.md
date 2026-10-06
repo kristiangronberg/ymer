@@ -107,12 +107,13 @@ door and repairs nothing (→ setup boundary).
 ## F
 
 ### front
-A surface a session runs on — a harness plus the account and
-instructions it starts from — named by a snake_case slug that every
+One installation — a harness config with its own account, connectors,
+plugin options and instructions — named by a snake_case slug that every
 front-bound row carries. The node's `fronts` table lists them, one row
-each. A session takes its slug from the instructions it starts with, or
-from the per-harness default where they name none. Each front drains its
-own rows.
+each. A session takes its slug from the `ymer` plugin's `front` option
+where the harness passes plugin options into skills, and from the
+instructions it starts with where it does not; there is no default. Each
+front drains its own rows.
 
 - _Used in_: marketplace
 - _Avoid_: harness (the front's kind, not the front), surface (bare), client
@@ -181,10 +182,11 @@ one fact-bearing line, its continuation lines joined.
 
 ### router
 How a plugin's skills find machine-local state and the objects they
-deposit into: one `userConfig` key (`state_folder`), or the front's
-initial instructions where the harness passes no plugin options, plus
-name conventions, over whichever stores the session reaches — the folder
-is configuration, the objects are convention, the store is reach
+deposit into: two `userConfig` keys (`state_folder`, `front`), or the
+front's initial instructions where the harness passes no plugin options,
+plus name conventions, over whichever stores the session reaches — the
+folder and the front are configuration, the objects are convention, the
+store is reach
 (→ reach rule). Nothing richer is config; a convention with no match
 makes the skill say what to create rather than guess.
 
@@ -216,9 +218,9 @@ a whole run chosen by subcommand, ordered by cost and by what it proves.
 The `userConfig` key (type `directory`) that names the state folder
 (→ state folder, the core glossary) on a harness that writes plugin
 options into skill text; where a harness does not, the front's initial
-instructions name the folder instead. It is still the only machine-local
-value a plugin takes as configuration — everything else routes by name
-convention or by what the session reaches.
+instructions name the folder instead. It and `front` are the only
+machine-local values a plugin takes as configuration — everything else
+routes by name convention or by what the session reaches.
 
 - _Used in_: marketplace
 - _Avoid_: plans_dir, workspace, data dir, state path

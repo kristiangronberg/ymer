@@ -46,12 +46,22 @@ capture's own writes.
 
 **Guard — the node is the pool's one door.** No `notebook` tool in
 this session, a node that does not answer, or a notebook without the
-`pool` or `kinds` table stops the run. Say which, and put every drop you
+`pool`, `kinds` or `fronts` table stops the run. Say which, and put every drop you
 were about to record in the report, verbatim, so the observation
 outlives the stop. Restoring the node comes first: a down node is
 brought back, never worked around — no fallback file, no second store,
 no retry loop — and capture never creates a table. `/ymer:setup` does,
 along with the `kinds` rows and the `fronts` row every drop keys on.
+
+**Guard — the front every drop is filed under.** With the node reached
+and before any drop is written, resolve this front's slug (→ The drop)
+and read the fronts the node lists, `SELECT slug FROM fronts`. No slug
+named, two instructions naming two different slugs, or a slug `fronts`
+does not list stops the run, naming `/ymer:setup` — which says where
+this installation's front is named and registers it — and puts every drop you were about to record in
+the report, verbatim, as the node guard does: a tail's context is spent,
+and an observation neither written nor printed is lost. Never pick a
+slug, and never write a drop under another front's.
 
 There is no second store — no archive, no clusters file, no staging — and
 nothing moves between containers at rest: a drop leaves the open pool
@@ -95,12 +105,21 @@ A drop is four values plus what its kind asks for; the table fills in
 the rest — `id`, `captured_on` with the node's UTC date, `kind` with
 `friction`, `status` with `open`:
 
-- `front` — the surface the session runs on, as the slug its initial
-  instructions name; where they name none, the default for the harness
-  this session runs on — `claude_code` on Claude Code, `cowork` on
-  Cowork, told from the session's own tools rather than from any text.
-  It is a key into the notebook's `fronts` table, so a missing or
-  unknown front is refused rather than filed as someone else's.
+- `front` — the installation the session runs in, as its slug. Where
+  the harness writes plugin options into this skill — Claude Code — it
+  is the `ymer` plugin's `front` option, written here as the harness
+  loads this skill and read from this one line alone:
+
+  > Front as configured: `${user_config.front}`
+
+  A slug there is the front; the placeholder itself — a dollar sign and
+  braces still around `user_config.front` — means none is named. Where
+  the harness does not — Cowork, whose skills read the placeholder
+  whatever the option holds — the instructions the session started with
+  name it, in any wording. Which harness this is, is told from the
+  session's own tools, never from any text. The slug is a key into the notebook's `fronts`
+  table, so an unknown front is refused rather than filed as someone
+  else's.
 - `source` — the skill that invoked capture, its name in snake_case as
   its capture block passes it (`plan_review`), or `standalone` when
   nothing invoked it.

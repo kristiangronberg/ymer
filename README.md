@@ -8,13 +8,17 @@ specializes that practice for one kind of work, naming itself
 `ymer-<domain>` and calling the core's skills the way `/ymer:brainstorm`
 names one.
 
-Using any plugin requires **two** things, and they are stated in the
+Using any plugin requires **three** things, and they are stated in the
 marketplace description because they are real requirements:
 
 - **a Ymer Node you run**, whose notebook the plugins keep their stores
   in. It is yours to run — no plugin ships one — and `/ymer:setup`
   creates the store skeletons inside it.
-- **one folder for your state** — the `ymer` plugin's single
+- **a name for this installation, its front** — the `ymer` plugin's
+  `front` setting — under which every drop you capture is filed, and
+  from which a mint draws only its own. Give each installation its own
+  name and keep it; `/ymer:setup` registers it in the node.
+- **one folder for your state** — the `ymer` plugin's
   `state_folder` setting — where a drained topic gets a folder of its
   own. It can be any folder: where it is a git work tree its history is
   git, and any other folder's history is kept in the node's
@@ -25,8 +29,9 @@ it: a **ymer.ax** account, connected as your own MCP server — with it,
 work is tracked in ymer's Roadmap projects; without it, in the node's
 `tasks` table.
 
-Each is yours to bring — no plugin ships a connection or names your
-folder for you — and none is asked for at run time. A store that is
+Each is yours to bring or to name — no plugin ships a connection,
+picks your front or names your folder for you — and none is asked for
+at run time. A store that is
 there and *broken*, though, stops the run rather than quietly using
 another one: that would fork your work across two stores without saying
 so.
@@ -41,13 +46,13 @@ repairing anything itself.
 
 ## Installing
 
-Run a Ymer Node, add the marketplace, install `ymer` naming your state
-folder (below), then run `/ymer:setup` in a fresh session:
+Run a Ymer Node, add the marketplace, install `ymer` naming this
+installation's front (below), then run `/ymer:setup` in a fresh session:
 
 ```
 claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
 claude plugin marketplace add kristiangronberg/ymer
-claude plugin install ymer@ymer
+claude plugin install ymer@ymer --config front=<your front>
 ```
 
 [Ymer Node](https://github.com/kristiangronberg/ymer-node) is the local
@@ -71,10 +76,14 @@ subscription, a ymer connector added at claude.ai reaches Claude Code on
 its own — the two `claude mcp` lines are the route that works under every
 sign-in.
 
-**Name your state folder**, which the plugin requires, as you install
-`ymer` — `claude plugin install ymer@ymer --config state_folder=<your state folder>`
-— or set it afterwards with `/plugin configure ymer@ymer`. Any folder
-will do, under version control or not.
+**Name your front and your state folder**, which the plugin requires,
+as you install `ymer` —
+`claude plugin install ymer@ymer --config front=<your front> --config state_folder=<your state folder>`
+— or set them afterwards with `/plugin configure ymer@ymer`. The front
+is a name for this installation, in lowercase snake_case: give each
+installation its own and keep it, because every drop you capture is
+filed under it and a mint draws only its own. Any folder will do for
+the state folder, under version control or not.
 
 `/ymer:setup` reports what it found, creates the store skeletons that were
 missing, and names your coordinator and your state folder's history. Run it
@@ -85,7 +94,8 @@ connections are not among them: setup checks them and reports, and the
 
 **On Claude Cowork** the plugins install through the desktop app and the
 skills are listed bare — `/setup` rather than `/ymer:setup`. A Cowork
-session reaches no plugin settings, so its state folder is named in the
-instructions your Cowork sessions start with instead: connect the folder
-to the project — the folder itself, or one it sits inside — and name it
-there, for example `State folder: <the folder's path>`.
+session reaches no plugin settings, so its front and its state folder
+are named in the instructions your Cowork sessions start with instead:
+connect the folder to the project — the folder itself, or one it sits
+inside — and name both there, for example `Front: <your front>` and
+`State folder: <the folder's path>`.

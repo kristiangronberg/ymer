@@ -303,9 +303,9 @@ leaf; no task, no edge.
 ### environment contract
 The named set of roles the development-process suite requires its
 environment to supply, each typed by how it binds and bound in exactly
-one binding home (→ binding): by **configuration** — the state folder:
-the one key, or the front's initial instructions where the harness
-passes no plugin options; by **reach at the guard** — the coordinator, the state
+one binding home (→ binding): by **configuration** — the state folder
+and the front: their keys, or the front's initial instructions where the
+harness passes no plugin options; by **reach at the guard** — the coordinator, the state
 store, the checkout, git, the shell, the question instrument, the node;
 by **the harness** — the plugin's own files, through the harness's
 variable; by **the front's initial instructions, or the node table they

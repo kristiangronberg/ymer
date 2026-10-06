@@ -18,11 +18,22 @@ below carry. The one format both share is mint's own: the line a drop is
 quoted as (→ `request.md`'s shape). Mint *draws* a drop, and the drop is
 *drained*.
 
-A mint works one front's drops. `<front>` below is the slug this
-front's initial instructions name — the one capture writes on every drop —
-and where they name none, the same per-harness default capture uses:
-`claude_code` on Claude Code, `cowork` on Cowork, told from the session's
-own tools. Another front's drops stay open for that front's own mint.
+A mint works one front's drops. `<front>` below is this installation's
+slug — the one capture writes on every drop — named the way `/ymer:setup`
+reads it, so this skill and setup always read the same answer. Where the
+harness writes plugin options into this skill — Claude Code — it is the
+`ymer` plugin's `front` option, written here as the harness loads this
+skill and read from this one line alone:
+
+> Front as configured: `${user_config.front}`
+
+A slug there is `<front>`; the placeholder itself, a dollar sign and
+braces still around `user_config.front`, means none is named and the
+guard below stops the run. Where the harness does not — Cowork — the
+instructions this session started with name it, in any wording. Which
+harness this is, is told from the session's own tools, never from any
+text. Another front's
+drops stay open for that front's own mint.
 
 ## Where this run deposits — the reach rule
 
@@ -55,7 +66,7 @@ reached but broken (the guard below; `claude mcp login ymer` is its fix),
 and no such server is the absence the rule means.
 
 Nothing is asked and nothing is configured beyond the state folder's
-path. All four combinations are real installs: this run may create its
+path and the front's name. All four combinations are real installs: this run may create its
 task in ymer and save into `topics_history`, or create it in `tasks` and
 commit into git, as readily as either pair.
 
@@ -108,11 +119,15 @@ device's own shell and not to the container's, so run the reading there.
 
 **Guard — environment failures have two doors, and a store that is
 reached but broken is one of them.** Resolve in this order and stop at
-the first failure: the node, then the state folder and its history, then
-the coordinator. The pool's door is capture's: its guard names the
-node-side stops and the fix for each, restoring the node first, and
+the first failure: the node, then the front's name, then the state
+folder and its history, then the coordinator. The front's step here
+reads its name alone; its row in `fronts` is read under Guard — nothing
+to draw, before any draw. The pool's door is capture's: its
+guard names the node-side stops and the fix for each, restoring the node first, and
 where the node is not reached that door is the whole answer — nothing
-else is read. Everything else setup owns — no state folder named (the
+else is read. Everything else setup owns — no front named (the
+placeholder on Claude Code, none in the instructions on Cowork), two
+instructions naming two different slugs, no state folder named (the
 placeholder on Claude Code, no path in the front's instructions on
 Cowork), two instructions naming two different folders, a named folder
 that is missing, out of this session's reach, or of a kind the reading
@@ -133,9 +148,9 @@ absence is the guard above.
 
 **Guard — nothing to draw.** First resolve `<front>` against the node:
 `SELECT slug FROM fronts` must list it, and a slug it does not list stops
-the run — the slug this front's instructions name is wrong, or its row
-is missing — because through every query below a wrong slug reads as an
-empty pool, never as an error. Then: if the pool holds no open drop on
+the run naming `/ymer:setup` — the slug named is not the one this
+installation registered, or its row is missing — because through every
+query below a wrong slug reads as an empty pool, never as an error. Then: if the pool holds no open drop on
 this front, or none but drops no exit can take — empty drops, vision
 drops no exit can place, and drops anchored to a topic in flight —
 started and not yet shipped — there is no run to make. Say so and stop, naming `/ymer:capture` as the way to
@@ -1045,9 +1060,11 @@ alone. Hand it, by name, what this run's scoring showed:
   else the node's `tasks` — resolved once, asked never. The state folder
   is required, and its history is git where it is a git work tree and
   the node's `topics_history` otherwise
-- A store reached but broken, or no state folder at all, stops the run
-  and names `/ymer:setup`; a coordinator that is simply absent stops
-  nothing
+- A store reached but broken, no front named, or no state folder at
+  all, stops the run at the environment guard and names `/ymer:setup`;
+  a front `fronts` does not list stops it at Guard — nothing to draw,
+  before any draw, naming `/ymer:setup` too; a coordinator that is simply
+  absent stops nothing
 - The task mint creates is the topic, created at `doing` where its work
   starts: the description points at the artifact and never copies it
 - Cluster by root cause, never by symptom; vision drops cluster per

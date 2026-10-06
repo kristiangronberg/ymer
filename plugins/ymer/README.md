@@ -95,14 +95,15 @@ What the loop deliberately does not do:
 
 ## Setup
 
-**`/ymer:setup`** checks four things in order — your Ymer Node answers
-and carries the store skeletons, your state folder is named and there
+**`/ymer:setup`** checks five things in order — your Ymer Node answers
+and carries the store skeletons, this installation's front is named and
+registered in the node, your state folder is named and there
 (and which history tracks it: git where it is a git work tree, the
 node's `topics_history` otherwise), ymer answers, and a `Meta Roadmap`
 project exists — creating whatever is missing and reporting each one
-with a fix you can follow. The node and the state folder are required;
-ymer and its `Meta Roadmap` are optional, and those checks report which
-store is in use instead. These are the floors every
+with a fix you can follow. The node, the front and the state folder are
+required; ymer and its `Meta Roadmap` are optional, and those checks
+report which store is in use instead. These are the floors every
 plugin shares; a plugin that needs more carries a setup skill of its own
 for it.
 
@@ -156,7 +157,9 @@ first — they are what the skills assume.
 ## What it needs
 
 A **Ymer Node** — the skills keep their stores in its notebook, and
-`/ymer:setup` creates what is missing. A **state folder** — any folder,
+`/ymer:setup` creates what is missing. A **front** — a name for this
+installation, named once: every drop is filed under it, and a mint
+draws only its own. A **state folder** — any folder,
 named once: a topic's artifacts are files under it, and their history is
 git where the folder is a git work tree and the node's `topics_history`
 otherwise. A **ymer.ax account** is optional, and the default where a
@@ -171,8 +174,8 @@ skeleton.
 
 ## Where it stops
 
-A skill names the door and repairs nothing. Where the node or the state
-folder is missing, the door is `/ymer:setup`. Where a store is present
+A skill names the door and repairs nothing. Where the node, the front or
+the state folder is missing, the door is `/ymer:setup`. Where a store is present
 but broken, the run stops rather than quietly using another one — that
 would fork your work across two stores without saying so.
 

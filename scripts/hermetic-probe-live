@@ -2,10 +2,10 @@
 # hermetic-probe-live — the live stage, sourced by hermetic-probe: a scratch
 # Ymer Node whose notebook starts empty, the README's own install lines
 # inside the probe dir's cfg/, and the plugins run headless against that
-# node in two arms. With no state folder named, setup creates the store
-# skeletons, fails its state-folder check and reports the coordinator by
-# reach, capture records a friction in the pool, and mint stops at its
-# guard. With the probe dir's state/ — a plain folder, not a git work tree
+# node in two arms. With the probe's front named and no state folder,
+# setup creates the store skeletons, registers the front, fails its
+# state-folder check and reports the coordinator by reach, capture records
+# a friction in the pool under that front, and mint stops at its guard. With the probe dir's state/ — a plain folder, not a git work tree
 # — named as the state folder, setup converges on a re-run and repairs
 # drift, and mint drains into state/, draws a bug ahead of open frictions
 # and folds the bug's recurrence into its unstarted topic, each save a
@@ -33,8 +33,8 @@
 # in two arms, then tutor's two — each from a working directory outside
 # the home tree and under the probe's own hook,
 # written into hook/, which refuses every Bash command but the declared
-# ones, and the install line re-run between the arms with state/ as the
-# plugin's state_folder option — then teardown — at the
+# ones, and the install line re-run between the arms with the front and
+# state/ as the plugin's options — then teardown — at the
 # end of the stage, or by the EXIT trap on any earlier exit — and the
 # install's containers asserted
 # untouched. runs/ keeps each run's stream-json, the install and compose
@@ -54,6 +54,10 @@
 # Exit 2 on any precondition, 1 on a failed step.
 
 live_project=hermetic-probe
+# The front every run names, through the plugin's front option: a slug no
+# release ever defaulted to. setup's, capture's and mint's checks read the
+# rows back under this slug, so a pass proves the option named them
+probe_front=probe_front
 
 # The node over its MCP, protocol 2026-07-28: no initialize handshake and
 # no session — every request carries the protocol fields in params._meta
@@ -776,12 +780,13 @@ stage_live() {
 		abort node "the scratch node's notebook holds $tables tables — its data/ ($data) was not empty at bring-up"
 	fi
 
-	# 4. the install path — the README's lines, the marketplace by path;
-	# each tolerant, so a failed line is reported by the list reads below
-	# rather than ending the script with the CLI's own exit status
+	# 4. the install path — the README's lines, the marketplace by path,
+	# the plugin with the front alone; each tolerant, so a failed line is
+	# reported by the list reads below rather than ending the script with
+	# the CLI's own exit status
 	claude mcp add --transport http --scope user ymer-node "$url" >"$runs/install.log" 2>&1 || true
 	claude plugin marketplace add "$root" >>"$runs/install.log" 2>&1 || true
-	claude plugin install ymer@ymer >>"$runs/install.log" 2>&1 || true
+	claude plugin install ymer@ymer --config "front=$probe_front" >>"$runs/install.log" 2>&1 || true
 	missing=''
 	claude plugin list --json 2>/dev/null | grep -q '"id": "ymer@ymer"' || missing="$missing ymer@ymer"
 	claude mcp list 2>/dev/null | grep -q "^ymer-node: $url" || missing="$missing ymer-node"
@@ -790,10 +795,17 @@ stage_live() {
 	else
 		abort install "not installed:$missing — read $runs/install.log"
 	fi
+	# the option is read back from cfg/ rather than trusted, as state/'s is
+	# between the arms
+	if grep -q -F "\"front\": \"$probe_front\"" "$cfg/settings.json" 2>/dev/null; then
+		pass front "front set to $probe_front"
+	else
+		abort front "the install did not set front to $probe_front — read $runs/install.log and $cfg/settings.json"
+	fi
 
 	# 5. the runs — state from the node and from state/, behaviour from the
-	# trace. The first arm names no state folder: the install above set no
-	# option, so every skill reads the option's placeholder. The hook every
+	# trace. The first arm names no state folder: the install above set the
+	# front alone, so every skill reads the state folder's placeholder. The hook every
 	# run loads is written first, from state/'s own path; the instructions
 	# check's control call runs next, under the same hook.
 	live_hook
@@ -801,10 +813,11 @@ stage_live() {
 	live_run 1 '/ymer:setup'
 	tables=$(node_tables)
 	fronts=$(node_count 'SELECT count(*) FROM fronts')
-	if [ "$tables" = 9 ] && [ "$fronts" = 1 ]; then
-		pass setup "9 tables created, 1 front row"
+	named=$(node_count "SELECT count(*) FROM fronts WHERE slug = '$probe_front'")
+	if [ "$tables" = 9 ] && [ "$fronts" = 1 ] && [ "$named" = 1 ]; then
+		pass setup "9 tables created, 1 front row, its slug $probe_front"
 	else
-		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows (expected 9 and 1) — read $runs/1.jsonl"
+		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows, $named of them $probe_front (expected 9, 1 and 1) — read $runs/1.jsonl"
 	fi
 	if live_calls 1 | grep -q '^mcp__ymer-node__notebook'; then
 		pass setup-node "setup wrote through the node's notebook tool"
@@ -831,15 +844,17 @@ stage_live() {
 		# an accepted probe row would read as tutor's write at run 9
 		node_execute "DELETE FROM tutor_engagements WHERE title = 'probe engagement'" || true
 	fi
-	# no state folder named fails its line, and the coordinator is reported
-	# by reach — each read as the facts its line carries. The coordinator's
-	# line is the one that passed: the Meta Roadmap line, marked not
-	# checked, may name ymer, its missing connection and tasks too
-	if report_match 1 '✘' state_folder 'not set' | grep -q . &&
+	# the front named passes its own line, its row added; no state folder
+	# named fails its line; and the coordinator is reported by reach — each
+	# read as the facts its line carries. The coordinator's line is the one
+	# that passed: the Meta Roadmap line, marked not checked, may name ymer,
+	# its missing connection and tasks too
+	if report_match 1 '✔' front "$probe_front" added | grep -q . &&
+		report_match 1 '✘' state_folder 'not set' | grep -q . &&
 		report_match 1 '✔' ymer 'no connection' tasks | grep -q .; then
-		pass setup-report "state_folder not set and failed, ymer no connection — the coordinator reported by reach"
+		pass setup-report "front $probe_front added, state_folder not set and failed, ymer no connection — the coordinator reported by reach"
 	else
-		fail setup-report "the report has no line carrying \`✘\`, \`state_folder\` and \`not set\`, or none carrying \`✔\`, \`ymer\`, \`no connection\` and \`tasks\` — read the result line of $runs/1.jsonl"
+		fail setup-report "the report has no line carrying \`✔\`, \`front\`, \`$probe_front\` and \`added\`, none carrying \`✘\`, \`state_folder\` and \`not set\`, or none carrying \`✔\`, \`ymer\`, \`no connection\` and \`tasks\` — read the result line of $runs/1.jsonl"
 	fi
 
 	# the prompt seeds a real friction, so the drop is one mint can drain:
@@ -852,10 +867,11 @@ rewrite linked a heading, "Installing", that the README does not have,
 and the broken link was found only by re-reading the file afterwards; a
 link check before the edit would have caught it.'
 	drops=$(node_count "SELECT count(*) FROM pool WHERE kind = 'friction'")
-	if [ "$drops" = 1 ]; then
-		pass capture "1 pool drop of kind friction"
+	filed=$(node_count "SELECT count(*) FROM pool WHERE kind = 'friction' AND front = '$probe_front'")
+	if [ "$drops" = 1 ] && [ "$filed" = 1 ]; then
+		pass capture "1 pool drop of kind friction, filed under $probe_front"
 	else
-		fail capture "after /ymer:capture the node holds $drops pool drops of kind friction (expected 1 — the prompt names a real friction, so an empty drop is a miss) — read $runs/2.jsonl"
+		fail capture "after /ymer:capture the node holds $drops pool drops of kind friction, $filed of them under $probe_front (expected 1 and 1 — the prompt names a real friction, so an empty drop is a miss, and the drop is filed under the front the option named) — read $runs/2.jsonl"
 	fi
 
 	# mint with no state folder stops at its guard naming setup, and
@@ -876,14 +892,15 @@ link check before the edit would have caught it.'
 	fi
 
 	# The second arm: state/ named as the state folder through the line the
-	# README gives for it. Re-running the install over the installed plugin
-	# rewrites the option (CLI 2.1.282, measured); the setting is read back
-	# from cfg/ rather than trusted.
-	claude plugin install ymer@ymer --config "state_folder=$state" >>"$runs/install.log" 2>&1 || true
-	if grep -q -F "\"state_folder\": \"$state\"" "$cfg/settings.json" 2>/dev/null; then
+	# README gives for it, the front beside it. Re-running the install over
+	# the installed plugin rewrites the option (CLI 2.1.282, measured); the
+	# setting is read back from cfg/ rather than trusted.
+	claude plugin install ymer@ymer --config "front=$probe_front" --config "state_folder=$state" >>"$runs/install.log" 2>&1 || true
+	if grep -q -F "\"state_folder\": \"$state\"" "$cfg/settings.json" 2>/dev/null &&
+		grep -q -F "\"front\": \"$probe_front\"" "$cfg/settings.json" 2>/dev/null; then
 		pass state-folder "state_folder set to $state"
 	else
-		abort state-folder "the install did not set state_folder to $state — read $runs/install.log and $cfg/settings.json"
+		abort state-folder "the install did not set state_folder to $state with front still $probe_front — read $runs/install.log and $cfg/settings.json"
 	fi
 
 	# the two schema reads are tolerant: a lost node fails the fronts
@@ -904,12 +921,12 @@ link check before the edit would have caught it.'
 	else
 		pass converge-calls "no execute call in the re-run"
 	fi
-	# the node's line on a healthy re-run: reachable, the tables it holds
-	# and the front, and nothing created or added — converge-calls shows the
-	# re-run executed nothing, so a line carrying the node's facts that says
-	# either word states a change that never happened. Every such line is
-	# read, and one saying either word fails the check even beside a clean
-	# one. Known gap: the check reads the words' presence, not what the line
+	# the node's and the front's lines on a healthy re-run: the node
+	# reachable with the tables it holds, the front named, and nothing
+	# created or added — converge-calls shows the re-run executed nothing,
+	# so a line carrying either line's facts that says either word states a
+	# change that never happened. Every such line is read, and one saying
+	# either word fails the check even beside a clean one. Known gap: the check reads the words' presence, not what the line
 	# asserts, so a healthy line that names either word only to deny it
 	# (`nothing added`) reads red too; setup's own grammar gives a healthy
 	# re-run the bare line, and a red here is loud, never a silent pass.
@@ -917,11 +934,12 @@ link check before the edit would have caught it.'
 	# characters, so a line saying `re-added`, `auto-created` or
 	# `created/added` reads neither word and passes — a false claim only,
 	# since converge and converge-calls read the node itself.
-	node_lines=$(report_match 4 '✔' node reachable '9 tables' claude_code)
-	if [ -n "$node_lines" ] && ! { printf '%s\n' "$node_lines" | report_words created; printf '%s\n' "$node_lines" | report_words added; } | grep -q .; then
-		pass converge-report "the node line reads reachable, 9 tables and the front, nothing created or added"
+	node_lines=$(report_match 4 '✔' node reachable '9 tables')
+	front_lines=$(report_match 4 '✔' front "$probe_front")
+	if [ -n "$node_lines" ] && [ -n "$front_lines" ] && ! { printf '%s\n%s\n' "$node_lines" "$front_lines" | report_words created; printf '%s\n%s\n' "$node_lines" "$front_lines" | report_words added; } | grep -q .; then
+		pass converge-report "the node line reads reachable and 9 tables, the front line $probe_front, nothing created or added"
 	else
-		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\`, \`9 tables\` and \`claude_code\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
+		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\` and \`9 tables\` and a front line carrying \`✔\`, \`front\` and \`$probe_front\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
 	fi
 	# the folder's own line: state/ printed as configured, read as a folder
 	# that is not a git work tree, passed, its history named on the same line
@@ -956,18 +974,20 @@ link check before the edit would have caught it.'
 	# the drain into state/, read as the artefacts it deposits: a task at
 	# claimed in the project the area derives, the friction drained to a
 	# topic whose request.md topics_history row its drained_to resolves to
-	# — the row's own key rearranged as <area>/YYYY/MM-DD-<topic>/ — and the
-	# file itself at state/<drained_to>request.md
+	# — the row's own key rearranged as <area>/YYYY/MM-DD-<topic>/ — every
+	# request.md row saved under the front the option named, and the file
+	# itself at state/<drained_to>request.md
 	live_run 6 '/ymer:mint'
 	tasks=$(node_count "SELECT count(*) FROM tasks WHERE status = 'claimed' AND project LIKE '% Roadmap'")
 	rows=$(node_count "SELECT count(*) FROM topics_history WHERE artifact = 'request.md'")
+	mine=$(node_count "SELECT count(*) FROM topics_history WHERE artifact = 'request.md' AND front = '$probe_front'")
 	drained=$(node_count "SELECT count(DISTINCT f.id) FROM pool f JOIN topics_history h ON f.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE f.status = 'drained' AND f.kind = 'friction' AND h.artifact = 'request.md'")
 	to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND kind = 'friction'")
 	if [ -f "$state/${to}request.md" ]; then file=present; else file=absent; fi
-	if [ "$tasks" != UNPARSEABLE ] && [ "$tasks" -ge 1 ] && [ "$rows" != UNPARSEABLE ] && [ "$rows" -ge 1 ] && [ "$drained" = 1 ] && [ "$file" = present ]; then
-		pass mint "$tasks tasks row(s) at claimed in a Roadmap project, $rows request.md topics_history row(s), the friction drained to $to, its request.md in state/"
+	if [ "$tasks" != UNPARSEABLE ] && [ "$tasks" -ge 1 ] && [ "$rows" != UNPARSEABLE ] && [ "$rows" -ge 1 ] && [ "$mine" = "$rows" ] && [ "$drained" = 1 ] && [ "$file" = present ]; then
+		pass mint "$tasks tasks row(s) at claimed in a Roadmap project, $rows request.md topics_history row(s), all under $probe_front, the friction drained to $to, its request.md in state/"
 	else
-		fail mint "after /ymer:mint: $tasks tasks at claimed in a Roadmap project, $rows request.md topics_history rows, $drained friction drops drained to a row their drained_to resolves to, request.md at state/$to $file (expected ≥1, ≥1, 1, present) — read $runs/6.jsonl"
+		fail mint "after /ymer:mint: $tasks tasks at claimed in a Roadmap project, $rows request.md topics_history rows, $mine of them under $probe_front, $drained friction drops drained to a row their drained_to resolves to, request.md at state/$to $file (expected ≥1, ≥1 with every one under it, 1, present) — read $runs/6.jsonl"
 	fi
 
 	# scoring runs first: after the mint, every drop that is not empty holds

@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Use to set up and verify the environment every ymer-marketplace plugin works from — the Ymer Node and its store skeletons, the state folder, the ymer connection, and the Meta Roadmap project. Run it after installing, and whenever a skill's guard sends you here.
+description: Use to set up and verify the environment every ymer-marketplace plugin works from — the Ymer Node and its store skeletons, this installation's front, the state folder, the ymer connection, and the Meta Roadmap project. Run it after installing, and whenever a skill's guard sends you here.
 ---
 
 # Setup
@@ -37,12 +37,13 @@ which history tracks it is read from the folder itself**:
   Ymer's tool surface among this session's tools → ymer's Roadmap
   projects. Absent → the node's `tasks` table.
 - **The state store** — where a topic's artifacts live: the state folder
-  (→ check 2), together with the history that tracks it. A folder that is
+  (→ check 3), together with the history that tracks it. A folder that is
   a git work tree → git, where each save is a commit. Any other folder →
   the node's `topics_history` table, where each save is a row.
 
 Read once, at the run's start, from what the session has — never asked,
-and never configured beyond the state folder's path. All four
+and never configured beyond the state folder's path and the front's
+name. All four
 combinations of coordinator and history are real installs. A store this
 session *reaches* but cannot use — a ymer call that errors, a state
 folder that is not named, is missing, or is out of this session's reach
@@ -274,11 +275,14 @@ on a run whose whole promise is that it changes nothing already right.
 
 The nine texts, each the grammar of its table:
 
-> **`table:fronts`** — The fronts: one row per surface a session runs on.
-> `slug` is the token every front-bound row names, snake_case, and the
-> answer wherever a front is asked for; a session takes it from the slug
-> its own instructions name, or from the per-harness default where they
-> name none. `capabilities` is a JSON array of what that front can do, in
+> **`table:fronts`** — The fronts: one row per installation sessions run
+> in — a harness config with its own account, connectors, settings and
+> instructions. `slug` is the token every front-bound row names,
+> lowercase snake_case, and the answer wherever a front is asked for; a
+> session takes it from its installation's own settings where the
+> harness passes them to the work, and from the instructions it starts
+> with where it does not. Nothing defaults it: two installations of one
+> harness are two fronts. `capabilities` is a JSON array of what that front can do, in
 > the front's own vocabulary — self-describing, read by no skill, and
 > worth a look when one node serves several fronts and you are choosing
 > which should take a piece of work. `notes` is free text about the
@@ -555,15 +559,17 @@ battery exists to prevent.
     naming every folder you wrote;
   - where it is not, save the same text into `topics_history`, in one
     `execute` call, with `phase` `hand_step` and `front` this front's
-    slug, the one the front row below confirms in `fronts` (the foreign
-    key refuses any other):
+    slug, the one check 2 confirms in `fronts` (the foreign key refuses
+    any other):
     `INSERT INTO topics_history (topic, area, artifact, body, phase, front) SELECT topic, area, artifact, body, 'hand_step', '<front>' FROM topics`,
     where the table also holds another front's rows, narrowed by a
     `WHERE` on `topic` to the ones this front moved.
 
-  Then drop the table and its `_meta` row as above. The move needs a
-  resolved state folder: where check 2 has not resolved one, the line
-  says the move waits on check 2 and prints `<state folder>` as written
+  Then drop the table and its `_meta` row as above. The move needs this
+  front's slug and a resolved state folder: where check 2 has not passed,
+  the line says the move waits on check 2 and prints `<front>` as written
+  rather than any slug, and where check 3 has not resolved a folder, it
+  says the move waits on check 3 and prints `<state folder>` as written
   rather than any path.
 
 The `_meta` row outlives a table dropped on its own. Where the table is
@@ -573,30 +579,107 @@ its one statement,
 describes the node as a state store, and the retirement is done only when
 both are gone.
 
-**This session's front row.** `pool.front` is a foreign key, so a
-capture on a front with no row is refused. Resolve this session's slug —
-the one its own instructions name, and where they name none the default
-for the harness it is running on, `claude_code` on Claude Code and
-`cowork` on Cowork — then read whether `fronts` lists it:
+### 2. This installation's front
+
+A front is one installation — a harness config with its own account,
+connectors, plugin options and instructions — and its slug is the key
+every drop and every saved topic carries into `fronts`: `pool.front` and
+`topics_history.front` are foreign keys, so a write from a front with no
+row is refused, and a mint draws only its own front's drops. This check
+reads and writes the node, so it runs whenever check 1 reached it: a
+difference check 1 reports on a table stops nothing here, and only a
+node check 1 could not reach leaves this check `not checked`. Its
+failure fails its own line and stops nothing: the checks after it still
+run and report, so one run shows every configuration failure at once.
+
+The slug is always named, never defaulted. A re-run of one installation
+and a second installation of the same harness look identical to setup,
+so a default would merge two fronts' rows without a word. Where the name
+comes from depends on the harness this session runs on, told from the
+session's own tools, exactly as the state folder's does (→ check 3).
+
+**Where the harness writes plugin options into this skill** — Claude
+Code — the slug is the `ymer` plugin's `front` option. The harness
+writes that option into this skill's text as it loads it, so the value
+is read here, from this one line, and from no file:
+
+> Front as configured: `${user_config.front}`
+
+That line is the whole answer, read as check 3 reads the state folder's
+line: a slug there is this front's, and the placeholder itself — a
+dollar sign and braces still around `user_config.front` — means the
+option is unset. An instruction naming a front is not read on this
+harness: the option alone names it.
+
+**Where the harness does not** — Cowork, whose skills read the
+placeholder whatever the option holds — the instructions this session
+started with name the slug, in any wording that names it. Two
+instructions naming two different slugs — the front's own and a
+`CLAUDE.md` in a connected folder, say — fail the check, naming both,
+with the fix: keep the slug in one of them and remove it from the
+other. Never pick one.
+
+Read what `fronts` lists, whether or not a slug was named — the pass and
+the insert need it, and every failure below names what it returns:
 
 ```sql
-SELECT slug FROM fronts WHERE slug = '<slug>'
+SELECT slug FROM fronts
 ```
 
-One row is the pass, and nothing is written. No row → insert it:
+- **Listed** — the pass, and nothing is written. A slug that already has
+  a row passes whatever its shape: the row is its owner's.
+- **Not listed** — a new front, and its row is inserted:
 
-```sql
-INSERT INTO fronts (slug) VALUES ('<slug>')
-```
+  ```sql
+  INSERT INTO fronts (slug) VALUES ('<slug>')
+  ```
 
-The defaults fill the rest. A table whose owner extended it with NOT NULL
-columns of their own will refuse that insert; report the refusal with the
-statement, so they can run it with their columns filled in, and never
-force it. The read comes first for the same reason: on a table that
-already lists the slug the insert refuses on the key, and a refusal on a
-healthy machine is a report nobody can act on.
+  First the slug's shape: lowercase snake_case — letters, digits and
+  `_`, starting with a letter. Once inserted it is the key on every row
+  this front writes, which setup never rewrites, so a slug of any other
+  shape fails the check with that rule and nothing is written. Its fix
+  is a rename where the slug was named: `/plugin configure ymer@ymer`
+  or the install line's `--config front=<your front>` on Claude Code,
+  the instructions this session started with on Cowork.
 
-### 2. The state folder
+  The defaults fill the rest. A table whose owner extended it with NOT
+  NULL columns of their own will refuse that insert; report the refusal
+  with the statement, so they can run it with their columns filled in,
+  and never force it. The read comes first for the same reason: on a
+  table that already lists the slug the insert refuses on the key, and a
+  refusal on a healthy machine is a report nobody can act on.
+
+No slug named — the placeholder on Claude Code, none in the instructions
+on Cowork — fails the check with the fix for the harness this session
+runs on. On Claude Code:
+
+> The `ymer` plugin's `front` option is not set, and the plugin needs a
+> name for this installation — the front every drop and topic it saves
+> is filed under. Set it with `/plugin configure ymer@ymer`, or
+> reinstall with `claude plugin install ymer@ymer --config
+> front=<your front>`.
+
+If the option was set and still reads `not set`, the causes are the
+state folder's (→ check 3): set on another plugin, set in a project's
+own settings, or a harness that does not pass plugin options through.
+
+On Cowork:
+
+> The `ymer` plugin needs a name for this installation, and the
+> instructions this session started with name none. Name it there, for
+> example `Front: <your front>`.
+
+**Every failure of this check names the fronts the node already holds**,
+after its fix — the slugs the read above returned, which every failure
+runs, the no-slug and two-slug ones included — with the
+advice to name this installation's own slug again if it has one: an
+installation whose drops are already filed under one of them keeps them
+only by naming that slug, and a fresh name would leave them invisible to
+its mint without a word. Where `fronts` is empty the list
+is left out. The list is a fact read, never a pick: setup proposes no
+slug.
+
+### 3. The state folder
 
 The state folder is required. It is the one folder this front keeps its
 topics' artifacts in, laid out `<area>/YYYY/MM-DD-<topic>/`, and it can
@@ -704,18 +787,18 @@ On Cowork a connected folder is visible to the device's own shell and
 not to the container's, so run the reading there. It only reads: it
 takes no lock and writes nothing into the folder.
 
-**The report prints whatever check 2 resolved** (→ The report), and that
+**The report prints whatever check 3 resolved** (→ The report), and that
 printing is this check's real catch: a state folder that is real,
 reachable and *wrong* passes every mechanical check there is. The
 printed path, read by the person who is standing right here, is the only
 thing that finds it —
 which is why this runs with you present rather than inside every later run.
 
-### 3. The ymer connection
+### 4. The ymer connection
 
 Ymer is optional, and where this session does not reach it the node's
 `tasks` table is the coordinator. One call proves the account, the
-connection and the sign-in together, and its result is what check 4
+connection and the sign-in together, and its result is what check 5
 reads: a `projects list` name search for `Roadmap`, asking for each
 project's id and name. The parameter shape is the server's — ask its
 `help` for the action if you do not have it.
@@ -751,12 +834,12 @@ Name those two lines only on Claude Code. Adding one that already exists
 changes nothing, so a reader who wants ymer runs both either way, then
 starts a fresh session.
 
-### 4. The `Meta Roadmap` project
+### 5. The `Meta Roadmap` project
 
-**This check runs only when check 3 reached ymer and passed.** Check 3's
+**This check runs only when check 4 reached ymer and passed.** Check 4's
 result is the project list this check reads, so a failed connection
 leaves nothing to read in; report this check as not checked, naming check
-3. Do not call back into a connection that just refused. Where check 3
+4. Do not call back into a connection that just refused. Where check 4
 found no ymer at all, this check has nothing to do either: work about how
 you work routes to `project = 'Meta Roadmap'` in the node's `tasks`
 table, which is a value rather than an object to create. Report it as not
@@ -767,7 +850,7 @@ own, named exactly `Meta Roadmap`. Every machine with ymer has one — a
 floor, not a naming decision, which is why setup creates it instead of
 asking.
 
-Check 3's result already lists it. Absent, create it with
+Check 4's result already lists it. Absent, create it with
 `projects create` — named exactly `Meta Roadmap`, its description the
 markdown below:
 
@@ -789,7 +872,7 @@ or edit that fixes it, or `not checked` naming the earlier check it waits
 on. A check that passed on reach rather than on configuration says which
 store is in use, and the state folder's line says which history tracks
 it, because those are the things worth reading. The state folder is
-printed whenever check 2 resolved one, a failed reading included. A
+printed whenever check 3 resolved one, a failed reading included. A
 retired `topics` table, where one is left, gets a line of its own after
 the node's, carrying its row count and its whole hand step: with no rows,
 the two statements that clear the table and its `_meta` row; with rows,
@@ -797,19 +880,21 @@ their move and the history that records it first, then the same two
 statements. A `_meta` row left without its table gets the same line,
 with its one statement.
 
-The node's line counts its tables and names the front: the number this
-run created, with `created`, when it created any, and otherwise the
-number the node holds; and `added` after the front only when this run
-wrote the front's row. So a first run on an empty node reads
-`` 9 tables created, front `claude_code` added `` and a re-run on a
-healthy machine reads bare, `` 9 tables, front `claude_code` ``: the line
-names what this run changed and nothing else, so a reader can tell a
-repair from a machine that was already right.
+The node's line counts its tables: the number this run created, with
+`created`, when it created any, and otherwise the number the node holds.
+The front's line names the slug, with `added` after it only when this
+run wrote its row. So a first run on an empty node reads
+`9 tables created` and `` `work_laptop` added ``, and a re-run on a
+healthy machine reads both bare, `9 tables` and `` `work_laptop` ``:
+each line names what this run changed and nothing else, so a reader can
+tell a repair from a machine that was already right. Where the node
+failed, the front's line reads `not checked`, naming the node.
 
 ```
 Setup — ymer environment
 
-  ✔ node          reachable — 9 tables, front `claude_code`
+  ✔ node          reachable — 9 tables
+  ✔ front         `work_laptop`
   ✔ state_folder  /Users/you/state — git work tree, history in git
   ✔ ymer          reachable
   ✔ Meta Roadmap  exists
@@ -824,16 +909,19 @@ with no ymer reads its coordinator by reach:
 ```
 Setup — ymer environment
 
-  ✔ node          reachable — 1 table created, front `cowork`
+  ✔ node          reachable — 1 table created
   – topics        retired — 1 row; move it into the state folder and into `topics_history` by hand, then DROP TABLE topics and its `_meta` row
+  ✔ front         `home_desktop` added
   ✔ state_folder  /Users/you/state — not a git work tree, history in the node's `topics_history`
   ✔ ymer          no connection in this session — work tracked in the node's `tasks` table
   – Meta Roadmap  not checked — no ymer; process work routes to `Meta Roadmap` in `tasks`
 ```
 
-With no state folder named, that one line fails and carries its fix:
+With no front and no state folder named, those two lines fail, each
+carrying its own fix — the front's with the fronts the node holds:
 
 ```
+  ✘ front         not set — set it with /plugin configure ymer@ymer; the node holds `work_laptop`, name it again if it is this installation
   ✘ state_folder  not set — set it with /plugin configure ymer@ymer
 ```
 
@@ -845,8 +933,11 @@ exactly one next action, so the report carries nothing else.
 - Verify, create what is missing, never mutate what exists — re-running
   this skill is the whole upgrade story for everything setup owns
 - The node is the floor: its absence fails check 1 and stops the battery.
-  The state folder is required too — any folder, named once — and ymer
-  is optional, the coordinator where this session reaches it
+  The front and the state folder are required too — each named once per
+  installation, neither ever defaulted — and ymer is optional, the
+  coordinator where this session reaches it
+- A new front's slug is inserted only in lowercase snake_case; a slug
+  that already has a row is its owner's, whatever its shape
 - A store reached but broken is a failure, never a reason to use
   another one — that would fork your work across two stores silently
 - One statement per `notebook` `execute` call; the node drops the rest of
