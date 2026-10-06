@@ -18,9 +18,10 @@ A skill owns its own domain and never sends you here for domain state.
 what is missing, and never mutates what already exists. So a healthy
 machine reports all-pass and changes nothing, and re-running this skill
 converges everything setup owns — skeletons, settings and floors — with no
-migration step and nothing to version. Two things sit outside that
+migration step and nothing to version. Three things sit outside that
 promise. The ymer connection is yours, it lives outside any plugin, and
-re-running can only report on it. And what this skill writes once — each
+re-running can only report on it. The state folder is yours too: setup
+verifies it and never creates it (→ check 3). And what this skill writes once — each
 table's `_meta` grammar row (→ The grammar rows), the `kinds` rows
 (→ The kinds) and the `Meta Roadmap` project's description (→ The `Meta
 Roadmap` project) — is its owner's from then on and never rewritten: a

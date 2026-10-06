@@ -100,8 +100,10 @@ and carries the store skeletons, this installation's front is named and
 registered in the node, your state folder is named and there
 (and which history tracks it: git where it is a git work tree, the
 node's `topics_history` otherwise), ymer answers, and a `Meta Roadmap`
-project exists — creating whatever is missing and reporting each one
-with a fix you can follow. The node, the front and the state folder are
+project exists. It creates the skeletons, the front's registration and
+the `Meta Roadmap` project where they are missing; the state folder and
+the ymer connection are yours, so it only reports on them. Each failure
+comes with a fix you can follow. The node, the front and the state folder are
 required; ymer and its `Meta Roadmap` are optional, and those checks
 report which store is in use instead. These are the floors every
 plugin shares; a plugin that needs more carries a setup skill of its own
