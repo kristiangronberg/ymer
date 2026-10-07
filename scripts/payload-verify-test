@@ -13,22 +13,25 @@
 # under a ticked and an unticked box, early arrival — and the count's own
 # rules: non-overlapping occurrences, the payload's final newline, blank
 # lines inside a payload, a target with no final newline, bytes that are
-# not UTF-8. Every authoring-defect exit: usage and each argument edge,
-# an unset HOME, the topic directory's shape, missing plan.md or
-# manifest, each malformed manifest line, a ~user target, duplicate and
-# suffixed checkboxes, a gate with no checkbox, no or two payload files,
-# an empty, unreadable or non-file payload, a payload file with no
-# extension, an orphan payload file, an unreadable target, and an awk
-# that fails on the scan or the count. The reference scan: each literal
-# class, each placeholder spelling, each class's token alone on its
-# line, the reported line number, the state-store class keyed on the
-# state folder's own name, both exemptions by target — the state folder
-# and an --exempt tree given absolute, relative, through a symlink, or
-# twice, a symlinked file included, a sibling that only shares the prefix
-# excluded — both markers, and a clean payload of near-misses. A run that
-# could loop is bounded, so a regression fails instead of hanging. Last,
-# the placeholder list in the verifier is held equal to the plugin
-# glossary's.
+# not UTF-8, paths with a space in them. Every authoring-defect exit:
+# usage and each argument edge, an unset HOME, the topic directory's
+# shape, missing plan.md or manifest, each malformed manifest line, a
+# ~user target, duplicate and suffixed checkboxes, a gate with no
+# checkbox, no or two payload files, an empty, unreadable or non-file
+# payload, a payload file with no extension, an orphan payload file, an
+# unreadable target, and an awk that fails on the scan or the counts — a
+# stop at a count gate leaving every earlier gate's verdict on stdout.
+# The reference scan: each literal class, each placeholder spelling,
+# each class's token alone on its line, the reported line number, the
+# rows of several payloads in manifest order, the state-store class
+# keyed on the state folder's own name, both exemptions by target — the
+# state folder and an --exempt tree given absolute, relative, through a
+# symlink, or twice, a symlinked file included, a sibling that only
+# shares the prefix excluded, targets sharing a directory each given
+# their own answer — both markers, and a clean payload of near-misses.
+# A run that could loop is bounded, so a regression fails instead of
+# hanging. Last, the placeholder list in the verifier is held equal to
+# the plugin glossary's.
 #
 # Exit 0 = every case passed.
 
@@ -90,11 +93,19 @@ bounded() { # bounded <dir> <args...> — run from <dir>, killed after 20 s, so 
 	shift
 	(cd "$bdir" && exec sh "$verify" "$@") >"$tmp/bounded.out" 2>&1 &
 	bpid=$!
-	(sleep 20 && kill "$bpid") >/dev/null 2>&1 &
+	# the watchdog stops its own sleep when it is stopped, so no sleep
+	# outlives the run
+	(
+		trap 'kill "${spid:-}" 2>/dev/null; exit 0' TERM
+		sleep 20 &
+		spid=$!
+		wait "$spid" && kill "$bpid"
+	) >/dev/null 2>&1 &
 	wpid=$!
 	wait "$bpid"
 	code=$?
 	kill "$wpid" 2>/dev/null
+	wait "$wpid" 2>/dev/null
 	report=$(cat "$tmp/bounded.out")
 }
 
@@ -510,23 +521,79 @@ else
 	echo "skip — the three unreadable-file cases: root reads every file"
 fi
 
-# An awk that fails on the reference scan or on a count stops the run
+# An awk that fails on the reference scan or on the counts stops the run
 # with exit 2; the stub fails on that one program and runs the real awk
 # for every other.
-stub awk-scan 'ppath='
+stub awk-scan 'remedy_re'
 fixture awkscan
 err=$(PATH="$tmp/awk-scan:$PATH" sh "$verify" "$(topicdir awkscan)" 2>&1 >/dev/null)
 code=$?
 check "an awk that fails on the scan — exit 2" "2" "$code"
-check "an awk that fails on the scan — message" "cannot scan payloads/t1s1.md" \
-	"$(note_seen "$err" "cannot scan payloads/t1s1.md")"
-stub awk-count 'pnl='
+check "an awk that fails on the scan — message" "cannot scan the payloads" \
+	"$(note_seen "$err" "cannot scan the payloads")"
+stub awk-count 'unreadable'
 fixture awkcount
 err=$(PATH="$tmp/awk-count:$PATH" sh "$verify" "$(topicdir awkcount)" 2>&1 >/dev/null)
 code=$?
-check "an awk that fails on a count — exit 2" "2" "$code"
-check "an awk that fails on a count — message" "cannot count payloads/t1s1.md" \
-	"$(note_seen "$err" "cannot count payloads/t1s1.md")"
+check "an awk that fails on the counts — exit 2" "2" "$code"
+check "an awk that fails on the counts — message" "cannot count the payloads" \
+	"$(note_seen "$err" "cannot count the payloads")"
+
+# A run that stops at a gate has already reported every gate before it:
+# the stop lands where that gate's verdict would. Ahead of the failing
+# count stand a whole-file gate and a count gate whose target does not
+# exist yet — neither needs a count, so both are reported.
+diefixture() { # diefixture <name> — t1s1 whole, t1s2 a missing target, t1s3 a count
+	d=$(topicdir "$1")
+	t=$tmp/repo/$1
+	mkdir -p "$d/payloads" "$t"
+	printf '# Fixture\n\n- [x] **T1S1: a**\n\n- [ ] **T1S2: b**\n\n- [x] **T1S3: c**\n' >"$d/plan.md"
+	printf 'whole\n' >"$d/payloads/t1s1.md"
+	printf 'beta line\n' >"$d/payloads/t1s2.md"
+	printf 'gamma line\n' >"$d/payloads/t1s3.md"
+	printf 'whole\n' >"$t/whole.md"
+	printf 'gamma line\n' >"$t/count.md"
+	printf 't1s1 %s/whole.md whole\nt1s2 %s/missing.md\nt1s3 %s/count.md\n' "$t" "$t" "$t" \
+		>"$d/payloads/manifest"
+}
+diefixture awkorder
+out=$(PATH="$tmp/awk-count:$PATH" sh "$verify" "$(topicdir awkorder)" 2>/dev/null)
+code=$?
+check "a failed count stops at its gate — exit 2" "2" "$code"
+check "a failed count stops at its gate — the gates before it" \
+	"PASS t1s1|PENDING t1s2|" "$(printf '%s\n' "$out" | awk '{ printf "%s %s|", $1, $2 }')"
+if [ "$asroot" = 0 ]; then
+	diefixture unreadorder
+	chmod 000 "$tmp/repo/unreadorder/count.md"
+	out=$(sh "$verify" "$(topicdir unreadorder)" 2>"$tmp/unreadorder.err")
+	code=$?
+	check "an unreadable count target stops at its gate — exit 2" "2" "$code"
+	check "an unreadable count target stops at its gate — the gates before it" \
+		"PASS t1s1|PENDING t1s2|" "$(printf '%s\n' "$out" | awk '{ printf "%s %s|", $1, $2 }')"
+	c=$tmp/repo/unreadorder/count.md
+	check "an unreadable count target stops at its gate — the last two lines" \
+		"payload-verify: cannot read $c — check its permissions|payload-verify: cannot count payloads/t1s3.md in $c — awk failed on it (its error is above)|" \
+		"$(tail -n 2 "$tmp/unreadorder.err" | tr '\n' '|')"
+fi
+
+# A path with a space in it is read whole — the payload's, under a
+# state folder with a space in its path, and the target's, under a HOME
+# with one — and the payload's final newline is still told apart from
+# its absence: one target, ending without one, holds t1s1 and not t1s2.
+sp="$tmp/sp ace/state/area/2026/09-29-spaced"
+mkdir -p "$sp/payloads" "$tmp/sp ace/house"
+printf '# Fixture\n\n- [x] **T1S1: a**\n\n- [ ] **T1S2: b**\n' >"$sp/plan.md"
+printf 'alpha line\n' >"$sp/payloads/t1s1.md"
+printf 'omega\n' >"$sp/payloads/t1s2.md"
+printf 'x\nalpha line\nomega' >"$tmp/sp ace/house/target.md"
+spt='~/target.md'
+printf 't1s1 %s\nt1s2 %s\n' "$spt" "$spt" >"$sp/payloads/manifest"
+report=$(HOME="$tmp/sp ace/house" sh "$verify" "$sp" 2>&1)
+code=$?
+check "paths with a space — exit" "0" "$code"
+check "paths with a space — a count" "PASS" "$(verdict "$report" t1s1)"
+check "paths with a space — a final newline the target lacks" "PENDING 0 of 1" \
+	"$(printf '%s\n' "$report" | awk '$2 == "t1s2" { print $1, $(NF - 2), $(NF - 1), $NF }')"
 
 # A payload file with no extension is a defect whether or not its name
 # is a gate's step-id — never quietly neither payload nor orphan.
@@ -720,6 +787,56 @@ mkdir -p "$tmp/machinery-old"
 printf 't1s1 %s/no-such-file.md\n' "$tmp/machinery-old" >"$(topicdir exsib)/payloads/manifest"
 defect "a sibling sharing the prefix is not exempt" "t1s1.md:1: topic ID" \
 	"$(topicdir exsib)" --exempt "$tmp/machinery"
+
+# One run, several payloads: each row names its own payload and line, in
+# manifest order, and an exempt target between two scanned ones drops
+# out without moving them. The gates' targets share directories, so the
+# exemption decided for one target stands for the next under the same
+# parent: a parent reached through a symlink into the exempt tree, a
+# parent that only shares the exempt tree's prefix, a parent whose path
+# ends in the exempt tree's, and the exempt tree itself, met after both.
+# Every payload carries a token, so a target wrongly exempted drops a
+# row and one wrongly scanned adds one. The control runs the same topic
+# with no --exempt, and every gate trips.
+bx=$(topicdir batch)
+bt=$tmp/repo/batch
+mkdir -p "$bx/payloads" "$bt/plain" "$bt/x$tmp/machinery"
+ln -s "$tmp/machinery" "$bt/mlink"
+printf '# Fixture\n' >"$bx/plan.md"
+for i in 1 2 3 4 5 6 7 8; do
+	printf '\n- [ ] **T1S%s: g**\n' "$i" >>"$bx/plan.md"
+done
+printf 'A clean line.\nLanded at T4S2 here.\n' >"$bx/payloads/t1s1.md"
+printf 'Topic 2026-08-16-standalone-repos.\n' >"$bx/payloads/t1s2.md"
+printf 'One.\nTwo.\nAsserted at spec D5.\n' >"$bx/payloads/t1s3.md"
+printf 'Topic 2026-08-16-standalone-repos.\n' >"$bx/payloads/t1s4.md"
+printf 'Topic 2026-08-16-standalone-repos.\n' >"$bx/payloads/t1s5.md"
+printf 'Quoted in plan.md here.\n' >"$bx/payloads/t1s6.md"
+printf 'Topic 2026-08-16-standalone-repos.\n' >"$bx/payloads/t1s7.md"
+printf 'Topic 2026-08-16-standalone-repos.\n' >"$bx/payloads/t1s8.md"
+{
+	printf 't1s1 %s/plain/a.md\n' "$bt"
+	printf 't1s2 %s/mlink/a.md\n' "$bt"
+	printf 't1s3 %s/plain/b.md\n' "$bt"
+	printf 't1s4 %s/mlink/b.md\n' "$bt"
+	printf 't1s5 %s/a.md\n' "$tmp/machinery-old"
+	printf 't1s6 %s/x%s/a.md\n' "$bt" "$tmp/machinery"
+	printf 't1s7 %s/a.md\n' "$tmp/machinery"
+	printf 't1s8 %s/b.md\n' "$tmp/machinery"
+} >"$bx/payloads/manifest"
+rows() { printf '%s\n' "$1" | awk '/^  / { sub(/^.*\/payloads\//, ""); printf "%s|", $0 }'; }
+err=$(sh "$verify" "$bx" --exempt "$tmp/machinery" 2>&1 >/dev/null)
+code=$?
+check "shared directories, several payloads — exit 2" "2" "$code"
+check "shared directories, several payloads — the rows" \
+	"t1s1.md:2: step ID — T4S2|t1s3.md:3: label — spec D5|t1s5.md:1: topic ID — 2026-08-16-standalone-repos|t1s6.md:1: artifact basename — plan.md|" \
+	"$(rows "$err")"
+err=$(sh "$verify" "$bx" 2>&1 >/dev/null)
+code=$?
+check "control: shared directories without --exempt — exit 2" "2" "$code"
+check "control: shared directories without --exempt — every gate trips" \
+	"t1s1.md:2: step ID — T4S2|t1s2.md:1: topic ID — 2026-08-16-standalone-repos|t1s3.md:3: label — spec D5|t1s4.md:1: topic ID — 2026-08-16-standalone-repos|t1s5.md:1: topic ID — 2026-08-16-standalone-repos|t1s6.md:1: artifact basename — plan.md|t1s7.md:1: topic ID — 2026-08-16-standalone-repos|t1s8.md:1: topic ID — 2026-08-16-standalone-repos|" \
+	"$(rows "$err")"
 
 # Exemption 2 — a line carrying a remediation marker's `plan:`. The
 # marker ahead of the token is what the exemption keys on — the `#` of a

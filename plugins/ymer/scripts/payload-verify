@@ -137,7 +137,8 @@ phase name	<phase>
 EOF
 }
 
-# expand <path> — a leading ~ is $HOME, as the manifest grammar allows
+# expand <path> — a leading ~ is $HOME, for the topic argument; the
+# manifest awk below expands its targets by the same rule
 expand() {
 	case $1 in
 	\~) printf '%s\n' "$HOME" ;;
@@ -157,10 +158,6 @@ resolve() {
 	/*) ;;
 	*) r=$(pwd -P)/$r ;;
 	esac
-	if [ -d "$r" ]; then
-		(cd -P "$r" && pwd -P)
-		return
-	fi
 	n=0
 	while [ -h "$r" ] && [ "$n" -lt 40 ]; do
 		n=$((n + 1))
@@ -192,44 +189,6 @@ exempt() {
 		esac
 	done <"$tmp/exempt"
 	return 1
-}
-
-# lastnl <file> — 1 when the file's last byte is a newline, else 0
-lastnl() {
-	if [ -s "$1" ] && [ "$(tail -c 1 "$1" | wc -l | tr -d ' ')" = 1 ]; then
-		echo 1
-	else
-		echo 0
-	fi
-}
-
-# count <payload> <target> — the payload's occurrences in the target,
-# non-overlapping, left to right
-count() {
-	awk -v pnl="$(lastnl "$1")" -v tnl="$(lastnl "$2")" '
-		function slurp(f, nl,    s, l, k, g) {
-			s = ""
-			k = 0
-			while ((g = (getline l < f)) > 0) s = (k++ ? s "\n" : "") l
-			if (g < 0) {
-				print "payload-verify: cannot read " f " — check its permissions" | "cat 1>&2"
-				exit 2
-			}
-			close(f)
-			return (nl && k) ? s "\n" : s
-		}
-		BEGIN {
-			p = slurp(ARGV[1], pnl)
-			t = slurp(ARGV[2], tnl)
-			if (p == "") exit 2
-			n = 0
-			while ((i = index(t, p)) > 0) {
-				n++
-				t = substr(t, i + length(p))
-			}
-			print n
-			exit
-		}' "$1" "$2"
 }
 
 # ── arguments ────────────────────────────────────────────────────────
@@ -343,7 +302,8 @@ awk -v plan="$plan" '
 
 # ── the manifest ─────────────────────────────────────────────────────
 # The payloads/ listing is read once; each gate becomes one
-# `<sid> <box> <ticked> <payload file> <target> <expected>` line.
+# `<sid> <box> <ticked> <payload file> <target> <expected>` line, its
+# target ~-expanded.
 
 ls -A "$pay" >"$tmp/listing" || die "cannot list $pay — check its permissions"
 
@@ -376,6 +336,8 @@ awk -v q="'" '
 		k = 0
 		for (x in file) if (index(x, sid ".") == 1) { k++; pf = x }
 		if (k != 1) die("manifest line " FNR ": want exactly one payloads/" sid ".<ext>, found " k " — one payload file per gate, named by its step-id")
+		if (target == "~") target = ENVIRON["HOME"]
+		else if (target ~ /^~\//) target = ENVIRON["HOME"] substr(target, 2)
 		print sid "\t" b "\t" box[b] "\t" pf "\t" target "\t" expected
 	}
 	END {
@@ -400,11 +362,17 @@ awk -v q="'" '
 		}
 	}' "$tmp/boxes" "$tmp/listing" "$man" >"$tmp/gates" || exit 2
 
+# The same pass reads plan complete (used by the verdicts below) and
+# lists every count gate whose target is a file as
+# `<payload><TAB><target>`, the counts' input.
+complete=1
 while IFS=$tab read -r sid box ticked pf target expected; do
 	[ -f "$pay/$pf" ] || die "payloads/$pf is not a regular file — a payload is a file named payloads/<step-id>.<ext>"
 	[ -r "$pay/$pf" ] || die "payloads/$pf is not readable — check its permissions"
 	[ -s "$pay/$pf" ] || die "payloads/$pf is empty — a payload carries at least one line of the target's final state"
-done <"$tmp/gates"
+	[ "$ticked" = 1 ] || complete=0
+	[ "$expected" = whole ] || [ ! -f "$target" ] || printf '%s\t%s\n' "$pay/$pf" "$target"
+done <"$tmp/gates" >"$tmp/countable"
 
 # ── workflow-internal references ─────────────────────────────────────
 # Each class below mirrors its token shape with ASCII word boundaries: a
@@ -412,13 +380,19 @@ done <"$tmp/gates"
 # it may not run into. A sentinel newline at both ends of the line stands
 # for the line's edges.
 
+# One awk reads every payload whose target is not exempt, in manifest
+# order, so the rows keep that order.
+
 wir_placeholders >"$tmp/wir"
 : >"$tmp/hits"
 stem=${state##*/}
+set --
 while IFS=$tab read -r sid box ticked pf target expected; do
-	real=$(resolve "$(expand "$target")")
-	exempt "$real" && continue
-	awk -v ppath="$pay/$pf" -v stem="$stem" '
+	real=$(resolve "$target")
+	exempt "$real" || set -- "$@" "$pay/$pf"
+done <"$tmp/gates"
+if [ $# -gt 0 ]; then
+	awk -v stem="$stem" '
 		function esc(s,    o, i, c) {
 			o = ""
 			for (i = 1; i <= length(s); i++) {
@@ -436,15 +410,11 @@ while IFS=$tab read -r sid box ticked pf target expected; do
 			at = RSTART + head
 			return substr(s, RSTART + head, RLENGTH - head - tail)
 		}
-		# pick <s> <class> <literal re> <head> <tail> — the leftmost of the
-		# literal token and every placeholder spelling of the class
-		function pick(s, cls, re, head, tail,    tok, best, pos, i, p) {
-			best = ""
-			pos = 0
-			if (re != "") {
-				tok = find(s, re, head, tail)
-				if (at) { best = tok; pos = at }
-			}
+		# pick <s> <class> <literal token> <its position> — the leftmost of
+		# the literal token, when there is one, and every placeholder
+		# spelling of the class
+		function pick(s, cls, best, pos,    i, p) {
+			if (best == "") pos = 0
 			for (i = 1; i <= np; i++) {
 				if (pc[i] != cls) continue
 				p = index(s, ps[i])
@@ -459,7 +429,7 @@ while IFS=$tab read -r sid box ticked pf target expected; do
 			ps[np] = w[2]
 			next
 		}
-		FNR == 1 {
+		BEGIN {
 			st = esc(stem)
 			topic_re = "[^A-Za-z0-9_/-][0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[a-z0-9]*[a-z][a-z0-9]*(-[a-z0-9]+)*"
 			up_re = "[^A-Za-z0-9_-]\\.\\./" st "[^A-Za-z0-9_-]"
@@ -477,39 +447,31 @@ while IFS=$tab read -r sid box ticked pf target expected; do
 			# the redefinition-in-flight marker: a topic ID after it is exempt
 			m = index(s, marker)
 			ts = m ? substr(s, 1, m - 1) "\n" : s
-			tok = pick(ts, "topic ID", topic_re, 1, 0)
+			tok = find(ts, topic_re, 1, 0)
+			tok = pick(ts, "topic ID", tok, at)
 			if (tok != "") hit("topic ID", tok)
 			up = find(s, up_re, 1, 1)
 			upat = at
 			down = find(s, down_re, 1, 0)
 			if (upat && (!at || upat <= at)) { lit = up; at = upat } else lit = down
-			tok = placeholder_or(s, "state-store path", lit, at)
+			tok = pick(s, "state-store path", lit, at)
 			if (tok != "") hit("state-store path", tok)
-			tok = pick(s, "artifact basename", art_re, 1, 1)
+			tok = find(s, art_re, 1, 1)
+			tok = pick(s, "artifact basename", tok, at)
 			if (tok != "") hit("artifact basename", tok)
-			tok = pick(s, "step ID", step_re, 1, 1)
+			tok = find(s, step_re, 1, 1)
+			tok = pick(s, "step ID", tok, at)
 			if (tok != "") hit("step ID", tok)
-			tok = pick(s, "label", label_re, 1, 1)
+			tok = find(s, label_re, 1, 1)
+			tok = pick(s, "label", tok, at)
 			if (tok != "") hit("label", tok)
-			tok = pick(s, "phase name", "", 0, 0)
+			tok = pick(s, "phase name", "", 0)
 			if (tok != "") hit("phase name", tok)
 		}
-		# placeholder_or <s> <class> <literal token> <its position> — the
-		# leftmost of a literal already found and the class placeholders
-		function placeholder_or(s, cls, lit, lat,    best, pos, i, p) {
-			best = lit
-			pos = lit == "" ? 0 : lat
-			for (i = 1; i <= np; i++) {
-				if (pc[i] != cls) continue
-				p = index(s, ps[i])
-				if (p && (pos == 0 || p < pos)) { best = ps[i]; pos = p }
-			}
-			return best
-		}
-		function hit(cls, tok) { printf "  %s:%d: %s — %s\n", ppath, FNR, cls, tok }
-	' "$tmp/wir" "$pay/$pf" >>"$tmp/hits" ||
-		die "cannot scan payloads/$pf — awk failed on it (its error is above); the scan needs a POSIX awk"
-done <"$tmp/gates"
+		function hit(cls, tok) { printf "  %s:%d: %s — %s\n", FILENAME, FNR, cls, tok }
+	' "$tmp/wir" "$@" >"$tmp/hits" ||
+		die "cannot scan the payloads — awk failed on the batched scan (its error is above); the scan needs a POSIX awk"
+fi
 if [ -s "$tmp/hits" ]; then
 	{
 		echo "payload-verify: workflow-internal reference in payload prose bound for a project repo (write-plan's frame bar) — reword each line below for the target file's reader, or pass --exempt for a machinery tree the front binds:"
@@ -521,19 +483,72 @@ fi
 # ── the verdicts ─────────────────────────────────────────────────────
 # Plan complete — every gate's box ticked — is the terminal moment:
 # every gated step has run, so a count still short of its final-state
-# count is short for good (the accepted edge: the header).
+# count is short for good (the accepted edge: the header). The sanity
+# pass above sets complete, and the verdict loop below reads it.
 
-complete=1
-while IFS=$tab read -r sid box ticked pf target expected; do
-	[ "$ticked" = 1 ] || complete=0
-done <"$tmp/gates"
+# The counts run first, as one awk over the count list, and the verdicts
+# below take them in order. A count needs to know whether each file's
+# last byte is a newline, which getline hides: under LC_ALL=C a
+# non-empty file ends in one exactly when its line lengths, plus one per
+# line, sum to its byte size, so one wc -c supplies every size. The awk
+# prints one line per listed gate — the count, or `unreadable <file>`
+# for a file it cannot read, after which it stops — and an awk that
+# fails counts nothing.
+
+set --
+while IFS=$tab read -r p t; do
+	set -- "$@" "$p" "$t"
+done <"$tmp/countable"
+: >"$tmp/sizes"
+: >"$tmp/counts"
+if [ $# -gt 0 ]; then
+	wc -c "$@" >"$tmp/sizes" 2>/dev/null
+	awk '
+		# slurp <file> — 1 with its bytes in got, 0 when it cannot be read
+		function slurp(f,    s, l, k, b, g) {
+			s = ""
+			k = 0
+			b = 0
+			while ((g = (getline l < f)) > 0) {
+				s = (k++ ? s "\n" : "") l
+				b += length(l) + 1
+			}
+			if (g < 0) return 0
+			close(f)
+			if (!(f in size)) exit 2
+			got = (k && b == size[f]) ? s "\n" : s
+			return 1
+		}
+		FILENAME == ARGV[1] {
+			n = $1
+			sub(/^ *[0-9]+ /, "")
+			size[$0] = n + 0
+			next
+		}
+		{
+			split($0, g, "\t")
+			if (!slurp(g[1])) { print "unreadable " g[1]; exit }
+			p = got
+			if (!(g[2] in text)) {
+				if (!slurp(g[2])) { print "unreadable " g[2]; exit }
+				text[g[2]] = got
+			}
+			if (p == "") exit 2
+			t = text[g[2]]
+			n = 0
+			while ((i = index(t, p)) > 0) {
+				n++
+				t = substr(t, i + length(p))
+			}
+			print n
+		}' "$tmp/sizes" "$tmp/countable" >"$tmp/counts" || : >"$tmp/counts"
+fi
 
 pass=0
 pending=0
 fail=0
 total=0
 while IFS=$tab read -r sid box ticked pf target expected; do
-	target=$(expand "$target")
 	payload=$pay/$pf
 	if [ "$expected" = whole ]; then
 		if [ ! -f "$target" ]; then
@@ -547,8 +562,14 @@ while IFS=$tab read -r sid box ticked pf target expected; do
 		fi
 	else
 		if [ -f "$target" ]; then
-			n=$(count "$payload" "$target") ||
+			IFS= read -r n <&3 ||
+				die "cannot count the payloads — awk failed on the batched count (its error is above); the count needs a POSIX awk"
+			case $n in
+			'unreadable '*)
+				printf 'payload-verify: cannot read %s — check its permissions\n' "${n#unreadable }" >&2
 				die "cannot count payloads/$pf in $target — awk failed on it (its error is above)"
+				;;
+			esac
 		else
 			n=0
 		fi
@@ -579,7 +600,7 @@ while IFS=$tab read -r sid box ticked pf target expected; do
 	esac
 	total=$((total + 1))
 	printf '%-7s %-6s %s — %s\n' "$status" "$sid" "$target" "$note"
-done <"$tmp/gates"
+done <"$tmp/gates" 3<"$tmp/counts"
 
 printf 'payload-verify: %d gate(s) — %d PASS · %d PENDING · %d FAIL\n' "$total" "$pass" "$pending" "$fail"
 [ "$fail" -eq 0 ] || exit 1

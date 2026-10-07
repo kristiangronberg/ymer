@@ -695,8 +695,8 @@ content, embedded content
 
 ### payload gate
 The gate proving one payload landed: the target file contains the
-payload file's exact bytes at the expected count (a whole-file `diff` for a
-Create payload), joined to its step's checkbox by step ID and reported
+payload file's exact bytes at the expected count (a whole-file byte
+comparison for a Create payload), joined to its step's checkbox by step ID and reported
 PASS / PENDING / FAIL by the payload verifier. Not one of sweep's gate
 shapes — a delta gate certifies one edit's increment; the payload gate
 certifies the bytes' presence in the target.
