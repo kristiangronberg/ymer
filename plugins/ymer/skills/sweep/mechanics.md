@@ -14,19 +14,26 @@ The mechanics of the sweep skill, moved here byte for byte from `SKILL.md`, whic
   gitignored path is reached only by turning that filter off, as the
   hidden-files bullet above says.
 - Name the corpus by absolute path, never `.` or a path relative to
-  the cwd: the Bash tool's working directory is state a sibling call
-  can move — a `cd <topic folder> && …` in one of several
-  same-response calls re-scoped a sibling's `find . -name plan.md` to
-  that folder (2026-08-31: 1 plan counted where the absolute-path
-  re-run counted 148; the paired total-count control exposed it).
-  The re-scope is live, not historical: the harness snaps the shell
-  back to the launch directory — printing "Shell cwd was reset" —
-  only when the new cwd falls outside the session's working
-  directories or `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` is set
-  (as-of CLI 2.1.258, read from the bundle; the 2026-09-02 probe that
-  saw the line had `cd`-ed to a scratchpad outside them), so a `cd`
-  into the repo being swept carries to the next call. An absolute
-  corpus is right under either behaviour — except that a
+  the cwd: the Bash tool's working directory is state a `cd` can
+  move. A `cd <topic folder> && …` once re-scoped a same-response
+  call's `find . -name plan.md` to that folder (2026-08-31: 1 plan
+  counted where the absolute-path re-run counted 148; the paired
+  total-count control exposed it); on CLI 2.1.292 a `pwd` in the same
+  batch as a `cd` printed the launch dir (observed in passing, not
+  probed), so nothing here relies on whether another call in the
+  batch sees the move. Whether a `cd` outlives its own call depends
+  on the front: in a main session the harness restores the launch
+  directory after every call, silently, when
+  `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` is set, and without it a
+  `cd` into the repo being swept carries to the next call (both
+  measured by headless probe, CLI 2.1.292, 2026-10-07); only a `cd`
+  outside the session's working directories snaps back, printing
+  "Shell cwd was reset" (probed 2026-09-02, a `cd` to the scratchpad;
+  bundle read 2.1.273); an agent thread resets after every call
+  regardless. A `cd` still re-scopes the rest of its own call under
+  every behaviour, and a relative corpus inherits whatever cwd the
+  front left, so an absolute corpus is right under all of them —
+  except that a
   `/`-containing `rg -g` glob is matched relative to the cwd, not the
   named root, so such a command stays cwd-dependent until the glob is
   prefixed `**/` (probed 2026-09-02, ripgrep 15.2.0; → the front's
