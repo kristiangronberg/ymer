@@ -21,21 +21,29 @@
 # run that did not pass is copied into the run's own results directory as
 # <case>.trace.jsonl, and every kept temp dir is removed, green or red,
 # and on an interrupted run too: when the stage is ended before its own
-# removal pass, the entry script's EXIT trap removes them instead.
+# removal pass, the entry script's EXIT trap removes them instead. The one
+# exception is a result this stage cannot read: then no trace can be told
+# from another, so every kept temp dir stays, and the layout line names
+# them.
 
-# Every temp dir the runner kept, named on its own `⚠ kept <dir>:` line in
-# <log>, whether or not a result was written. It seals what the plugin
+# Every temp dir the runner kept, each named on its own `⚠ kept <dir>:`
+# line in <log>, whether or not a result was written. The log is read in
+# the C locale, so a byte that is not valid UTF-8 never stops the read.
+eval_kept_dirs() { # eval_kept_dirs <log> — each kept dir <log> names, one per line
+	LC_ALL=C sed -n 's/^⚠ kept \([^ ]*\): .*/\1/p' "$1"
+}
+
+# Removes every temp dir the runner kept. The runner seals what the plugin
 # under test wrote in <dir>/sealed at mode 000 and leaves <dir> read-only,
 # so both are opened before the removal. Only a directory shaped like the
 # runner's own — a last component named e-* or claude-eval-*, holding
 # out/ — is ever removed. Runs once the runner returns, or instead from
 # the EXIT trap when the stage was ended before that. The dirs that
-# outlived their removal are named on a `kept` fail line. The log is read
-# in the C locale, so a byte that is not valid UTF-8 never stops the read.
+# outlived their removal are named on a `kept` fail line.
 eval_remove_kept() { # eval_remove_kept <log>
 	left=''
 	[ -f "$1" ] || return 0
-	LC_ALL=C sed -n 's/^⚠ kept \([^ ]*\): .*/\1/p' "$1" >"$tmp/eval-kept"
+	eval_kept_dirs "$1" >"$tmp/eval-kept"
 	while IFS= read -r d; do
 		case ${d##*/} in
 		e-?* | claude-eval-?*) ;;
@@ -89,47 +97,97 @@ stage_eval() {
 	# spaces, in that order, its graders' `passed` deeper, and the case's
 	# `dir` at six. The run's own results directory is the `startedAt` at
 	# the result's root, two spaces in, with `:` and `.` made `-`, as the
-	# runner names it.
+	# runner names it; with none read, no trace is copied, and none on any
+	# other layout miss below either.
+	#
+	# Those indents are the runner's layout, not a contract, so every
+	# result is checked against it, green or red: a `schemaVersion` of 1 at
+	# the root, a `startedAt` read there, and a run-level `tracePath` read
+	# for every run the result says ran — `casesTotal`, one run per case.
+	# Any miss is the layout red: the kept temp dirs stay for inspection
+	# instead of going, and once the line naming them has printed the EXIT
+	# trap is told to leave them too.
 	copied=0
 	traces=''
+	layout=''
 	if [ -f "$result" ]; then
+		schema=$(sed -n 's/^  "schemaVersion": \([0-9]*\),*$/\1/p' "$result")
 		ts=$(sed -n 's/^  "startedAt": "\(.*\)",*$/\1/p' "$result" | sed 's/[:.]/-/g')
-		traces=$root/evals/results/${ts:-unknown-run}
-		awk '
+		total=$(sed -n 's/^ *"casesTotal": \([0-9]*\),*$/\1/p' "$result")
+		awk -v count="$tmp/eval-trace-count" '
 			/^      "dir": "/ { c = $0; sub(/^      "dir": "evals\//, "", c); sub(/",*$/, "", c) }
 			/^            "passed": / { p = ($0 ~ /true/); e = 0 }
 			/^            "error": / { e = ($0 !~ /"error": null,*$/) }
 			/^            "tracePath": "/ {
+				n++
 				t = $0
 				sub(/^            "tracePath": "/, "", t)
 				sub(/",*$/, "", t)
 				if (!p || e) print c "\t" t
 			}
+			END { print n + 0 > count }
 		' "$result" >"$tmp/eval-red"
-		while IFS='	' read -r case_name trace; do
-			if [ -f "$trace" ]; then
-				mkdir -p "$traces"
-				cp "$trace" "$traces/$case_name.trace.jsonl"
-				copied=$((copied + 1))
-			fi
-		done <"$tmp/eval-red"
+		found=$(cat "$tmp/eval-trace-count")
+		if [ -z "$schema" ]; then
+			layout="$layout; no schemaVersion at its root"
+		elif [ "$schema" != 1 ]; then
+			layout="$layout; schemaVersion $schema, not 1"
+		fi
+		[ -n "$ts" ] || layout="$layout; no startedAt at its root"
+		# one casesTotal, all digits: an empty read, or two reads on two
+		# lines, has no count to compare and must not read as a pass
+		case $total in
+		'' | *[!0-9]*) layout="$layout; no single casesTotal to count its runs by" ;;
+		*) [ "$found" -ge "$total" ] || layout="$layout; $found run-level tracePath line(s) for $total run(s)" ;;
+		esac
+		# the traces are told apart by the reads above, so a layout miss
+		# copies none
+		if [ -z "$layout" ]; then
+			traces=$root/evals/results/$ts
+			while IFS='	' read -r case_name trace; do
+				if [ -f "$trace" ]; then
+					mkdir -p "$traces"
+					cp "$trace" "$traces/$case_name.trace.jsonl"
+					copied=$((copied + 1))
+				fi
+			done <"$tmp/eval-red"
+		fi
 	fi
 
-	# every kept temp dir goes now, ahead of every line below; one that
-	# outlives its removal is named here, and the EXIT trap has nothing
-	# left to do
-	eval_remove_kept "$log"
-	eval_log=''
+	if [ -n "$layout" ]; then
+		# a result this stage cannot read: the kept dirs stay, named on the
+		# layout line below, and eval_log is cleared only once that line has
+		# printed, so an interrupt before it still has the EXIT trap remove them
+		kept_dirs=$(eval_kept_dirs "$log" | tr '\n' ' ')
+	else
+		# every kept temp dir goes now, ahead of every line below; one that
+		# outlives its removal is named here, and the EXIT trap has nothing
+		# left to do
+		eval_remove_kept "$log"
+		eval_log=''
+	fi
 
 	if [ ! -f "$result" ]; then
 		abort runner "claude plugin eval wrote no result (exit $rc) — read $log"
 	fi
 
-	total=$(sed -n 's/^ *"casesTotal": \([0-9]*\),*$/\1/p' "$result")
 	passed=$(sed -n 's/^ *"casesPassed": \([0-9]*\),*$/\1/p' "$result")
 	errors=$(grep -c '^ *"error": null,*$' "$result" || true)
 	kept_note=''
 	[ "$copied" = 0 ] || kept_note=" — traces kept in $traces/"
+
+	if [ -n "$layout" ]; then
+		if [ -n "$kept_dirs" ]; then
+			kept_line="the runner's kept temp dir(s) ${kept_dirs% } are left for inspection — remove each after: chmod 700 <dir> <dir>/sealed && rm -rf <dir>"
+		else
+			kept_line="the runner named no kept temp dir in $log"
+		fi
+		fail layout "the runner's result is not in the layout this stage reads (${layout#; }), so no failed run's trace can be found — read $result and bring the reads in scripts/hermetic-probe-eval to it; $kept_line"
+		# the dirs are named now, so the EXIT trap leaves them
+		eval_log=''
+	else
+		pass layout "schemaVersion 1, its start time read, a trace located for each of its $total run(s)"
+	fi
 
 	if grep -q '^ *"partial": true' "$result"; then
 		fail runner "the run is partial — read $result (partialReason) and run again$kept_note"

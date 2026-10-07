@@ -9,7 +9,8 @@
 # allowed one, a value running on past one, a binary file, a nested
 # checkout in the corpus, an empty corpus, the token file's shape), the
 # reference rules, the runner's result read — a failed run's trace kept,
-# every temp dir the runner kept removed — the login call — no login, an
+# every temp dir the runner kept removed, and every one kept when the
+# result is in a layout the read does not know — the login call — no login, an
 # error of another kind, no result line, a long text cut — the scrub,
 # prompt-before-flags and the strict MCP config, the node read-back,
 # teardown on failure — a failed `up` included — the compose copy's
@@ -216,6 +217,17 @@ eval_result false 2 1 2 >"$canned/eval-fail.json"
 eval_result true 2 1 1 >"$canned/eval-partial.json"
 eval_result false 1 1 1 >"$canned/eval-short.json"
 eval_result false 2 0 1 >"$canned/eval-error.json"
+# The same result in a layout the stage does not read, one miss each: every
+# key below the root four spaces deeper, all green and again on a partial
+# run; a schemaVersion of 2, and none at all; no startedAt at the root, the
+# runs' own start times left in place; and no casesTotal, and two of them
+sed 's/^    /        /' "$canned/eval-ok.json" >"$canned/eval-reindented.json"
+sed 's/^    /        /' "$canned/eval-partial.json" >"$canned/eval-reindented-partial.json"
+sed 's/^  "schemaVersion": 1,$/  "schemaVersion": 2,/' "$canned/eval-fail.json" >"$canned/eval-schema2.json"
+sed '/^  "schemaVersion": /d' "$canned/eval-ok.json" >"$canned/eval-noschema.json"
+sed '/^  "startedAt": /d' "$canned/eval-fail.json" >"$canned/eval-nostart.json"
+sed '/^    "casesTotal": /d' "$canned/eval-ok.json" >"$canned/eval-nototal.json"
+sed '/^    "casesTotal": /p' "$canned/eval-ok.json" >"$canned/eval-twototals.json"
 # keep-runs <i>... — what --keep-temp leaves for runs <i>: the run's dir
 # under $evals_kept with its trace in out/, what the plugin wrote sealed at
 # mode 000 in sealed/, the dir itself read-only, and the runner's notice
@@ -849,6 +861,7 @@ probe "$fx" eval
 unset ANTHROPIC_API_KEY
 check "eval ok exits 0" 0 "$rc"
 check "eval ok: the cases line" 1 "$(lines '✔ cases        2 cases, 2 passed on claude-sonnet-5')"
+check "eval ok: the layout line" 1 "$(lines '✔ layout       schemaVersion 1, its start time read, a trace located for each of its 2 run(s)')"
 check "eval runs the root once, pinned, one run, no baseline, no publish, temp dirs kept" 1 "$(logged "claude plugin eval $fx --trust-plugin --ablation none --runs 1 --model claude-sonnet-5 --no-publish --max-cost-usd 5 --keep-temp --json $fx/evals/results/hermetic-probe.json")"
 check "eval: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is set')"
 check "eval keeps the runner's log beside the result" 1 "$(test -f "$fx/evals/results/hermetic-probe.log" && echo 1)"
@@ -936,6 +949,65 @@ effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2 && kill -TERM \$(ps -o p
 probe "$fx" eval
 check "eval interrupted exits 143" 143 "$rc"
 check "eval interrupted: every kept dir removed" 0 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+
+# ── 10e · eval, a result in a layout the stage does not read ──────────
+# each miss alone turns the layout line red and keeps every dir the runner
+# kept, named on that line; a re-indented result is caught on an all-green
+# run too, and on a partial run the layout line comes ahead of the runner
+# line; a result with no root start time copies nothing anywhere, and one
+# with no casesTotal, or two, is a miss rather than a count that passes
+eval_layout() { # eval_layout <canned result> — run it with both runs kept
+	shim_reset
+	answer 'claude plugin eval' "@$canned/$1"
+	effect 'claude plugin eval' "sh '$canned/keep-runs' 1 2"
+	probe "$fx" eval
+}
+eval_unkeep() { # eval_unkeep — open and remove the dirs a layout red kept
+	chmod 700 "$evals_kept"/e-* "$evals_kept"/e-*/sealed
+	rm -rf "$evals_kept"/e-*
+}
+layout_kept="the runner's kept temp dir(s) $evals_kept/e-1 $evals_kept/e-2 are left for inspection — remove each after: chmod 700 <dir> <dir>/sealed && rm -rf <dir>"
+eval_layout eval-reindented.json
+check "eval re-indented exits 1" 1 "$rc"
+check "eval re-indented: the layout line names the miss, the result and the kept dirs" 1 "$(lines "✘ layout       the runner's result is not in the layout this stage reads (0 run-level tracePath line(s) for 2 run(s)), so no failed run's trace can be found — read $fx/evals/results/hermetic-probe.json and bring the reads in scripts/hermetic-probe-eval to it; $layout_kept")"
+check "eval re-indented: the cases still read green" 1 "$(lines '✔ cases        2 cases, 2 passed on claude-sonnet-5')"
+check "eval re-indented: both kept dirs survive" 2 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+eval_unkeep
+eval_layout eval-reindented-partial.json
+check "eval re-indented partial exits 1" 1 "$rc"
+check "eval re-indented partial: the layout line, then the runner line" 'layout runner' "$(printf '%s\n' "$out" | awk '/✘ layout/ { s = s " layout" } /✘ runner/ { s = s " runner" } END { print substr(s, 2) }')"
+check "eval re-indented partial: both kept dirs survive" 2 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+eval_unkeep
+rm -rf "$eval_runs"
+eval_layout eval-schema2.json
+check "eval schemaVersion 2 exits 1" 1 "$rc"
+check "eval schemaVersion 2: the layout line names the miss" 1 "$(lines '(schemaVersion 2, not 1), so no failed run')"
+check "eval schemaVersion 2: both kept dirs survive" 2 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+check "eval schemaVersion 2: no trace copied into the results dir" 0 "$(find "$fx/evals/results" -name '*.trace.jsonl' | wc -l | tr -d ' ')"
+check "eval schemaVersion 2: no line names a trace" 0 "$(lines 'traces kept in')"
+eval_unkeep
+eval_layout eval-noschema.json
+check "eval no schemaVersion exits 1" 1 "$rc"
+check "eval no schemaVersion: the layout line names the miss" 1 "$(lines '(no schemaVersion at its root), so no failed run')"
+check "eval no schemaVersion: both kept dirs survive" 2 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+eval_unkeep
+rm -rf "$eval_runs"
+eval_layout eval-nostart.json
+check "eval no startedAt exits 1" 1 "$rc"
+check "eval no startedAt: the layout line names the miss" 1 "$(lines '(no startedAt at its root), so no failed run')"
+check "eval no startedAt: both kept dirs survive" 2 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+check "eval no startedAt: no trace copied into the results dir" 0 "$(find "$fx/evals/results" -name '*.trace.jsonl' | wc -l | tr -d ' ')"
+eval_unkeep
+eval_layout eval-nototal.json
+check "eval no casesTotal exits 1" 1 "$rc"
+check "eval no casesTotal: the layout line names the miss" 1 "$(lines '(no single casesTotal to count its runs by), so no failed run')"
+check "eval no casesTotal: both kept dirs survive" 2 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+eval_unkeep
+eval_layout eval-twototals.json
+check "eval two casesTotal exits 1" 1 "$rc"
+check "eval two casesTotal: the layout line names the miss" 1 "$(lines '(no single casesTotal to count its runs by), so no failed run')"
+check "eval two casesTotal: both kept dirs survive" 2 "$(ls "$evals_kept" | wc -l | tr -d ' ')"
+eval_unkeep
 
 # ── 11 · eval, no cases ───────────────────────────────────────────────
 fx=$tmp/f11

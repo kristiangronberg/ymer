@@ -120,7 +120,9 @@ abort() {
 # docker-before and data/ exist and before `up` runs, so a failed `up`
 # still reaches the teardown. eval_remove_kept is defined by the eval
 # stage file, which sets eval_log from the runner's start until its own
-# removal pass. This shell runs the trap when SIGINT or SIGTERM ends it,
+# removal pass, or, when a result it cannot read keeps the dirs for
+# inspection, until the line naming them has printed. This shell runs the
+# trap when SIGINT or SIGTERM ends it,
 # so an interrupt reaches it too. A SIGTERM to this shell's pid alone,
 # rather than to its process group, leaves the runner running on as an
 # orphan: the trap removes what the log names by then, and a dir the
