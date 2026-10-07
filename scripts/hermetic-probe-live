@@ -8,8 +8,9 @@
 # a friction in the pool under that front, and mint stops at its guard. With the probe dir's state/ — a plain folder, not a git work tree
 # — named as the state folder, setup converges on a re-run and repairs
 # drift, and mint drains into state/, draws a bug ahead of open frictions
-# and folds the bug's recurrence into its unstarted topic, each save a
-# file in state/ and a row in the node's topics_history.
+# and folds the bug's recurrence into its unstarted topic, every line the
+# topic held kept, each save a file in state/ and a row in the node's
+# topics_history.
 # Last, tutor stops at its guard twice and writes nothing: with no ymer,
 # and with its subject-index tables dropped.
 # State is asserted through the scratch node's own MCP over curl, never
@@ -38,10 +39,12 @@
 # end of the stage, or by the EXIT trap on any earlier exit — and the
 # install's containers asserted
 # untouched. runs/ keeps each run's stream-json, the install and compose
-# logs, and node.log: every request the stage made to the node with the
-# raw response, the record to read before a red line is taken as a
-# finding about a skill. The traces and node.log are this invocation's
-# alone: the previous run's are removed at the start of the stage.
+# logs, 8-preimage.md — the bug topic's request.md as run 8 found it —
+# and node.log: every request the stage made to the node with the raw
+# response, the record to read before a red line is taken as a finding
+# about a skill. The traces, the pre-image and node.log are this
+# invocation's alone: the previous run's are removed at the start of the
+# stage.
 # cfg/projects/, where Claude Code keeps the transcript of every session
 # run under the config dir, is the probe's own as well: wiped whole at the
 # start of the stage, beside the traces, on a line of its own. The last
@@ -132,6 +135,27 @@ node_text() { # node_text <sql selecting one text> — the text, or UNPARSEABLE
 file_occurrences() { # file_occurrences <file> <text> — how often <text> occurs in <file>
 	if [ -f "$1" ]; then
 		grep -o -F -- "$2" "$1" | wc -l | tr -d ' '
+	else
+		echo UNPARSEABLE
+	fi
+}
+
+file_length() { # file_length <file> — how many lines <file> holds, a last line with no newline counted, or UNPARSEABLE
+	if [ -f "$1" ]; then
+		awk 'END { print NR }' "$1" 2>/dev/null || echo UNPARSEABLE
+	else
+		echo UNPARSEABLE
+	fi
+}
+
+# A file read against an earlier copy of itself: how much of the copy
+# survives, line by line from its first, in order — lines inserted
+# anywhere between them pass, a line changed or dropped stops the count.
+# Each line is compared byte for byte, as a string: awk compares two
+# lines that both read as numbers numerically, and `1.0` would match `1`.
+file_kept() { # file_kept <before> <after> — how many of <before>'s lines, from its first, occur in <after> in order, or UNPARSEABLE
+	if [ -f "$1" ] && [ -f "$2" ]; then
+		awk 'NR == FNR { before[++n] = $0; next } k < n && $0 "" == before[k + 1] "" { k++ } END { print k + 0 }' "$1" "$2" 2>/dev/null || echo UNPARSEABLE
 	else
 		echo UNPARSEABLE
 	fi
@@ -727,7 +751,7 @@ stage_live() {
 		abort port "something already answers on 127.0.0.1:$port — set HERMETIC_PROBE_PORT to a free port"
 	fi
 	mkdir -p "$cfg" "$runs"
-	rm -f "$runs"/*.jsonl "$runs"/*.err "$runs/node.log"
+	rm -f "$runs"/*.jsonl "$runs"/*.err "$runs/node.log" "$runs/8-preimage.md"
 	# cfg/projects/ is the probe's own: every session the config dir has
 	# seen keeps its transcript there, a hand probe's and an older live
 	# run's alike, and nothing else removes them. Wiped whole, before any
@@ -1145,20 +1169,30 @@ link check before the edit would have caught it.'
 	# was not before, the started date kept; and the save as one more row,
 	# the newest carrying the file's clauses and the one before it the
 	# pre-image, the clauses the file held before the fold.
+	# The fold inserts and never rewrites: the file as run 8 found it, kept
+	# in runs/ as 8-preimage.md, is read against the file after — every
+	# line of it still there, in order and byte for byte, new lines
+	# anywhere between them, since a friction-batch's append lands under a
+	# heading mid-file and is the same append. A run that rewords or drops
+	# a line the file held fails, whichever tool wrote it.
 	# The `_before` reads follow the seed: it inserts one open drop, which
 	# moves neither the file nor the history.
 	recur_seed="INSERT INTO pool (front, source, context, kind, anchor_id, body) VALUES ($front_sql, 'hermetic_probe', 'probe/seed', 'bug', $bug_id, '$recur_clause')"
 	recur_score_seed="INSERT INTO pool_scores (drop_id, direction_value, time_criticality, risk_reduction, size, why) SELECT id, 5, 5, 5, 1, 'probe seed' FROM pool WHERE source = 'hermetic_probe' AND anchor_id = $bug_id"
 	if [ "$bug_ok" != 1 ]; then
 		notrun append "the bug-first step did not pass — see bug-first"
+		notrun append-keep "the append step did not run — see append"
 		notrun append-history "the append step did not run — see append"
 	elif ! { node_execute "$recur_seed" && node_execute "$recur_score_seed"; }; then
 		seed_failed append "the node refused the recurrence seed drop or its pool_scores row — read $runs/node.log"
+		notrun append-keep "the append step did not run — see append"
 		notrun append-history "the append step did not run — see append"
 	else
 		lines_before=$(file_occurrences "$f" "$recur_clause")
 		started_before=$(file_started "$f")
 		rows_before=$(node_count "$bug_rows_sql")
+		pre=$runs/8-preimage.md
+		cp "$f" "$pre" 2>/dev/null || true
 		live_run 8 '/ymer:mint'
 		files=$(topic_files "$bug_to" | wc -l | tr -d ' ')
 		recur_to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND anchor_id = $bug_id")
@@ -1170,6 +1204,17 @@ link check before the edit would have caught it.'
 			pass append "still one request.md in $bug_to, started $started_before kept, the recurrence drained to the bug's topic, its clause in the file $lines_before → $lines_after"
 		else
 			fail append "$files request.md file(s) in $bug_to, started $started_before → $started_after, the recurrence drained to $recur_to, its clause in the file $lines_before → $lines_after (expected 1, unchanged, $bug_to, more) — read $runs/8.jsonl"
+		fi
+		pre_lines=$(file_length "$pre")
+		kept=$(file_kept "$pre" "$f")
+		if [ "$pre_lines" != UNPARSEABLE ] && [ "$kept" = "$pre_lines" ]; then
+			pass append-keep "every one of the $pre_lines line(s) the file held before the fold still in it, in order, byte for byte — $(file_length "$f") line(s) now"
+		else
+			case $kept in
+			UNPARSEABLE) lost=UNPARSEABLE ;;
+			*) lost="line $((kept + 1)): '$(sed -n "$((kept + 1))p" "$pre" 2>/dev/null || true)'" ;;
+			esac
+			fail append-keep "$kept of the $pre_lines line(s) the file held before the fold still in it, in order, the first not found $lost (expected all $pre_lines, byte for byte) — the pre-image is at $pre, read $runs/8.jsonl"
 		fi
 		rows_after=$(node_count "$bug_rows_sql")
 		newest=$(node_count "$(row_occurrences "$recur_clause" 0)")

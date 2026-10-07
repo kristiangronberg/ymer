@@ -19,6 +19,8 @@
 # ended in an error — stopped at max turns, or its login lapsed — the two
 # arms and the option between them, the seeded
 # steps' not-run lines, the state reads' deltas over the node and state/,
+# the fold's pre-image kept line for line around a line inserted
+# mid-file or a last line with no newline, a reworded or moved line refused,
 # the history read, setup's report read for its facts — dressed, its
 # role lines carried onto the lines under them, a word inside a longer
 # one, and naming a wrong node address or another port — tutor's stop
@@ -539,6 +541,14 @@ bug_body() { # bug_body <started> <recurrences> — the bug topic's request.md
 bug_body 2026-09-21 0 >"$canned/bug-0.md"
 bug_body 2026-09-21 1 >"$canned/bug-1.md"
 bug_body 2026-09-22 1 >"$canned/bug-1-redated.md"
+# a fold that writes the file whole, rewording the root-cause line it held
+sed 's/gauge is wired/dial is wired/' "$canned/bug-1.md" >"$canned/bug-1-reworded.md"
+# a fold that swaps two lines the file held: each still in it, out of order
+sed -e '2s/.*/task: 2/' -e '3s/.*/source: mint/' "$canned/bug-1.md" >"$canned/bug-1-swapped.md"
+# a fold that inserts the recurrence under the heading, mid-file, and the
+# same fold with its last line, one the file held, left with no newline
+awk -v r="$(sed -n '$p' "$canned/bug-1.md")" '{ print } /^# probe-bug$/ { print r }' "$canned/bug-0.md" >"$canned/bug-1-inserted.md"
+printf '%s' "$(cat "$canned/bug-1-inserted.md")" >"$canned/bug-1-unterminated.md"
 # mint_effects <run 3> <run 6> <run 7> <run 8> — what each mint run
 # leaves on disk, replacing any queued before; `:` leaves nothing
 mint_effects() {
@@ -680,6 +690,13 @@ live_seeded() { # live_seeded <slash command> <trace> — live_case, then live_q
 	live_case
 	queue "claude -p $1" "@$canned/$2"
 	live_queue
+}
+
+live_folded() { # live_folded <canned bug file> — a live run whose run 8 writes <canned bug file> over the bug's topic as its fold
+	live_case
+	live_queue
+	mint_effects ':' "$effect_drain" "$effect_bug" "cp '$canned/$1' '${bug_dir}request.md'"
+	probe "$fx" live
 }
 
 # ── 1 · usage ─────────────────────────────────────────────────────────
@@ -1108,13 +1125,14 @@ check "live: the login line says a call answered, not which credential" 1 "$(lin
 check "live: the scrub line" 1 "$(lines '✔ scrub')"
 check "live: the node line" 1 "$(lines '✔ node         up on http://127.0.0.1:8112/mcp, notebook empty')"
 check "live: the install line" 1 "$(lines '✔ install      marketplace from')"
-check "live: front, setup, setup-node, setup-history, setup-tutor, setup-report, capture, mint-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, mint, scored, mint-capture, bug-first, append, append-history, tutor-ymer, tutor-stop" 22 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (front|setup|setup-node|setup-history|setup-tutor|setup-report|capture|mint-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|mint|scored|mint-capture|bug-first|append|append-history|tutor-ymer|tutor-stop) ')"
+check "live: front, setup, setup-node, setup-history, setup-tutor, setup-report, capture, mint-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, mint, scored, mint-capture, bug-first, append, append-keep, append-history, tutor-ymer, tutor-stop" 23 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (front|setup|setup-node|setup-history|setup-tutor|setup-report|capture|mint-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|mint|scored|mint-capture|bug-first|append|append-keep|append-history|tutor-ymer|tutor-stop) ')"
 check "live: the front line names the probe's front" 1 "$(lines '✔ front        front set to probe_front')"
 check "live: the dispatch line reports a run that scored in-session, neither passed nor failed" 1 "$(lines '– dispatch     not run — run 6 scored in-session — 0 haiku subagent call(s), 0 subagent transcript(s)')"
 check "live: the mint-capture line counts the mint's own drops" 1 "$(lines '✔ mint-capture 2 source mint drop(s) after /ymer:mint — its capture block ran')"
 check "live: the mint line names the drained topic and its file" 1 "$(lines "✔ mint         1 tasks row(s) at claimed in a Roadmap project, 1 request.md topics_history row(s), all under probe_front, the friction drained to $drained_to, its request.md in state/")"
 check "live: the bug-first line names the bug's topic" 1 "$(lines "✔ bug-first    the bug drawn ahead of ten open frictions, drained to $bug_to — one request.md there quoting its title once, in state/ and in its newest topics_history row — the ten seed frictions still open")"
 check "live: the append line reads the deltas" 1 "$(lines "✔ append       still one request.md in $bug_to, started 20260921 kept, the recurrence drained to the bug's topic, its clause in the file 0 → 1")"
+check "live: the append-keep line reads the pre-image whole" 1 "$(lines "✔ append-keep  every one of the 13 line(s) the file held before the fold still in it, in order, byte for byte — 14 line(s) now")"
 check "live: the append-history line reads the save" 1 "$(lines "✔ append-history one more topics_history row, the newest carrying the file's 1 recurrence clause(s) and the one before it the pre-image's 0")"
 check "live: the teardown's install line" 1 "$(lines '✔ install      untouched')"
 check "live: servers, isolation, writes, bash-commands, mint-git and setup-address pass — the node alone, reads inside, writes under state/, the declared commands allowed, no commit, no wrong node address" 6 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (servers|isolation|writes|bash-commands|mint-git|setup-address) ')"
@@ -1804,11 +1822,14 @@ check "live failed drift seed: bash-commands reads the runs that ran" 1 "$(lines
 live_case
 live_queue
 queue 'seed friction 1 below' 'rc=1'
+cp "$canned/bug-1-reworded.md" "$tmp/probe/runs/8-preimage.md"
 probe "$fx" live
 check "live failed bug seed exits 1" 1 "$rc"
 check "live failed bug seed: the bug-first-seed line" 1 "$(lines '✘ bug-first-seed the node refused the seed drops — ten frictions and a bug')"
 check "live failed bug seed: bug-first is not run" 1 "$(lines '– bug-first    not run — its seed failed — see bug-first-seed')"
 check "live failed bug seed: append waits on bug-first" 1 "$(lines '– append       not run — the bug-first step did not pass — see bug-first')"
+check "live failed bug seed: append-keep waits on append" 1 "$(lines '– append-keep  not run — the append step did not run — see append')"
+check "live failed bug seed: the stale pre-image is gone, not read" 0 "$(test -e "$tmp/probe/runs/8-preimage.md" && echo 1 || echo 0)"
 check "live failed bug seed: append-history waits on append" 1 "$(lines '– append-history not run — the append step did not run — see append')"
 check "live failed bug seed: append never passes" 0 "$(lines '✔ append')"
 check "live failed bug seed: no mint run after the seed" 8 "$(logged 'claude -p /')"
@@ -1836,6 +1857,7 @@ check "live failed recurrence seed exits 1" 1 "$rc"
 check "live failed recurrence seed: bug-first passed" 1 "$(lines '✔ bug-first')"
 check "live failed recurrence seed: the append-seed line" 1 "$(lines '✘ append-seed  the node refused the recurrence seed drop')"
 check "live failed recurrence seed: append is not run" 1 "$(lines '– append       not run — its seed failed — see append-seed')"
+check "live failed recurrence seed: append-keep is not run" 1 "$(lines '– append-keep  not run — the append step did not run — see append')"
 check "live failed recurrence seed: append-history is not run" 1 "$(lines '– append-history not run — the append step did not run — see append')"
 check "live failed recurrence seed: append never passes" 0 "$(lines '✔ append')"
 live_case
@@ -1873,8 +1895,9 @@ check "live bug row lagging its file: the bug-first line names both counts" 1 "$
 check "live bug row lagging its file: append waits on bug-first" 1 "$(lines '– append       not run — the bug-first step did not pass — see bug-first')"
 
 # ── 35 · live, the fold a no-op, a rewrite that moved the date, the ────
-# recurrence drained elsewhere or not at all, and a fold the history
-# never saw
+# recurrence drained elsewhere or not at all, a fold the history never
+# saw, a rewrite that reworded or moved a line the file held, and a fold
+# that inserts mid-file, its last line with a newline or without one
 live_case
 live_queue
 mint_effects ':' "$effect_drain" "$effect_bug" ':'
@@ -1882,12 +1905,31 @@ probe "$fx" live
 check "live no-op fold exits 1" 1 "$rc"
 check "live no-op fold: the append line reads the deltas" 1 "$(lines "✘ append       1 request.md file(s) in $bug_to, started 20260921 → 20260921, the recurrence drained to $bug_to, its clause in the file 0 → 0")"
 check "live no-op fold: bug-first still passes" 1 "$(lines '✔ bug-first')"
-live_case
-live_queue
-mint_effects ':' "$effect_drain" "$effect_bug" "cp '$canned/bug-1-redated.md' '${bug_dir}request.md'"
-probe "$fx" live
+live_folded bug-1-redated.md
 check "live rewritten bug topic exits 1" 1 "$rc"
 check "live rewritten bug topic: the append line names the moved date" 1 "$(lines "✘ append       1 request.md file(s) in $bug_to, started 20260921 → 20260922, the recurrence drained to $bug_to, its clause in the file 0 → 1")"
+check "live rewritten bug topic: append-keep names the first line lost" 1 "$(lines "✘ append-keep  3 of the 13 line(s) the file held before the fold still in it, in order, the first not found line 4: 'started: 2026-09-21'")"
+# a fold that writes the file whole and rewords a line it held: every
+# count still holds, and the pre-image read alone tells it from an insert
+live_folded bug-1-reworded.md
+check "live reworded fold exits 1" 1 "$rc"
+check "live reworded fold: append's deltas still pass" 1 "$(lines '✔ append ')"
+check "live reworded fold: append-history still passes" 1 "$(lines '✔ append-history')"
+check "live reworded fold: append-keep names the reworded line" 1 "$(lines "✘ append-keep  8 of the 13 line(s) the file held before the fold still in it, in order, the first not found line 9: '**Root cause.** The gauge is wired in reverse.'")"
+# a fold that moves a line the file held: every line still in it, and
+# the order alone tells it from an insert
+live_folded bug-1-swapped.md
+check "live swapped fold exits 1" 1 "$rc"
+check "live swapped fold: append-keep names the first line out of order" 1 "$(lines "✘ append-keep  2 of the 13 line(s) the file held before the fold still in it, in order, the first not found line 3: 'task: 2'")"
+# a fold that inserts under the heading, mid-file, and the same fold with
+# its last line left with no newline: every line the file held still in it
+live_folded bug-1-inserted.md
+check "live mid-file fold exits 0" 0 "$rc"
+check "live mid-file fold: append's deltas pass" 1 "$(lines '✔ append ')"
+check "live mid-file fold: append-keep keeps every line around the insert" 1 "$(lines "✔ append-keep  every one of the 13 line(s) the file held before the fold still in it, in order, byte for byte — 14 line(s) now")"
+live_folded bug-1-unterminated.md
+check "live unterminated fold exits 0" 0 "$rc"
+check "live unterminated fold: append-keep reads a last line with no newline" 1 "$(lines "✔ append-keep  every one of the 13 line(s) the file held before the fold still in it, in order, byte for byte — 14 line(s) now")"
 live_case
 live_queue
 requeue "SELECT drained_to FROM pool WHERE status = 'drained' AND anchor_id" "$(node_text_rows 'demo/2026/09-22-probe-recurrence/')"
