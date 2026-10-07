@@ -54,7 +54,7 @@ recognised from the topic's artifacts plus the topic's
 | `surveyed`     | `survey.md` exists                                                     |
 | `specced`      | `spec.md` exists and its head carries no `Interview pending —` line |
 | `planned`      | `plan.md` exists                                                       |
-| `hardened`     | the newest `<topic ID>: plan-review` / `<topic ID>: write-plan` commit **over the topic's folder** is a plan-review (no reading where the state folder is not a git work tree — below) |
+| `hardened`     | the newest `<topic ID>: plan-review` / `<topic ID>: write-plan` commit **over the topic's folder** is a plan-review (no reading where git does not track the state folder — below) |
 | `implemented`  | `implemented.md` exists                                                |
 | shipped        | `review.md`'s first recognizer top-down is `^## Shipped` — content-based, because the file exists mid-phase |
 
@@ -92,9 +92,9 @@ line, not the exit status, since `git log` exits 0 either way:
   *body* prints a subject that is neither kind; implement's gate stops
   and asks rather than treating it as a verdict.
 
-A state folder that is not a git work tree has no `hardened` reading:
-the phases that need it, plan-review and implement, are development
-phases, and they run only where the state folder is a git work tree. The
+A state folder git does not track has no `hardened` reading: the phases
+that need it, plan-review and implement, are development phases, and
+they run only where the state folder is its own git repository. The
 other rungs are existence or content readings, and they hold in any
 folder.
 
@@ -182,8 +182,10 @@ never skipped silently. These writes are pipeline-critical.
 ## The topic's artifacts
 
 A topic's artifacts are files in a folder under the state folder, whose
-history is git where the state folder is a git work tree and the node's
-`topics_history` otherwise (→ reach rule). The names are fixed, one
+history is git where the state folder is its own git repository and the
+node's `topics_history` where it is in no git repository or the session
+has no git (→ reach rule).
+The names are fixed, one
 artifact per name:
 `request.md`, `sketch.md`, `brainstorm.md`, `survey.md`, `spec.md`,
 `plan.md` with its `payloads/`, `implemented.md`, `review.md`. Nothing

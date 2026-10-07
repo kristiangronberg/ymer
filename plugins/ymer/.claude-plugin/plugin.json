@@ -1,7 +1,7 @@
 {
   "name": "ymer",
   "description": "Brainstorm, scout, define, plan, harden, implement, review: a seven-phase practice that takes a change in Claude Code from a rough idea to a shipped commit. What you get is work that holds up. Every phase leaves a written record that the next session builds on, plans and code both face an adversarial review before they land, and anything you notice along the way goes into a pool, so your next piece of work is drawn from it instead of recalled from memory. Runs on a Ymer Node you host locally; a ymer.ax account is optional.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": {
     "name": "Kristian Grönberg"
   },
@@ -9,7 +9,7 @@
     "state_folder": {
       "type": "directory",
       "title": "State folder",
-      "description": "Required. The one folder your topics live in — any folder, under version control or not: /ymer:setup verifies it, drawn topics get folders beneath it, and its history is git where it is a git work tree and your Ymer Node's notebook otherwise."
+      "description": "Required. The one folder your topics live in — its own git repository or a folder in no git repository, never one inside another git repository: /ymer:setup verifies it, drawn topics get folders beneath it, and its history is git where it is its own git repository and your Ymer Node's notebook where it is in no git repository."
     },
     "front": {
       "type": "string",

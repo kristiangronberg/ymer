@@ -20,9 +20,10 @@ marketplace description because they are real requirements:
   name and keep it; `/ymer:setup` registers it in the node.
 - **one folder for your state** — the `ymer` plugin's
   `state_folder` setting — where a drained topic gets a folder of its
-  own. It can be any folder: where it is a git work tree its history is
-  git, and any other folder's history is kept in the node's
-  `topics_history` table.
+  own. It can be any folder outside another git repository: where it is
+  its own git repository its history is git, and a folder in no git
+  repository, or one a session without git reaches, has its history kept
+  in the node's `topics_history` table.
 
 One more thing is **optional**, and the default where a session reaches
 it: a **ymer.ax** account, connected as your own MCP server — with it,
@@ -83,7 +84,9 @@ as you install `ymer` —
 is a name for this installation, in lowercase snake_case: give each
 installation its own and keep it, because every drop you capture is
 filed under it and a mint draws only its own. Any folder will do for
-the state folder, under version control or not.
+the state folder, under version control or not, as long as it does not
+sit inside another git repository: its own git repository, or a folder
+in no git repository.
 
 `/ymer:setup` reports what it found, creates the store skeletons that were
 missing, and names your coordinator and your state folder's history. Run it

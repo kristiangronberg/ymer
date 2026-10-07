@@ -1059,10 +1059,13 @@ The one folder a front keeps its topics' artifacts in, laid out
 environment-contract role of the configuration kind, and this suite's
 internal register. Its path is named by the `state_folder` option where
 the harness passes plugin options, and by the front's initial
-instructions where it does not; either way it can sit anywhere, and it
-is always named, never inferred. A folder that is a git work tree keeps
-its history in git; any other folder keeps it in the node's
-`topics_history`. Written `<state folder>` in skill prose and fenced
+instructions where it does not; either way it can sit anywhere but
+inside another git repository, and it is always named, never inferred.
+A folder that is its own git repository — the top of a git work tree,
+its `rev-parse` prefix empty — keeps its history in git; a folder in no
+git repository, or one a session without git finds by its file tools,
+keeps it in the node's `topics_history`; a folder inside another git
+repository is refused. Written `<state folder>` in skill prose and fenced
 commands, a role placeholder the session resolves, bound per environment
 in its binding home (→ state store).
 _Avoid_: any one front's own folder name (a value), workspace, project

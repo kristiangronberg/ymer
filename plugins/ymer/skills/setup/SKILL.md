@@ -39,8 +39,10 @@ which history tracks it is read from the folder itself**:
   projects. Absent → the node's `tasks` table.
 - **The state store** — where a topic's artifacts live: the state folder
   (→ check 3), together with the history that tracks it. A folder that is
-  a git work tree → git, where each save is a commit. Any other folder →
-  the node's `topics_history` table, where each save is a row.
+  its own git repository → git, where each save is a commit. A folder in
+  no git repository, or one a session without git finds → the node's
+  `topics_history` table, where each save is a row. A folder inside
+  another git repository is refused (→ check 3).
 
 Read once, at the run's start, from what the session has — never asked,
 and never configured beyond the state folder's path and the front's
@@ -192,8 +194,8 @@ CREATE TABLE tasks_log (
 )
 ```
 
-`topics_history` — the history of a state folder that is not a git work
-tree, one row per save of one artifact:
+`topics_history` — the history of a state folder git does not track,
+one row per save of one artifact:
 
 ```sql
 CREATE TABLE topics_history (
@@ -380,7 +382,7 @@ The nine texts, each the grammar of its table:
 > time tracking. author is the worker or model that wrote the entry.
 
 > **`table:topics_history`** — The history of the artifacts in a state
-> folder that is not a git work tree: one row per save of one artifact,
+> folder git does not track: one row per save of one artifact,
 > append-only, where the newest row for a (front, topic, area, artifact)
 > is its current save and the one before it the pre-image. The file in
 > the folder is the artifact; a row records the text the saving session
@@ -552,13 +554,14 @@ battery exists to prevent.
   belongs in is yours to tell: move each from a session on the front it
   belongs to, into that front's folder. Then record the moved
   files in the folder's history, the way every save is recorded:
-  - where the state folder is a git work tree, commit the topic folders
-    you wrote, pathspec-scoped on both halves — a bare commit sweeps in
-    whatever concurrent sessions have staged:
+  - where the state folder is its own git repository, commit the topic
+    folders you wrote, pathspec-scoped on both halves — a bare commit
+    sweeps in whatever concurrent sessions have staged:
     `git -C <state folder> add <area>/YYYY/MM-DD-<slug>/`, then
     `git -C <state folder> commit -m "topics: move retired rows into the state folder" -- <area>/YYYY/MM-DD-<slug>/`,
     naming every folder you wrote;
-  - where it is not, save the same text into `topics_history`, in one
+  - where it is in no git repository, or this session has no git, save
+    the same text into `topics_history`, in one
     `execute` call, with `phase` `hand_step` and `front` this front's
     slug, the one check 2 confirms in `fronts` (the foreign key refuses
     any other):
@@ -569,9 +572,9 @@ battery exists to prevent.
   Then drop the table and its `_meta` row as above. The move needs this
   front's slug and a resolved state folder: where check 2 has not passed,
   the line says the move waits on check 2 and prints `<front>` as written
-  rather than any slug, and where check 3 has not resolved a folder, it
-  says the move waits on check 3 and prints `<state folder>` as written
-  rather than any path.
+  rather than any slug, and where check 3 has not resolved a folder or
+  has refused it, it says the move waits on check 3 and prints
+  `<state folder>` as written rather than any path.
 
 The `_meta` row outlives a table dropped on its own. Where the table is
 gone but `_meta` still has its row, report that on the same line, with
@@ -684,10 +687,11 @@ slug.
 
 The state folder is required. It is the one folder this front keeps its
 topics' artifacts in, laid out `<area>/YYYY/MM-DD-<topic>/`, and it can
-be any folder you choose: it can sit anywhere, nothing assumes it is next
-to your repositories, and it need not be under version control. It is
-always named, never inferred, and where its name comes from depends on
-the harness this session runs on, told from the session's own tools.
+be any folder you choose that does not sit inside another git
+repository: nothing assumes it is next to your repositories, and it need
+not be under version control. It is always named, never inferred, and
+where its name comes from depends on the harness this session runs on,
+told from the session's own tools.
 
 **Where the harness writes plugin options into this skill** — Claude
 Code — the path is the `ymer` plugin's `state_folder` option. The harness
@@ -710,8 +714,8 @@ answer, never a sign to look elsewhere.
   the check:
 
   > The `ymer` plugin's `state_folder` option is not set, and the plugin
-  > needs one folder to keep your topics in — any folder, under version
-  > control or not. Set it with `/plugin configure ymer@ymer`, or
+  > needs one folder to keep your topics in — its own git repository or
+  > one in no git repository. Set it with `/plugin configure ymer@ymer`, or
   > reinstall with `claude plugin install ymer@ymer --config
   > state_folder=<your folder>`.
 
@@ -752,20 +756,37 @@ path outside every connected folder, fails the check:
 > `State folder: <the folder's path>`.
 
 **The folder's kind.** With a path in hand, one reading decides whether
-the folder exists and which history tracks it:
+the folder exists, what kind of folder it is, and which history tracks
+it:
 
 ```
-git -C <state folder> rev-parse --is-inside-work-tree
+git -C <state folder> rev-parse --is-inside-work-tree --show-prefix
 ```
 
 Run it bare: the tool reports a non-zero exit and its message by itself,
-so nothing is appended to capture the status.
+so nothing is appended to capture the status. With exit 0 it prints
+`true` or `false`, then the folder's prefix — its path below the top of
+the repository it sits in. At that top the prefix is an empty line, and
+the tool may not show a trailing empty line at all, so a lone `true`
+reads the same as `true` then an empty line.
 
-- `true` with exit 0 — a git work tree: git tracks its history, one
-  commit per save. A pass.
+- `true` alone, or `true` then an empty line — the folder is its
+  own git repository: git tracks its history, one commit per save. A
+  pass.
+- `true`, then a non-empty prefix line — the folder is inside another git
+  repository. That fails the check: every save would commit into that
+  other repository, which may be shared or pushed anywhere, and its own
+  `add -A`, `stash -u` and `clean -x` would sweep up, set aside or delete
+  your topics. Name the folder and the prefix, which says how deep inside
+  the other repository it sits, and both fixes: run `git init` in the
+  folder and list the folder in the enclosing repository's `.gitignore`,
+  so it becomes its own git repository that the other one leaves alone;
+  or choose a folder in no git repository, which the node's
+  `topics_history` table then tracks. Setup runs neither fix and edits
+  neither repository: which history keeps your topics is yours to choose.
 - A non-zero exit whose message says `not a git repository` — a folder
-  that is not a git work tree: the node's `topics_history` table tracks
-  its history, one row per save. A pass too, and the report says which.
+  in no git repository: the node's `topics_history` table tracks its
+  history, one row per save. A pass too, and the report says which.
 - A non-zero exit whose message says `cannot change to` — the folder is
   not there. That fails the check: name the fix — create the folder, or
   correct the setting or the instructions that name it. Setup never
@@ -773,11 +794,14 @@ so nothing is appended to capture the status.
   created is exactly the silent second store this check exists to
   prevent.
 - Exit 127 — the shell found no `git` to run — means this session has no
-  git, so git cannot track the folder: it is not a git work tree. The
-  reading then says nothing about whether the folder exists, so list it
-  with this session's own file tools, never another command. Found — a
-  pass, tracked by `topics_history`, and the report says so. Not found —
-  the missing-folder failure above.
+  git, so git cannot track the folder, and the reading cannot tell a
+  folder in no git repository from one inside another; a session with no
+  git commits nowhere, so neither is a hazard to it. The reading then
+  says nothing about whether the folder exists, so list it with this
+  session's own file tools, never another command. Found — a pass,
+  tracked by `topics_history`, and the report names the reason rather
+  than a kind: no git in this session (→ The report). Not found — the
+  missing-folder failure above.
 - Anything else — `false` with exit 0 among it, which git prints for a
   bare repository or a `.git` directory, neither of them a folder meant
   to hold topics — is a state no reading names. That fails the check:
@@ -896,7 +920,7 @@ Setup — ymer environment
 
   ✔ node          reachable — 9 tables
   ✔ front         `work_laptop`
-  ✔ state_folder  /Users/you/state — git work tree, history in git
+  ✔ state_folder  /Users/you/state — its own git repository, history in git
   ✔ ymer          reachable
   ✔ Meta Roadmap  exists
 
@@ -904,7 +928,7 @@ Ready. Re-run /ymer:setup whenever you like — it changes nothing that is
 already right.
 ```
 
-A folder that is not a git work tree passes the same way, and a machine
+A folder in no git repository passes the same way, and a machine
 with no ymer reads its coordinator by reach:
 
 ```
@@ -913,7 +937,7 @@ Setup — ymer environment
   ✔ node          reachable — 1 table created
   – topics        retired — 1 row; move it into the state folder and into `topics_history` by hand, then DROP TABLE topics and its `_meta` row
   ✔ front         `home_desktop` added
-  ✔ state_folder  /Users/you/state — not a git work tree, history in the node's `topics_history`
+  ✔ state_folder  /Users/you/state — in no git repository, history in the node's `topics_history`
   ✔ ymer          no connection in this session — work tracked in the node's `tasks` table
   – Meta Roadmap  not checked — no ymer; process work routes to `Meta Roadmap` in `tasks`
 ```
@@ -924,6 +948,16 @@ carrying its own fix — the front's with the fronts the node holds:
 ```
   ✘ front         not set — set it with /plugin configure ymer@ymer; the node holds `work_laptop`, name it again if it is this installation
   ✘ state_folder  not set — set it with /plugin configure ymer@ymer
+```
+
+A folder inside another git repository fails its line, naming the prefix
+the reading printed and both fixes; and a session with no git passes the
+folder its file tools found, naming that reason where a kind would
+stand — one line or the other, never both:
+
+```
+  ✘ state_folder  /Users/you/state — inside another git repository, prefix `state/` — run `git init` in it and list it in that repository's `.gitignore`, or choose a folder in no git repository
+  ✔ state_folder  /Users/you/state — no git in this session, history in the node's `topics_history`
 ```
 
 A check that passed needs no explanation and a check that failed needs

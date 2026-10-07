@@ -68,8 +68,9 @@ drop, where a drained drop stays with its status changed; its `kinds`
 table holds the rule for each kind of drop. A tail that found no
 friction still records an empty drop, so the table is also the record of
 which sessions reflected at all. Your state folder holds a folder per
-drawn topic. Where it is a git work tree, mint commits what it writes
-there; any other folder's history is the node's `topics_history` table,
+drawn topic. Where it is its own git repository, mint commits what it
+writes there; a folder in no git repository, or one a session without
+git reaches, keeps its history in the node's `topics_history` table,
 where mint saves each file it writes as a row.
 
 Every phase already closes with a **capture block** that invokes
@@ -98,8 +99,10 @@ What the loop deliberately does not do:
 **`/ymer:setup`** checks five things in order — your Ymer Node answers
 and carries the store skeletons, this installation's front is named and
 registered in the node, your state folder is named and there
-(and which history tracks it: git where it is a git work tree, the
-node's `topics_history` otherwise), ymer answers, and a `Meta Roadmap`
+(and which history tracks it: git where it is its own git repository,
+the node's `topics_history` where it is in no git repository or the
+session has no git; a folder inside another git repository fails), ymer
+answers, and a `Meta Roadmap`
 project exists. It creates the skeletons, the front's registration and
 the `Meta Roadmap` project where they are missing; the state folder and
 the ymer connection are yours, so it only reports on them. Each failure
@@ -161,10 +164,12 @@ first — they are what the skills assume.
 A **Ymer Node** — the skills keep their stores in its notebook, and
 `/ymer:setup` creates what is missing. A **front** — a name for this
 installation, named once: every drop is filed under it, and a mint
-draws only its own. A **state folder** — any folder,
-named once: a topic's artifacts are files under it, and their history is
-git where the folder is a git work tree and the node's `topics_history`
-otherwise. A **ymer.ax account** is optional, and the default where a
+draws only its own. A **state folder** — any folder outside another git
+repository, named once: a topic's artifacts are files under it, and
+their history is git where the folder is its own git repository and the
+node's `topics_history` where it is in no git repository or the session
+has no git.
+A **ymer.ax account** is optional, and the default where a
 session reaches it: with ymer, work is tracked in Roadmap projects;
 without it, in the node's `tasks` table.
 

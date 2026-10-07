@@ -16,8 +16,8 @@
 # teardown on failure — a failed `up` included — the compose copy's
 # project name checked before `up` and again before `down`, a wrong one
 # refused at either end, each live precondition's exit 2, a run that
-# ended in an error — stopped at max turns, or its login lapsed — the two
-# arms and the option between them, the seeded
+# ended in an error — stopped at max turns, or its login lapsed — the three
+# arms and the option before the second and the third, the seeded
 # steps' not-run lines, the state reads' deltas over the node and state/,
 # the fold's pre-image kept line for line around a line inserted
 # mid-file or a last line with no newline, a reworded or moved line refused,
@@ -273,6 +273,7 @@ tool_result() { # tool_result <id> <content> <is_error> — a user line answerin
 notebook=mcp__ymer-node__notebook
 live=$tmp/live # the live cases' fixture, named here so a canned trace can read under it
 pstate=$tmp/probe/state # the live stage's state/, under the probe dir every live case uses
+penc=$pstate/encl/plans # the third arm's state folder: inside encl/, a repository of its own under state/
 # setup's report with no state folder named, in the lines the skill's own
 # grammar gives; the second variant is the wording a denied read
 # produced, which the report check must not accept
@@ -281,25 +282,35 @@ run_trace "$setup_report" $notebook '{"action":"execute","data":{"sql":"CREATE T
 # the first run's report with no front line, and the re-run's with the
 # node's line alone: the front's own line is a fact each check reads
 run_trace "$(printf '%s' "$setup_report" | sed 's/\\n  ✔ front         `probe_front` added//')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-front.jsonl"
-run_trace "  ✔ node          reachable — 9 tables\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-no-front.jsonl"
+run_trace "  ✔ node          reachable — 9 tables\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-no-front.jsonl"
 run_trace "$(printf '%s' "$setup_report" | sed 's/not set — set it/not readable from this session — set it/')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-unreadable.jsonl"
 run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO pool VALUES (1)"}}' >"$canned/run-capture.jsonl"
 # mint with no state folder: it reads the pool and stops naming setup
 run_trace 'No state folder is named, so nothing was drained. Run /ymer:setup.' $notebook '{"action":"query","data":{"sql":"SELECT slug FROM fronts"}}' >"$canned/run-mint-stop.jsonl"
+# the third arm, its folder inside another git repository: setup failing
+# it with its fix, having read its kind; the same run passing it as git,
+# the defect the arm exists to catch; mint stopping at its guard naming
+# setup, having read the kind; the same stop with the kind never read; and
+# a mint that read the kind and drew into the folder all the same
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables, 2 created\n  ✔ front         \`probe_front\`\n  ✘ state_folder  $penc — inside another git repository, prefix \`plans/\` — run \`git init\` in it and list it in that repository's \`.gitignore\`, or choose a folder in no git repository\n  ✔ ymer          no connection in this session — work tracked in the node's \`tasks\` table" Bash "{\"command\":\"git -C $penc rev-parse --is-inside-work-tree --show-prefix\"}" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup-enclosed.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables, 2 created\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $penc — its own git repository, history in git" Bash "{\"command\":\"git -C $penc rev-parse --is-inside-work-tree --show-prefix\"}" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup-enclosed-pass.jsonl"
+run_trace "The state folder $penc is inside another git repository, prefix plans/, so nothing was drained. Run /ymer:setup." Bash "{\"command\":\"git -C $penc rev-parse --is-inside-work-tree --show-prefix\"}" $notebook '{"action":"query","data":{"sql":"SELECT slug FROM fronts"}}' >"$canned/run-mint-enclosed.jsonl"
+run_trace 'No state folder is usable, so nothing was drained. Run /ymer:setup.' $notebook '{"action":"query","data":{"sql":"SELECT slug FROM fronts"}}' >"$canned/run-mint-enclosed-unread.jsonl"
+run_trace 'drained' Bash "{\"command\":\"git -C $penc rev-parse --is-inside-work-tree --show-prefix\"}" $notebook '{"action":"execute","data":{"sql":"UPDATE pool SET status = 1"}}' >"$canned/run-mint-enclosed-drained.jsonl"
 # mint's healthy trace in the second arm carries the declared commands
 # — the state folder's rev-parse bare and with its path quoted — reads
 # inside state/, one path under it, one naming state/ itself and one
 # relative, a write under state/, and the history row it saves
 save_sql="INSERT INTO topics_history (topic, area, artifact, body, phase, front) SELECT 't', 'meta', 'request.md', new.body, 'mint', 'probe_front' FROM (SELECT 'b' AS body) AS new"
-run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE pool SET status = 1"}}' $notebook "{\"action\":\"execute\",\"data\":{\"sql\":\"$save_sql\"}}" Bash '{"command":"claude mcp get ymer"}' Bash '{"command":"claude mcp get ymer 2>&1"}' Bash "{\"command\":\"git -C $pstate rev-parse --is-inside-work-tree\"}" Bash "{\"command\":\"git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree\"}" Write "{\"file_path\":\"$pstate/demo/2026/09-21-probe-bug/request.md\",\"content\":\"x\"}" Read "{\"file_path\":\"$pstate/demo/2026/09-21-probe-bug/request.md\"}" Glob "{\"pattern\":\"*.md\",\"path\":\"$pstate\"}" Glob '{"pattern":"*.md"}' >"$canned/run-mint.jsonl"
+run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE pool SET status = 1"}}' $notebook "{\"action\":\"execute\",\"data\":{\"sql\":\"$save_sql\"}}" Bash '{"command":"claude mcp get ymer"}' Bash '{"command":"claude mcp get ymer 2>&1"}' Bash "{\"command\":\"git -C $pstate rev-parse --is-inside-work-tree --show-prefix\"}" Bash "{\"command\":\"git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree --show-prefix\"}" Write "{\"file_path\":\"$pstate/demo/2026/09-21-probe-bug/request.md\",\"content\":\"x\"}" Read "{\"file_path\":\"$pstate/demo/2026/09-21-probe-bug/request.md\"}" Glob "{\"pattern\":\"*.md\",\"path\":\"$pstate\"}" Glob '{"pattern":"*.md"}' >"$canned/run-mint.jsonl"
 # the same mint writing beside state/ rather than into it
 run_trace 'drained' $notebook '{"action":"execute","data":{"sql":"UPDATE pool SET status = 1"}}' Write "{\"file_path\":\"$tmp/probe/cwd/request.md\",\"content\":\"x\"}" >"$canned/run-mint-outside.jsonl"
 # the re-run's report, healthy on the result line while a narration line
 # mid-run says `tables created`: only a read of the result line passes it
 trace_narration='All nine tables created earlier are present; composing the report.'
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2.jsonl"
 trace_narration=''
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — git work tree, history in git" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-git.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — its own git repository, history in git" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-git.jsonl"
 run_trace "  ✔ node          reachable — 9 tables created\n  ✔ front         \`probe_front\` added" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created.jsonl"
 # setup's reports dressed the way a model dresses them — a sentence
 # before, bold role names, ` — ` separators, backticked values, a code
@@ -308,28 +319,28 @@ run_trace "  ✔ node          reachable — 9 tables created\n  ✔ front      
 # pass them; the re-run's Details line says created and added, off the
 # node's line, and does not decide the node's line
 run_trace "Now compiling the full report.\n\n**Setup — ymer environment**\n\n\`\`\`\n✔ **node** — reachable — 9 tables created\n✔ **front** — \`probe_front\` added\n✘ **state_folder** — not **set** — set it with /plugin configure ymer@ymer\n✔ **ymer** — no  connection in this session (no \`ymer\` MCP server configured) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked\n\`\`\`\n\nDetails:\n- **state_folder**: the option is unset." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-decorated.jsonl"
-run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 9 tables present (fronts, kinds, pool, pool_scores, tasks, tasks_log, topics_history, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed\n✔ **front** — \`probe_front\` — already registered\n✔ **state_folder** — \`$pstate\` — not a git work tree, history in the node's \`topics_history\`\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-node\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
+run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 9 tables present (fronts, kinds, pool, pool_scores, tasks, tasks_log, topics_history, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed\n✔ **front** — \`probe_front\` — already registered\n✔ **state_folder** — \`$pstate\` — in no git repository, history in the node's \`topics_history\`\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-node\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
 # no coordinator line, and the Meta Roadmap line naming ymer's missing
 # connection and tasks in its place: the coordinator is not reported
 run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables created\n  ✔ front         \`probe_front\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  – Meta Roadmap  not checked — no connection to ymer; process work routes to \`Meta Roadmap\` in \`tasks\`" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-ymer.jsonl"
 # the re-run's node line naming a change the re-run never made: tables
 # created, or a front row added — and the line saying created beside a
 # Details line that restates the node's facts without it
-run_trace "  ✔ node          reachable — 9 tables created\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-only.jsonl"
-run_trace "  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\` added\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-added.jsonl"
-run_trace "  ✔ node          reachable — 9 tables created\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nDetails:\n- ✔ **node**: reachable, 9 tables" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-recap.jsonl"
+run_trace "  ✔ node          reachable — 9 tables created\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-only.jsonl"
+run_trace "  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\` added\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-added.jsonl"
+run_trace "  ✔ node          reachable — 9 tables created\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`\n\nDetails:\n- ✔ **node**: reachable, 9 tables" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-created-recap.jsonl"
 # the re-run's report naming the node by address: a port the node does
 # not run on, as a URL, as a bare port and after the node's server name,
 # and the probe's own port
-run_trace "  ✔ node          reachable at http://127.0.0.1:8012/mcp — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-url.jsonl"
-run_trace "  ✔ node          reachable on port 8012 — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-port.jsonl"
-run_trace "  ✔ node          reachable at ymer-node:8012 — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-host.jsonl"
-run_trace "  ✔ node          reachable at http://127.0.0.1:8112/mcp — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-right-url.jsonl"
+run_trace "  ✔ node          reachable at http://127.0.0.1:8012/mcp — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-url.jsonl"
+run_trace "  ✔ node          reachable on port 8012 — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-port.jsonl"
+run_trace "  ✔ node          reachable at ymer-node:8012 — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrong-host.jsonl"
+run_trace "  ✔ node          reachable at http://127.0.0.1:8112/mcp — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-right-url.jsonl"
 # the first run's and the drift run's reports naming a port the node does
 # not run on, each otherwise the run it stands in for — the drift run's in
 # the role grammar a real drift run prints, the port on the node's line
 run_trace "$(printf '%s' "$setup_report" | sed 's/reachable —/reachable on port 8012 —/')" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' Read "{\"file_path\":\"$live/plugins/ymer/skills/setup/SKILL.md\"}" >"$canned/run-setup1-wrong-port.jsonl"
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables, node on port 8012 (added tasks.due_date)\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3-wrong-port.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 9 tables, node on port 8012 (added tasks.due_date)\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3-wrong-port.jsonl"
 run_trace 'tasks.due_date added' $notebook '{"action":"execute","data":{"sql":"ALTER TABLE tasks ADD COLUMN due_date TEXT"}}' >"$canned/run-setup3.jsonl"
 # the first run's report with a role line the model wrapped, its
 # continuation lines indented under it and one opening on the ` — `
@@ -340,29 +351,29 @@ run_trace "## Setup — ymer environment\n\n\`\`\`\n✔ node          reachable 
 run_trace "**Setup — ymer environment**\n\n- ✔ node — reachable — 9 tables created\n- ✔ front — \`probe_front\` added\n- ✘ state_folder — not set — set it with \`/plugin configure ymer@ymer\`\n  - If you did set a folder and still read not set, check which plugin it is set on.\n- ✔ ymer — no connection in this session. Add it with:\n  \`\`\`\n  claude mcp add --transport http --scope user ymer <its address>\n  \`\`\`\n  until then, work is tracked in the node's \`tasks\` table\n- – Meta Roadmap — not checked\n\nNext step: set the state_folder option." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-nested.jsonl"
 # the re-run's node line naming a count or a state that only contains the
 # right one: 19 tables, unreachable
-run_trace "  ✔ node          reachable — 19 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-19-tables.jsonl"
-run_trace "  ✔ node          unreachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-unreachable.jsonl"
+run_trace "  ✔ node          reachable — 19 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-19-tables.jsonl"
+run_trace "  ✔ node          unreachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-unreachable.jsonl"
 # the re-run's report fenced, the node's role line last and a sentence
 # saying created and added straight after the closing fence: the block's
 # own fence ends the role line, so the sentence never decides it; and the
 # role names dressed with a colon, which still read as the role names
-run_trace "Setup — ymer environment\n\n\`\`\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n\`\`\`\nNothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-fenced.jsonl"
-run_trace "Setup — ymer environment\n\n- ✔ **node**: reachable — 9 tables\n- ✔ **front**: \`probe_front\`\n- ✔ **state_folder**: \`$pstate\` — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-colon.jsonl"
+run_trace "Setup — ymer environment\n\n\`\`\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`\n  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n\`\`\`\nNothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-fenced.jsonl"
+run_trace "Setup — ymer environment\n\n- ✔ **node**: reachable — 9 tables\n- ✔ **front**: \`probe_front\`\n- ✔ **state_folder**: \`$pstate\` — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-colon.jsonl"
 # the re-run's report naming ports that are not the node's address — a
 # container's port in the prose after the lines, a database's port on the
 # node's own line — and a wrong node URL in that prose
-run_trace "  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nInside Docker the container listens on port 8012." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-container-port.jsonl"
-run_trace "  ✔ node          reachable — 9 tables, db_port 5432\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-db-port.jsonl"
-run_trace "  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`\n\nReady. The node answers at http://127.0.0.1:8012/mcp." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-prose-url.jsonl"
+run_trace "  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`\n\nInside Docker the container listens on port 8012." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-container-port.jsonl"
+run_trace "  ✔ node          reachable — 9 tables, db_port 5432\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-db-port.jsonl"
+run_trace "  ✔ node          reachable — 9 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`\n\nReady. The node answers at http://127.0.0.1:8012/mcp." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-prose-url.jsonl"
 # the re-run's node line carried onto a continuation line that names a
 # wrong port: the node's role line is read whole, its continuations joined
-run_trace "  ✔ node          reachable — 9 tables\n                 (repaired: tasks was missing due_date — node on port 8012)\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrapped-port.jsonl"
+run_trace "  ✔ node          reachable — 9 tables\n                 (repaired: tasks was missing due_date — node on port 8012)\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-wrapped-port.jsonl"
 # the node's role mark in emoji presentation — the mark, then U+FE0F —
 # on a line naming a wrong port: the mark is the same mark
-run_trace "  ✔️ node          reachable — 9 tables, node on port 8012\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — not a git work tree, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-emoji-port.jsonl"
+run_trace "  ✔️ node          reachable — 9 tables, node on port 8012\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, history in the node's \`topics_history\`" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-emoji-port.jsonl"
 # the state folder's reading aimed at another folder: the path is the
 # stage's own, so any other is no declared command
-run_trace 'read' Bash '{"command":"git -C /Users/someone/state rev-parse --is-inside-work-tree"}' >"$canned/run-capture-revparse.jsonl"
+run_trace 'read' Bash '{"command":"git -C /Users/someone/state rev-parse --is-inside-work-tree --show-prefix"}' >"$canned/run-capture-revparse.jsonl"
 run_trace 'committed' Bash '{"command":"git commit -m x"}' >"$canned/run-mint-git.jsonl"
 # a `{}` ahead of the commit: a read cut at the first `}` would hide it
 run_trace 'committed' Bash '{"command":"echo {} && git commit -m x"}' >"$canned/run-mint-git-brace.jsonl"
@@ -605,7 +616,8 @@ node_fk_refused='{"result":{"content":[{"text":"SQLite error: FOREIGN KEY constr
 # answers are searched after the queue and in order. The first mint run
 # is the first arm's, which stops and leaves nothing; each install writes
 # its options into cfg/, the way the CLI does — the first the front alone,
-# the one between the arms the front and state/.
+# the one between the first two arms the front and state/, and the third
+# arm's the front and encl/plans.
 live_queue() {
 	queue 'curl -sS -o /dev/null' 'rc=7'
 	answer 'claude -p Say the single word' "@$canned/login-ok.jsonl"
@@ -668,6 +680,20 @@ live_queue() {
 	queue "name LIKE 'tutor%'" "$(node_rows 0)"
 	queue 'claude -p /ymer:tutor' "@$canned/run-tutor-stop.jsonl"
 	queue "name LIKE 'tutor%'" "$(node_rows 0)"
+	# the third arm: its install writes encl/plans as the option; its two
+	# runs, handed encl/plans and so keyed on that path, refuse and stop;
+	# and the node's counts read before and after the stopped mint
+	effect 'claude plugin install ymer@ymer --config' "printf '{\n  \"pluginConfigs\": {\n    \"ymer@ymer\": {\n      \"options\": {\n        \"front\": \"probe_front\",\n        \"state_folder\": \"%s\"\n      }\n    }\n  }\n}\n' '$penc' >'$tmp/probe/cfg/settings.json'"
+	queue "--add-dir $penc " "@$canned/run-setup-enclosed.jsonl"
+	queue "--add-dir $penc " "@$canned/run-mint-enclosed.jsonl"
+	queue "status = 'drained'\"" "$(node_rows 3)"
+	queue 'FROM tasks"' "$(node_rows 3)"
+	queue 'FROM topics_history"' "$(node_rows 4)"
+	queue 'FROM pool_scores"' "$(node_rows 2)"
+	queue "status = 'drained'\"" "$(node_rows 3)"
+	queue 'FROM tasks"' "$(node_rows 3)"
+	queue 'FROM topics_history"' "$(node_rows 4)"
+	queue 'FROM pool_scores"' "$(node_rows 2)"
 }
 
 probe() { # probe <fixture> <args...> — output in $out, exit status in $rc
@@ -713,7 +739,7 @@ probe "$fx" static
 check "static clean exits 0" 0 "$rc"
 check "static clean: manifests pass" 1 "$(lines '✔ manifests')"
 check "static clean: values pass" 1 "$(lines '✔ values')"
-check "static clean: references pass — the fixture's and the live stage's own" 1 "$(lines '✔ references   35 slash references, 1 relative links, 0 plugin-root paths')"
+check "static clean: references pass — the fixture's and the live stage's own" 1 "$(lines '✔ references   42 slash references, 1 relative links, 0 plugin-root paths')"
 check "static clean: hosting passes" 1 "$(lines '✔ hosting      no plugins/*/bin')"
 check "static validates the root and the plugin" 2 "$(logged 'claude plugin validate --strict')"
 # a nested checkout and a dangling link in the tree: git lists the one as
@@ -1125,7 +1151,7 @@ check "live: the login line says a call answered, not which credential" 1 "$(lin
 check "live: the scrub line" 1 "$(lines '✔ scrub')"
 check "live: the node line" 1 "$(lines '✔ node         up on http://127.0.0.1:8112/mcp, notebook empty')"
 check "live: the install line" 1 "$(lines '✔ install      marketplace from')"
-check "live: front, setup, setup-node, setup-history, setup-tutor, setup-report, capture, mint-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, mint, scored, mint-capture, bug-first, append, append-keep, append-history, tutor-ymer, tutor-stop" 23 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (front|setup|setup-node|setup-history|setup-tutor|setup-report|capture|mint-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|mint|scored|mint-capture|bug-first|append|append-keep|append-history|tutor-ymer|tutor-stop) ')"
+check "live: front, setup, setup-node, setup-history, setup-tutor, setup-report, capture, mint-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, mint, scored, mint-capture, bug-first, append, append-keep, append-history, tutor-ymer, tutor-stop, encl-folder, setup-enclosed, mint-enclosed" 26 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (front|setup|setup-node|setup-history|setup-tutor|setup-report|capture|mint-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|mint|scored|mint-capture|bug-first|append|append-keep|append-history|tutor-ymer|tutor-stop|encl-folder|setup-enclosed|mint-enclosed) ')"
 check "live: the front line names the probe's front" 1 "$(lines '✔ front        front set to probe_front')"
 check "live: the dispatch line reports a run that scored in-session, neither passed nor failed" 1 "$(lines '– dispatch     not run — run 6 scored in-session — 0 haiku subagent call(s), 0 subagent transcript(s)')"
 check "live: the mint-capture line counts the mint's own drops" 1 "$(lines '✔ mint-capture 2 source mint drop(s) after /ymer:mint — its capture block ran')"
@@ -1134,6 +1160,9 @@ check "live: the bug-first line names the bug's topic" 1 "$(lines "✔ bug-first
 check "live: the append line reads the deltas" 1 "$(lines "✔ append       still one request.md in $bug_to, started 20260921 kept, the recurrence drained to the bug's topic, its clause in the file 0 → 1")"
 check "live: the append-keep line reads the pre-image whole" 1 "$(lines "✔ append-keep  every one of the 13 line(s) the file held before the fold still in it, in order, byte for byte — 14 line(s) now")"
 check "live: the append-history line reads the save" 1 "$(lines "✔ append-history one more topics_history row, the newest carrying the file's 1 recurrence clause(s) and the one before it the pre-image's 0")"
+check "live: the encl-folder line names the third arm's folder" 1 "$(lines "✔ encl-folder  state_folder set to $penc")"
+check "live: the setup-enclosed line" 1 "$(lines "✔ setup-enclosed $penc failed as inside another git repository, its prefix plans/ and the git init fix named, the folder's kind read")"
+check "live: the mint-enclosed line reads the counts around the stop" 1 "$(lines "✔ mint-enclosed stopped naming /ymer:setup, the folder's kind read — 3 drained drops, 3 tasks, 4 topics_history rows and 2 pool_scores rows, each as before, no file in $penc")"
 check "live: the teardown's install line" 1 "$(lines '✔ install      untouched')"
 check "live: servers, isolation, writes, bash-commands, mint-git and setup-address pass — the node alone, reads inside, writes under state/, the declared commands allowed, no commit, no wrong node address" 6 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (servers|isolation|writes|bash-commands|mint-git|setup-address) ')"
 check "live: the isolation line names the roots a run is handed — state/, the checkout, the runs' working directory" 1 "$(lines "✔ isolation    every Read, Glob and Grep stayed under $pstate, $fx or the runs' working directory ")"
@@ -1142,20 +1171,22 @@ check "live brings the node up under its own project and port, from its own copy
 check "live never runs compose against the named file itself" 0 "$(logged "-f $HERMETIC_PROBE_COMPOSE_FILE")"
 check "live resolves the project name before up and again before down" 2 "$(logged "$scratch_dc config")"
 check "live: the copy is the named file byte for byte" 0 "$(cmp -s "$HERMETIC_PROBE_COMPOSE_FILE" "$tmp/probe/compose/docker-compose.yml"; echo $?)"
-check "live installs through the README's lines — the front alone, then the front and state/ as the options" '1 1 2 2 1' "$(printf '%s %s %s %s %s' "$(logged 'claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8112/mcp')" "$(logged "claude plugin marketplace add $fx")" "$(logged 'claude plugin install ymer@ymer')" "$(logged 'claude plugin install ymer@ymer --config front=probe_front')" "$(logged "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$pstate")")"
-check "live runs ten headless prompts, prompt before flags" 10 "$(logged 'claude -p /')"
-run_flags="--output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash(claude mcp get *) Bash(git -C * rev-parse --is-inside-work-tree) mcp__ymer-node__notebook Read(/$fx/plugins/**) Agent --add-dir $pstate --model claude-sonnet-5 --max-turns 60 --strict-mcp-config --mcp-config "'{"mcpServers":{"ymer-node":{"type":"http","url":"http://127.0.0.1:8112/mcp"}}}'" --settings $tmp/probe/hook/settings.json"
-check "live: every run is stream-json, verbose, pinned, the notebook and the two declared Bash commands allowed, state/ added, the scratch node the one server, the runs' hook loaded" 10 "$(logged "$run_flags")"
+check "live installs through the README's lines — the front alone, then the front and each later arm's folder as the options" '1 1 3 3 1 1' "$(printf '%s %s %s %s %s %s' "$(logged 'claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8112/mcp')" "$(logged "claude plugin marketplace add $fx")" "$(logged 'claude plugin install ymer@ymer')" "$(logged 'claude plugin install ymer@ymer --config front=probe_front')" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$pstate" "$SHIM_DIR/log")" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$penc" "$SHIM_DIR/log")")"
+check "live runs twelve headless prompts, prompt before flags" 12 "$(logged 'claude -p /')"
+run_flags="--output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash(claude mcp get *) Bash(git -C * rev-parse --is-inside-work-tree --show-prefix) mcp__ymer-node__notebook Read(/$fx/plugins/**) Agent --add-dir $pstate --model claude-sonnet-5 --max-turns 60 --strict-mcp-config --mcp-config "'{"mcpServers":{"ymer-node":{"type":"http","url":"http://127.0.0.1:8112/mcp"}}}'" --settings $tmp/probe/hook/settings.json"
+check "live: every run but the third arm's is stream-json, verbose, pinned, the notebook and the two declared Bash commands allowed, state/ added, the scratch node the one server, the runs' hook loaded" 10 "$(logged "$run_flags")"
+encl_flags="${run_flags%%--add-dir *}--add-dir $penc --model${run_flags#*--add-dir $pstate --model}"
+check "live: the third arm's two runs carry the same flags, handed encl/plans in place of state/" 2 "$(logged "$encl_flags")"
 check "live: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is set')"
 check "live: teardown brings the node down" 1 "$(logged "$scratch_dc down")"
 check "live: data/ is gone after teardown" 0 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
 check "live: state/ is gone after teardown" 0 "$(test -e "$pstate" && echo 1 || echo 0)"
-check "live: the runs are kept, the control call's and the login call's beside them" 12 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
-check "live: the instructions line" 1 "$(lines '✔ instructions no run loaded an instructions file — 10 transcript(s) read, each recording its environment, and the control run recorded its planted CLAUDE.md alone')"
+check "live: the runs are kept, the control call's and the login call's beside them" 14 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
+check "live: the instructions line" 1 "$(lines '✔ instructions no run loaded an instructions file — 12 transcript(s) read, each recording its environment, and the control run recorded its planted CLAUDE.md alone')"
 check "live: the control call, prompt before flags — one turn, no server, under the runs' hook" 1 "$(logged "claude -p Reply with the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}'" --settings $tmp/probe/hook/settings.json")"
 check "live: the login call, prompt before flags — one turn, no server, no hook" 1 "$(grep -c -x -F -- "claude -p Say the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}' "$SHIM_DIR/log")"
 check "live: the login call runs before the scrub" 1 "$(awk '/^claude plugin uninstall/ { exit } /^claude -p Say the single word ok\./ { n++ } END { print n + 0 }' "$SHIM_DIR/log")"
-check "live: twelve headless calls, every one from a working directory outside the probe dir and the home directory" '12 0' "$(printf '%s %s' "$(wc -l <"$SHIM_DIR/cwds" | tr -d ' ')" "$(grep -c -e "^$tmp/probe" -e "^$HOME" "$SHIM_DIR/cwds")")"
+check "live: fourteen headless calls, every one from a working directory outside the probe dir and the home directory" '14 0' "$(printf '%s %s' "$(wc -l <"$SHIM_DIR/cwds" | tr -d ' ')" "$(grep -c -e "^$tmp/probe" -e "^$HOME" "$SHIM_DIR/cwds")")"
 # node.log is truncated at the stage's start like the traces: the two
 # `tables` reads are this invocation's — the node-up one and the teardown's
 check "live: node.log is this invocation's alone" 2 "$(grep -c '^>> tables {}' "$tmp/probe/runs/node.log")"
@@ -1172,8 +1203,8 @@ hook_event() { # hook_event <command as its JSON string spells it> — the hook'
 }
 hook_settings="{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Bash\",\"hooks\":[{\"type\":\"command\",\"command\":\"sh '$tmp/probe/hook/bash'\"}]}]}}"
 check "live hook: the settings file loads it on Bash, and nothing else" "$hook_settings" "$(cat "$tmp/probe/hook/settings.json" 2>/dev/null)"
-check "live hook: the declared commands run" '0 0 0 0' "$(printf '%s %s %s %s' "$(hook_event 'claude mcp get ymer')" "$(hook_event 'claude mcp get ymer 2>&1')" "$(hook_event "git -C $pstate rev-parse --is-inside-work-tree")" "$(hook_event "git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree")")"
-check "live hook: every other command is refused" '2 2 2 2 2' "$(printf '%s %s %s %s %s' "$(hook_event 'true')" "$(hook_event 'claude mcp get ymer 2>&1; echo \"---\"')" "$(hook_event 'claude mcp get ymer 2>/dev/null')" "$(hook_event 'git -C /Users/someone/state rev-parse --is-inside-work-tree')" "$(printf '{"tool_name":"Bash","tool_input":{"description":"d","command":"claude mcp get ymer"}}' | sh "$tmp/probe/hook/bash" 2>/dev/null; echo $?)")"
+check "live hook: the declared commands run, the reading on either arm's folder" '0 0 0 0 0 0' "$(printf '%s %s %s %s %s %s' "$(hook_event 'claude mcp get ymer')" "$(hook_event 'claude mcp get ymer 2>&1')" "$(hook_event "git -C $pstate rev-parse --is-inside-work-tree --show-prefix")" "$(hook_event "git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree --show-prefix")" "$(hook_event "git -C $penc rev-parse --is-inside-work-tree --show-prefix")" "$(hook_event "git -C \\\"$penc\\\" rev-parse --is-inside-work-tree --show-prefix")")"
+check "live hook: every other command is refused, the reading without --show-prefix among them" '2 2 2 2 2 2' "$(printf '%s %s %s %s %s %s' "$(hook_event 'true')" "$(hook_event 'claude mcp get ymer 2>&1; echo \"---\"')" "$(hook_event 'claude mcp get ymer 2>/dev/null')" "$(hook_event 'git -C /Users/someone/state rev-parse --is-inside-work-tree --show-prefix')" "$(hook_event "git -C $pstate rev-parse --is-inside-work-tree")" "$(printf '{"tool_name":"Bash","tool_input":{"description":"d","command":"claude mcp get ymer"}}' | sh "$tmp/probe/hook/bash" 2>/dev/null; echo $?)")"
 check "live hook: a refusal names the declared commands to the model" 1 "$(printf '{"tool_input":{"command":"true"}}' | sh "$tmp/probe/hook/bash" 2>&1 >/dev/null | grep -c -F '`claude mcp get <name>`')"
 
 # ── 15c · live, a drop the mint left unscored ─────────────────────────
@@ -1208,7 +1239,7 @@ check "live mint that dispatched scorers: no in-session line" 0 "$(lines '– di
 # ── 15f · live, the guard's stop wrote scores ─────────────────────────
 live_case
 live_queue
-requeue 'FROM pool_scores"' "$(node_rows 3)"
+requeue 'FROM pool_scores"' "$(node_rows 3)" "$(node_rows 2)" "$(node_rows 2)"
 probe "$fx" live
 check "live stopped mint that wrote scores exits 1" 1 "$rc"
 check "live stopped mint that wrote scores: the mint-stop line names the rows" 1 "$(lines '✘ mint-stop    after /ymer:mint with no state folder: 1 open friction drops, 0 tasks, 0 topics_history rows, 3 pool_scores rows, and the result line names /ymer:setup (expected 1, 0, 0, 0, names)')"
@@ -1373,7 +1404,7 @@ check "live fresh-creation report: the converge-report line" 1 "$(lines '✘ con
 check "live fresh-creation report: converge still passes" 1 "$(lines '✔ converge     sqlite_master')"
 check "live fresh-creation report: setup-folder names the missing line" 1 "$(lines '✘ setup-folder the re-run'"'"'s report does not read')"
 
-# ── 21b · live, state/ reported as a git work tree ────────────────────
+# ── 21b · live, state/ reported as its own git repository ─────────────
 live_case
 live_queue
 requeue 'claude -p /ymer:setup' "@$canned/run-setup1.jsonl" "@$canned/run-setup2-git.jsonl" "@$canned/run-setup3.jsonl"
@@ -1623,6 +1654,42 @@ probe "$fx" live
 check "live request.md row under another slug exits 1" 1 "$rc"
 check "live request.md row under another slug: the mint line names the slug" 1 "$(lines '✘ mint         after /ymer:mint: 1 tasks at claimed in a Roadmap project, 1 request.md topics_history rows, 0 of them under probe_front')"
 
+# ── 21r · live, the third arm's setup passing its folder as git ───────
+# the defect the third arm exists for: a folder inside another git
+# repository read as its own — the reading ran, its answer was misjudged
+live_case
+live_queue
+requeue "--add-dir $penc " "@$canned/run-setup-enclosed-pass.jsonl" "@$canned/run-mint-enclosed.jsonl"
+probe "$fx" live
+check "live third arm passing its folder exits 1" 1 "$rc"
+check "live third arm passing its folder: the setup-enclosed line" 1 "$(lines "✘ setup-enclosed the report has no line carrying \`✘\`, \`state_folder\` and $penc, does not name the prefix \`plans/\`, does not name the \`git init\` fix, and the run read the folder's kind")"
+check "live third arm passing its folder: mint-enclosed still passes" 1 "$(lines '✔ mint-enclosed')"
+
+# ── 21s · live, the third arm's mint drawing into its folder ──────────
+# the kind read and the guard passed all the same: one more drop drained
+# and a file written into the folder, the first effect on that key the
+# setup run's, which leaves nothing
+live_case
+live_queue
+requeue "status = 'drained'\"" "$(node_rows 3)" "$(node_rows 4)"
+requeue "--add-dir $penc " "@$canned/run-setup-enclosed.jsonl" "@$canned/run-mint-enclosed-drained.jsonl"
+effect "--add-dir $penc " ':'
+effect "--add-dir $penc " "mkdir -p '$penc/demo' && printf 'x\n' >'$penc/demo/request.md'"
+probe "$fx" live
+check "live third arm drawing into its folder exits 1" 1 "$rc"
+check "live third arm drawing into its folder: the mint-enclosed line names the counts" 1 "$(lines "✘ mint-enclosed after /ymer:mint with the state folder inside another git repository: drained drops 3 → 4, tasks 3 → 3, topics_history rows 4 → 4, pool_scores rows 2 → 2, 1 file(s) in $penc, the run read the folder's kind, and the result line does not name /ymer:setup")"
+check "live third arm drawing into its folder: setup-enclosed still passes" 1 "$(lines '✔ setup-enclosed')"
+
+# ── 21t · live, the third arm's mint stopping without reading the kind ─
+# the stop is right and the counts are unchanged, but a run that never
+# looked proves nothing about the reading
+live_case
+live_queue
+requeue "--add-dir $penc " "@$canned/run-setup-enclosed.jsonl" "@$canned/run-mint-enclosed-unread.jsonl"
+probe "$fx" live
+check "live third arm's mint never reading the kind exits 1" 1 "$rc"
+check "live third arm's mint never reading the kind: the mint-enclosed line" 1 "$(lines "✘ mint-enclosed after /ymer:mint with the state folder inside another git repository: drained drops 3 → 3, tasks 3 → 3, topics_history rows 4 → 4, pool_scores rows 2 → 2, 0 file(s) in $penc, the run did not read the folder's kind, and the result line names /ymer:setup")"
+
 # ── 22 · live, a git commit, a file write and a foreign server's tool ──
 # a queue line ahead of live_queue's answers first; mint's second-arm
 # answer is persistent, so it is replaced
@@ -1630,7 +1697,7 @@ live_seeded /ymer:capture run-capture-write.jsonl
 reanswer 'claude -p /ymer:mint' "@$canned/run-mint-git.jsonl"
 probe "$fx" live
 check "live git commit exits 1" 1 "$rc"
-check "live git commit: the mint-git line names the second arm's mint runs" 1 "$(lines '✘ mint-git     mint attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
+check "live git commit: the mint-git line names the second arm's mint runs" 1 "$(lines '✘ mint-git     mint attempted a git commit, with no state folder that is its own git repository, in run(s) 6 7 8')"
 check "live git commit: the bash-commands line names the mint runs" 1 "$(lines "$bash_other 6 7 8")"
 check "live file write: the writes line names the capture run" 1 "$(lines '✘ writes       a file write outside the second arm'"'"'s mint runs or outside')"
 check "live file write: the writes line names run 2 alone" 1 "$(lines "in run(s) 2 — read $tmp/probe/runs/<n>.jsonl")"
@@ -1832,7 +1899,7 @@ check "live failed bug seed: append-keep waits on append" 1 "$(lines '– append
 check "live failed bug seed: the stale pre-image is gone, not read" 0 "$(test -e "$tmp/probe/runs/8-preimage.md" && echo 1 || echo 0)"
 check "live failed bug seed: append-history waits on append" 1 "$(lines '– append-history not run — the append step did not run — see append')"
 check "live failed bug seed: append never passes" 0 "$(lines '✔ append')"
-check "live failed bug seed: no mint run after the seed" 8 "$(logged 'claude -p /')"
+check "live failed bug seed: no mint run after the seed in the second arm — its first six runs, tutor's two and the third arm's two" 10 "$(logged 'claude -p /')"
 live_case
 live_queue
 requeue "kind = 'bug' AND anchor_id IS NULL" "$(node_rows '')"
@@ -1992,7 +2059,7 @@ live_queue
 reanswer 'claude -p /ymer:mint' "@$canned/run-mint-git-brace.jsonl"
 probe "$fx" live
 check "live brace before a git commit exits 1" 1 "$rc"
-check "live brace before a git commit: the mint-git line" 1 "$(lines '✘ mint-git     mint attempted a git commit, with the state folder unset or no git work tree, in run(s) 6 7 8')"
+check "live brace before a git commit: the mint-git line" 1 "$(lines '✘ mint-git     mint attempted a git commit, with no state folder that is its own git repository, in run(s) 6 7 8')"
 
 # ── 37c · live, the instructions check over the runs' transcripts ─────
 # a file loaded after the first turn, a nested file reached through a
@@ -2103,7 +2170,7 @@ check "live wipe: the transcripts line counts what went" 1 "$(lines "✔ transcr
 check "live wipe: the earlier sessions' project dirs are gone" '0 0' "$(printf '%s %s' "$(test -e "$transcripts/-old-live" && echo 1 || echo 0)" "$(test -e "$transcripts/-hand-probe" && echo 1 || echo 0)")"
 check "live wipe: the login's account record is untouched" 0 "$(cmp -s "$tmp/account-before.json" "$tmp/probe/cfg/.claude.json"; echo $?)"
 check "live wipe: the login line still passes" 1 "$(lines '✔ login')"
-check "live wipe: the runs' own transcripts, written after it, are read" 1 "$(lines '✔ instructions no run loaded an instructions file — 10 transcript(s) read')"
+check "live wipe: the runs' own transcripts, written after it, are read" 1 "$(lines '✔ instructions no run loaded an instructions file — 12 transcript(s) read')"
 rm -rf "$transcripts"
 live_case
 live_queue

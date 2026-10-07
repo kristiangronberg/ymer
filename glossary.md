@@ -159,8 +159,10 @@ run.
 ### reach rule
 The coordinator is the default where the session reaches it: ymer's tool
 surface, else the node's `tasks` table. For the state store the rule
-reads which history tracks the state folder: git where it is a git work
-tree, `topics_history` otherwise. The state folder itself is required,
+reads which history tracks the state folder: git where it is its own git
+repository, `topics_history` where it is in no git repository or the
+session has no git, and a folder inside another git repository is
+refused. The state folder itself is required,
 never a reach default: an unresolved or unusable one stops the run with
 its fix named. A store reached but unusable stops the run the same way;
 nothing is asked and nothing falls back on a failure.
@@ -237,7 +239,8 @@ routes by name convention or by what the session reaches.
 
 ### state store
 The state folder together with the history that tracks it: git where
-the folder is a git work tree, the node's `topics_history` otherwise.
+the folder is its own git repository, the node's `topics_history` where
+it is in no git repository or the session has no git.
 What a skill names when it saves an artifact without knowing which
 history applies.
 

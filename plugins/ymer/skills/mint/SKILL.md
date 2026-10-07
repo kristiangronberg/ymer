@@ -48,9 +48,11 @@ before the run starts:
 - **The state store** — where a topic's artifacts live: the state folder,
   laid out `<area>/YYYY/MM-DD-<topic>/`, together with the history that
   tracks it. **The state folder is required**, and which history tracks
-  it is read from the folder. A git work tree → git: the run commits
-  what it wrote. Any other folder → the node's `topics_history` table:
-  the run saves each file it wrote there as a row, and commits nothing.
+  it is read from the folder. Its own git repository → git: the run
+  commits what it wrote. A folder in no git repository, or one a session
+  without git finds → the node's `topics_history` table: the run saves
+  each file it wrote there as a row, and commits nothing. A folder inside
+  another git repository → the guard below.
 
 Ymer's tool surface counts as reached when it is among this session's
 tools **whether or not it has been loaded yet** — the same test
@@ -102,20 +104,25 @@ runs.
 **Which history tracks it** is one reading, the same one setup runs:
 
 ```
-git -C <state folder> rev-parse --is-inside-work-tree
+git -C <state folder> rev-parse --is-inside-work-tree --show-prefix
 ```
 
 Run it bare: the tool reports a non-zero exit and its message by itself,
 so nothing is appended to capture the status.
 
-`true` → git. A non-zero exit whose message says `not a git repository`
-→ `topics_history`. Exit 127 — no `git` to run in this session → the
-folder is not a git work tree: list it with this session's own file
-tools, never another command, and a folder found there → `topics_history`,
-one not found → the guard below. Any other outcome — a missing folder, or `false` with
-exit 0, which a bare repository or a `.git` directory returns — is the
-guard below. On Cowork a connected folder is visible to the
-device's own shell and not to the container's, so run the reading there.
+`true` alone, or `true` then an empty line — the tool may not show a
+trailing empty line, and the prefix is empty at the top of a repository
+— the folder is its own git repository → git. `true`, then a non-empty
+prefix line — the folder is inside another git repository → the guard
+below: a save there would commit into that other repository. A non-zero exit whose message says `not a git repository` —
+a folder in no git repository → `topics_history`. Exit 127 — no `git` to
+run in this session → git cannot track the folder: list it with this
+session's own file tools, never another command, and a folder found
+there → `topics_history`, one not found → the guard below. Any other
+outcome — a missing folder, or `false` with exit 0, which a bare
+repository or a `.git` directory returns — is the guard below. On Cowork
+a connected folder is visible to the device's own shell and not to the
+container's, so run the reading there.
 
 **Guard — environment failures have two doors, and a store that is
 reached but broken is one of them.** Resolve in this order and stop at
@@ -130,8 +137,9 @@ placeholder on Claude Code, none in the instructions on Cowork), two
 instructions naming two different slugs, no state folder named (the
 placeholder on Claude Code, no path in the front's instructions on
 Cowork), two instructions naming two different folders, a named folder
-that is missing, out of this session's reach, or of a kind the reading
-above does not name, a ymer call that errors,
+that is missing, out of this session's reach, inside another git
+repository, or of a kind the reading above does not name, a ymer call
+that errors,
 a lapsed sign-in, a notebook that answers but lacks `tasks`, `tasks_log`,
 `topics_history` or `pool_scores` — stops the run with one instruction:
 **run `/ymer:setup`**, which ships in this plugin. Repair nothing here, never
@@ -1058,8 +1066,10 @@ alone. Hand it, by name, what this run's scoring showed:
   each its one home
 - The coordinator is the default where this session reaches it: ymer
   else the node's `tasks` — resolved once, asked never. The state folder
-  is required, and its history is git where it is a git work tree and
-  the node's `topics_history` otherwise
+  is required, and its history is git where it is its own git
+  repository and the node's `topics_history` where it is in no git
+  repository or the session has no git; one inside another git
+  repository stops the run at the guard
 - A store reached but broken, no front named, or no state folder at
   all, stops the run at the environment guard and names `/ymer:setup`;
   a front `fronts` does not list stops it at Guard — nothing to draw,

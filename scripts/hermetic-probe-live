@@ -2,17 +2,21 @@
 # hermetic-probe-live — the live stage, sourced by hermetic-probe: a scratch
 # Ymer Node whose notebook starts empty, the README's own install lines
 # inside the probe dir's cfg/, and the plugins run headless against that
-# node in two arms. With the probe's front named and no state folder,
+# node in three arms. With the probe's front named and no state folder,
 # setup creates the store skeletons, registers the front, fails its
 # state-folder check and reports the coordinator by reach, capture records
-# a friction in the pool under that front, and mint stops at its guard. With the probe dir's state/ — a plain folder, not a git work tree
+# a friction in the pool under that front, and mint stops at its guard. With the probe dir's state/ — a plain folder, in no git repository
 # — named as the state folder, setup converges on a re-run and repairs
 # drift, and mint drains into state/, draws a bug ahead of open frictions
 # and folds the bug's recurrence into its unstarted topic, every line the
 # topic held kept, each save a file in state/ and a row in the node's
 # topics_history.
-# Last, tutor stops at its guard twice and writes nothing: with no ymer,
+# Then tutor stops at its guard twice and writes nothing: with no ymer,
 # and with its subject-index tables dropped.
+# Last, with state/encl/plans — a folder inside another git repository,
+# encl/ — named as the state folder, setup fails its state-folder check
+# naming the `git init` fix and mint stops at its guard, each having read
+# the folder's kind, and nothing is drained, saved or written.
 # State is asserted through the scratch node's own MCP over curl, never
 # through the bind-mounted database file (a stale decoy under a VM-backed
 # Docker), and through the files in state/; behaviour through each run's
@@ -30,12 +34,13 @@
 # another uid — and state/ fresh beside it, asserted no git work tree),
 # the install path (the README's lines with the
 # marketplace by working-tree path and the node on the probe's port),
-# the instructions check's control call, then ten headless runs — eight
-# in two arms, then tutor's two — each from a working directory outside
-# the home tree and under the probe's own hook,
+# the instructions check's control call, then twelve headless runs — eight
+# in the first two arms, tutor's two, then the third arm's two — each from
+# a working directory outside the home tree and under the probe's own hook,
 # written into hook/, which refuses every Bash command but the declared
-# ones, and the install line re-run between the arms with the front and
-# state/ as the plugin's options — then teardown — at the
+# ones, and the install line re-run before the second and third arms with
+# the front and that arm's state folder as the plugin's options — then
+# teardown — at the
 # end of the stage, or by the EXIT trap on any earlier exit — and the
 # install's containers asserted
 # untouched. runs/ keeps each run's stream-json, the install and compose
@@ -173,9 +178,11 @@ topic_files() { # topic_files <drained_to> — every request.md in that topic's 
 # line in hook/declared, each matched against a command as its JSON string
 # spells it, escaped quotes included, so a separator, any other redirect, a
 # substitution or an escaped newline anywhere in it fails the match:
-# `claude mcp get <name>` whole, a trailing `2>&1` admitted, and the state
-# folder's own `git -C <state/> rev-parse --is-inside-work-tree`, its path
-# bare or quoted. The file is the one home of the patterns: the runs' hook
+# `claude mcp get <name>` whole, a trailing `2>&1` admitted, and the
+# reading of the state folder's kind, `git -C <folder> rev-parse
+# --is-inside-work-tree --show-prefix`, for either folder an arm names —
+# state/, or the third arm's encl/plans — its path bare or quoted. The
+# file is the one home of the patterns: the runs' hook
 # refuses every other command against it, and bash-commands reads every
 # command that ran against it. The hook's refusal message and
 # bash-commands' pass and fail lines spell the set in words, so a change to
@@ -190,7 +197,8 @@ live_hook() {
 	rm -rf "$hook"
 	mkdir -p "$hook"
 	state_re=$(printf '%s' "$state" | sed 's/[][\.*^$()+?{}|]/\\&/g')
-	printf '%s\n' '^claude mcp get [A-Za-z0-9_.-]+( 2>&1)?$' "^git -C (\\\\\"|')?$state_re(\\\\\"|')? rev-parse --is-inside-work-tree\$" >"$hook/declared"
+	encl_re=$(printf '%s' "$encl" | sed 's/[][\.*^$()+?{}|]/\\&/g')
+	printf '%s\n' '^claude mcp get [A-Za-z0-9_.-]+( 2>&1)?$' "^git -C (\\\\\"|')?$state_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" "^git -C (\\\\\"|')?$encl_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" >"$hook/declared"
 	cat >"$hook/bash" <<'EOF'
 #!/bin/sh
 # The hermetic probe's PreToolUse hook on Bash: a command matching a line
@@ -199,7 +207,7 @@ cmd=$(sed -E -n 's/.*"tool_input":\{"command":"(([^"\\]|\\.)*)".*/\1/p')
 if [ -n "$cmd" ] && printf '%s\n' "$cmd" | grep -q -E -f "$(dirname "$0")/declared"; then
 	exit 0
 fi
-echo 'Refused: only two shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`, and `git -C <the state folder> rev-parse --is-inside-work-tree`.' >&2
+echo 'Refused: only two shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`, and `git -C <the state folder> rev-parse --is-inside-work-tree --show-prefix`.' >&2
 exit 2
 EOF
 	printf '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"sh %s"}]}]}}\n' "'$hook/bash'" >"$hook/settings.json"
@@ -211,8 +219,9 @@ EOF
 # `claude mcp get`, the read the skills name on Claude Code before they
 # take a missing ymer as absent (the rule shape is the CLI's own `--help`
 # example, `Bash(git *)`), and `git -C <folder> rev-parse
-# --is-inside-work-tree`, the reading that says which history tracks the
-# state folder (a `*` in the middle of a rule admits the path and nothing
+# --is-inside-work-tree --show-prefix`, the reading that says what kind of
+# folder the state folder is and which history tracks it (a `*` in the
+# middle of a rule admits the path and nothing
 # else: CLI 2.1.282, measured). The allow rules do not bound the shell:
 # under acceptEdits a read-only command such as `true` or `echo` runs with
 # no rule matching it (CLI 2.1.283, measured), so every run also loads
@@ -224,9 +233,10 @@ EOF
 # the filesystem: CLI 2.1.289, measured). Agent is allowed, so mint's
 # scorers can be dispatched. A tool call no rule and no mode admits is
 # asked, and an unattended run denies it; either way the attempt stays in
-# the trace for the checks below. state/ sits outside the working
-# directory, where acceptEdits denies a write, so it is added as a
-# directory the run may edit (measured the same way). The MCP servers are
+# the trace for the checks below. The arm's state folder — state/, or the
+# third arm's encl/plans — sits outside the working directory, where
+# acceptEdits denies a write, so it is added as a directory the run may
+# edit (measured the same way); run_dir names it. The MCP servers are
 # the flag's alone: a logged-in config dir carries the organisation's
 # claude.ai connectors, which `claude mcp remove` cannot reach and which
 # would give the skills a ymer to find, so --strict-mcp-config keeps every
@@ -242,8 +252,8 @@ live_run() { # live_run <n> <prompt>
 	mkdir -p "$cwd"
 	(cd "$cwd" && claude -p "$2" --output-format stream-json --verbose \
 		--permission-mode acceptEdits \
-		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree)' mcp__ymer-node__notebook "Read(/$root/plugins/**)" Agent \
-		--add-dir "$state" --model "$probe_model" --max-turns 60 \
+		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree --show-prefix)' mcp__ymer-node__notebook "Read(/$root/plugins/**)" Agent \
+		--add-dir "$run_dir" --model "$probe_model" --max-turns 60 \
 		--strict-mcp-config --mcp-config "$mcp" --settings "$hook/settings.json") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
 	ran="$ran $1"
 	if ! call_err=$(live_error "$1"); then
@@ -716,6 +726,7 @@ stage_live() {
 	data=$dir/data
 	runs=$dir/runs
 	state=$dir/state
+	encl=$state/encl/plans
 	scratch_compose=$dir/compose/docker-compose.yml
 	hook=$dir/hook
 	port=${HERMETIC_PROBE_PORT:-8112}
@@ -723,6 +734,7 @@ stage_live() {
 	url=http://127.0.0.1:$port/mcp
 	mcp="{\"mcpServers\":{\"ymer-node\":{\"type\":\"http\",\"url\":\"$url\"}}}"
 	ran=''
+	run_dir=$state # the folder a run is handed: state/, until the third arm names its own
 	# The runs' working directories sit outside the home tree: for any
 	# directory under it, Claude Code loads the home directory's own
 	# .claude/CLAUDE.md as the home directory's project instructions,
@@ -829,8 +841,9 @@ stage_live() {
 	# it succeeds: a failed `up` can leave the project's network and
 	# container behind, and the EXIT trap's teardown is what removes them
 	# (it needs docker-before and data/ to exist, so it is set after both).
-	# state/ fresh, and a plain folder: a probe dir inside some git work tree
-	# would turn the second arm's drain into a commit instead of a row
+	# state/ fresh, and a plain folder: inside some git work tree, state/
+	# would be refused as inside another git repository, and the second
+	# arm would drain nothing
 	rm -rf "$state"
 	mkdir -p "$state"
 	if git -C "$state" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -1025,11 +1038,11 @@ link check before the edit would have caught it.'
 		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\` and \`9 tables\` and a front line carrying \`✔\`, \`front\` and \`$probe_front\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
 	fi
 	# the folder's own line: state/ printed as configured, read as a folder
-	# that is not a git work tree, passed, its history named on the same line
-	if report_match 4 '✔' state_folder "$state" 'not a git work tree' topics_history | grep -q .; then
-		pass setup-folder "state/ reported as not a git work tree, tracked by topics_history"
+	# in no git repository, passed, its history named on the same line
+	if report_match 4 '✔' state_folder "$state" 'in no git repository' topics_history | grep -q .; then
+		pass setup-folder "state/ reported as in no git repository, tracked by topics_history"
 	else
-		fail setup-folder "the re-run's report does not read \`✔\`, \`state_folder\`, $state, \`not a git work tree\` and \`topics_history\` on one line — read the result line of $runs/4.jsonl"
+		fail setup-folder "the re-run's report does not read \`✔\`, \`state_folder\`, $state, \`in no git repository\` and \`topics_history\` on one line — read the result line of $runs/4.jsonl"
 	fi
 
 	# Each of the three seeded steps runs only when its seed took: a step
@@ -1260,6 +1273,74 @@ link check before the edit would have caught it.'
 		seed_failed tutor-stop "DROP TABLE did not remove the tutor tables on the node — read $runs/node.log"
 	fi
 
+	# The third arm: state/encl/plans named as the state folder, encl/ a git
+	# repository of its own, made here with no commit — so the reading
+	# answers `true` and the prefix `plans/` for the folder, while state/
+	# itself stays in no git repository, since git looks for a repository
+	# upward from a folder and never down into one. It runs last, so no
+	# earlier run meets the nested repository and the run numbers above
+	# keep their meaning; its runs are handed the arm's folder in place of
+	# state/. Setup must fail its state-folder check naming the folder, its
+	# prefix and the `git init` fix, and mint must stop at its guard naming
+	# /ymer:setup — no drop drained, no task, no topics_history row, no
+	# pool_scores row and no file in the folder. Each run must have read
+	# the folder's kind: a run that never looked would pass by accident.
+	# Their writes and commits fall under the checks below, which count both
+	# runs. Only the mark, the role and the folder are bound to the
+	# state-folder line; the prefix and the fix are facts of the whole
+	# report, wherever the model puts them.
+	encl_repo=${encl%/plans}
+	rm -rf "$encl_repo"
+	mkdir -p "$encl"
+	git -C "$encl_repo" init -q 2>"$runs/encl-init.err" || abort encl "git init failed in $encl_repo — read $runs/encl-init.err"
+	encl_read=$(git -C "$encl" rev-parse --is-inside-work-tree --show-prefix 2>"$runs/encl-read.err" | tr '\n' ' ')
+	[ "$encl_read" = 'true plans/ ' ] || abort encl "the reading on $encl printed '$encl_read', not true and plans/ — the third arm needs a folder inside another git repository; read $runs/encl-read.err"
+	claude plugin install ymer@ymer --config "front=$probe_front" --config "state_folder=$encl" >>"$runs/install.log" 2>&1 || true
+	if grep -q -F "\"state_folder\": \"$encl\"" "$cfg/settings.json" 2>/dev/null &&
+		grep -q -F "\"front\": \"$probe_front\"" "$cfg/settings.json" 2>/dev/null; then
+		pass encl-folder "state_folder set to $encl"
+	else
+		abort encl-folder "the install did not set state_folder to $encl with front still $probe_front — read $runs/install.log and $cfg/settings.json"
+	fi
+	run_dir=$encl
+	# whether run <n> ran the reading on the arm's folder: a Bash call that
+	# ran, never one refused, naming the folder and the whole reading
+	read_kind() { # read_kind <n>
+		live_bash "$1" | grep -F -- "$encl" | grep -q -F -- 'rev-parse --is-inside-work-tree --show-prefix'
+	}
+	live_run 11 '/ymer:setup'
+	if read_kind 11; then looked=read; else looked='did not read'; fi
+	if report_lines 11 | report_words 'plans/' | grep -q .; then prefix=names; else prefix='does not name'; fi
+	if report_lines 11 | report_words 'git init' | grep -q .; then fix=names; else fix='does not name'; fi
+	if report_match 11 '✘' state_folder "$encl" | grep -q .; then role='a line'; else role='no line'; fi
+	if [ "$role" = 'a line' ] && [ "$prefix" = names ] && [ "$fix" = names ] && [ "$looked" = read ]; then
+		pass setup-enclosed "$encl failed as inside another git repository, its prefix plans/ and the git init fix named, the folder's kind read"
+	else
+		fail setup-enclosed "the report has $role carrying \`✘\`, \`state_folder\` and $encl, $prefix the prefix \`plans/\`, $fix the \`git init\` fix, and the run $looked the folder's kind (expected a line, names, names, read) — read the result line and the Bash calls of $runs/11.jsonl"
+	fi
+	drained_sql="SELECT count(*) FROM pool WHERE status = 'drained'"
+	drained_before=$(node_count "$drained_sql")
+	tasks_before=$(node_count 'SELECT count(*) FROM tasks')
+	saved_before=$(node_count 'SELECT count(*) FROM topics_history')
+	scores_before=$(node_count 'SELECT count(*) FROM pool_scores')
+	live_run 12 '/ymer:mint'
+	drained_after=$(node_count "$drained_sql")
+	tasks_after=$(node_count 'SELECT count(*) FROM tasks')
+	saved_after=$(node_count 'SELECT count(*) FROM topics_history')
+	scores_after=$(node_count 'SELECT count(*) FROM pool_scores')
+	encl_files=$(find "$encl" -type f 2>/dev/null | wc -l | tr -d ' ')
+	if live_result 12 | grep -q -F '/ymer:setup'; then named=names; else named='does not name'; fi
+	if read_kind 12; then looked=read; else looked='did not read'; fi
+	if [ "$drained_before" != UNPARSEABLE ] && [ "$drained_after" = "$drained_before" ] &&
+		[ "$tasks_before" != UNPARSEABLE ] && [ "$tasks_after" = "$tasks_before" ] &&
+		[ "$saved_before" != UNPARSEABLE ] && [ "$saved_after" = "$saved_before" ] &&
+		[ "$scores_before" != UNPARSEABLE ] && [ "$scores_after" = "$scores_before" ] &&
+		[ "$encl_files" = 0 ] && [ "$named" = names ] && [ "$looked" = read ]; then
+		pass mint-enclosed "stopped naming /ymer:setup, the folder's kind read — $drained_after drained drops, $tasks_after tasks, $saved_after topics_history rows and $scores_after pool_scores rows, each as before, no file in $encl"
+	else
+		fail mint-enclosed "after /ymer:mint with the state folder inside another git repository: drained drops $drained_before → $drained_after, tasks $tasks_before → $tasks_after, topics_history rows $saved_before → $saved_after, pool_scores rows $scores_before → $scores_after, $encl_files file(s) in $encl, the run $looked the folder's kind, and the result line $named /ymer:setup (expected each count unchanged, 0 files, read, names) — read $runs/12.jsonl"
+	fi
+
 	# Behaviour across every run that ran: the servers each run saw, the
 	# files it read and wrote, the node ports a setup run's report names,
 	# and every Bash command — the tool name alone cannot tell a declared
@@ -1273,8 +1354,8 @@ link check before the edit would have caught it.'
 	refused=''
 	commits=''
 	write_runs=' 6 7 8 '
-	mint_runs=' 3 6 7 8 '
-	setup_runs=' 1 4 5 '
+	mint_runs=' 3 6 7 8 12 '
+	setup_runs=' 1 4 5 11 '
 	addressed=''
 	loaded=''
 	loaded_first=''
@@ -1394,7 +1475,7 @@ link check before the edit would have caught it.'
 	if [ -z "$commits" ]; then
 		pass mint-git "no git commit attempted in any mint run"
 	else
-		fail mint-git "mint attempted a git commit, with the state folder unset or no git work tree, in run(s)$commits — read $runs/<n>.jsonl"
+		fail mint-git "mint attempted a git commit, with no state folder that is its own git repository, in run(s)$commits — read $runs/<n>.jsonl"
 	fi
 	if [ -z "$addressed" ]; then
 		pass setup-address "every setup report names the node at its own port or at no address"
