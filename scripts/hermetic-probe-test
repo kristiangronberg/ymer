@@ -35,8 +35,10 @@
 # no environment, the control recording its planted file, none, or
 # another beside it — the runs' hook over its own events, the one model
 # pin, the static
-# stage's verifier check — its test passing, failing and missing — and
-# the exit codes.
+# stage's verifier check — its test passing, failing and missing — its
+# descriptions check — a description at the limit and one past it, one
+# under it by characters and over it by bytes, one missing, one empty and
+# ones written across lines — and the exit codes.
 #
 #   scripts/hermetic-probe-test
 #
@@ -583,7 +585,7 @@ fixture() {
 	printf 'Install it, then run /ymer:setup — see [installing](%s).\n' '../../README.md#installing' >"$1/plugins/ymer/README.md"
 	for s in ymer/setup ymer/capture ymer/mint ymer/tutor; do
 		mkdir -p "$1/plugins/${s%/*}/skills/${s#*/}"
-		printf -- '---\nname: %s\n---\nA skill; its door is /ymer:setup.\n' "${s#*/}" >"$1/plugins/${s%/*}/skills/${s#*/}/SKILL.md"
+		printf -- '---\nname: %s\ndescription: Stands in for a shipped skill.\n---\nA skill; its door is /ymer:setup.\n' "${s#*/}" >"$1/plugins/${s%/*}/skills/${s#*/}/SKILL.md"
 	done
 	printf '{ "name": "m", "plugins": [ { "name": "ymer", "source": "./plugins/ymer" } ] }\n' >"$1/.claude-plugin/marketplace.json"
 	# the README links an address: a link the references check must not
@@ -890,6 +892,78 @@ shim_reset
 probe "$fx" static
 check "a missing verifier test exits 1" 1 "$rc"
 check "a missing verifier test: the check names it" 1 "$(lines '✘ verifier     no scripts/payload-verify-test')"
+
+# ── 7c · static, the descriptions check ───────────────────────────────
+# the harness cuts a skill description past 1024 characters without a
+# word, so the check counts characters, never bytes: a description at the
+# limit passes, one past it fails naming the file and its count, one
+# under the limit by characters but over it by bytes passes, and one
+# missing, empty or written across lines — a `>` or `|` block, or a plain
+# value continued on an indented line — fails: there is no one line to
+# count
+fx=$tmp/f7c
+fixture "$fx"
+skill_md() { # skill_md <skill> <frontmatter line>... — that fixture skill's SKILL.md, every line after its name replaced
+	sk=$1
+	shift
+	{
+		printf -- '---\nname: %s\n' "$sk"
+		for l in "$@"; do printf '%s\n' "$l"; done
+		printf -- '---\nA skill; its door is /ymer:setup.\n'
+	} >"$fx/plugins/ymer/skills/$sk/SKILL.md"
+}
+letters() { printf '%*s' "$1" '' | tr ' ' a; } # letters <n> — n ASCII letters
+shim_reset
+probe "$fx" static
+check "four short descriptions exit 0" 0 "$rc"
+check "four short descriptions: the check counts them" 1 "$(lines '✔ descriptions 4 skill descriptions, the longest 30 characters — none past 1024')"
+skill_md capture "description: $(letters 1024)"
+shim_reset
+probe "$fx" static
+check "a description at 1024 characters exits 0" 0 "$rc"
+check "a description at 1024 characters: the check passes it" 1 "$(lines '✔ descriptions 4 skill descriptions, the longest 1024 characters — none past 1024')"
+skill_md capture "description: $(letters 1025)"
+shim_reset
+probe "$fx" static
+check "a description at 1025 characters exits 1" 1 "$rc"
+check "a description at 1025 characters: the check names the file and its count" 1 "$(lines 'plugins/ymer/skills/capture/SKILL.md: 1025 characters')"
+check "a description at 1025 characters: the other checks still pass" 1 "$(lines '✔ references')"
+# 1000 letters and 20 em dashes: 1020 characters in 1060 bytes, which a
+# byte count would fail
+skill_md capture "description: $(letters 1000)$(printf '%*s' 20 '' | sed 's/ /—/g')"
+shim_reset
+probe "$fx" static
+check "1020 characters in 1060 bytes exits 0" 0 "$rc"
+check "1020 characters in 1060 bytes: counted as characters" 1 "$(lines 'the longest 1020 characters — none past 1024')"
+skill_md capture 'description: Stands in for a shipped skill.'
+skill_md mint
+shim_reset
+probe "$fx" static
+check "a skill with no description exits 1" 1 "$rc"
+check "a skill with no description: the check names it" 1 "$(lines 'plugins/ymer/skills/mint/SKILL.md: no one-line description')"
+skill_md mint 'description: Stands in for a shipped skill.'
+skill_md tutor 'description: >' '  Stands in for a shipped skill.'
+shim_reset
+probe "$fx" static
+check "a description written across lines exits 1" 1 "$rc"
+check "a description written across lines: the check names it" 1 "$(lines 'plugins/ymer/skills/tutor/SKILL.md: no one-line description')"
+skill_md tutor 'description: |' '  Stands in for a shipped skill.'
+shim_reset
+probe "$fx" static
+check "a description written as a | block exits 1" 1 "$rc"
+check "a description written as a | block: the check names it" 1 "$(lines 'plugins/ymer/skills/tutor/SKILL.md: no one-line description')"
+# a plain value continued on an indented line is one string to the
+# harness, so the first line alone would undercount it
+skill_md tutor 'description: Stands in for a' '  shipped skill.'
+shim_reset
+probe "$fx" static
+check "a description continued on an indented line exits 1" 1 "$rc"
+check "a description continued on an indented line: the check names it" 1 "$(lines 'plugins/ymer/skills/tutor/SKILL.md: no one-line description')"
+skill_md tutor 'description:'
+shim_reset
+probe "$fx" static
+check "an empty description exits 1" 1 "$rc"
+check "an empty description: the check names it" 1 "$(lines 'plugins/ymer/skills/tutor/SKILL.md: no one-line description')"
 
 # ── 8 · eval, two cases pass ──────────────────────────────────────────
 fx=$tmp/f8

@@ -1,6 +1,6 @@
 #!/bin/sh
 # hermetic-probe-static — the static stage, sourced by hermetic-probe:
-# five checks over every tracked file, no model.
+# six checks over every tracked file, no model.
 #
 #   manifests    `claude plugin validate --strict` on the root and each plugin
 #   values       no personal value in any file — the five value classes
@@ -19,6 +19,9 @@
 #   verifier    scripts/payload-verify-test passes — the plugin's payload
 #                verifier against its fixtures, and its placeholder list
 #                against the plugin glossary
+#   descriptions every skill's description is one line of at most 1024
+#                characters — past that the harness cuts it without a
+#                word, and `claude plugin validate` passes it
 #
 # The corpus is `git ls-files` plus untracked files git does not ignore, so
 # a file added but not yet committed is swept too; it is read one file at a
@@ -294,5 +297,40 @@ stage_static() {
 	else
 		fail verifier "scripts/payload-verify-test failed — run \`sh scripts/payload-verify-test\` and fix each FAIL it names:"
 		grep -A 2 '^FAIL' "$tmp/pvt" | sed 's/^/                 /'
+	fi
+
+	# 6. descriptions — the description is the frontmatter's one
+	# `description:` line; none, or one written across lines (a `>` or `|`
+	# block, an empty value, or a plain value continued on an indented
+	# line, which reads back as `>`), cannot be counted and fails.
+	# Characters, not bytes: UTF-8 continuation bytes are dropped before the
+	# count, so the count needs no locale
+	grep -E '^plugins/[^/]+/skills/[^/]+/SKILL\.md$' "$tmp/files" >"$tmp/skills" || true
+	n=0
+	longest=0
+	cut=''
+	while IFS= read -r f; do
+		n=$((n + 1))
+		d=$(LC_ALL=C awk 'NR == 1 { if ($0 != "---") exit; next } got { if ($0 ~ /^[ \t]/) v = ">"; print v; got = 0; exit } $0 == "---" { exit } sub(/^description:[ \t]*/, "") { v = $0; got = 1; next } END { if (got) print v }' "$root/$f")
+		case $d in
+		'' | '>'* | '|'*)
+			cut="$cut
+                 $f: no one-line description"
+			continue
+			;;
+		esac
+		c=$(printf '%s' "$d" | LC_ALL=C tr -d '\200-\277' | wc -c | tr -d ' ')
+		if [ "$c" -gt "$longest" ]; then
+			longest=$c
+		fi
+		if [ "$c" -gt 1024 ]; then
+			cut="$cut
+                 $f: $c characters"
+		fi
+	done <"$tmp/skills"
+	if [ -z "$cut" ]; then
+		pass descriptions "$n skill descriptions, the longest $longest characters — none past 1024"
+	else
+		fail descriptions "a skill description the harness would cut, or one it cannot count — keep each on one line, at most 1024 characters:$cut"
 	fi
 }
