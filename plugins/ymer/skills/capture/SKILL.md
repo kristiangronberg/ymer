@@ -8,8 +8,8 @@ description: Records what a piece of work noticed as drops in the Ymer Node's po
 Capture writes down what a piece of work noticed but is not doing now,
 so that it is not lost: one **drop** per observation, in the **pool** on
 the Ymer Node. Later, `/ymer:mint` draws drops from the pool and turns
-them into work. Capture itself only records — it does not analyse,
-prioritise or fix.
+them into work. Capture itself only records — it does not analyse or
+fix.
 
 It runs in three ways: on its own, as the **capture block** at the tail
 of another skill (→ The capture block), or mid-way through a piece of
@@ -43,7 +43,9 @@ report, word for word.
 
 **The node is the pool's one door.** The pool is the `pool` table in the
 notebook of the user's own Ymer Node, reached through the node's
-`notebook` tool — `query` reads, `execute` writes. A project's development instance, or another server
+`notebook` tool — `query` reads, `execute` writes, one SQL statement per
+call: a call runs only its first statement and drops the rest without a
+word. A project's development instance, or another server
 that also offers a `notebook` tool, is not it — with more than one such
 tool loaded, a missing `pool` table is the first sign of the wrong door.
 Stop, saying which of these it was, when the session has no `notebook`
@@ -106,7 +108,7 @@ settles an observation that fits two the same way every time:
 1. **bug** — something does not work as it claims: a product, a tool,
    an instruction that cannot be followed as written, or the machine and
    network the work runs on. An infrastructure blocker is a bug.
-2. **learning** — someone should learn something: a gap in someone's
+2. **learning** — someone should learn something: a gap in a person's
    knowledge that the work exposed.
 3. **vision** — where a product is heading, rather than how the work
    went, and not a piece of work.
@@ -257,9 +259,8 @@ files, no cost data, no tooling.
 7. **Urgent?** Tell the user now, outside the pool — above all a bug that
    blocks work in flight — and still write the drop: the evidence is
    needed either way.
-8. **Write the drops** — one `notebook` `execute` call per drop. A call
-   runs only its first SQL statement and drops the rest without a word,
-   so never send two in one call:
+8. **Write the drops** — one `notebook` `execute` call per drop, never
+   two statements in one call (→ Two guards, the node's door):
 
    ```sql
    INSERT INTO pool (front, source, context, body)
