@@ -302,7 +302,9 @@ stage_static() {
 	# 6. descriptions — the description is the frontmatter's one
 	# `description:` line; none, or one written across lines (a `>` or `|`
 	# block, an empty value, or a plain value continued on an indented
-	# line, which reads back as `>`), cannot be counted and fails.
+	# line, empty lines between included, which reads back as `>`),
+	# cannot be counted and fails. No skill at all fails too: a zero is
+	# never a pass.
 	# Characters, not bytes: UTF-8 continuation bytes are dropped before the
 	# count, so the count needs no locale
 	grep -E '^plugins/[^/]+/skills/[^/]+/SKILL\.md$' "$tmp/files" >"$tmp/skills" || true
@@ -311,7 +313,7 @@ stage_static() {
 	cut=''
 	while IFS= read -r f; do
 		n=$((n + 1))
-		d=$(LC_ALL=C awk 'NR == 1 { if ($0 != "---") exit; next } got { if ($0 ~ /^[ \t]/) v = ">"; print v; got = 0; exit } $0 == "---" { exit } sub(/^description:[ \t]*/, "") { v = $0; got = 1; next } END { if (got) print v }' "$root/$f")
+		d=$(LC_ALL=C awk 'NR == 1 { if ($0 != "---") exit; next } got { if ($0 == "") next; if ($0 ~ /^[ \t]/) v = ">"; print v; got = 0; exit } $0 == "---" { exit } sub(/^description:[ \t]*/, "") { v = $0; got = 1; next } END { if (got) print v }' "$root/$f")
 		case $d in
 		'' | '>'* | '|'*)
 			cut="$cut
@@ -328,7 +330,9 @@ stage_static() {
                  $f: $c characters"
 		fi
 	done <"$tmp/skills"
-	if [ -z "$cut" ]; then
+	if [ "$n" -eq 0 ]; then
+		fail descriptions "no plugins/*/skills/*/SKILL.md found — nothing was counted"
+	elif [ -z "$cut" ]; then
 		pass descriptions "$n skill descriptions, the longest $longest characters — none past 1024"
 	else
 		fail descriptions "a skill description the harness would cut, or one it cannot count — keep each on one line, at most 1024 characters:$cut"

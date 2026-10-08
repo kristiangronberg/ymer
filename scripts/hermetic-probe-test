@@ -964,6 +964,19 @@ shim_reset
 probe "$fx" static
 check "an empty description exits 1" 1 "$rc"
 check "an empty description: the check names it" 1 "$(lines 'plugins/ymer/skills/tutor/SKILL.md: no one-line description')"
+# an empty line inside a continued value does not end it: the harness
+# reads on past it, so the check must too
+skill_md tutor 'description: Stands in for a' '' '  shipped skill.'
+shim_reset
+probe "$fx" static
+check "a description continued past an empty line exits 1" 1 "$rc"
+check "a description continued past an empty line: the check names it" 1 "$(lines 'plugins/ymer/skills/tutor/SKILL.md: no one-line description')"
+# no skill at all: a zero is never a pass
+rm "$fx"/plugins/ymer/skills/*/SKILL.md
+shim_reset
+probe "$fx" static
+check "no skill at all exits 1" 1 "$rc"
+check "no skill at all: the check says nothing was counted" 1 "$(lines '✘ descriptions no plugins/*/skills/*/SKILL.md found')"
 
 # ── 8 · eval, two cases pass ──────────────────────────────────────────
 fx=$tmp/f8
