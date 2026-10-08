@@ -1,6 +1,6 @@
 ---
 name: capture
-description: Records what a piece of work noticed — a bug, a learning gap, product direction, an idea, the one friction its hindsight finds — as drops in the Ymer Node's pool for later work. Use at the tail of a piece of work, when future work is noticed, or on its own.
+description: Records what a piece of work noticed as drops in the Ymer Node's pool for later work: a bug, a learning gap, product direction, an idea, or the one friction its hindsight finds. Use at the tail of a piece of work, when future work is noticed, or on its own.
 ---
 
 # Capture
