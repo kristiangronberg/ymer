@@ -53,17 +53,35 @@ the one that was not.
      workflow script cannot resolve the plugin root itself.
 
 2. **Note the in-place rewrite.** Briefly remind the user the workflow
-   rewrites the plan in place. The pre-rewrite plan is already committed
-   (write-plan's phase commit), so the rewrite is always recoverable from
-   the state folder's history; no stash or extra commit is needed before
-   launch. On an **iteration** that same commit's parent is the delta's
-   pre-image — the charter states that doctrine (*Iteration*, in the
-   development-process skill) and leaves the command here, at its one
-   consumer: the subject is `git -C <state folder> diff <commit>^
+   rewrites the plan in place, and keep the plan's pre-image (term: the
+   plugin glossary). Where git tracks the state folder, the pre-rewrite
+   plan is already committed (write-plan's phase commit), so the rewrite
+   is always recoverable from the state folder's history; no stash or
+   extra commit is needed before launch. On an **iteration** that same
+   commit's parent is the delta's pre-image — the charter states that
+   doctrine (*Iteration*, in the development-process skill) and leaves
+   the command here, at its one consumer: the subject is
+   `git -C <state folder> diff <commit>^
    <commit> -- <repo>/YYYY/MM-DD-<topic>/plan.md
    <repo>/YYYY/MM-DD-<topic>/payloads/`, with the untouched plan as
    context, and the tier is keyed over that delta like any other
-   subject.
+   subject. Where the files are the record, an iteration's subject is
+   the topic's `pre-image/` slot, which write-plan filled before its
+   re-plan, against the current `plan.md` and `payloads/`: read it and
+   keep it for step 3 first. Then, on every run where the files are the
+   record, first cycle or iteration, copy `plan.md` and `payloads/` into
+   the slot (the operations contract, § The topic's artifacts) before
+   the workflow launches; step 4 removes the copy's stamp before the
+   commit. A resumed run that finds the slot's stamp
+   standing skips that copy, as the contract says, and on an iteration
+   the slot then holds this phase's own pre-image rather than
+   write-plan's: the subject is the whole plan, the safe side.
+
+   Last before launch, on any kind of state folder: remove a
+   `Hardened —` line an earlier review left under `plan.md`'s title.
+   The plan about to be rewritten is no longer the plan that line
+   certified, so a run torn mid-rewrite must read unhardened, and
+   step 4 writes the line afresh.
 
 3. **Derive the facts, then derive the tier.** No sizing question reaches the
    user here: both the roster and the tier follow from the plan document
@@ -257,19 +275,24 @@ the one that was not.
    then has a single author apply every confirmed fix to the plan file
    directly.
 
-4. **Commit — this phase's commit is the record.** No roadmap write:
-   this phase rewrites `plan.md` in place and, on the define branch,
-   writes the iteration marker into `review.md`; neither of those says
-   the plan was reviewed, so the `<topic ID>: plan-review` commit is
-   still the *only* thing that does. Implement's readiness gate reads
-   it — and reads it as the newest of the two commit kinds it greps,
-   `: plan-review` and `: write-plan`, so a later write-plan commit
+4. **Mark the plan hardened, then commit.** No roadmap write. When the
+   workflow returns, and only then: where `review.md` topped with a
+   consumed `Iteration —` marker when this phase opened, first append
+   `Consumed — <YYYY-MM-DD> by plan-review` to that marker's block
+   (grammar and reading: review § Input item 2); then write the line
+   `Hardened — <YYYY-MM-DD>`, dated today, directly under `plan.md`'s
+   title, with a blank line on either side, the earlier review's line
+   having gone at step 2. It is the last write of the
+   rewrite, so a run torn before it leaves the plan unhardened, the safe
+   side. Where the files are the record, remove the slot's stamp
+   `pre-image/plan.md.taken` too, on every run. That line is plan-review's only mark on the path to implement:
+   the rewritten plan does not otherwise say it was reviewed. On the
+   define branch this phase also writes the iteration marker into
+   `review.md`, which implement's readiness gate reads before the line.
+   A re-plan never carries the line over, so a later write-plan
    unhardens the plan again (roadmap contract: the operations contract,
-   Status ladder). A
-   phase that skips this
-   commit leaves a hardened plan indistinguishable from an unreviewed
-   one. The commit is unconditional
-   at phase close — state changes before announcements
+   Status ladder). Where git tracks the state folder, commit at phase
+   close — state changes before announcements
    (*Defaults and holds*: development-process):
    `git -C <state folder> add <repo>/… && git -C <state folder>
    commit -m "YYYY-MM-DD-<topic>: plan-review" --
@@ -416,10 +439,10 @@ the one that was not.
    <state folder> commit -m "<topic ID>: plan-review" --
    <repo>/YYYY/MM-DD-<topic>/`, the pathspec on the commit too, because
    concurrent sessions leave staged work a bare commit would sweep in
-   (concurrent edits: the substrate contract). Either way that follow-up is
-   the newest `<topic ID>: plan-review` commit over the folder with no
-   `: write-plan` commit after it, so the hardened read stays green
-   (step 4; roadmap contract: the operations contract, Status ladder); on
+   (concurrent edits: the substrate contract). Either way the
+   `Hardened —` line step 4 wrote still stands, so the hardened read
+   stays green (step 4; roadmap contract: the operations contract,
+   Status ladder); on
    the define route the stop is the iteration marker, which implement's
    readiness gate reads before the hardened read. Next Phase already
    sanctions later input landing as follow-up commits.

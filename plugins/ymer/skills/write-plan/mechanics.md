@@ -6,14 +6,6 @@ The mechanics of the write-plan skill, moved here byte for byte from `SKILL.md`,
 
 **Save plans to:** `<state folder>/<repo>/YYYY/MM-DD-<topic>/plan.md` — in the state folder; `<repo>` is the checkout's directory name, or `meta` for cross-repo process topics, which have no project checkout of their own; the topic ID stays `YYYY-MM-DD-<topic>`, its folder splits the ID after the year. The path is absolute: it does not depend on the session's cwd. One directory per topic, shared by every development-process phase (brainstorm, scout, define, plan, implement, review). Reuse the topic's existing directory when an earlier phase created one — find it via the topic's task in the repo's Roadmap project — *look up topic*, binding: the operations contract; the date prefix is the first phase's date, not today's. Only create the directory when the topic has none. A **split child** is the arrival that has none (→ Grounding): create it under today's date, write `request.md` through the operations contract's template (§ The topic's artifacts) with `started:` today — the task already is the topic — and bind the parent's **direction doc**, which the task's description names, in the plan's header; a child entering here has no `spec.md` and is owed none.
 
-## Language-specific companion skills
-
-**Mandatory pairings:**
-
-| Codebase signal                                                     | Required companion skill                       |
-|---------------------------------------------------------------------|------------------------------------------------|
-| `mix.exs`, `lib/**/*.ex`, `use Ecto.Schema`, `use Phoenix.LiveView` | the front's Elixir coding-standards skill      |
-
 ## Grounding
 
 A code-repo topic then runs the **project-checkout pre-flight** (the
@@ -128,7 +120,9 @@ Part of the bar is a gate, not a judgement: the payload verifier reports a token
 
 ## Saving the Plan
 
-Save the plan to the topic directory (see the header of this skill). No roadmap write: `plan.md` plus this phase's commit are what the `planned` rung is read from (roadmap contract: the operations contract). Onboard the repo per the binding (Roadmap project + `<repo>/` subtree) if this project is not in the state folder yet.
+Save the plan to the topic directory (see the header of this skill). No roadmap write: `plan.md` is what the `planned` rung is read from (roadmap contract: the operations contract). Onboard the repo per the binding (Roadmap project + `<repo>/` subtree) if this project is not in the state folder yet.
+
+Any `plan.md` this phase saves carries no `Hardened —` line: remove one an earlier plan-review left, on every arm, so a plan written after its review reads unhardened (roadmap contract: the operations contract, Status ladder).
 
 **Machinery edits present** (development-process § Topic kinds): where
 this session edited a machinery tree, commit each one

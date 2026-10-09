@@ -107,8 +107,7 @@ git -C <tree> log --oneline -1    # ref → spec.md glossary delta
 
 Whichever refs exist are real by now and `spec.md` carries them, so the
 state-folder commit records a ref rather than predicting one — no roadmap
-write: `spec.md` plus this commit are what the `specced` rung is read
-from (roadmap contract: the operations contract):
+write: `spec.md` is what the `specced` rung is read from (roadmap contract: the operations contract):
 
 ```
 git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/

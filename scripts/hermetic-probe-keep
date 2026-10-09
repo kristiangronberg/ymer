@@ -53,6 +53,11 @@ scripts/hermetic-probe-test	~/things-private
 scripts/hermetic-probe-test	http://example.invalid:9999
 scripts/hermetic-probe-test	http://example.invalid:9999/mcp
 scripts/hermetic-probe-test	mcp__foo__bar
+# The hook test's refused shell commands, which name a system path or a
+# bare home to prove the hook refuses them
+scripts/hermetic-probe-test	-f/etc/passwd
+scripts/hermetic-probe-test	/etc/passwd
+scripts/hermetic-probe-test	~/
 # The payload verifier's ~-rooted targets: its own expansion and its
 # test's one case
 plugins/ymer/scripts/payload-verify	~/

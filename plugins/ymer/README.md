@@ -69,9 +69,8 @@ table holds the rule for each kind of drop. A tail that found no
 friction still records an empty drop, so the table is also the record of
 which sessions reflected at all. Your state folder holds a folder per
 drawn topic. Where it is its own git repository, mint commits what it
-writes there; a folder in no git repository, or one a session without
-git reaches, keeps its history in the node's `topics_history` table,
-where mint saves each file it writes as a row.
+writes there; in a folder in no git repository, or one a session without
+git reaches, the files mint writes are the record.
 
 Every phase already closes with a **capture block** that invokes
 `ymer:capture`, and the phases capture the future work they notice
@@ -100,9 +99,10 @@ What the loop deliberately does not do:
 and carries the store skeletons, this installation's front is named and
 registered in the node, your state folder is named and there
 (and which history tracks it: git where it is its own git repository,
-the node's `topics_history` where it is in no git repository or the
-session has no git; a folder inside another git repository fails), ymer
-answers, and a `Meta Roadmap`
+none where it is in no git repository or the session has no git, its
+files being the record; a folder inside another git repository fails,
+and so does a git repository this session reaches only through a remote
+device's shell), ymer answers, and a `Meta Roadmap`
 project exists. It creates the skeletons, the front's registration and
 the `Meta Roadmap` project where they are missing; the state folder and
 the ymer connection are yours, so it only reports on them. Each failure
@@ -166,18 +166,19 @@ A **Ymer Node** — the skills keep their stores in its notebook, and
 installation, named once: every drop is filed under it, and a mint
 draws only its own. A **state folder** — any folder outside another git
 repository, named once: a topic's artifacts are files under it, and
-their history is git where the folder is its own git repository and the
-node's `topics_history` where it is in no git repository or the session
-has no git.
+their history is git where the folder is its own git repository; where
+it is in no git repository, or the session has no git, the files are
+the record.
 A **ymer.ax account** is optional, and the default where a
 session reaches it: with ymer, work is tracked in Roadmap projects;
 without it, in the node's `tasks` table.
 
-Two reference files travel with the plugin and are read on demand:
-`glossary.md`, the one home for the words these skills use, and
+Three reference files travel with the plugin and are read on demand:
+`glossary.md`, the one home for the words these skills use;
 `operations-contract.md`, which fixes what each roadmap operation must
 achieve and how it binds per coordinator, and states the product page's
-skeleton.
+skeleton; and `substrate-contract.md`, the git rules the skills follow
+wherever git is there.
 
 ## Where it stops
 
@@ -186,7 +187,8 @@ the state folder is missing, the door is `/ymer:setup`. Where a store is present
 but broken, the run stops rather than quietly using another one — that
 would fork your work across two stores without saying so.
 
-These skills assume a development environment: a checkout you can read
-and write, git answering, and a shell for the project's gates. Splitting
-the substrate-free half out, so the general practice runs wherever the
-node is reached, is the next change to this plugin.
+Where git is there, these skills follow the git rules in
+`substrate-contract.md`; where the state folder is in no git repository,
+its files are the record and no step commits into it. A code topic
+still assumes a checkout you can read and write, and a shell for the
+project's gates.

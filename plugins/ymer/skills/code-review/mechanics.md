@@ -11,6 +11,13 @@ include the working-tree changes in scope — the review often runs before the
 commit. If a PR number, branch name, or file path was passed as an argument,
 review that target instead.
 
+A **change set** target (term: the plugin glossary), which the pipeline
+hands over where no diff exists, is a topic's `payloads/manifest` with
+its payload files: each manifest row pairs a payload with its target.
+Read each payload as the change and its target in place, a file or a
+store, and treat the set as the review scope; there is no diff to run
+and no untracked file to add.
+
 **Untracked files are outside every `git diff`** — a topic's new test file
 or new doc is the usual case, invisible to `main...HEAD` and to
 `git diff HEAD` alike. Run `git -C <tree> status --porcelain -uall` once
@@ -47,7 +54,9 @@ CLAUDE.local.md in a directory that is an ancestor of a changed file (a
 directory's CLAUDE.md only applies to files at or below it). Read each one
 that exists, then check the diff for clear violations of the rules they state.
 Also read the coding-standards companion skill the topic's plan header
-names, when it names one, and check its rules the same way.
+names, when it names one, and check its rules the same way. Run
+standalone, with no plan header, look for one the way write-plan
+§ Language-specific companion skills does.
 
 ## Applying fixes (--fix)
 

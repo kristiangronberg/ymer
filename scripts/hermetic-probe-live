@@ -9,8 +9,8 @@
 # — named as the state folder, setup converges on a re-run and repairs
 # drift, and mint drains into state/, draws a bug ahead of open frictions
 # and folds the bug's recurrence into its unstarted topic, every line the
-# topic held kept, each save a file in state/ and a row in the node's
-# topics_history.
+# topic held kept, each save a file in state/ alone — the files are the
+# record, and the setup run leaves no topics_history table in the node.
 # Then tutor stops at its guard twice and writes nothing: with no ymer,
 # and with its subject-index tables dropped.
 # Last, with state/encl/plans — a folder inside another git repository,
@@ -181,10 +181,30 @@ topic_files() { # topic_files <drained_to> — every request.md in that topic's 
 # `claude mcp get <name>` whole, a trailing `2>&1` admitted, and the
 # reading of the state folder's kind, `git -C <folder> rev-parse
 # --is-inside-work-tree --show-prefix`, for either folder an arm names —
-# state/, or the third arm's encl/plans — its path bare or quoted. The
+# state/, or the third arm's encl/plans — its path bare or quoted — and
+# mint's two searches of state/, the listing of unstarted topics
+# `grep -rl --include='request.md' 'source: mint' <folder>` and the
+# recurrence search `grep -r --exclude-dir=pre-image '<term>' <folder>`,
+# each spelled as mint/SKILL.md spells it, its quotes single or double,
+# the folder bare or quoted with an optional trailing slash, and the term
+# quoted, not opening with `-` — grep reads a word opening with one as an
+# option, whatever its quotes — and with no quote, backslash, `$`,
+# backtick, `;`, `|`, `&`, `<` or `>` inside — and `ls`, bare or with
+# flags from `aAlR1`, of state/ or a folder under it, the listing mint
+# needs to tell a folder holding nothing but its `request.md`. The
+# listing's path is one operand: each name under state/ is letters,
+# digits, `_`, `-` and `.`, never opening with a dot, so no space starts
+# a second operand, no `~`, brace or bracket expands to another path, and
+# no `..` climbs out. A session
+# on this CLI has no file search but its shell (no Glob or Grep tool in
+# the init line's tools: CLI 2.1.295, measured), so a run refused these
+# finds no topic to fold a recurrence into. The
 # file is the one home of the patterns: the runs' hook
 # refuses every other command against it, and bash-commands reads every
-# command that ran against it. The hook's refusal message and
+# command that ran against it — a mint run's against the whole file, any
+# other run's against hook/declared-base, its first three lines, since
+# the hook cannot tell which skill runs and the check can. The hook's
+# refusal message and
 # bash-commands' pass and fail lines spell the set in words, so a change to
 # the set moves those three texts with it. The hook is sh, reading the PreToolUse event on
 # stdin — one JSON line, tool_input's command its first key (CLI 2.1.283,
@@ -198,7 +218,13 @@ live_hook() {
 	mkdir -p "$hook"
 	state_re=$(printf '%s' "$state" | sed 's/[][\.*^$()+?{}|]/\\&/g')
 	encl_re=$(printf '%s' "$encl" | sed 's/[][\.*^$()+?{}|]/\\&/g')
-	printf '%s\n' '^claude mcp get [A-Za-z0-9_.-]+( 2>&1)?$' "^git -C (\\\\\"|')?$state_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" "^git -C (\\\\\"|')?$encl_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" >"$hook/declared"
+	q="'"
+	path="(\\\\\"|$q)?$state_re/?(\\\\\"|$q)?\$"
+	term="[^-$q\"\\\\\$\`;|&<>][^$q\"\\\\\$\`;|&<>]*"
+	seg="(/[A-Za-z0-9_-][A-Za-z0-9_.-]*)*"
+	printf '%s\n' '^claude mcp get [A-Za-z0-9_.-]+( 2>&1)?$' "^git -C (\\\\\"|')?$state_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" "^git -C (\\\\\"|')?$encl_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" >"$hook/declared-base"
+	cp "$hook/declared-base" "$hook/declared"
+	printf '%s\n' "^grep -rl --include=(${q}request\\.md$q|request\\.md|\\\\\"request\\.md\\\\\") (${q}source: mint$q|\\\\\"source: mint\\\\\") $path" "^grep -r --exclude-dir=pre-image ($q$term$q|\\\\\"$term\\\\\") $path" "^ls( -[aAlR1]+)? (\\\\\"|$q)?$state_re$seg/?(\\\\\"|$q)?\$" >>"$hook/declared"
 	cat >"$hook/bash" <<'EOF'
 #!/bin/sh
 # The hermetic probe's PreToolUse hook on Bash: a command matching a line
@@ -207,7 +233,7 @@ cmd=$(sed -E -n 's/.*"tool_input":\{"command":"(([^"\\]|\\.)*)".*/\1/p')
 if [ -n "$cmd" ] && printf '%s\n' "$cmd" | grep -q -E -f "$(dirname "$0")/declared"; then
 	exit 0
 fi
-echo 'Refused: only two shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`, and `git -C <the state folder> rev-parse --is-inside-work-tree --show-prefix`.' >&2
+echo 'Refused: only five shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`; `git -C <the state folder> rev-parse --is-inside-work-tree --show-prefix`; and two searches of the state folder, `grep -rl --include='\''request.md'\'' '\''source: mint'\'' <the state folder>` and `grep -r --exclude-dir=pre-image '\''<term>'\'' <the state folder>`, the term in quotes, not starting with a dash, with no quote, backslash, `$`, backtick, `;`, `|`, `&`, `<` or `>` inside; and `ls` of the state folder or a folder at any depth inside it, a single path whose names are letters, digits, `_`, `-` and `.`, none starting with a dot, with flags from `-aAlR1` at most.' >&2
 exit 2
 EOF
 	printf '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"sh %s"}]}]}}\n' "'$hook/bash'" >"$hook/settings.json"
@@ -220,9 +246,10 @@ EOF
 # take a missing ymer as absent (the rule shape is the CLI's own `--help`
 # example, `Bash(git *)`), and `git -C <folder> rev-parse
 # --is-inside-work-tree --show-prefix`, the reading that says what kind of
-# folder the state folder is and which history tracks it (a `*` in the
+# folder the state folder is and whether git keeps its history (a `*` in the
 # middle of a rule admits the path and nothing
-# else: CLI 2.1.282, measured). The allow rules do not bound the shell:
+# else: CLI 2.1.282, measured), and mint's two searches of the state
+# folder and its listing, each by its leading words. The allow rules do not bound the shell:
 # under acceptEdits a read-only command such as `true` or `echo` runs with
 # no rule matching it (CLI 2.1.283, measured), so every run also loads
 # hook/settings.json, and its hook is what makes the declared commands
@@ -252,7 +279,7 @@ live_run() { # live_run <n> <prompt>
 	mkdir -p "$cwd"
 	(cd "$cwd" && claude -p "$2" --output-format stream-json --verbose \
 		--permission-mode acceptEdits \
-		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree --show-prefix)' mcp__ymer-node__notebook "Read(/$root/plugins/**)" Agent \
+		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree --show-prefix)' 'Bash(grep -rl *)' 'Bash(grep -r --exclude-dir=pre-image *)' 'Bash(ls *)' mcp__ymer-node__notebook "Read(/$root/plugins/**)" Agent \
 		--add-dir "$run_dir" --model "$probe_model" --max-turns 60 \
 		--strict-mcp-config --mcp-config "$mcp" --settings "$hook/settings.json") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
 	ran="$ran $1"
@@ -361,8 +388,8 @@ report_lines() { # report_lines <n> — run <n>'s report, one line per role line
 
 # The lines on stdin carrying every word, case aside, each where no name
 # character touches either end: letters, digits, `_`, `-` and `/` on
-# either side, and `:` before the word only — so `9 tables` is not read
-# in `19 tables`, `reachable` not in `unreachable`, `ymer` not in
+# either side, and `:` before the word only — so `8 tables` is not read
+# in `18 tables`, `reachable` not in `unreachable`, `ymer` not in
 # `ymer-node` or a skill's `/ymer:<skill>`, while a dressed `node:` still
 # reads as `node`. A word may hold a space; the report's blanks are
 # collapsed to one.
@@ -574,6 +601,18 @@ live_bash() { # live_bash <n>
 				s = substr(s, j + 1)
 			}
 		}' "$runs/$1.jsonl" "$runs/$1.jsonl"
+}
+
+# The command each Bash call of run <n> carried, unwrapped from its input
+# as the runs' hook reads it: the calls that ran, or with `all` every
+# call, refused or run. An input whose first key is not the command stays
+# whole, so it matches no declared line and fails closed.
+bash_commands() { # bash_commands <n> [all]
+	if [ "${2:-}" = all ]; then
+		live_calls "$1" | sed -n 's/^Bash //p'
+	else
+		live_bash "$1"
+	fi | sed -E 's/^\{"command":"(([^"\\]|\\.)*)".*/\1/'
 }
 
 # The paths a run's Read, Glob and Grep calls named, one per line: each
@@ -910,24 +949,25 @@ stage_live() {
 	tables=$(node_tables)
 	fronts=$(node_count 'SELECT count(*) FROM fronts')
 	named=$(node_count "SELECT count(*) FROM fronts WHERE slug = '$probe_front'")
-	if [ "$tables" = 9 ] && [ "$fronts" = 1 ] && [ "$named" = 1 ]; then
-		pass setup "9 tables created, 1 front row, its slug $probe_front"
+	if [ "$tables" = 8 ] && [ "$fronts" = 1 ] && [ "$named" = 1 ]; then
+		pass setup "8 tables created, 1 front row, its slug $probe_front"
 	else
-		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows, $named of them $probe_front (expected 9, 1 and 1) — read $runs/1.jsonl"
+		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows, $named of them $probe_front (expected 8, 1 and 1) — read $runs/1.jsonl"
 	fi
 	if live_calls 1 | grep -q '^mcp__ymer-node__notebook'; then
 		pass setup-node "setup wrote through the node's notebook tool"
 	else
 		fail setup-node "no notebook call in $runs/1.jsonl — the run never reached the node"
 	fi
-	# topics_history arrives whole — the table, its index and both triggers,
-	# four sqlite_master entries — and the retired topics table never does
+	# the retired tables never arrive: no topics_history — no table, index
+	# or trigger on it, every sqlite_master entry it would carry — and no
+	# topics table
 	history=$(node_count "SELECT count(*) FROM sqlite_master WHERE tbl_name = 'topics_history'")
 	retired=$(node_count "SELECT count(*) FROM sqlite_master WHERE name = 'topics'")
-	if [ "$history" = 4 ] && [ "$retired" = 0 ]; then
-		pass setup-history "topics_history with its index and two triggers, no topics table"
+	if [ "$history" = 0 ] && [ "$retired" = 0 ]; then
+		pass setup-retired "no topics_history and no topics table"
 	else
-		fail setup-history "after /ymer:setup sqlite_master holds $history topics_history entries and $retired topics tables (expected 4 and 0) — read $runs/1.jsonl"
+		fail setup-retired "after /ymer:setup sqlite_master holds $history topics_history entries and $retired topics tables (expected 0 and 0) — read $runs/1.jsonl"
 	fi
 	# the subject index arrives with its foreign key enforced: an engagement
 	# row naming a subject tutor_subjects does not hold is refused by the
@@ -971,20 +1011,19 @@ link check before the edit would have caught it.'
 	fi
 
 	# mint with no state folder stops at its guard naming setup, and
-	# drains, creates, scores and saves nothing: the friction stays open for
-	# the second arm's drain, and no pool_scores row is written — a row is
+	# drains, creates and scores nothing: the friction stays open for the
+	# second arm's drain, and no pool_scores row is written — a row is
 	# written once, so one laid down by a run that then stopped would stand
 	# for good
 	live_run 3 '/ymer:mint'
 	open=$(node_count "SELECT count(*) FROM pool WHERE kind = 'friction' AND status = 'open'")
 	minted=$(node_count 'SELECT count(*) FROM tasks')
-	saved=$(node_count 'SELECT count(*) FROM topics_history')
 	scores=$(node_count 'SELECT count(*) FROM pool_scores')
 	if live_result 3 | grep -q -F '/ymer:setup'; then named=names; else named='does not name'; fi
-	if [ "$open" = 1 ] && [ "$minted" = 0 ] && [ "$saved" = 0 ] && [ "$scores" = 0 ] && [ "$named" = names ]; then
-		pass mint-stop "stopped naming /ymer:setup — the friction still open in the pool, no task, no topics_history row, no pool_scores row"
+	if [ "$open" = 1 ] && [ "$minted" = 0 ] && [ "$scores" = 0 ] && [ "$named" = names ]; then
+		pass mint-stop "stopped naming /ymer:setup — the friction still open in the pool, no task, no pool_scores row"
 	else
-		fail mint-stop "after /ymer:mint with no state folder: $open open friction drops, $minted tasks, $saved topics_history rows, $scores pool_scores rows, and the result line $named /ymer:setup (expected 1, 0, 0, 0, names) — read $runs/3.jsonl"
+		fail mint-stop "after /ymer:mint with no state folder: $open open friction drops, $minted tasks, $scores pool_scores rows, and the result line $named /ymer:setup (expected 1, 0, 0, names) — read $runs/3.jsonl"
 	fi
 
 	# The second arm: state/ named as the state folder through the line the
@@ -1030,19 +1069,20 @@ link check before the edit would have caught it.'
 	# characters, so a line saying `re-added`, `auto-created` or
 	# `created/added` reads neither word and passes — a false claim only,
 	# since converge and converge-calls read the node itself.
-	node_lines=$(report_match 4 '✔' node reachable '9 tables')
+	node_lines=$(report_match 4 '✔' node reachable '8 tables')
 	front_lines=$(report_match 4 '✔' front "$probe_front")
 	if [ -n "$node_lines" ] && [ -n "$front_lines" ] && ! { printf '%s\n%s\n' "$node_lines" "$front_lines" | report_words created; printf '%s\n%s\n' "$node_lines" "$front_lines" | report_words added; } | grep -q .; then
-		pass converge-report "the node line reads reachable and 9 tables, the front line $probe_front, nothing created or added"
+		pass converge-report "the node line reads reachable and 8 tables, the front line $probe_front, nothing created or added"
 	else
-		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\` and \`9 tables\` and a front line carrying \`✔\`, \`front\` and \`$probe_front\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
+		fail converge-report "the re-run's report does not read a node line carrying \`✔\`, \`reachable\` and \`8 tables\` and a front line carrying \`✔\`, \`front\` and \`$probe_front\`, or a line carrying them also reads \`created\` or \`added\` — read the result line of $runs/4.jsonl"
 	fi
 	# the folder's own line: state/ printed as configured, read as a folder
-	# in no git repository, passed, its history named on the same line
-	if report_match 4 '✔' state_folder "$state" 'in no git repository' topics_history | grep -q .; then
-		pass setup-folder "state/ reported as in no git repository, tracked by topics_history"
+	# in no git repository, passed, the files named as the record on the
+	# same line
+	if report_match 4 '✔' state_folder "$state" 'in no git repository' 'the files are the record' | grep -q .; then
+		pass setup-folder "state/ reported as in no git repository, the files the record"
 	else
-		fail setup-folder "the re-run's report does not read \`✔\`, \`state_folder\`, $state, \`in no git repository\` and \`topics_history\` on one line — read the result line of $runs/4.jsonl"
+		fail setup-folder "the re-run's report does not read \`✔\`, \`state_folder\`, $state, \`in no git repository\` and \`the files are the record\` on one line — read the result line of $runs/4.jsonl"
 	fi
 
 	# Each of the three seeded steps runs only when its seed took: a step
@@ -1068,22 +1108,22 @@ link check before the edit would have caught it.'
 	fi
 
 	# the drain into state/, read as the artefacts it deposits: a task at
-	# claimed in the project the area derives, the friction drained to a
-	# topic whose request.md topics_history row its drained_to resolves to
-	# — the row's own key rearranged as <area>/YYYY/MM-DD-<topic>/ — every
-	# request.md row saved under the front the option named, and the file
-	# itself at state/<drained_to>request.md
+	# claimed in the project the area derives, the one friction drained to
+	# a topic — its drained_to the topic's folder, <area>/YYYY/MM-DD-<topic>/
+	# — and the file itself at state/<drained_to>request.md, mint's own
+	# save, carrying `source: mint`. The file is the whole of the save: the
+	# folder alone finds the topic
 	live_run 6 '/ymer:mint'
 	tasks=$(node_count "SELECT count(*) FROM tasks WHERE status = 'claimed' AND project LIKE '% Roadmap'")
-	rows=$(node_count "SELECT count(*) FROM topics_history WHERE artifact = 'request.md'")
-	mine=$(node_count "SELECT count(*) FROM topics_history WHERE artifact = 'request.md' AND front = '$probe_front'")
-	drained=$(node_count "SELECT count(DISTINCT f.id) FROM pool f JOIN topics_history h ON f.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE f.status = 'drained' AND f.kind = 'friction' AND h.artifact = 'request.md'")
+	drained=$(node_count "SELECT count(*) FROM pool WHERE status = 'drained' AND kind = 'friction'")
 	to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND kind = 'friction'")
 	if [ -f "$state/${to}request.md" ]; then file=present; else file=absent; fi
-	if [ "$tasks" != UNPARSEABLE ] && [ "$tasks" -ge 1 ] && [ "$rows" != UNPARSEABLE ] && [ "$rows" -ge 1 ] && [ "$mine" = "$rows" ] && [ "$drained" = 1 ] && [ "$file" = present ]; then
-		pass mint "$tasks tasks row(s) at claimed in a Roadmap project, $rows request.md topics_history row(s), all under $probe_front, the friction drained to $to, its request.md in state/"
+	sourced=$(file_occurrences "$state/${to}request.md" 'source: mint')
+	if [ "$tasks" != UNPARSEABLE ] && [ "$tasks" -ge 1 ] && [ "$drained" = 1 ] && [ "$file" = present ] &&
+		[ "$sourced" != UNPARSEABLE ] && [ "$sourced" -ge 1 ]; then
+		pass mint "$tasks tasks row(s) at claimed in a Roadmap project, the friction drained to $to, its request.md in state/ carrying source: mint"
 	else
-		fail mint "after /ymer:mint: $tasks tasks at claimed in a Roadmap project, $rows request.md topics_history rows, $mine of them under $probe_front, $drained friction drops drained to a row their drained_to resolves to, request.md at state/$to $file (expected ≥1, ≥1 with every one under it, 1, present) — read $runs/6.jsonl"
+		fail mint "after /ymer:mint: $tasks tasks at claimed in a Roadmap project, $drained friction drops drained, request.md at state/$to $file, \`source: mint\` $sourced time(s) in it (expected ≥1, 1, present, ≥1) — read $runs/6.jsonl"
 	fi
 
 	# scoring runs first: after the mint, every drop that is not empty holds
@@ -1124,15 +1164,13 @@ link check before the edit would have caught it.'
 	# 5, 5 over size 1, each friction 1, 1, 1 over size 5 — so the ranking,
 	# never the scorer's model, decides the draw; and the mint after them
 	# draws the bug — drained to a topic of its own,
-	# the frictions left open. The bug's topic is read on both halves of
-	# its save: the file in state/ and its rows in topics_history, found by
-	# the bug's drained_to rearranged as run 6's is. The bug's title is
-	# what its line in request.md quotes (capture's drop-as-a-line grammar:
-	# a drop with a title renders as `bug: <title> (#id)`), so it is counted
-	# once in the file and in the newest row — a row that lags the file is a
-	# save that never happened. The history is append-only, so the topic is
-	# addressed by its key, never by a row count: run 8's fold adds a row
-	# to the same topic.
+	# the frictions left open. The bug's topic is read as its save: the
+	# file in state/, found by the bug's drained_to as run 6's is. The bug's
+	# title is what its line in request.md quotes (capture's drop-as-a-line
+	# grammar: a drop with a title renders as `bug: <title> (#id)`), so it
+	# is counted once in the file. The topic is addressed by its folder,
+	# never by a count of drained drops: run 8's fold drains into the same
+	# topic.
 	bug_title='Probe gauge reads its dial backwards'
 	bug_body='The probe gauge showed every seeded reading reversed.'
 	recur_clause='the gauge stuck at noon on the second seeded pass'
@@ -1152,24 +1190,17 @@ link check before the edit would have caught it.'
 	if node_execute "$seed" && bug_id=$(node_count "$bug_id_sql") && [ "$bug_id" != UNPARSEABLE ] && node_execute "$score_seed"; then
 		live_run 7 '/ymer:mint'
 		bug_to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND id = $bug_id")
-		resolved=$(node_count "SELECT count(DISTINCT p.id) FROM pool p JOIN topics_history h ON p.drained_to = h.area || '/' || substr(h.topic, 1, 4) || '/' || substr(h.topic, 6) || '/' WHERE p.status = 'drained' AND p.kind = 'bug' AND p.id = $bug_id AND h.artifact = 'request.md'")
 		seeds_open=$(node_count "$seeds_open_sql")
 		files=$(topic_files "$bug_to" | wc -l | tr -d ' ')
 		f=$state/${bug_to}request.md
 		if [ -f "$f" ]; then file=present; else file=absent; fi
-		bug_where="FROM topics_history WHERE area || '/' || substr(topic, 1, 4) || '/' || substr(topic, 6) || '/' = '$bug_to' AND artifact = 'request.md'"
-		bug_rows_sql="SELECT count(*) $bug_where"
-		row_occurrences() { # row_occurrences <text> <offset> — the SQL counting <text> in the bug topic's row <offset> back from the newest
-			echo "SELECT (length(body) - length(replace(body, '$1', ''))) / length('$1') $bug_where ORDER BY id DESC LIMIT 1 OFFSET $2"
-		}
 		file_lines=$(file_occurrences "$f" "$bug_title")
-		row_lines=$(node_count "$(row_occurrences "$bug_title" 0)")
-		if [ "$resolved" = 1 ] && [ "$file" = present ] && [ "$files" = 1 ] && [ "$seeds_open" = 10 ] &&
-			[ "$file_lines" = 1 ] && [ "$row_lines" = "$file_lines" ]; then
-			pass bug-first "the bug drawn ahead of ten open frictions, drained to $bug_to — one request.md there quoting its title once, in state/ and in its newest topics_history row — the ten seed frictions still open"
+		if [ "$bug_to" != UNPARSEABLE ] && [ "$file" = present ] && [ "$files" = 1 ] && [ "$seeds_open" = 10 ] &&
+			[ "$file_lines" = 1 ]; then
+			pass bug-first "the bug drawn ahead of ten open frictions, drained to $bug_to — one request.md there in state/, quoting its title once — the ten seed frictions still open"
 			bug_ok=1
 		else
-			fail bug-first "after /ymer:mint over ten seed frictions and one bug: $resolved bug drained to a request.md row its drained_to resolves to, request.md at state/$bug_to $file, $files request.md file(s) in that folder, $seeds_open seed frictions open, the bug's title $file_lines time(s) in the file and $row_lines in the newest row (expected 1, present, 1, 10, 1 and the two equal) — read $runs/7.jsonl"
+			fail bug-first "after /ymer:mint over ten seed frictions and one bug: the bug drained to $bug_to, request.md at state/$bug_to $file, $files request.md file(s) in that folder, $seeds_open seed frictions open, the bug's title $file_lines time(s) in the file (expected a topic folder, present, 1, 10, 1) — read $runs/7.jsonl"
 		fi
 	else
 		seed_failed bug-first "the node refused the seed drops — ten frictions and a bug — or holds no bug id for them, or refused their pool_scores rows — read $runs/node.log"
@@ -1179,9 +1210,7 @@ link check before the edit would have caught it.'
 	# bug, anchored on it by id, drained by the next mint into the same
 	# topic — nobody has started it, so the drop is folded into its
 	# request.md — still one file, the recurrence's clause in it where it
-	# was not before, the started date kept; and the save as one more row,
-	# the newest carrying the file's clauses and the one before it the
-	# pre-image, the clauses the file held before the fold.
+	# was not before, the started date kept.
 	# The fold inserts and never rewrites: the file as run 8 found it, kept
 	# in runs/ as 8-preimage.md, is read against the file after — every
 	# line of it still there, in order and byte for byte, new lines
@@ -1189,21 +1218,18 @@ link check before the edit would have caught it.'
 	# heading mid-file and is the same append. A run that rewords or drops
 	# a line the file held fails, whichever tool wrote it.
 	# The `_before` reads follow the seed: it inserts one open drop, which
-	# moves neither the file nor the history.
+	# does not move the file.
 	recur_seed="INSERT INTO pool (front, source, context, kind, anchor_id, body) VALUES ($front_sql, 'hermetic_probe', 'probe/seed', 'bug', $bug_id, '$recur_clause')"
 	recur_score_seed="INSERT INTO pool_scores (drop_id, direction_value, time_criticality, risk_reduction, size, why) SELECT id, 5, 5, 5, 1, 'probe seed' FROM pool WHERE source = 'hermetic_probe' AND anchor_id = $bug_id"
 	if [ "$bug_ok" != 1 ]; then
 		notrun append "the bug-first step did not pass — see bug-first"
 		notrun append-keep "the append step did not run — see append"
-		notrun append-history "the append step did not run — see append"
 	elif ! { node_execute "$recur_seed" && node_execute "$recur_score_seed"; }; then
 		seed_failed append "the node refused the recurrence seed drop or its pool_scores row — read $runs/node.log"
 		notrun append-keep "the append step did not run — see append"
-		notrun append-history "the append step did not run — see append"
 	else
 		lines_before=$(file_occurrences "$f" "$recur_clause")
 		started_before=$(file_started "$f")
-		rows_before=$(node_count "$bug_rows_sql")
 		pre=$runs/8-preimage.md
 		cp "$f" "$pre" 2>/dev/null || true
 		live_run 8 '/ymer:mint'
@@ -1228,15 +1254,6 @@ link check before the edit would have caught it.'
 			*) lost="line $((kept + 1)): '$(sed -n "$((kept + 1))p" "$pre" 2>/dev/null || true)'" ;;
 			esac
 			fail append-keep "$kept of the $pre_lines line(s) the file held before the fold still in it, in order, the first not found $lost (expected all $pre_lines, byte for byte) — the pre-image is at $pre, read $runs/8.jsonl"
-		fi
-		rows_after=$(node_count "$bug_rows_sql")
-		newest=$(node_count "$(row_occurrences "$recur_clause" 0)")
-		previous=$(node_count "$(row_occurrences "$recur_clause" 1)")
-		if [ "$rows_before" != UNPARSEABLE ] && [ "$rows_after" = $((rows_before + 1)) ] &&
-			[ "$newest" = "$lines_after" ] && [ "$previous" = "$lines_before" ]; then
-			pass append-history "one more topics_history row, the newest carrying the file's $lines_after recurrence clause(s) and the one before it the pre-image's $lines_before"
-		else
-			fail append-history "topics_history rows $rows_before → $rows_after, recurrence clauses $newest in the newest row and $previous in the one before it, against $lines_after in the file after and $lines_before before (expected one more row, and the two pairs equal) — read the execute calls in $runs/8.jsonl"
 		fi
 	fi
 
@@ -1282,8 +1299,8 @@ link check before the edit would have caught it.'
 	# keep their meaning; its runs are handed the arm's folder in place of
 	# state/. Setup must fail its state-folder check naming the folder, its
 	# prefix and the `git init` fix, and mint must stop at its guard naming
-	# /ymer:setup — no drop drained, no task, no topics_history row, no
-	# pool_scores row and no file in the folder. Each run must have read
+	# /ymer:setup — no drop drained, no task, no pool_scores row and no
+	# file in the folder. Each run must have read
 	# the folder's kind: a run that never looked would pass by accident.
 	# Their writes and commits fall under the checks below, which count both
 	# runs. Only the mark, the role and the folder are bound to the
@@ -1321,24 +1338,21 @@ link check before the edit would have caught it.'
 	drained_sql="SELECT count(*) FROM pool WHERE status = 'drained'"
 	drained_before=$(node_count "$drained_sql")
 	tasks_before=$(node_count 'SELECT count(*) FROM tasks')
-	saved_before=$(node_count 'SELECT count(*) FROM topics_history')
 	scores_before=$(node_count 'SELECT count(*) FROM pool_scores')
 	live_run 12 '/ymer:mint'
 	drained_after=$(node_count "$drained_sql")
 	tasks_after=$(node_count 'SELECT count(*) FROM tasks')
-	saved_after=$(node_count 'SELECT count(*) FROM topics_history')
 	scores_after=$(node_count 'SELECT count(*) FROM pool_scores')
 	encl_files=$(find "$encl" -type f 2>/dev/null | wc -l | tr -d ' ')
 	if live_result 12 | grep -q -F '/ymer:setup'; then named=names; else named='does not name'; fi
 	if read_kind 12; then looked=read; else looked='did not read'; fi
 	if [ "$drained_before" != UNPARSEABLE ] && [ "$drained_after" = "$drained_before" ] &&
 		[ "$tasks_before" != UNPARSEABLE ] && [ "$tasks_after" = "$tasks_before" ] &&
-		[ "$saved_before" != UNPARSEABLE ] && [ "$saved_after" = "$saved_before" ] &&
 		[ "$scores_before" != UNPARSEABLE ] && [ "$scores_after" = "$scores_before" ] &&
 		[ "$encl_files" = 0 ] && [ "$named" = names ] && [ "$looked" = read ]; then
-		pass mint-enclosed "stopped naming /ymer:setup, the folder's kind read — $drained_after drained drops, $tasks_after tasks, $saved_after topics_history rows and $scores_after pool_scores rows, each as before, no file in $encl"
+		pass mint-enclosed "stopped naming /ymer:setup, the folder's kind read — $drained_after drained drops, $tasks_after tasks and $scores_after pool_scores rows, each as before, no file in $encl"
 	else
-		fail mint-enclosed "after /ymer:mint with the state folder inside another git repository: drained drops $drained_before → $drained_after, tasks $tasks_before → $tasks_after, topics_history rows $saved_before → $saved_after, pool_scores rows $scores_before → $scores_after, $encl_files file(s) in $encl, the run $looked the folder's kind, and the result line $named /ymer:setup (expected each count unchanged, 0 files, read, names) — read $runs/12.jsonl"
+		fail mint-enclosed "after /ymer:mint with the state folder inside another git repository: drained drops $drained_before → $drained_after, tasks $tasks_before → $tasks_after, pool_scores rows $scores_before → $scores_after, $encl_files file(s) in $encl, the run $looked the folder's kind, and the result line $named /ymer:setup (expected each count unchanged, 0 files, read, names) — read $runs/12.jsonl"
 	fi
 
 	# Behaviour across every run that ran: the servers each run saw, the
@@ -1417,21 +1431,34 @@ link check before the edit would have caught it.'
 			*) writes="$writes $n" ;;
 			esac
 		fi
-		# every command that ran is a declared one, read against
-		# hook/declared as the runs' hook reads it: the command is the
-		# whole JSON string, escaped quotes included. A refused call never
+		# every command that ran is a declared one, read as the runs'
+		# hook reads it: the command is the whole JSON string, escaped
+		# quotes included. A mint run's are read against hook/declared,
+		# every other run's against hook/declared-base, so a capture or
+		# setup run that searches or lists the state folder is named
+		# here although the hook let it run. A refused call never
 		# ran, whatever its input's shape: live_bash leaves it out by its
 		# id, and the run is named on the pass line. An input that ran
 		# whose first key is not the command is not unwrapped, and fails
-		# closed. A grep that cannot read hook/declared (status 2) counts
+		# closed. A grep that cannot read its file (status 2) counts
 		# the run, so a lost file fails closed rather than passing every
 		# command
-		live_bash "$n" | sed -E 's/^\{"command":"(([^"\\]|\\.)*)".*/\1/' |
-			grep -v -E -f "$hook/declared" >"$tmp/other" || [ $? -eq 1 ] || echo "hook/declared unreadable" >>"$tmp/other"
+		case $mint_runs in
+		*" $n "*) set_file=declared ;;
+		*) set_file=declared-base ;;
+		esac
+		bash_commands "$n" |
+			grep -v -E -f "$hook/$set_file" >"$tmp/other" || [ $? -eq 1 ] || echo "hook/$set_file unreadable" >>"$tmp/other"
 		grep -q . "$tmp/other" && shell="$shell $n"
 		denied_bash "$n" | grep -q . && refused="$refused $n"
+		# a commit attempt is any Bash call of a mint run, refused or
+		# run, whose command carries `git commit` — less the declared
+		# commands, whose search term is free text and may name it. A
+		# grep that cannot read hook/declared keeps every command, so a
+		# lost file still counts a real commit
 		case $mint_runs in
-		*" $n "*) live_calls "$n" | grep '^Bash ' | grep -q 'git commit' && commits="$commits $n" ;;
+		*" $n "*) bash_commands "$n" all >"$tmp/calls"
+			{ grep -v -E -f "$hook/declared" "$tmp/calls" || [ $? -eq 1 ] || cat "$tmp/calls"; } | grep -q 'git commit' && commits="$commits $n" ;;
 		esac
 		# a setup report names the node only where it runs: a port it
 		# gives other than the probe's own is an address the node is not on
@@ -1468,9 +1495,9 @@ link check before the edit would have caught it.'
 		fail writes "a file write outside the second arm's mint runs or outside $state in run(s)$writes — read $runs/<n>.jsonl"
 	fi
 	if [ -z "$shell" ]; then
-		pass bash-commands "no Bash command beyond \`claude mcp get <name>\` and the state folder's \`rev-parse\` ran in any run${refused:+ — refused, never run, in run(s)$refused}"
+		pass bash-commands "no Bash command beyond \`claude mcp get <name>\`, the state folder's \`rev-parse\` and, in a mint run, the mint reads of it ran in any run${refused:+ — refused, never run, in run(s)$refused}"
 	else
-		fail bash-commands "a Bash command other than \`claude mcp get <name>\` or the state folder's \`rev-parse\` in run(s)$shell — read its command in $runs/<n>.jsonl"
+		fail bash-commands "a Bash command other than \`claude mcp get <name>\`, the state folder's \`rev-parse\` or, in a mint run, the mint reads of it in run(s)$shell — read its command in $runs/<n>.jsonl"
 	fi
 	if [ -z "$commits" ]; then
 		pass mint-git "no git commit attempted in any mint run"

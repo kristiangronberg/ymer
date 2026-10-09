@@ -216,8 +216,10 @@ development-process, *Iteration*, where that rule lives).
 A **partial** supersede (the premise died, the verdict lives) and a
 whole-section re-derive each take a dated note in place instead: the entry
 is still live, and a banner would overstate it. What never happens is a
-second spec file — one artifact, rewritten in place, its history in the
-state folder's phase commits.
+second spec file — one artifact, rewritten in place, its history the
+state store's (the operations contract, § The topic's artifacts): none
+where the files are the record, since this rewrite fills no pre-image
+slot.
 
 ## Bootstrap Mode (one-time per repo)
 

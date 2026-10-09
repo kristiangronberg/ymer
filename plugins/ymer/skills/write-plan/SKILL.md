@@ -21,18 +21,17 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 ## Language-specific companion skills
 
-*Read with this section: `mechanics.md` § Language-specific companion skills (the mechanics).*
+Before drafting, look for a coding-standards companion for the target codebase's primary language, in two places the user can extend: the skills this session lists, for one whose name or description says it holds coding standards for that language; and the instruction files that govern the codebase (the front's initial instructions, the repo's `CLAUDE.md` files), for a sentence pointing at one. The companion skill governs coding and documentation tasks inside the plan (what docstrings to write, which diagrams are required, where test narratives live, guard contracts at trust boundaries) — this skill still governs plan shape, task granularity, and execution handoff.
 
-Before drafting, detect the primary language of the target codebase and invoke any matching coding-standards skill as a companion. The companion skill governs coding and documentation tasks inside the plan (what `@moduledoc` / docstrings to write, which diagrams are required, where test narratives live, guard contracts at trust boundaries) — this skill still governs plan shape, task granularity, and execution handoff.
+The plan header says what the search found, in one line either way:
 
-When a pairing applies:
+- **Found** — `Coding and documentation work in this plan must follow the <skill-name> skill.` Then:
+  1. Read the companion skill before writing the plan.
+  2. Include the companion skill's required artifacts as explicit tasks (e.g. docstring updates, diagram impact checklist, test documentation review, guard contracts on any new boundary functions) — not as a final cleanup step.
+  3. Complete any checklist the companion skill defines (e.g. diagram impact) and embed the result in the plan.
+- **None found** — `No coding-standards skill was found for <language>; looked in this session's skills and the instruction files that govern the codebase.` Proceed with this skill alone, and tell the user the same, so they can add a pointer where you looked.
 
-1. Read the companion skill before writing the plan.
-2. In the plan header, add: `Coding and documentation work in this plan must follow the <skill-name> skill.`
-3. Include the companion skill's required artifacts as explicit tasks (e.g. moduledoc updates, diagram impact checklist, test `@moduledoc` review, guard contracts on any new boundary functions) — not as a final cleanup step.
-4. Complete any checklist the companion skill defines (e.g. diagram impact) and embed the result in the plan.
-
-If the codebase is not Elixir and no companion skill matches, proceed with this skill alone.
+Plan-review, implement and code-review read this header line rather than searching again.
 
 ## Scope Check
 
@@ -69,13 +68,9 @@ present or not, and whether it holds `request*.md` — and, where the
 folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
 `Interview pending —` marker at its head (development-process
-§ Artifacts). A marker on top of `review.md` is **live** when the phase
-it names has no `<topic ID>: <phase>` commit over the topic folder since
-the commit
-that last touched `review.md`; the command that reads that range, and
-the rule trusting it only over a committed floor, are review § Input
-item 2's, run with the phase the marker names substituted for
-`implement`. A **drawn topic** — a `doing` task whose folder holds
+§ Artifacts). A marker on top of `review.md` is **live** while its block
+holds no `Consumed —` line; the block, the line's grammar, who writes it
+and which phase it makes due are review § Input item 2's. A **drawn topic** — a `doing` task whose folder holds
 nothing but its `request.md` — and a task that is not in flight — open,
 or a **closed topic**, its task completed or cancelled — are all topics
 this phase does not plan: stop and name **brainstorm** ("External requests never skip
@@ -84,14 +79,17 @@ with no folder is a **split child** (→ Save plans to); in a code repo
 its branch is born here, `git switch -c <topic> main`, the way an
 idea-first topic's is. A **live marker naming write-plan** is this
 cycle's brief — read `review.md` first, the finding and the entries
-below it, and the cycle is a re-plan (→ Re-planning). A live marker
-naming another phase stops the session and names that phase; mid-route,
-`plan.md`'s ticks and the topic's phase commits since the marker say
-where the route now stands (review § Input items 1–2). The
+below it, and the cycle is a re-plan (→ Re-planning), whose close
+appends `Consumed — <YYYY-MM-DD> by write-plan` to the marker's block
+as its last write before the phase's commit. A live marker
+naming another phase stops the session and names that phase (review
+§ Input item 2). The
 `Interview pending —` marker at the head of `brainstorm.md` or
 `spec.md` names its artifact's phase the same way — stop and name it,
 the command written out. Anything else is
-a topic **in flight** — reuse the folder and plan as usual.
+a topic **in flight** — reuse the folder and plan as usual; where
+`review.md` tops with a consumed marker, the close appends its own
+`Consumed — <YYYY-MM-DD> by write-plan` line to the block the same way.
 
 When the topic directory holds a `spec.md` from the define phase, it is the spec this plan implements — read it first: the decisions and their rationale, the domain rules and edge cases, the out-of-scope list, and its "open questions for write-plan", which the plan must answer. A split child holds no `spec.md` and is owed none (→ Save plans to): the parent's direction doc, which the task's description names, is read first in its place and is the brief this plan grounds in. Do not contradict a spec decision silently; a decision that turns out
 not to survive planning goes back to the user. **Default: record the
@@ -277,9 +275,16 @@ Expected: exit 0 — `payload-verify: N gate(s) — X PASS · Y PENDING · 0 FAI
 A topic that iterates back to this phase already has a `plan.md` and a
 `payloads/` directory. **The re-plan writes the whole current plan in
 place**: completed tasks stand ticked, dropped ones are gone, and the
-delta is read from git — the pre-image is the parent of this iteration's
-own `: write-plan` commit (charter: development-process, *Iteration*) —
-never written as a document. There is no "delta plan" shape and never a
+delta is read from the plan's pre-image (term: the plugin glossary) —
+the parent of this iteration's own `: write-plan` commit where git
+tracks the state folder (charter: development-process, *Iteration*);
+where the files are the record, the re-plan first copies `plan.md` and
+`payloads/` into the topic's `pre-image/` slot (the operations
+contract, § The topic's artifacts, which says how the copy replaces an
+earlier one and when a resumed re-plan skips it; the close removes the
+copy's stamp) —
+never written as a document, and it never carries plan-review's
+`Hardened —` line over. There is no "delta plan" shape and never a
 second plan file: a reader must never have to work out which plan is the
 plan, which is the sibling-files confusion moved inside one file.
 

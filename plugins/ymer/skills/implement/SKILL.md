@@ -39,12 +39,11 @@ self-contained; read `spec.md` only when a task's intent is unclear.
 
 ## Companion Skill
 
-The plan header names the coding-standards skill its work must follow —
-read that skill before the first task. If the header names none, detect
-the codebase's primary language and read the matching coding-standards
-companion skill the front has installed (e.g. `mix.exs` / `lib/**/*.ex` →
-the Elixir one), the same pairing write-plan uses. No match, or none
-installed → proceed with the plan alone.
+The plan header says which coding-standards skill its work must follow,
+or that none was found — read a named skill before the first task. A
+header with neither line predates that rule: look for one the way
+write-plan § Language-specific companion skills does, and proceed with
+the plan alone when none turns up.
 
 ## Execution
 
@@ -56,6 +55,11 @@ installed → proceed with the plan alone.
   A step's `<the payload verifier>` is `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify`
   run on the topic directory, with one `--exempt <tree>` per machinery
   tree the front binds.
+
+- **A notebook backup before a store change.** Before the first step that
+  applies a payload to the node's notebook, or runs DDL, an `UPDATE` or a
+  `DELETE` there, take a notebook backup and note its id in
+  `implemented.md` (the operations contract, § Changing the notebook).
 
 - **Straight through.** A brief progress note per task; no pause at
   the end either — the close runs straight through, no user gate, lens
@@ -188,7 +192,11 @@ Fix issues inline and move on — no re-review loop.
    § The Close), and a red one is a finding there besides — never a stop
    and never the drift valve.
 
-3. **Write the `## Review` entry** into `review.md` in the topic
+3. **Consume the marker, then write the `## Review` entry.** Where
+   `review.md`'s first recognizer is an `Iteration —` marker, whatever
+   phase it names, first append `Consumed — <YYYY-MM-DD> by implement`
+   to the end of its block (grammar: review § Input item 2). Then write the
+   `## Review` entry into `review.md` in the topic
    directory — the pass's findings on disk, before this session goes
    further. The grammar is review's, whoever writes it (review § The
    Close), exactly as the drift valve's marker is: the `## Review —
@@ -207,7 +215,7 @@ Fix issues inline and move on — no re-review loop.
    store (the collection: review § The lens pass, step 1).
 
    A pass that found nothing still writes the entry, and so does one
-   that recorded `Lens pass: dropped — no diff`: that line is what
+   that recorded `Lens pass: dropped — no diff or change set`: that line is what
    review's pre-flight forks on (review § Input, item 2), and its
    absence sends the next session into a fallback pass it does not owe.
 
@@ -340,7 +348,7 @@ dirt was recognisably this topic's own torn fragment, since that tells the
 user the entry is safe to drop —
 and **what the lens pass did** — the `## Review` entry it wrote, how
 many findings it left for review's dispositions, and which fixes it
-applied, or that the pass was dropped for want of a diff — and lists
+applied, or that the pass was dropped for want of a diff or a change set — and lists
 every pending step with
 its command written out (report rule: *Defaults and holds*) — normally
 none on a code-repo topic: the branch is local and nothing has reached

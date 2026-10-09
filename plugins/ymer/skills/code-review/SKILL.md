@@ -249,8 +249,10 @@ special cases.
 
 *Read with this section: `mechanics.md` § Conventions (CLAUDE.md + coding standards) (the mechanics).*
 
-**Precondition:** at least one CLAUDE.md governs a changed path, or the topic's
-plan header names a coding-standards skill.
+**Precondition:** at least one CLAUDE.md governs a changed path, or a
+coding-standards companion applies — named by the topic's plan header, or,
+run standalone with no plan header, found the way write-plan § Language-specific
+companion skills finds one.
 
 Only flag a violation when you can quote the exact rule and the exact line
 that breaks it — no style preferences, no vague "spirit of the doc"

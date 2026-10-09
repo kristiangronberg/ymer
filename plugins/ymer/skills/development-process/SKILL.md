@@ -56,7 +56,7 @@ and skip phases whose output you already hold:
 - A large or unfamiliar area to orient in first → standalone `/ymer:scout`.
 - `/ymer:review` always runs after implement, on every topic: the lens pass —
   pre-executed at implement's close and read from the record here —
-  carries the one precondition, a diff exists, and the walkthrough
+  carries the one precondition, a diff or a change set exists, and the walkthrough
   carries none, so a topic with a tiny increment makes a naturally tiny
   review rather than an exit. The one lane switch past the phase is the
   lightweight close-out (below), taken per topic at the user's explicit
@@ -213,9 +213,12 @@ decision was not actually made; the executor fork re-derives to a full
 iteration and the session stops at the route's phase.
 
 **Each phase keeps one artifact, rewritten in place**; the history is
-git's, through the state folder's phase commits. Sibling files (`plan-2.md`)
-never come into existence: every phase writes one file named after itself,
-and no reader ever has to work out which one is the live one.
+the state store's — git's phase commits where git tracks the state
+folder, the `pre-image/` slot where it does not. Sibling files (`plan-2.md`)
+never come into existence, the `pre-image/` slot aside, which is no
+artifact and which no reader takes for the live file: every phase writes
+one file named after itself, and no reader ever has to work out which one
+is the live one.
 
 ## Knowledge placement — the contract
 

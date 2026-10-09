@@ -33,23 +33,11 @@ the run (→ role line).
 - _Used in_: marketplace
 - _Avoid_: wrapped line, overflow line
 
-### coordinator
-What tracks a front's work and how topics are named there: ymer's
-`<Product> Roadmap` tasks where the session reaches ymer, the node's
-`tasks` table otherwise (→ reach rule). Each plugin states which one a
-run is using in its own shipped prose and in its report — operative use
-of this term, never a second definition.
-
-- _Used in_: marketplace
-- _Avoid_: tracker, task system, ymer (as the generic word)
-
 ### core glossary
 The core plugin's own glossary file — the one home for the terms its
 skills speak: the phases and their artifacts, the topic and pipeline
 vocabulary, the claims and sweep discipline, the learning track, and the
-capture and mint loop over the pool. Read on demand by the skills that need it; a term two or
-more plugins speak is defined here in the root instead, and stated
-operatively in each plugin's prose.
+capture and mint loop over the pool. Read on demand by the skills that need it.
 
 - _Defined in_: `plugins/ymer/glossary.md`
 - _Used in_: ymer
@@ -67,9 +55,12 @@ domain plugin.
 ## D
 
 ### declared command
-One of the Bash commands a live-stage run may run: the run's hook
-refuses every other command, and `bash-commands` reds on any other
-command that ran.
+One of the Bash commands a live-stage run may run: `claude mcp get
+<name>` and the state folder's `rev-parse` in every run, and mint's
+searches and listing of the state folder in a mint run alone. The runs'
+hook refuses every command outside the whole set, since it cannot tell
+which skill runs, and `bash-commands` reds on any command that ran
+outside its own run's set.
 
 - _Used in_: marketplace
 - _Avoid_: allowed command
@@ -81,7 +72,7 @@ work about the process itself under `Meta Roadmap`, and a topic's
 artifacts laid out `<area>/YYYY/MM-DD-<topic>/` with `meta` reserved for
 process work — the area that routes to `Meta Roadmap`. It is what makes
 routing by convention possible, and it holds whichever stores a session
-reaches (→ reach rule): the Roadmaps are ymer projects or `project`
+reaches (→ reach rule, the core glossary): the Roadmaps are ymer projects or `project`
 values in the node's `tasks` table, and the topics are folders in the
 state folder. The core plugin's setup skill puts what this
 practice assumes in place — the notebook's store skeletons always, and
@@ -103,20 +94,6 @@ door and repairs nothing (→ setup boundary).
 - _Used in_: marketplace
 - _Avoid_: fallback, remedy, escape hatch, fix line (the line a door is
   named on, not the door)
-
-## F
-
-### front
-One installation — a harness config with its own account, connectors,
-plugin options and instructions — named by a snake_case slug that every
-front-bound row carries. The node's `fronts` table lists them, one row
-each. A session takes its slug from the `ymer` plugin's `front` option
-where the harness passes plugin options into skills, and from the
-instructions it starts with where it does not; there is no default. Each
-front drains its own rows.
-
-- _Used in_: marketplace
-- _Avoid_: harness (the front's kind, not the front), surface (bare), client
 
 ## H
 
@@ -156,23 +133,6 @@ run.
 
 ## R
 
-### reach rule
-The coordinator is the default where the session reaches it: ymer's tool
-surface, else the node's `tasks` table. For the state store the rule
-reads which history tracks the state folder: git where it is its own git
-repository, `topics_history` where it is in no git repository or the
-session has no git, and a folder inside another git repository is
-refused. The state folder itself is required,
-never a reach default: an unresolved or unusable one stops the run with
-its fix named. A store reached but unusable stops the run the same way;
-nothing is asked and nothing falls back on a failure.
-Read once, at a run's guard, from what the session has. Each depositing
-skill states it in its own shipped prose — operative use of this term,
-never a second definition.
-
-- _Used in_: marketplace
-- _Avoid_: presence rule, fallback rule, configured switch
-
 ### result line
 The `"type":"result"` event a headless call writes as the last line of
 its stream-json trace, carrying whether the call ended in error, why it
@@ -199,7 +159,7 @@ front's initial instructions where the harness passes no plugin options,
 plus name conventions, over whichever stores the session reaches — the
 folder and the front are configuration, the objects are convention, the
 store is reach
-(→ reach rule). Nothing richer is config; a convention with no match
+(→ reach rule, the core glossary). Nothing richer is config; a convention with no match
 makes the skill say what to create rather than guess.
 
 - _Used in_: marketplace
@@ -237,22 +197,12 @@ routes by name convention or by what the session reaches.
 - _Used in_: marketplace
 - _Avoid_: plans_dir, workspace, data dir, state path
 
-### state store
-The state folder together with the history that tracks it: git where
-the folder is its own git repository, the node's `topics_history` where
-it is in no git repository or the session has no git.
-What a skill names when it saves an artifact without knowing which
-history applies.
-
-- _Used in_: marketplace
-- _Avoid_: state path, workspace, data dir
-
 ## Y
 
 ### ymer
 The ymer.ax service — tasks, projects, docs and memories — as a session
 reaches it: the MCP server a user connects under the name `ymer`, and
-the coordinator wherever a session reaches it (→ reach rule). Bare
+the coordinator wherever a session reaches it (→ reach rule, the core glossary). Bare
 "ymer" in prose names this service and nothing else; the marketplace is
 "the marketplace", and in code form `@ymer`; the core plugin is "the
 `ymer` plugin", or `/ymer:<skill>`.

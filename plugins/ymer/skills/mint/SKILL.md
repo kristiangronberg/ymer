@@ -50,9 +50,9 @@ before the run starts:
   tracks it. **The state folder is required**, and which history tracks
   it is read from the folder. Its own git repository → git: the run
   commits what it wrote. A folder in no git repository, or one a session
-  without git finds → the node's `topics_history` table: the run saves
-  each file it wrote there as a row, and commits nothing. A folder inside
-  another git repository → the guard below.
+  without git finds → no history beyond the files: the run writes each
+  file and commits nothing, and the files are the record. A folder
+  inside another git repository → the guard below.
 
 Ymer's tool surface counts as reached when it is among this session's
 tools **whether or not it has been loaded yet** — the same test
@@ -69,8 +69,8 @@ and no such server is the absence the rule means.
 
 Nothing is asked and nothing is configured beyond the state folder's
 path and the front's name. All four combinations are real installs: this run may create its
-task in ymer and save into `topics_history`, or create it in `tasks` and
-commit into git, as readily as either pair.
+task in ymer and leave the files as the record, or create it in `tasks`
+and commit into git, as readily as either pair.
 
 **The state folder** is read the way `/ymer:setup` reads it, so this
 skill and setup always read the same answer. Where its name comes from
@@ -101,28 +101,15 @@ device's directory tool, then read the connected folders from the
 device's own information (`connectedFolders`) — the same check setup
 runs.
 
-**Which history tracks it** is one reading, the same one setup runs:
-
-```
-git -C <state folder> rev-parse --is-inside-work-tree --show-prefix
-```
-
-Run it bare: the tool reports a non-zero exit and its message by itself,
-so nothing is appended to capture the status.
-
-`true` alone, or `true` then an empty line — the tool may not show a
-trailing empty line, and the prefix is empty at the top of a repository
-— the folder is its own git repository → git. `true`, then a non-empty
-prefix line — the folder is inside another git repository → the guard
-below: a save there would commit into that other repository. A non-zero exit whose message says `not a git repository` —
-a folder in no git repository → `topics_history`. Exit 127 — no `git` to
-run in this session → git cannot track the folder: list it with this
-session's own file tools, never another command, and a folder found
-there → `topics_history`, one not found → the guard below. Any other
-outcome — a missing folder, or `false` with exit 0, which a bare
-repository or a `.git` directory returns — is the guard below. On Cowork
-a connected folder is visible to the device's own shell and not to the
-container's, so run the reading there.
+**Which history tracks it** is the folder's kind, read the way the
+operations contract states it (§ The topic's artifacts) and the way
+setup runs it, so this skill and setup always read the same answer. Its
+own git repository → git. In no git repository, or no `git` in this
+session with the folder found by this session's own file tools → the
+files are the record. Inside another git repository, a folder not
+found, or any outcome the reading does not name → the guard below. On
+Cowork a connected folder is visible to the device's own shell and not
+to the container's, so run the reading there.
 
 **Guard — environment failures have two doors, and a store that is
 reached but broken is one of them.** Resolve in this order and stop at
@@ -140,8 +127,8 @@ Cowork), two instructions naming two different folders, a named folder
 that is missing, out of this session's reach, inside another git
 repository, or of a kind the reading above does not name, a ymer call
 that errors,
-a lapsed sign-in, a notebook that answers but lacks `tasks`, `tasks_log`,
-`topics_history` or `pool_scores` — stops the run with one instruction:
+a lapsed sign-in, a notebook that answers but lacks `tasks`, `tasks_log`
+or `pool_scores` — stops the run with one instruction:
 **run `/ymer:setup`**, which ships in this plugin. Repair nothing here, never
 guess a path, and never write a topic anywhere else: a run with no state
 folder drains nothing, and its drops stay open for the run after setup
@@ -351,36 +338,24 @@ wherever the harness kept it, never from a preview of it.
    ```
 
    Then find this front's topics nobody has started, in **every store
-   this session reaches** — they answer different questions, and the
-   node's rows are where a front whose state folder git does not track
-   keeps its history. Mint is per front, so another front's topics are
-   that front's own mint's to see. A topic mint creates is in flight from the moment it exists, so
-   what marks it unstarted is its folder, not its task:
+   this session reaches** — they answer different questions. Mint is per
+   front, so another front's topics are that front's own mint's to see.
+   A topic mint creates is in flight from the moment it exists, so what
+   marks it unstarted is its folder, not its task:
 
-   - The state folder. Where git tracks it, scan its files:
+   - The state folder, whatever its kind: find the `request.md` files
+     under it that carry `source: mint`, with whatever reaches the
+     folder. Where a shell does, this session's own or a remote
+     device's:
 
      ```
      grep -rl --include='request.md' 'source: mint' <state folder>
      ```
 
-     A folder holding nothing but its `request.md` is one nobody has
-     started. (`--include` keeps the scan to the files carrying the
-     marker; other artifacts may quote it.)
-
-     Where `topics_history` tracks it, the same question is one query over
-     this front's rows — the ones whose files sit in this front's folder —
-     and it reads the same on every harness: a topic whose only saved
-     artifact is a `request.md` mint wrote is one nobody has started:
-
-     ```sql
-     SELECT topic, area, min(saved_at) AS created
-     FROM topics_history
-     WHERE front = '<front>'
-     GROUP BY topic, area
-     HAVING count(DISTINCT artifact) = 1 AND max(artifact) = 'request.md'
-        AND max(instr(body, 'source: mint')) > 0
-     ORDER BY created
-     ```
+     Where none does, ask the same question with this session's own
+     list and search tools. A folder holding nothing but its
+     `request.md` is one nobody has started. (Keep the search to the
+     `request.md` files; other artifacts may quote the marker.)
 
    - `tasks list` on `Learning` (`projects list`, a name search for
      `Learning`) when one exists, narrowed to the **open** group — the
@@ -420,8 +395,8 @@ wherever the harness kept it, never from a preview of it.
    `request.md`: a file this run writes or appends at `<state
    folder>/<area>/YYYY/MM-DD-<topic>/request.md` with this session's own
    file tools, whichever history tracks the folder (→ `request.md`'s
-   shape). Step 5 records that file in the history; a history row never
-   stands in for the file.
+   shape). Where git tracks the folder, step 5 commits that file;
+   otherwise the file is the save.
 
    A cluster can span fronts: capture's recurrence check searches the
    whole pool, so a drop on this front may be anchored on another
@@ -482,26 +457,8 @@ wherever the harness kept it, never from a preview of it.
    Verify scoped: `git -C <state folder> status` no longer
    lists the topic folder; foreign dirty paths may remain — leave them.
 
-   Where `topics_history` tracks it, save the `request.md` the pick
-   wrote — its whole text as it now stands in the file, read back from
-   the file — as one row, with
-   `phase` `mint` and `front` this front's slug:
-
-   ```sql
-   INSERT INTO topics_history (topic, area, artifact, body, phase, front)
-   SELECT '<YYYY-MM-DD-topic>', '<area>', 'request.md', new.body, 'mint', '<front>'
-   FROM (SELECT '<the whole file>' AS body) AS new
-   WHERE new.body IS NOT (SELECT body FROM topics_history
-                          WHERE front = '<front>' AND topic = '<YYYY-MM-DD-topic>'
-                            AND area = '<area>' AND artifact = 'request.md'
-                          ORDER BY id DESC LIMIT 1)
-   ```
-
-   `affected_rows` `1` is the save; `0` means the newest row already holds
-   this text, so there was nothing to save. Quote the text the way capture
-   does — a single-quoted SQL literal with each `'` inside it doubled. The
-   table refuses `UPDATE` and `DELETE`: a wrong row is corrected by saving
-   the right text again, never by editing a row.
+   Where the files are the record, there is nothing more to record: the
+   file step 3 wrote is the save, and this step ends there.
 
 6. **Close with the runnable reminder** (→ The close).
 
@@ -667,19 +624,12 @@ over (→ `request.md`'s shape), and hand it to capture at the close.
 
 Everything wider than capture's bounded query is mint's, never
 capture's: the listings above, drained drops read in full, and an ad-hoc
-search when a drop looks like a recurrence of something already drained —
-`grep -r '<term>' <state folder>` where git tracks the folder, or, where
-`topics_history` does, the same search over the newest save of each
-artifact in this front's folder:
-
-```sql
-SELECT h.topic, h.area, h.artifact FROM topics_history h
-WHERE h.front = '<front>'
-  AND h.id = (SELECT max(id) FROM topics_history
-              WHERE front = h.front AND topic = h.topic
-                AND area = h.area AND artifact = h.artifact)
-  AND h.body LIKE '%<term>%'
-```
+search when a drop looks like a recurrence of something already drained:
+`grep -r --exclude-dir=pre-image '<term>' <state folder>`, run through
+whatever shell reaches the folder, or the same search through this
+session's own search tools where none does, whatever the folder's kind.
+Either way the search skips every topic's `pre-image/` slot: it holds
+superseded copies, so a hit there is no topic's current text.
 
 Narrow by time if that gets unwieldy, but set no default window — the
 valuable catch is something recurring from a topic that shipped long
@@ -954,19 +904,17 @@ heading and leave `started:` at the opening date.
 It is a file, `<area>/YYYY/MM-DD-<topic>/request.md` under the state
 folder, written and appended as any file is — on a harness that edits a
 connected folder by copying it out and writing it back, through those
-tools — and recorded in the folder's history at step 5. A topic whose
+tools — and committed at step 5 where git tracks the folder. A topic whose
 `request.md` is already there is one to append to, never to write again:
 the before-creating look is what finds it, and before writing a fresh
 `request.md` check with this session's own file tools, never a shell
-command, that no file is at that path — a file some earlier run
-wrote but never recorded is invisible to the `topics_history` listing.
+command, that no file is at that path.
 
 **An append MUST go through the file**: read `request.md` from the state
 folder, insert the drops into it with this session's own file tools, and
-only then save the row at step 5 from the file as it now stands. A row
-saved with no edit to the file leaves the file and its history
-disagreeing, and nothing reports it — the file is the artifact, and the
-history only records what was written to it.
+only then, where git tracks the folder, commit it at step 5 as it now
+stands. The file is the artifact, and a commit records only what was
+written to it.
 
 An append never writes blind. Under a heading that has another heading
 after it — the first of the friction-batch's two — **count the heading
@@ -981,31 +929,11 @@ which has none — there is nothing to insert before — but a heading the
 append names must be there, or the drops land under whichever heading
 happens to be last.
 
-Reading the history itself — this front's newest row for the artifact,
-for the unchanged-save comparison or to see what the last save held —
-follows the MCP result's size cap: ask for the length first, and window
-the read when it is large rather than discovering the cap. It is never
-the source of an append; the file is:
-
-```sql
-SELECT length(body) AS len FROM topics_history
-WHERE front = '<front>' AND topic = '<YYYY-MM-DD-topic>'
-  AND area = '<area>' AND artifact = 'request.md'
-ORDER BY id DESC LIMIT 1
-```
-
-```sql
-SELECT substr(body, <from>, 20000) AS window FROM topics_history
-WHERE front = '<front>' AND topic = '<YYYY-MM-DD-topic>'
-  AND area = '<area>' AND artifact = 'request.md'
-ORDER BY id DESC LIMIT 1
-```
-
 ### The close
 
 ```
 Picked: <name> — <one line: what doing it removes or builds>
-Topic:  <area>/YYYY/MM-DD-<name>/ (state folder, history in <git | node `topics_history`>)
+Topic:  <area>/YYYY/MM-DD-<name>/ (state folder, history in <git | the files alone>)
 Task:   <task name> (doing, <Product> Roadmap in <ymer | node `tasks`>)
 Scored: <n> new drops (<n> scorers | in this session | next steps unreadable)
 Unscored: <m> left out of the ranking (ids <the first ten>)
@@ -1067,9 +995,9 @@ alone. Hand it, by name, what this run's scoring showed:
 - The coordinator is the default where this session reaches it: ymer
   else the node's `tasks` — resolved once, asked never. The state folder
   is required, and its history is git where it is its own git
-  repository and the node's `topics_history` where it is in no git
-  repository or the session has no git; one inside another git
-  repository stops the run at the guard
+  repository and the files alone where it is in no git repository or
+  the session has no git; one inside another git repository stops the
+  run at the guard
 - A store reached but broken, no front named, or no state folder at
   all, stops the run at the environment guard and names `/ymer:setup`;
   a front `fronts` does not list stops it at Guard — nothing to draw,
@@ -1087,5 +1015,5 @@ alone. Hand it, by name, what this run's scoring showed:
 - Every run opens with a notebook backup, and the drain is one `UPDATE`
   by id to `drained` — drops are never deleted
 - Mint records what it wrote in the state folder's history — a
-  pathspec-scoped commit where git tracks it, one `topics_history` row
-  per saved file otherwise; the pool itself lives in no git tree
+  pathspec-scoped commit where git tracks it, the files alone
+  otherwise; the pool itself lives in no git tree

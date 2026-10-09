@@ -31,13 +31,9 @@ present or not, and whether it holds `request*.md` — and, where the
 folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
 `Interview pending —` marker at its head (development-process
-§ Artifacts). A marker on top of `review.md` is **live** when the phase
-it names has no `<topic ID>: <phase>` commit over the topic folder since
-the commit
-that last touched `review.md`; the command that reads that range, and
-the rule trusting it only over a committed floor, are review § Input
-item 2's, run with the phase the marker names substituted for
-`implement`. The arrival the three coordinates land on decides this
+§ Artifacts). A marker on top of `review.md` is **live** while its block
+holds no `Consumed —` line; the block, the line's grammar, who writes it
+and which phase it makes due are review § Input item 2's. The arrival the three coordinates land on decides this
 phase's opening:
 
 - a **drawn topic** — a `doing` task whose folder holds nothing but its
@@ -51,11 +47,11 @@ phase's opening:
   the task already is the topic — and bind the parent's **direction doc**, which
   the task's description names, in `spec.md`'s opening paragraph;
 - a **live marker naming define** — an **iteration**: step 1's read
-  order applies, and the pass is recorded under § The Spec's re-define
-  header or amendment marker;
+  order applies, the pass is recorded under § The Spec's re-define
+  header or amendment marker, and the close, a pending close included,
+  appends `Consumed — <YYYY-MM-DD> by define` to the marker's block as
+  its last write before the phase's commit (review § Input item 2);
 - a **live marker naming another phase** — stop and name that phase;
-  mid-route, `plan.md`'s ticks and the topic's phase commits since the
-  marker say where the route now stands (review § Input items 1–2);
 - a **pending interview** — `spec.md` carrying the `Interview pending —`
   marker at its head (development-process § Artifacts): steps 1–4 read
   as usual, `survey.md` already standing, and the interview resumes at
@@ -65,7 +61,9 @@ phase's opening:
   instead — stop before writing anything and name it,
   `/ymer:brainstorm <topic>` written out;
 - anything else — a topic **in flight**: reuse the folder and open as
-  usual.
+  usual; where `review.md` tops with a consumed marker, the close
+  appends its own `Consumed — <YYYY-MM-DD> by define` line to the
+  block the same way.
 
 1. Read `brainstorm.md` in the topic directory — the chosen direction and its open questions; at a split child, the parent's, which the task's description names. On an iteration, read `review.md` first: the marker's finding, and the entries below it, head the question list.
 2. Read `survey.md` — what exists, the vocabulary in use, flagged overloads,

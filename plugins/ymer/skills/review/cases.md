@@ -21,12 +21,12 @@ The cases of the review skill, moved here byte for byte from `SKILL.md`, which k
    implement has not run at all: stop and name the phase that should run
    — **implement**, unless `review.md` carries an `Iteration —` marker
    on top. plan-review's define branch writes one before implement has
-   ever run, and with no implement commit anywhere item 2's test cannot
-   read such a marker as consumed, so it always reads live — which is
-   why the phase is named by item 2's mid-route read rather than by the
-   marker alone: `plan.md`'s ticks and the topic's phase commits since
-   the marker say where the route now stands, and a route whose phases
-   have all run again leaves **implement** due.
+   ever run, so the phase is named by item 2's read of the marker's
+   block rather than by the marker alone: a block with no `Consumed —`
+   line reads live and names the phase the marker names, and otherwise
+   the block's last line, with `plan.md`'s ticks, says where the route
+   now stands; a route whose phases have all run again leaves
+   **implement** due.
    `implemented.md`'s presence answers a different question and answers
    it wrong: an iterate close leaves an earlier cycle's file standing,
    and a drift-valve stop writes none at all (implement § Drift Valve).
@@ -71,38 +71,43 @@ The cases of the review skill, moved here byte for byte from `SKILL.md`, which k
    never confirm-gate it. All landed → already shipped: a re-run is
    deliberate, confirm before proceeding. `Iteration —` on top (or a
    pre-rename `Routed back —`, which reads identically) → **read whether
-   that route is still live**. Nothing ever clears a marker, so one on
-   top means either that the route was just taken (implement stopped,
-   review just iterated, or plan-review's close routed a surviving
-   `> Needs confirmation:` marker to define) or that it ran its course —
-   write-plan and implement completed, implement never touching
-   `review.md` — and review is correctly due. The state folder's commit
-   order over the topic folder discriminates: has an implement commit
-   landed since the newest commit that touched `review.md`?
+   that route is still live, and where it stands**. Nothing ever removes
+   a marker. Its **block** is the marker line and the ref lines written
+   with it (`Reviewed:`, `Unreviewed:`), up to the first blank line or
+   the file's end, and
+   the route is recorded by lines appended to the end of that block, one
+   per phase close, in the order written, so the newest is last:
 
-   ```
-   git -C <state folder> log --oneline --grep '<topic ID>: implement' \
-       "$(git -C <state folder> log -1 --format=%H \
-            -- <repo>/YYYY/MM-DD-<topic>/review.md)..HEAD" \
-       -- <repo>/YYYY/MM-DD-<topic>/
+   ```markdown
+   Consumed — <YYYY-MM-DD> by <phase>
    ```
 
-   Read the **output**, not the exit status — `git log` exits 0 either
-   way. And trust the range only over a committed floor: a dirty
-   `review.md` in the state folder is a torn close — finish it first, as
-   the `## Shipped` branch already requires — and an inner `log -1`
-   that prints nothing is a wrong pathspec, never a verdict.
-   Non-empty → implement completed after the marker → this session
+   The phase the marker names writes the first at its own close, a
+   pending close included, and that line **consumes** the marker. Each
+   later phase on the route (scout, define, write-plan, plan-review,
+   implement, whichever run) appends its own at its close to a block
+   that already holds one, and implement's close appends its line
+   whatever the marker names, since implement ends the route. A phase
+   writes its line as its close's last write before the phase's commit,
+   with two exceptions: plan-review writes its `Hardened —` line after
+   it (the operations contract, Status ladder), and implement writes its
+   line just before its `## Review` entry, which then takes the top. The
+   line is the same on every kind of state folder. It is no recognizer,
+   so the marker stays the first one top-down, and a session that stops
+   at topic resolution writes none. No line in the block → the route is
+   **live**: stop and name the phase the marker names, where the route
+   *entered*. A last line `by implement` → implement completed after
+   the marker, never reaching `review.md` with its entry → this session
    follows a consumed re-entry and proceeds: a fresh `## Review` entry
    prepends above the marker, and the entries below it carry the
    `Reviewed:`, `Unreviewed:` and `Fixes applied (--fix):` lines this
    session's delta is computed from (→ The lens pass, which enumerates
-   the traceability stores). Empty → the route is live: stop and name the
-   phase the marker names — where the route *entered*; mid-route,
-   `plan.md`'s ticks and the topic's phase commits since the marker say
-   where it now stands. A stop's own commit writes the marker and the
-   state-folder commit at once, so it falls outside the range by construction
-   and reads live — which is the right answer. `## Review` on
+   the traceability stores). Any other last line → the route is
+   mid-way, and the phase **due** is the one after the last line's
+   phase in the pipeline's order (brainstorm, scout, define, write-plan,
+   plan-review, implement): stop and name it. A stopped route writes no
+   line, so it still names the phase it stopped before, which is the
+   right answer. `## Review` on
    top with no ship section → read the
    entry itself; its close block is the selector. **Incomplete** — no
    `Fitness:` line → an open review: the lens findings, the stops
@@ -125,7 +130,7 @@ The cases of the review skill, moved here byte for byte from `SKILL.md`, which k
    **The fallback fork — read off the open entry, never off recall.**
    The observable is a `^Lens pass:` line as the open entry's first body
    line under its heading (grammar: → The Close). Present → the pass has
-   run; read its findings and open Prep. `Lens pass: dropped — no diff`
+   run; read its findings and open Prep. `Lens pass: dropped — no diff or change set`
    counts as present: the pass ran and recorded its precondition
    failure. **Absent** — no `review.md` at all, or an open `## Review`
    entry with no such line — → this session runs the pass itself
@@ -158,7 +163,7 @@ The cases of the review skill, moved here byte for byte from `SKILL.md`, which k
 
 ## The lens pass
 
-**Precondition: a diff exists** — read off what is already held (lens
+**Precondition: a diff or a change set exists** — read off what is already held (lens
 applicability: development-process, *Review effort*): on a code-repo
 topic, `git log --first-parent --no-merges main..<topic> --oneline` is
 non-empty — the branch's own commits, read the way the delta is read
@@ -169,9 +174,14 @@ it empty on a branch that does carry the topic's own work; where the
 session edited machinery, `implemented.md` names at least one machinery
 commit ref per machinery tree it edited,
 so a meta topic whose session touched only a machinery tree has a diff like
-any other (topic kinds: development-process § Topic kinds). A failed
+any other (topic kinds: development-process § Topic kinds). Where no
+diff exists, the topic's **change set** (term: the plugin glossary)
+stands in: the caller hands code-review that set as its target, and
+the pass reads each payload as the change and its target in place, a
+file or a store. Only a topic that wrote nothing fails the
+precondition. A failed
 precondition is reported, never silent: the `review.md` entry's
-lens-pass line reads `Lens pass: dropped — no diff` and is the whole of
+lens-pass line reads `Lens pass: dropped — no diff or change set` and is the whole of
 the pass's lines (→ The Close), and the session goes straight to Prep,
 the walkthrough running over the artifacts' real content. There is no
 artifact-kind exemption: a prose or meta diff gets
@@ -285,8 +295,9 @@ pre-flight fork reads (→ Input, item 2). The slot after `over` names
 what the pass actually diffed: the branch tip it read, as `branch @
 <sha>`, and the machinery refs as a list per tree, `<tree> <sha…>` per
 machinery tree, `·`-joined wherever more than one applies; a meta
-topic's line carries the machinery halves alone. A pass whose
-precondition failed writes `Lens pass: dropped — no diff` and no slot,
+topic's line carries the machinery halves alone, and a pass over a
+change set carries `change set @ <n> payloads`. A pass whose
+precondition failed writes `Lens pass: dropped — no diff or change set` and no slot,
 and that line is then the whole of the pass's lines: no fixes line, no
 `Refuted/skipped:` — the dropped line explains both absences, so
 neither is written `none`. The findings list is not the pass's to

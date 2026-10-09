@@ -160,6 +160,12 @@ conflict — an ordinary one resolved on the branch, Claude-run; one that
 would remake a recorded decision asked, and aborted rather than left in
 progress when the answer has not come.
 
+### change set
+A topic's `payloads/` files paired with their targets by the manifest:
+what the lens pass reviews where no diff exists, each payload read as
+the change and its target in place.
+_Avoid_: diff (for this), payload set
+
 ### chartered store
 A store the knowledge-placement contract names as a legitimate home for
 durable process or project knowledge — membership is by charter, and
@@ -205,9 +211,14 @@ instead of closing it.
 _Avoid_: convergence step, evaluation pass, review beat
 
 ### coordinator
-Defined at marketplace level — the root glossary is its home. An
-environment-contract role of the reach kind.
-_Avoid_: tracker, task system, backend (as the role word)
+What tracks a front's work and how topics are named there: ymer's
+`<Product> Roadmap` tasks where the session reaches ymer, the node's
+`tasks` table otherwise (→ reach rule). An environment-contract role of
+the reach kind. Each skill states which one a run is using in its own
+prose and in its report: operative use of this term, never a second
+definition.
+_Avoid_: tracker, task system, backend (as the role word), ymer (as the
+generic word)
 
 ### cycle
 One pass of a topic through the pipeline, from the phase it enters at —
@@ -372,9 +383,15 @@ for a set of small frictions.
 _Avoid_: fix-now topic, the batch
 
 ### front
-Defined at marketplace level — the root glossary is its home. Its
-initial instructions, or the node table they point at, are the binding
-home of the environment contract's front-instructions roles.
+One installation, a harness config with its own account, connectors,
+plugin options and instructions, named by a snake_case slug that every
+front-bound row carries. The node's `fronts` table lists them, one row
+each. A session takes its slug from the `ymer` plugin's `front` option
+where the harness passes plugin options into skills, and from the
+instructions it starts with where it does not; there is no default. Each
+front drains its own rows. Its initial instructions, or the node table
+they point at, are the binding home of the environment contract's
+front-instructions roles.
 _Avoid_: harness (the front's kind, not the front), surface (bare),
 client
 
@@ -769,6 +786,14 @@ pending steps from durable state, finish an unfinished close from its
 first missing outcome, then run the phase's own readiness checks.
 _Avoid_: preflight
 
+### pre-image
+An artifact's state before its newest in-place rewrite: the rewrite
+commit's parent where git tracks the state folder; where it does not,
+the artifact's file in the topic's `pre-image/` slot for the rewrites
+that fill it, and none for the others. Which rewrites fill the slot, and
+its rule and shape: the operations contract, § The topic's artifacts.
+_Avoid_: snapshot, backup (for this), previous
+
 ### prerequisite check
 Brainstorm's convergence beat asking which subjects the settled
 direction touches and whether the user is at the operator bar for
@@ -834,9 +859,19 @@ _Avoid_: question taxonomy
 ## R
 
 ### reach rule
-Defined at marketplace level — the root glossary is its home. How
-every reach-kind role of the environment contract binds: read once, at
-a run's guard, from what the session has.
+How every reach-kind role of the environment contract binds: read once,
+at a run's guard, from what the session has. The coordinator is the
+default where the session reaches it: ymer's tool surface, else the
+node's `tasks` table. For the state store the rule reads the state
+folder's kind (the operations contract, § The topic's artifacts): its
+own git repository, and each save is a commit; in no git repository, or
+no git in this session, and each save is the file alone; inside another
+git repository, and it is refused. The state folder itself is required,
+never a reach default: an unresolved or unusable one stops the run with
+its fix named. A store reached but unusable stops the run the same way;
+nothing is asked and nothing falls back on a failure. Each depositing
+skill states it in its own prose: operative use of this term, never a
+second definition.
 _Avoid_: presence rule, fallback rule, configured switch
 
 ### read-back
@@ -1064,17 +1099,20 @@ inside another git repository, and it is always named, never inferred.
 A folder that is its own git repository — the top of a git work tree,
 its `rev-parse` prefix empty — keeps its history in git; a folder in no
 git repository, or one a session without git finds by its file tools,
-keeps it in the node's `topics_history`; a folder inside another git
-repository is refused. Written `<state folder>` in skill prose and fenced
-commands, a role placeholder the session resolves, bound per environment
-in its binding home (→ state store).
+keeps none — its files are the record; a folder inside another git
+repository is refused, and so is a git repository reached by a session
+whose only shell over it is a remote device's. Written `<state folder>`
+in skill prose and fenced commands, a role placeholder the session
+resolves, bound per environment in its binding home (→ state store).
 _Avoid_: any one front's own folder name (a value), workspace, project
 folder, state dir
 
 ### state store
-Defined at marketplace level; the root glossary is its home. An
-environment-contract role of the reach kind: the state folder plus the
-history that tracks it.
+The state folder together with the history that tracks it: git where the
+folder is its own git repository, and none where it is in no git
+repository or the session has no git, so its files are the record. An
+environment-contract role of the reach kind. What a skill names when it
+saves an artifact without knowing whether a commit follows.
 _Avoid_: state path, workspace, data dir
 
 ### station
@@ -1087,9 +1125,8 @@ The six rungs naming where a topic stands — `brainstormed → surveyed →
 specced → planned → hardened → implemented`. Vocabulary, not state:
 nothing stores a rung, and shipped is not a rung — it reads from
 `review.md`'s ship section. Each rung is derived from the topic folder's
-artifacts plus the topic's phase commits in the state folder; the mapping,
-and the exact predicate for each rung, live in the operations contract's
-Roadmap section.
+artifacts alone; the mapping, and the exact predicate for each rung,
+live in the operations contract's Roadmap section.
 _Avoid_: status column, phase status
 
 ### step ID
@@ -1129,17 +1166,16 @@ and each table's `_meta` description carries its column grammar.
 _Avoid_: subject table, `subjects.md`
 
 ### substrate contract
-The reference file the `dev` plugin ships for the substrate its skills
-run on — the branch workflow and the tree options, the commit
-registers, concurrent edits on a shared tree, the by-hunk recipe, the
-code-repo topic kind. This plugin names it and never restates it. Until
-`dev` ships, the file does not exist: a skill citing it reads those
-rules from the front's initial instructions where the front states
-them, and where the front states none the step takes the
-Defaults-and-holds fallback — asked, never defaulted. Not the
-environment contract, which is the named set of roles these skills
-require; the substrate contract is the mechanics for the substrate
-roles.
+The reference file this plugin ships for the substrate its skills run on
+where git is there: the branch workflow and the tree options, the commit
+registers, concurrent edits on a shared tree, the by-hunk recipe,
+explicit-path staging, commit ownership, the network boundary, and the
+ruling behind *git is never guessed*. A skill reads it where the state
+folder is its own git repository, the topic has a project checkout, or
+the session commits into a machinery tree, and never restates it; its one resolvable address is
+`${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`. Not the environment
+contract, which is the named set of roles these skills require; the
+substrate contract is the mechanics for the substrate roles.
 _Avoid_: the git contract (bare)
 
 ### sweep artifact
@@ -1204,8 +1240,12 @@ _Avoid_: resolution (bare — seven senses in the suite), entry read,
 entry procedure
 
 ### topics_history
-Defined in the `setup` skill, its one home.
-_Avoid_: artifact_history, ledger, snapshots, revisions
+Historical (retired 2026-10-08): the node table that kept the history of
+a state folder git did not track, one row per save of an artifact. A
+state folder in no git repository now keeps no history beyond its files
+(→ state store), and an in-place rewrite's earlier state goes to the
+topic's `pre-image/` slot (→ pre-image). The word survives in nodes set
+up before then, which still carry the table and its `_meta` grammar row.
 
 ### traceability store
 Defined in the development-process charter — the machinery-traceability
@@ -1286,7 +1326,7 @@ decision or finding label (`spec D5`). Each class has a literal spelling
 and, where the suite writes one, a placeholder spelling — `<topic ID>`;
 `<state folder>`, `<topic folder>`; `T<task>S<step>`, `<step-id>`;
 `<phase>` — and either spelling is the reference. Public-register commit
-messages carry none (the register rule: the operations contract,
+messages carry none (the register rule: the substrate contract, § Commit registers,
 restated in development-process's ground rules and review's ship
 sequence), and payload prose bound for a project repo carries none
 either (write-plan's Payloads section, gated by the payload verifier).

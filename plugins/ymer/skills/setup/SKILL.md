@@ -38,11 +38,13 @@ which history tracks it is read from the folder itself**:
   Ymer's tool surface among this session's tools → ymer's Roadmap
   projects. Absent → the node's `tasks` table.
 - **The state store** — where a topic's artifacts live: the state folder
-  (→ check 3), together with the history that tracks it. A folder that is
-  its own git repository → git, where each save is a commit. A folder in
-  no git repository, or one a session without git finds → the node's
-  `topics_history` table, where each save is a row. A folder inside
-  another git repository is refused (→ check 3).
+  (→ check 3), together with the history that tracks it, which the
+  folder's kind decides (the operations contract, § The topic's
+  artifacts). A folder that is its own git repository → git, where each
+  save is a commit. A folder in no git repository, or one a session
+  without git finds → no history beyond the files: each save is the file
+  alone, and the files are the record. A folder inside another git
+  repository is refused (→ check 3).
 
 Read once, at the run's start, from what the session has — never asked,
 and never configured beyond the state folder's path and the front's
@@ -72,11 +74,11 @@ claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
 Name that command only on Claude Code. On a harness with no such door,
 say that the node is unreachable from this session and leave it there.
 
-**The skeletons.** Nine tables, created in this order — `fronts`,
-`kinds`, `pool`, `pool_scores`, `tasks`, `tasks_log`, `topics_history`,
+**The skeletons.** Eight tables, created in this order — `fronts`,
+`kinds`, `pool`, `pool_scores`, `tasks`, `tasks_log`,
 `tutor_subjects`, `tutor_engagements`. The order is load-bearing: `pool`
 keys on `fronts(slug)` and `kinds(kind)`, `pool_scores` on `pool(id)`,
-`topics_history` on `fronts(slug)`, `tasks_log` on `tasks(id)`, and
+`tasks_log` on `tasks(id)`, and
 `tutor_engagements` on `tutor_subjects(subject)`.
 
 Read what is there first, with the `notebook` `tables` action, and then
@@ -84,6 +86,12 @@ work table by table. **The node runs one statement per `execute` call and
 drops the rest of a multi-statement call without a word**, so every
 statement below is a call of its own — a batched skeleton creates its
 first table and silently loses every write after it.
+
+Before the first statement that changes what the notebook already holds
+— creating, altering or dropping a table, an `UPDATE` or a `DELETE` —
+take a notebook backup (the operations contract, § Changing the
+notebook). A healthy re-run changes nothing and takes none, and
+inserting a missing grammar, kind or front row needs none either.
 
 `fronts` — the front every other row keys on:
 
@@ -194,52 +202,6 @@ CREATE TABLE tasks_log (
 )
 ```
 
-`topics_history` — the history of a state folder git does not track,
-one row per save of one artifact:
-
-```sql
-CREATE TABLE topics_history (
-  id       INTEGER PRIMARY KEY,
-  topic    TEXT NOT NULL,
-  area     TEXT NOT NULL,
-  artifact TEXT NOT NULL,
-  body     TEXT NOT NULL,
-  phase    TEXT NOT NULL,
-  front    TEXT NOT NULL REFERENCES fronts(slug),
-  saved_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
-)
-```
-
-```sql
-CREATE INDEX topics_history_artifact ON topics_history (topic, area, artifact, id)
-```
-
-A row is found by its front, topic, area and artifact together. Topic ids
-are not unique across areas, and every front keeps its own state folder
-while fronts on one machine share this node, so two fronts can hold the
-same topic id — a dated friction-batch, say — in two different folders.
-Every read of one artifact's history names all four, and `front` is part
-of that address, not only a record of who saved.
-
-Two triggers make it append-only, so a row once written is a fact every
-later reading can rely on — the pre-image a rewrite is checked against,
-and where a topic stands. A trigger's `BEGIN … END` body is part of its
-one statement, so each trigger is one `execute` call:
-
-```sql
-CREATE TRIGGER topics_history_no_update BEFORE UPDATE ON topics_history
-BEGIN
-  SELECT RAISE(ABORT, 'topics_history is append-only');
-END
-```
-
-```sql
-CREATE TRIGGER topics_history_no_delete BEFORE DELETE ON topics_history
-BEGIN
-  SELECT RAISE(ABORT, 'topics_history is append-only');
-END
-```
-
 `tutor_subjects` and `tutor_engagements` — the subject index, the
 learning track's index of its knowledge docs and open engagements. The
 docs themselves are ymer docs; these rows name them, and the foreign key
@@ -276,7 +238,7 @@ owner extended — the columns their front added, the rules their work runs
 by — and that text lives nowhere else. Replacing it destroys it silently,
 on a run whose whole promise is that it changes nothing already right.
 
-The nine texts, each the grammar of its table:
+The eight texts, each the grammar of its table:
 
 > **`table:fronts`** — The fronts: one row per installation sessions run
 > in — a harness config with its own account, connectors, settings and
@@ -381,26 +343,6 @@ The nine texts, each the grammar of its table:
 > array of pointers: issue keys, URLs, reference ids. minutes carries
 > time tracking. author is the worker or model that wrote the entry.
 
-> **`table:topics_history`** — The history of the artifacts in a state
-> folder git does not track: one row per save of one artifact,
-> append-only, where the newest row for a (front, topic, area, artifact)
-> is its current save and the one before it the pre-image. The file in
-> the folder is the artifact; a row records the text the saving session
-> sent, so an encoding or line-ending difference between the two is not a
-> fault. topic is the dated topic id YYYY-MM-DD-<slug>; area is the repo
-> or product it belongs to, with meta reserved for process work; artifact
-> is the file's name in the topic's folder, <area>/YYYY/MM-DD-<slug>/;
-> body is the whole text saved; phase is the snake_case name of the skill
-> or phase that saved it, or hand_step for a row a hand step moved in,
-> and the newest row's phase says where the topic stands; front is the
-> fronts slug of the front whose folder holds the file, and is part of a
-> row's address, since fronts sharing this node each keep their own
-> folder and the same topic id can sit in two of them. A save whose body
-> equals the newest row's for the same (front, topic, area, artifact)
-> writes no row. Two triggers refuse UPDATE and DELETE, so a wrong row is
-> corrected by saving the right text again. A large body is read in substr
-> windows after its length, an MCP result having a size cap.
-
 > **`table:tutor_subjects`** — The learning track's subjects, one row per
 > subject: half of the subject index, beside tutor_engagements. subject
 > is the subject's lowercase key as the learner names it — `git`,
@@ -463,7 +405,7 @@ The order is the point: bug comes first so that whatever does not work
 as written is never filed as waste, and friction comes last because it
 is what remains when everything worked.
 
-**An existing table is verified, never rebuilt.** For each of the nine
+**An existing table is verified, never rebuilt.** For each of the eight
 that already exists, read it with the `notebook` `schema` action and
 check the required columns **by name and type** — nothing else. A
 missing one is added:
@@ -512,22 +454,8 @@ The required columns, by table:
   `created_at`, `updated_at`, `closed_at`
 - `tasks_log` — `id`, `task_id`, `at`, `kind`, `body`, `refs`,
   `minutes`, `author`
-- `topics_history` — `id`, `topic`, `area`, `artifact`, `body`, `phase`,
-  `front`, `saved_at`
 - `tutor_subjects` — `subject`, `knowledge_doc`
 - `tutor_engagements` — `title`, `subject`, `engagement_doc`
-
-**`topics_history`'s index and triggers are checked by name.** The column
-check never sees them, and a missing trigger loses append-only without a
-word. Read what the table carries:
-
-```sql
-SELECT type, name FROM sqlite_master WHERE tbl_name = 'topics_history' AND type IN ('index', 'trigger')
-```
-
-Create any of `topics_history_artifact`, `topics_history_no_update` and
-`topics_history_no_delete` that is missing, with its statement above, and
-leave a present one as it is: the name is the whole comparison here too.
 
 **A retired `topics` table is reported, never dropped.** Earlier releases
 kept a topic's artifacts as rows in a `topics` table where no state
@@ -552,28 +480,18 @@ battery exists to prevent.
   column `YYYY-MM-DD-<slug>` splits after the year. The table does not
   record which front wrote a row, so which front's state folder a row
   belongs in is yours to tell: move each from a session on the front it
-  belongs to, into that front's folder. Then record the moved
-  files in the folder's history, the way every save is recorded:
-  - where the state folder is its own git repository, commit the topic
-    folders you wrote, pathspec-scoped on both halves — a bare commit
-    sweeps in whatever concurrent sessions have staged:
-    `git -C <state folder> add <area>/YYYY/MM-DD-<slug>/`, then
-    `git -C <state folder> commit -m "topics: move retired rows into the state folder" -- <area>/YYYY/MM-DD-<slug>/`,
-    naming every folder you wrote;
-  - where it is in no git repository, or this session has no git, save
-    the same text into `topics_history`, in one
-    `execute` call, with `phase` `hand_step` and `front` this front's
-    slug, the one check 2 confirms in `fronts` (the foreign key refuses
-    any other):
-    `INSERT INTO topics_history (topic, area, artifact, body, phase, front) SELECT topic, area, artifact, body, 'hand_step', '<front>' FROM topics`,
-    where the table also holds another front's rows, narrowed by a
-    `WHERE` on `topic` to the ones this front moved.
+  belongs to, into that front's folder. Where the state folder is its
+  own git repository, then commit the topic folders you wrote,
+  pathspec-scoped on both halves — a bare commit sweeps in whatever
+  concurrent sessions have staged:
+  `git -C <state folder> add <area>/YYYY/MM-DD-<slug>/`, then
+  `git -C <state folder> commit -m "topics: move retired rows into the state folder" -- <area>/YYYY/MM-DD-<slug>/`,
+  naming every folder you wrote. Where it is in no git repository, or
+  this session has no git, the files you wrote are the record.
 
-  Then drop the table and its `_meta` row as above. The move needs this
-  front's slug and a resolved state folder: where check 2 has not passed,
-  the line says the move waits on check 2 and prints `<front>` as written
-  rather than any slug, and where check 3 has not resolved a folder or
-  has refused it, it says the move waits on check 3 and prints
+  Then drop the table and its `_meta` row as above. The move needs a
+  resolved state folder: where check 3 has not resolved a folder or has
+  refused it, the line says the move waits on check 3 and prints
   `<state folder>` as written rather than any path.
 
 The `_meta` row outlives a table dropped on its own. Where the table is
@@ -587,9 +505,9 @@ both are gone.
 
 A front is one installation — a harness config with its own account,
 connectors, plugin options and instructions — and its slug is the key
-every drop and every saved topic carries into `fronts`: `pool.front` and
-`topics_history.front` are foreign keys, so a write from a front with no
-row is refused, and a mint draws only its own front's drops. This check
+every drop carries into `fronts`: `pool.front` is a foreign key, so a
+write from a front with no row is refused, and a mint draws only its
+own front's drops. This check
 reads and writes the node, so it runs whenever check 1 reached it: a
 difference check 1 reports on a table stops nothing here, and only a
 node check 1 could not reach leaves this check `not checked`. Its
@@ -755,62 +673,59 @@ path outside every connected folder, fails the check:
 > instructions this front's sessions start with, for example
 > `State folder: <the folder's path>`.
 
-**The folder's kind.** With a path in hand, one reading decides whether
-the folder exists, what kind of folder it is, and which history tracks
-it:
+**The folder's kind.** With a path in hand, read the folder's kind. The
+reading, its outcomes and what each means for the folder's history are
+the operations contract's (§ The topic's artifacts), and setup runs it
+exactly as stated there. Run it bare: the tool reports a non-zero exit
+and its message by itself, so nothing is appended to capture the
+status. What this check makes of each outcome:
 
-```
-git -C <state folder> rev-parse --is-inside-work-tree --show-prefix
-```
-
-Run it bare: the tool reports a non-zero exit and its message by itself,
-so nothing is appended to capture the status. With exit 0 it prints
-`true` or `false`, then the folder's prefix — its path below the top of
-the repository it sits in. At that top the prefix is an empty line, and
-the tool may not show a trailing empty line at all, so a lone `true`
-reads the same as `true` then an empty line.
-
-- `true` alone, or `true` then an empty line — the folder is its
-  own git repository: git tracks its history, one commit per save. A
-  pass.
-- `true`, then a non-empty prefix line — the folder is inside another git
-  repository. That fails the check: every save would commit into that
-  other repository, which may be shared or pushed anywhere, and its own
-  `add -A`, `stash -u` and `clean -x` would sweep up, set aside or delete
-  your topics. Name the folder and the prefix, which says how deep inside
-  the other repository it sits, and both fixes: run `git init` in the
-  folder and list the folder in the enclosing repository's `.gitignore`,
-  so it becomes its own git repository that the other one leaves alone;
-  or choose a folder in no git repository, which the node's
-  `topics_history` table then tracks. Setup runs neither fix and edits
-  neither repository: which history keeps your topics is yours to choose.
-- A non-zero exit whose message says `not a git repository` — a folder
-  in no git repository: the node's `topics_history` table tracks its
-  history, one row per save. A pass too, and the report says which.
+- Its own git repository, or a folder in no git repository — a pass,
+  and the report says which: git keeps the history, or the files are
+  the record.
+- Exit 127 — the shell found no `git` to run, so this session has no
+  git, and the reading says nothing about whether the folder exists.
+  List it with this session's own file tools, never another command.
+  Found — a pass, and the report names the reason rather than a kind:
+  no git in this session, the files are the record (→ The report). Not
+  found — the missing-folder failure below.
+- Inside another git repository — that fails the check: every save would
+  commit into that other repository, which may be shared or pushed
+  anywhere, and its own `add -A`, `stash -u` and `clean -x` would sweep
+  up, set aside or delete your topics. Name the folder and the prefix,
+  which says how deep inside the other repository it sits, and both
+  fixes: run `git init` in the folder and list the folder in the
+  enclosing repository's `.gitignore`, so it becomes its own git
+  repository that the other one leaves alone; or choose a folder in no
+  git repository, whose files are then the record. Setup runs neither
+  fix and edits neither repository: which history keeps your topics is
+  yours to choose.
 - A non-zero exit whose message says `cannot change to` — the folder is
   not there. That fails the check: name the fix — create the folder, or
   correct the setting or the instructions that name it. Setup never
   creates the state folder itself: a mistyped path that setup helpfully
   created is exactly the silent second store this check exists to
   prevent.
-- Exit 127 — the shell found no `git` to run — means this session has no
-  git, so git cannot track the folder, and the reading cannot tell a
-  folder in no git repository from one inside another; a session with no
-  git commits nowhere, so neither is a hazard to it. The reading then
-  says nothing about whether the folder exists, so list it with this
-  session's own file tools, never another command. Found — a pass,
-  tracked by `topics_history`, and the report names the reason rather
-  than a kind: no git in this session (→ The report). Not found — the
-  missing-folder failure above.
 - Anything else — `false` with exit 0 among it, which git prints for a
   bare repository or a `.git` directory, neither of them a folder meant
   to hold topics — is a state no reading names. That fails the check:
   name the folder and what the reading returned, and ask what the folder
   is. Setup never picks a history on a guess.
 
-On Cowork a connected folder is visible to the device's own shell and
-not to the container's, so run the reading there. It only reads: it
-takes no lock and writes nothing into the folder.
+**Git through a remote device.** On Cowork a connected folder is visible
+to the device's own shell and not to the container's, so the reading
+runs there. The reading only reads: it takes no lock and writes nothing
+into the folder. Every later save would be another matter. A session
+whose only shell over the state folder is a remote device's, told from
+the session's own tools as the harness is (no shell of its own reaches
+the folder, and the reading ran through the device's), would run every
+commit through a git that is not the host's, and such a git has left a
+lock file in a repository's `.git` that it could not then remove. So
+where such a session reads the folder as its own git repository, the
+check fails: say that this session reaches the folder's git only through
+a remote device's shell, and name the fix — point this front at a folder
+in no git repository. Every phase after setup relies on the folder's
+kind alone, so none of them meets this case.
 
 **The report prints whatever check 3 resolved** (→ The report), and that
 printing is this check's real catch: a state folder that is real,
@@ -895,8 +810,9 @@ and the skill that needs one says so when it is missing.
 One line per check, in order — a pass, a failure with the single command
 or edit that fixes it, or `not checked` naming the earlier check it waits
 on. A check that passed on reach rather than on configuration says which
-store is in use, and the state folder's line says which history tracks
-it, because those are the things worth reading. The state folder is
+store is in use, and the state folder's line says whether git keeps its
+history or its files are the record, because those are the things worth
+reading. The state folder is
 printed whenever check 3 resolved one, a failed reading included. A
 retired `topics` table, where one is left, gets a line of its own after
 the node's, carrying its row count and its whole hand step: with no rows,
@@ -909,8 +825,8 @@ The node's line counts its tables: the number this run created, with
 `created`, when it created any, and otherwise the number the node holds.
 The front's line names the slug, with `added` after it only when this
 run wrote its row. So a first run on an empty node reads
-`9 tables created` and `` `work_laptop` added ``, and a re-run on a
-healthy machine reads both bare, `9 tables` and `` `work_laptop` ``:
+`8 tables created` and `` `work_laptop` added ``, and a re-run on a
+healthy machine reads both bare, `8 tables` and `` `work_laptop` ``:
 each line names what this run changed and nothing else, so a reader can
 tell a repair from a machine that was already right. Where the node
 failed, the front's line reads `not checked`, naming the node.
@@ -918,7 +834,7 @@ failed, the front's line reads `not checked`, naming the node.
 ```
 Setup — ymer environment
 
-  ✔ node          reachable — 9 tables
+  ✔ node          reachable — 8 tables
   ✔ front         `work_laptop`
   ✔ state_folder  /Users/you/state — its own git repository, history in git
   ✔ ymer          reachable
@@ -935,9 +851,9 @@ with no ymer reads its coordinator by reach:
 Setup — ymer environment
 
   ✔ node          reachable — 1 table created
-  – topics        retired — 1 row; move it into the state folder and into `topics_history` by hand, then DROP TABLE topics and its `_meta` row
+  – topics        retired — 1 row; move it into the state folder by hand, then DROP TABLE topics and its `_meta` row
   ✔ front         `home_desktop` added
-  ✔ state_folder  /Users/you/state — in no git repository, history in the node's `topics_history`
+  ✔ state_folder  /Users/you/state — in no git repository, the files are the record
   ✔ ymer          no connection in this session — work tracked in the node's `tasks` table
   – Meta Roadmap  not checked — no ymer; process work routes to `Meta Roadmap` in `tasks`
 ```
@@ -951,13 +867,16 @@ carrying its own fix — the front's with the fronts the node holds:
 ```
 
 A folder inside another git repository fails its line, naming the prefix
-the reading printed and both fixes; and a session with no git passes the
+the reading printed and both fixes; a session with no git passes the
 folder its file tools found, naming that reason where a kind would
-stand — one line or the other, never both:
+stand; and a session that reaches a git folder only through a remote
+device's shell fails, naming the fix — one line of the three, never
+more:
 
 ```
   ✘ state_folder  /Users/you/state — inside another git repository, prefix `state/` — run `git init` in it and list it in that repository's `.gitignore`, or choose a folder in no git repository
-  ✔ state_folder  /Users/you/state — no git in this session, history in the node's `topics_history`
+  ✔ state_folder  /Users/you/state — no git in this session, the files are the record
+  ✘ state_folder  /Users/you/state — its own git repository, reached only through a remote device's shell — point this front at a folder in no git repository
 ```
 
 A check that passed needs no explanation and a check that failed needs

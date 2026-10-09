@@ -9,7 +9,7 @@
     "state_folder": {
       "type": "directory",
       "title": "State folder",
-      "description": "Required. The one folder your topics live in — its own git repository or a folder in no git repository, never one inside another git repository: /ymer:setup verifies it, drawn topics get folders beneath it, and its history is git where it is its own git repository and your Ymer Node's notebook where it is in no git repository."
+      "description": "Required. The one folder your topics live in — its own git repository or a folder in no git repository, never one inside another git repository: /ymer:setup verifies it, drawn topics get folders beneath it, and its history is git where it is its own git repository; where it is in no git repository, its files are the record."
     },
     "front": {
       "type": "string",

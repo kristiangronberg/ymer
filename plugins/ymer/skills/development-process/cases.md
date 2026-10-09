@@ -41,7 +41,8 @@ questions are numbered on from the last `Q<n>`, and the interview's
 escapes stand — not worth pursuing, a split, define's route back to
 brainstorm; where `review.md` tops with an iteration marker naming the
 phase, its finding is read first as at an iteration, because the pending
-close's own commit reads that marker consumed. A resume that is itself
+close appended the marker's `Consumed —` line, so the marker reads
+consumed (review § Input item 2). A resume that is itself
 unattended closes around the interview again, the marker's date and
 count the newest close's. A topic carries one pending interview at most:
 define stops on a pending `brainstorm.md` before it writes anything. The
@@ -112,7 +113,7 @@ learns it is the route's destination at its own opening, where topic
 resolution reads `review.md`'s first recognizer beside the task's status
 and the topic folder — brainstorm, define, scout and write-plan each
 carry that read. A marker on top is either live or consumed; which it
-is, and the command, range and committed floor that decide it, live once
+is, and the `Consumed —` line that decides it, live once
 at review § Input item 2, and nothing here restates them. A live marker
 naming the phase that is open is that session's brief, its finding the
 mandate; one naming some other phase is the same read's other answer —
@@ -135,9 +136,10 @@ ladder already prices a delta exactly as it prices anything else
   arithmetic in this section reads as the traceability-store list, and a
   list short by one returns the empty set for a whole class of
   increments. Findings an earlier entry disposed stay disposed.
-- **The plan** — the committed pre-image, which is the parent of this
-  iteration's own `: write-plan` commit. The diff that reads it is one
-  command, and it lives once, at plan-review § Steps step 2 — its one
+- **The plan** — its pre-image: the parent of this iteration's own
+  `: write-plan` commit where git tracks the state folder, the slot
+  write-plan filled before its re-plan where it does not. The read that
+  takes it lives once, at plan-review § Steps step 2 — its one
   consumer — not here. Implement's
   plan edits — mechanical corrections and decide-forward amendments
   alike — belong to the standing record rather than to the new delta:

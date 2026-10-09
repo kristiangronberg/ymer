@@ -75,7 +75,8 @@ Four rules keep the step IDs and their gates joinable across iterations:
    tick that has gone stale turns its gate red at the next implement
    rather than passing quietly.
 3. **An amended step keeps its ID and unticks.** Its payload file is
-   rewritten in place; the old bytes live in the state folder's history.
+   rewritten in place; the old bytes live in the state folder's history,
+   or in the topic's `pre-image/` slot where the files are the record.
    Letter suffixes are never version markers — they mean "several
    payloads in one step", and nothing else.
 4. **Dropped work is removed, not marked.** The task leaves the plan, its

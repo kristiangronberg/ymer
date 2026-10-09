@@ -22,8 +22,8 @@ marketplace description because they are real requirements:
   `state_folder` setting — where a drained topic gets a folder of its
   own. It can be any folder outside another git repository: where it is
   its own git repository its history is git, and a folder in no git
-  repository, or one a session without git reaches, has its history kept
-  in the node's `topics_history` table.
+  repository, or one a session without git reaches, keeps no history
+  beyond its files, which are the record.
 
 One more thing is **optional**, and the default where a session reaches
 it: a **ymer.ax** account, connected as your own MCP server — with it,

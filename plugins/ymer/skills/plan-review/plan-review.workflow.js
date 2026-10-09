@@ -121,7 +121,7 @@ ${specLine}${focusLine}${payloadsLine}${digestBlock}
 
 Steps:
 1. Read the plan in full.
-2. Read the actual codebase it touches — open the modules, schemas, tests and config the plan references, and grep for the patterns it assumes. Ground every finding in either a specific plan section or a real file:line. The repo's CLAUDE.md and README.md are the source of truth for conventions; module ownership lives in ${facts.companionSkill === 'elixir-coding-standards' ? "the app module's @moduledoc map (lib/<app>.ex) where the repo has migrated, else in README.md" : "README.md"} — read them.
+2. Read the actual codebase it touches — open the modules, schemas, tests and config the plan references, and grep for the patterns it assumes. Ground every finding in either a specific plan section or a real file:line. The repo's CLAUDE.md and README.md are the source of truth for conventions; module ownership lives in ${facts.companionSkill ? "README.md, or where the `" + facts.companionSkill + "` skill says module ownership is documented (load it by that name the way the front loads its own skills; if it will not load, say so)" : "README.md"} — read them.
 3. Apply this lens:
 ${lensBody}
 
@@ -183,7 +183,7 @@ This is the single most common failure class — be exhaustive here.`,
     requires: 'hasCode',
     requiresText: 'the plan changes at least one non-prose source file',
     body: `- Coupling and single-responsibility: does any step give one action more than one owner, or duplicate a save/update/broadcast sequence across call sites instead of hoisting it into a context function?
-- Does the design fit existing module ownership as defined in ${facts.companionSkill === 'elixir-coding-standards' ? "the app module's @moduledoc map (lib/<app>.ex), or in README.md where the repo has not migrated" : "README.md"}? Does it put logic in the wrong layer?
+- Does the design fit existing module ownership as the repo documents it — ${facts.companionSkill ? "README.md, or where the `" + facts.companionSkill + "` skill says module ownership is documented (load it by that name the way the front loads its own skills; if it will not load, say so)" : "README.md"}? Does it put logic in the wrong layer?
 - Does it duplicate logic that already exists or should be shared?
 - If the project exposes MCP tools, does the plan respect the project's established tool pipeline (schema → dispatch → validate → format layering) and keep persistence calls in context modules, out of the tool's action modules?
 - Does it introduce a worse abstraction than the codebase already uses?`,

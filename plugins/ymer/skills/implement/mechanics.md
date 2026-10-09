@@ -29,60 +29,39 @@ its command, and stop only when the work depends on one
 2. **This session is the phase due, and its plan is the reviewed one.**
    Two reads, in this order, and the order is load-bearing: a live
    marker naming another phase coexists with a `plan.md` (item 1
-   passes) and with a plan-review-newest log (the hardened read below
+   passes) and with a `Hardened —` line (the hardened read below
    passes), so only the marker read catches it.
 
    **First, marker liveness.** Read `review.md`'s first recognizer
    top-down (review § Recognizers). An `Iteration —` marker on top is
-   **live** when the phase it names has no `<topic ID>: <phase>` commit
-   over the topic folder since the commit that last touched
-   `review.md`; the command that reads that range, and the rule
-   trusting it only over a committed floor, are review § Input item 2's
-   — run with the marker's phase in place of the `implement` that item
-   names. A dirty `review.md` in the state folder leaves no committed
-   floor: surface it and stop rather than read the range. A live marker
-   naming **another phase** → stop and name that phase. A live marker
-   naming **implement** → this session is that re-entry; go on to the
-   hardened read. A consumed marker, a `## Review` entry, a
-   `## Shipped` section, or no `review.md` at all → go on to the
-   hardened read as well. This is a marker read and nothing more: no
-   task status and no folder read happen here, so it is not topic
-   resolution.
+   **live** while its block holds no `Consumed —` line; the block, the
+   line's grammar, who writes it and which phase it makes due are
+   review § Input item 2's. A live marker naming **another phase** →
+   stop and name that phase. A live marker naming **implement** → this
+   session is that re-entry, and its close consumes the marker (Phase
+   Close, step 3); go on to the hardened read. A consumed marker → read
+   the phase it makes due. **Implement** due, or a last line
+   `by implement` → go on to the hardened read. Any other phase due →
+   stop and name it: the route has not reached implement, and a
+   `Hardened —` line left from before the iteration says nothing about
+   the route since. A `## Review` entry, a `## Shipped` section, or no
+   `review.md` at all → go on to the hardened read as well. This is a
+   marker read and nothing more: no task status and no folder read
+   happen here, so it is not topic resolution.
 
    **Then, the hardened read.** plan-review's only mark on the path to
-   implement is its **phase commit**, and it counts only while it is
-   newer than any `<topic ID>: write-plan` commit over the folder: a
-   re-plan lands one of those, and that invalidates the previous
-   cycle's hardening (roadmap contract: the operations contract, Status
-   ladder). Run, from anywhere:
-
-   ```
-   git -C <state folder> log -1 --format=%s \
-       --grep '<topic ID>: plan-review' --grep '<topic ID>: write-plan' \
-       -- <repo>/YYYY/MM-DD-<topic>/
-   ```
-
-   The single output line is the verdict — read the line, not the exit
-   status, since `git log` exits 0 either way. `<topic ID>:
-   plan-review…` → hardened; proceed. `<topic ID>: write-plan…` → the
-   plan in front of this session is not the plan that was reviewed, or
-   was never reviewed at all: **stop and name plan-review**, the same
-   shape as item 1's stop — the state names the missing phase, so there
-   is nothing to ask, and a plan-review commit further down the log
-   changes nothing. Both patterns are prefixes, so a suffixed follow-up
-   commit counts as its own kind; a post-review touch that belongs to
-   the review lands under plan-review's own follow-up commit and reads
-   green. Nothing at all → no pipeline-committed plan over this folder
-   (a legacy folder, a hand-written plan): ask the user one question,
-   and never start on an unreviewed plan without an explicit go-ahead.
-   **Anything else → stop, ask**: `--grep` searches the whole commit
-   message, not the subject, so a commit matched through its *body*
-   prints a subject that is neither kind — a state no reading names,
-   never a verdict.
-   The pathspec is load-bearing, not decoration: topic IDs are **not**
-   unique across repo subtrees, and an unscoped match can read a
-   sibling repo's plan-review as this topic's — a false green that
-   starts an unreviewed implementation.
+   implement is the `Hardened — <YYYY-MM-DD>` line it writes directly
+   under `plan.md`'s title as the last step of its rewrite, and a
+   re-plan never carries that line over, so a plan changed after its
+   review carries none (roadmap contract: the operations contract,
+   Status ladder). Read the head of `plan.md`, on any kind of state
+   folder. The line present → hardened; proceed. Absent → the plan in
+   front of this session is not the plan that was reviewed, or was never
+   reviewed at all: **stop and name plan-review**, the same shape as
+   item 1's stop — the state names the missing phase, so there is
+   nothing to ask. A plan reviewed before plan-review wrote the line
+   carries none either, and reads the same way: plan-review runs again,
+   the safe side.
 3. **The trees are ready.** **Which trees this gate reads is keyed on the
    plan's target paths — never on topic kind**: the paths its
    `payloads/manifest` names, plus any target its steps name. *How* each
@@ -305,7 +284,7 @@ step 1's place on a meta topic and beside it on a code-repo topic; why the
 commit is a duty rather than a convenience is the charter's
 (development-process § Topic kinds). Each tree is read from its own
 `status`/`log` and committed on its own. Public register — clean imperative
-message, no topic ID (registers: the operations contract); several machinery
+message, no topic ID (registers: the substrate contract, § Commit registers); several machinery
 commits per topic are fine, and every ref is recorded in `implemented.md`:
 
 ```

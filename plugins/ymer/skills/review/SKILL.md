@@ -31,8 +31,8 @@ bar's call, never a count; a topic with a tiny increment makes a
 naturally tiny walkthrough.
 
 **Every topic is reviewed.** The lens pass carries one precondition — a
-diff exists, wherever the pass runs — and the walkthrough carries none: a
-topic whose implement made no diff still walks its artifacts' real
+diff or a change set exists, wherever the pass runs — and the walkthrough carries none: a
+topic whose implement wrote nothing still walks its artifacts' real
 content. The one lane switch past this phase is development-process's
 **lightweight close-out**, taken per topic at the user's explicit call —
 never this session deciding about itself.
@@ -609,7 +609,7 @@ tree's main is ahead of origin the moment its commit lands.
 
 - The bound is the head-scratch test, never a clock: which stops and
   how many is the bar's call, never a count
-- Every topic is reviewed; the lens pass's one precondition is a diff,
+- Every topic is reviewed; the lens pass's one precondition is a diff or a change set,
   the walkthrough has none; the lightweight close-out lane is the one
   bypass, and it is the user's call, not this session's
 - The lens pass normally arrives already run: implement's close

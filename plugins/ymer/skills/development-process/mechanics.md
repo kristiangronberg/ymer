@@ -20,7 +20,7 @@ Topic artifacts are opened with the Read tool: a direction doc, a survey
 map or a plan routinely exceeds the Bash output cap, and a `cat` of one
 bounces to a persisted-output file and costs the read twice (the
 instrument rule: the front's initial instructions).
-The state folder is the user's own repository; `<repo>` is the
+The state folder is the user's own folder; `<repo>` is the
 checkout's directory name, or `meta` for cross-repo process
 topics, which have no project checkout of their own; the topic ID
 stays `YYYY-MM-DD-<topic>`, its folder splits the ID after the year.
@@ -50,9 +50,10 @@ records the squash ref plus any machinery commit refs the increment
 carries, per tree. A topic is **shipped iff `review.md` carries a
 ship section**; that file plus the shipped code is the completion
 record. Each phase commits its own writes in the state folder at
-the end of its run (message: `<topic ID>: <phase>`) — and since the
-`hardened` rung is read off the `: plan-review` commit, that commit is not
-bookkeeping but the record itself. Push and pull belong to the user in
+the end of its run (message: `<topic ID>: <phase>`) where git tracks
+the folder, and the files alone are the record where it does not; the
+`hardened` rung is read off plan-review's `Hardened —` line in
+`plan.md`, never off a commit. Push and pull belong to the user in
 every repository; local project-repo git is Claude-run at the moments the
 skills name (ownership: the substrate contract; contract: *Defaults and holds*,
 below).
@@ -126,7 +127,7 @@ hand-off — whatever the topic's kind, and whichever close ran.
   committed scoped to the paths this session touched (terms: the plugin
   glossary; mechanics and the by-hunk recipe: the substrate contract).
   Commit messages run in two registers
-  (the operations contract):
+  (the substrate contract, § Commit registers):
   the state folder is the internal register — phase writes commit as
   `<topic ID>: <phase>`, workflow metadata welcome; every other
   repository, each machinery tree included, is the public register — imperative

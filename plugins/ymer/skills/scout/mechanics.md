@@ -33,7 +33,7 @@ first — scoped by path on both halves, public register — and record the
 ref in `survey.md`.
 
 The close then commits the phase's writes in the state
-folder — no roadmap write: the topic's task is already in the pipeline, and `survey.md` plus this commit are what the `surveyed` rung is read from (roadmap contract: the operations contract):
+folder — no roadmap write: the topic's task is already in the pipeline, and `survey.md` is what the `surveyed` rung is read from (roadmap contract: the operations contract):
 
 ```
 git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/

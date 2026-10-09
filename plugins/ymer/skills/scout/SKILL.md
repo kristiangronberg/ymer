@@ -52,7 +52,10 @@ and name that phase. The `Interview pending —` marker at the head of
 `brainstorm.md` or `spec.md` names its artifact's phase the same way —
 stop and name it, the command written out. Anything else is a topic
 **in flight** — reuse the
-folder and survey as usual.
+folder and survey as usual; where `review.md` tops with a consumed
+marker, the close appends `Consumed — <YYYY-MM-DD> by scout` to the
+marker's block as its last write before the phase's commit (review
+§ Input item 2).
 
 ## The Survey
 

@@ -45,8 +45,8 @@ judgement.
 **Status ladder — vocabulary, derived, never stored.**
 `brainstormed → surveyed → specced → planned → hardened → implemented`.
 The rungs still name where a topic is; nothing records them. Each is
-recognised from the topic's artifacts plus the topic's
-`<topic ID>: <phase>` commits in the state folder:
+recognised from the topic folder's artifacts alone, on every kind of
+state folder:
 
 | Rung           | Recognised by                                                          |
 |----------------|------------------------------------------------------------------------|
@@ -54,49 +54,19 @@ recognised from the topic's artifacts plus the topic's
 | `surveyed`     | `survey.md` exists                                                     |
 | `specced`      | `spec.md` exists and its head carries no `Interview pending —` line |
 | `planned`      | `plan.md` exists                                                       |
-| `hardened`     | the newest `<topic ID>: plan-review` / `<topic ID>: write-plan` commit **over the topic's folder** is a plan-review (no reading where git does not track the state folder — below) |
+| `hardened`     | `plan.md` carries plan-review's `Hardened — <YYYY-MM-DD>` line directly under its title |
 | `implemented`  | `implemented.md` exists                                                |
 | shipped        | `review.md`'s first recognizer top-down is `^## Shipped` — content-based, because the file exists mid-phase |
 
-`hardened` needs the commit because plan-review's only mark on the path
-to implement is its phase commit — the rewritten `plan.md` does not say
-it was reviewed, and the define branch's `review.md` marker sends the
-topic away from implement rather than toward it. And it needs the
-*newest* such commit: a re-plan lands its own `<topic ID>: write-plan`
-commit, and that invalidates the previous cycle's hardening. So the rung
-is a fact about commit order — of the two plan-shaping commit kinds over
-the folder, the newest is a plan-review. Scope the log to the folder —
-topic IDs are not unique across areas, and an unscoped match can read
-another area's commit as this topic's:
-
-```
-git -C <state folder> log -1 --format=%s \
-    --grep '<topic ID>: plan-review' --grep '<topic ID>: write-plan' \
-    -- <repo>/YYYY/MM-DD-<topic>/
-```
-
-Multiple `--grep` patterns OR by default, so `-1` returns the newest
-commit of either kind. The single output line is the verdict — read the
-line, not the exit status, since `git log` exits 0 either way:
-
-- `<topic ID>: plan-review…` → hardened.
-- `<topic ID>: write-plan…` → not hardened: the plan changed after it
-  was last reviewed, or was never reviewed. Both patterns are prefixes,
-  so a suffixed commit — `: write-plan corrections`, `: plan-review
-  (re-review after manual edits)` — counts as its own kind.
-- nothing → no pipeline-committed plan over this folder: not hardened
-  by this predicate, and implement's gate asks rather than reading the
-  absence as a verdict.
-- anything else → a state no reading names. `--grep` searches the whole
-  commit message, not the subject, so a commit matched through its
-  *body* prints a subject that is neither kind; implement's gate stops
-  and asks rather than treating it as a verdict.
-
-A state folder git does not track has no `hardened` reading: the phases
-that need it, plan-review and implement, are development phases, and
-they run only where the state folder is its own git repository. The
-other rungs are existence or content readings, and they hold in any
-folder.
+`hardened` needs a line of its own because the rewritten `plan.md` does
+not otherwise say it was reviewed, and the define branch's `review.md`
+marker sends the topic away from implement rather than toward it.
+Plan-review writes the line as the last step of its rewrite, so a torn
+run leaves the plan unhardened. A re-plan writes the whole plan afresh
+and never carries the line over, so a plan changed after its review
+reads unhardened until plan-review runs again. Where git tracks the
+state folder it keeps the history of both, and it is not the oracle:
+the line is.
 
 A topic may skip phases, so the rungs are not a chain — each predicate
 stands alone, and a rung is a reading of state, never a claim that some
@@ -181,16 +151,62 @@ never skipped silently. These writes are pipeline-critical.
 
 ## The topic's artifacts
 
-A topic's artifacts are files in a folder under the state folder, whose
-history is git where the state folder is its own git repository and the
-node's `topics_history` where it is in no git repository or the session
-has no git (→ reach rule).
-The names are fixed, one
-artifact per name:
+A topic's artifacts are files in a folder under the state folder.
+**The state folder's kind** decides what keeps their history, and it is
+read from the folder itself, once per session, at a run's guard:
+
+```
+git -C <state folder> rev-parse --is-inside-work-tree --show-prefix
+```
+
+- `true` alone, or `true` then an empty line (the prefix is empty at the
+  top of a repository, and the tool may not show it): the folder is its
+  own git repository. Git keeps the history, each save is a commit, and
+  the substrate contract governs every git step over it.
+- `true`, then a non-empty prefix line: the folder is inside another git
+  repository. Refused, because every save would commit into that other
+  repository.
+- A non-zero exit whose message says `not a git repository`: a folder in
+  no git repository. Exit 127, no `git` to run in this session, reads
+  the same once the session's own file tools find the folder. Either
+  way the files are the record: each save is the file alone, and no
+  history is kept beyond it.
+- Anything else, a missing folder or `false` with exit 0 among it, is a
+  state no reading names, and is refused.
+
+Every phase relies on this reading alone. Where it reads git, git is
+used; otherwise a step that would commit into the state folder is
+skipped, because the file it would commit is already the save. The one
+combination the folder cannot tell, a git repository reached by a
+session whose only shell over it is a remote device's, is refused by
+setup's state-folder check, so no phase meets it.
+
+The names are fixed, one artifact per name:
 `request.md`, `sketch.md`, `brainstorm.md`, `survey.md`, `spec.md`,
 `plan.md` with its `payloads/`, `implemented.md`, `review.md`. Nothing
-ever moves between them and no phase creates a sibling file: a plan is
-rewritten in place, and its history is the store's.
+ever moves between them and no phase creates a sibling file: an artifact
+is rewritten in place, and its **pre-image**, its state before the
+newest in-place rewrite (term: the plugin glossary), is the store's.
+Where git keeps the history, the pre-image is the rewrite commit's
+parent. Where the files are the record, the rewriter copies the artifact
+into the topic's `pre-image/` slot before the rewrite starts, as
+`pre-image/<artifact file name>`, with a plan's `payloads/` beside it as
+`pre-image/payloads/`. The copy replaces that artifact's entries
+whole: the rewriter first removes `pre-image/<artifact file name>`, and
+for a plan the whole of `pre-image/payloads/`, so no file of an earlier
+copy survives, and it never touches another artifact's entries. Once
+the copy is complete it writes the stamp
+`pre-image/<artifact file name>.taken`, and the phase's close removes
+it. A rewriter that finds its stamp standing is resuming a torn rewrite
+and skips the copy: the slot already holds the true pre-image, and the
+artifact, half rewritten, no longer does. A failed copy stops the
+rewrite before any byte of the artifact changes. The slot is the
+no-sibling rule's one exception: it is not an artifact, and no reader
+takes it for the live file. Only the last rewrite is recoverable from
+it; a folder moved out of git starts with an empty slot. The rewrites
+that fill it are brainstorm's consolidation, write-plan's re-plan and
+plan-review's; the other in-place rewrites keep no pre-image where the
+files are the record.
 
 **`request.md`** is the intake as it arrived, written once by whatever
 starts the topic and never rewritten afterwards — an existing one is a
@@ -261,11 +277,22 @@ The canonical topic ID is the full dated slug `YYYY-MM-DD-<topic>`. It is
 what remediation markers, citations, and the state folder's phase commits
 use; a topic's task carries the bare slug (→ Roadmap). Its folder is
 `<repo>/YYYY/MM-DD-<topic>/` — split the ID after the year; nothing else
-changes. In the node's `topics_history` the same ID is the `topic`
-column and the area is `area`, so the join key from a topic to its
-folder is the pair. One artifact's history is addressed by front, topic,
-area and artifact together — fronts sharing a node can hold the same
-topic ID — as the `setup` skill's grammar for the table states.
+changes.
+
+## Changing the notebook
+
+The node's notebook keeps no history of its own: git never covered it,
+whatever the state folder's kind. So a session about to change what the
+notebook already holds takes a notebook backup first, through the
+notebook's own backup, and notes its id: before any DDL, before an
+`UPDATE` or a `DELETE`, and before a plan payload is applied to the
+notebook. One backup covers the run that follows it. Inserting new rows
+that change nothing already there, a captured drop or a missing grammar
+row, needs none, and neither does an operation of this contract's on
+the node as coordinator (→ The node as coordinator): a one-row write to
+a task, read back by its own postcondition. A restore puts back everything as it was at the backup
+and discards whatever any client wrote after it, so the backup is the
+safety net, not an undo; an undo is the exact inverse of the change.
 
 ## Binding per coordinator
 
