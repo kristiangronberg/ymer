@@ -1,7 +1,7 @@
 {
   "name": "ymer",
   "description": "Brainstorm, scout, define, plan, harden, implement, review: a seven-phase practice that takes a change in Claude Code from a rough idea to a shipped commit. What you get is work that holds up. Every phase leaves a written record that the next session builds on, plans and code both face an adversarial review before they land, and anything you notice along the way goes into a pool, so your next piece of work is drawn from it instead of recalled from memory. Runs on a Ymer Node you host locally; a ymer.ax account is optional.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "author": {
     "name": "Kristian Grönberg"
   },

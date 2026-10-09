@@ -5,7 +5,7 @@ The `ymer` Claude Code plugin marketplace. See `README.md` for what using the pl
 ## Conventions
 
 - Domain terms for this repo live in the root `glossary.md`: documents use a term and point at its home, never redefine it. A plugin that ships its own glossary file has one pointer entry in the root, and its skills read that file rather than this one — a front receives a plugin's own files and no repo-level file.
-- Edit a plugin in place and it is live in every session that has the marketplace added by path — no update step, no version bump. Keep the working tree runnable.
+- Edit a plugin in place and every new session that has the marketplace added by path runs the edit — no update step, no version bump. A running session keeps the skill bodies it loaded until `/reload-plugins`. Keep the working tree runnable.
 - The plugins describe only the present. Before 1.0 a release carries no migration for state an earlier release left behind: it states how things work now, and a user re-runs `/ymer:setup` after upgrading. Handling deprecated state is a question for 1.x.
 - Run `claude plugin validate .` and `claude plugin validate plugins/<plugin>` after touching any manifest.
 - Skill prose is intent-first: state what is protected and why, and let the executor derive edge handling — enumeration ages worse than intent. Reserve hard MUST wording for spots where failure is silent and expensive.
