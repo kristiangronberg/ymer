@@ -185,7 +185,7 @@ topic_files() { # topic_files <drained_to> — every request.md in that topic's 
 # mint's two searches of state/, the listing of unstarted topics
 # `grep -rl --include='request.md' 'source: mint' <folder>` and the
 # recurrence search `grep -r --exclude-dir=pre-image '<term>' <folder>`,
-# each spelled as mint/SKILL.md spells it, its quotes single or double,
+# each spelled as mint/mechanics.md spells it, its quotes single or double,
 # the folder bare or quoted with an optional trailing slash, and the term
 # quoted, not opening with `-` — grep reads a word opening with one as an
 # option, whatever its quotes — and with no quote, backslash, `$`,
