@@ -1254,10 +1254,9 @@ _Avoid_: charter store, ref store, store (bare — `chartered store` is the
 knowledge-placement contract's word)
 
 ### tutoring contract
-The numbered ruleset every /tutor sitting runs under — the spike-distilled
-core (points 1–16) plus the facilitation points ported from learn at the
-fold (2026-08); self-improving via evidence lines, with unproven points
-carrying a provisional † until engagement evidence confirms them.
+The numbered ruleset every sitting runs under, engagement and study alike.
+It improves itself through evidence lines, and a point not yet confirmed
+by engagement evidence carries a †.
 
 ## U
 

@@ -54,7 +54,7 @@ a topic touches are **derived, not guessed**: match the topic's
 artifacts — the plan's tools, technologies, file kinds, and process
 areas — against the subject rows of the subject index
 (`tutor_subjects` in the Ymer Node, read with the node's `notebook`
-`query` through the door tutor's guard names), and take every row
+`query`; tutor's § First, the stores says which node that is), and take every row
 the artifacts name. Fetch each matched subject's knowledge doc from ymer (handles in that
 same table). The docs record what the developer has provenly learned: a
 **checked** entry is known, so assume it rather than teaching it; an

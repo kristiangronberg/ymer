@@ -192,8 +192,11 @@ dispose:
 - **enrichment gap** → no task, no edge. The leaf is written now, in
   the beat: append an unchecked entry to the subject's knowledge
   doc (entry format, index, **and every write rule that section
-  carries** — the store has no restore action: tutor's Knowledge Docs
-  section and its subject index in the Ymer Node, read with the node's
+  carries**: § Knowledge Docs in
+  `${CLAUDE_PLUGIN_ROOT}/skills/tutor/SKILL.md`, where its entry format
+  and the whole-body-root rule sit, and in `${CLAUDE_PLUGIN_ROOT}/skills/tutor/mechanics.md`, where
+  its write rules sit, and its subject index in the Ymer Node, read
+  with the node's
   `notebook` `query`). No knowledge doc yet, or no subject index to find
   one through? The leaf
   rides the direction doc's record instead — creating the doc is
