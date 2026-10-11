@@ -396,6 +396,11 @@ rather than an escape: the pool is one of the stores above.
   spine in the top, substrate and earned precision in the reference
   file. A top-side reference to reference-file content names the file
   and section (`mechanics.md § Drift Valve`), never "above" or "below".
+  A spine rule is never restated in `mechanics.md` or `cases.md`: the
+  top is the rule's one home and a reference file carries only what the
+  top points at, because a copy drifts. A pointer's label names every
+  rule a reader takes from the section it points at, so a reader who
+  follows it for one rule does not miss another sitting there.
   The check is reading: a prose-bound unit is invisible to every shape
   rule, which is how seven such sites survived thirty-three green gates.
 
