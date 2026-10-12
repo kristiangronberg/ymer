@@ -105,7 +105,7 @@ const specLine = specPath
 const focusLine = focus ? `\nEXTRA EMPHASIS for this run: ${focus}\n` : ''
 
 // Payloads live beside the plan, not in it (contract: the
-// development-process skill's Artifacts section): every payload's
+// process contract's § The payload contract): every payload's
 // bytes are a file under the topic's payloads/ directory, whatever
 // its extent, with one payload gate per file in payloads/manifest.
 // Agents Read them from disk selectively — never inlined here.
@@ -458,8 +458,8 @@ async function runReviewLens(lens) {
 // --- Applicability gate: drop lenses whose precondition fails, BEFORE spawning.
 // The set of dropped lenses is derived from the declarations above — there is no hand-maintained
 // list, and a lens added later carries its own applicability. A dropped lens is
-// reported with the precondition that failed, never silently (charter: Review
-// effort).
+// reported with the precondition that failed, never silently (the process
+// contract, § Review effort).
 const applicable = LENSES.filter((l) => !l.requires || Boolean(facts[l.requires]))
 const droppedLenses = LENSES.filter((l) => l.requires && !facts[l.requires]).map((l) => ({
   key: l.key,

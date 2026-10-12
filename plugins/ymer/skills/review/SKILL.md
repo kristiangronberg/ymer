@@ -33,7 +33,7 @@ naturally tiny walkthrough.
 **Every topic is reviewed.** The lens pass carries one precondition — a
 diff or a change set exists, wherever the pass runs — and the walkthrough carries none: a
 topic whose implement wrote nothing still walks its artifacts' real
-content. The one lane switch past this phase is development-process's
+content. The one lane switch past this phase is the process contract's
 **lightweight close-out**, taken per topic at the user's explicit call —
 never this session deciding about itself.
 
@@ -76,11 +76,11 @@ of minutes, the walkthrough opening on the other side of it. Everything
 below is the procedure wherever it runs; the two operators differ in
 nothing but which session they are.
 
-**On an iteration the subject is the delta** (charter:
-development-process, *Iteration*) — **this paragraph is that
+**On an iteration the subject is the delta** (the process contract,
+§ Iteration) — **this paragraph is that
 computation's one home**; every other site names the two ref lines and
 points here. The traceability-store list is not this paragraph's either:
-it is the charter's machinery-traceability ground rule, read here rather
+it is the process contract's § The traceability stores, read here rather
 than copied. The subject is what the record leaves uncertified, plus the
 working tree. Compute it from the record itself, which is the only
 enumerator this topic has — machinery commits carry public-register
@@ -88,8 +88,7 @@ messages with no topic ID, so "this topic's refs" is unreadable from
 either tree's log:
 
 1. Collect the topic's **recorded refs** — every traceability store the
-   charter's machinery-traceability ground rule names
-   (development-process § Process ground rules), **less `review.md`'s
+   process contract names (§ The traceability stores), **less `review.md`'s
    ship section**, and
    only that:
    a shipped topic does not iterate, so the shipped ref is never a
@@ -277,8 +276,8 @@ picks from a taxonomy. Five outcomes:
   lands now as a developer edit (→ Developer edits); a substantive one
   whose right answer is still open is a full iteration of this topic,
   and the close names the phase it re-enters at — **derived** from the
-  artifact owning the contested statement, never picked here (charter:
-  development-process, *Iteration*; → Iterate).
+  artifact owning the contested statement, never picked here (the process
+  contract, § Iteration; → Iterate).
 - **decide-forward** — the same iteration, executed in place because the
   developer has already made the new decision at the code: the edit
   stands, and the facilitator writes the dated amendment into the
@@ -337,7 +336,7 @@ and an iterate or wait close commits it just the same, its ref riding the
 entry's `Unreviewed:` line (→ Phase Close). Nothing this session changed
 in a project checkout is left uncommitted at a boundary.
 Destructive-of-uncommitted steps stay holds (*Defaults and holds*:
-development-process). The lens pass reviewed one diff; edits make it
+the process contract). The lens pass reviewed one diff; edits make it
 another — and the pass normally ran a session earlier, so "after the
 pass" spans the whole implement→review gap, every edit made between the
 two sittings included. When a tree gained edits after the lens pass's
@@ -484,8 +483,8 @@ direction itself is in doubt — and the session ends by iterating rather
 than pushing through; so does a disposition of *iterated in scope* whose
 fix is substantive and whose right answer is still open. **The phase is
 derived, never picked**: it is the one owning the artifact where the
-contested statement lives, and the charter's rule (development-process,
-*Iteration*) is where that reads off. The close prepends the marker as
+contested statement lives, and the process contract's rule (§ Iteration)
+is where that reads off. The close prepends the marker as
 the newest entry; **the findings below it stay** — they describe real
 code, not a plan about to change:
 
@@ -561,7 +560,7 @@ Fix issues inline and move on — no re-review loop.
 *Read with this section: `mechanics.md` § Phase Close — three closes (the mechanics).*
 
 **Ship** — Claude-run end to end except the push. A meta topic skips
-steps 1, 2, and 6 (topic kinds: development-process § Topic kinds); the
+steps 1, 2, and 6 (topic kinds: the process contract, § Topic kinds); the
 machinery commit, where this session made machinery edits, stands where
 steps 1–2 stand, run before step 3 — the ship section, which names its
 ref — its ref joining `implemented.md`'s refs in the ship

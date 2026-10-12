@@ -10,11 +10,11 @@ The cases of the review skill, moved here byte for byte from `SKILL.md`, which k
    plus every machinery commit the session made — one machinery tree
    or several — on either kind, the lens pass's own
    fix commits excepted: those are the `## Review` entry's fixes line's
-   (topic kinds: development-process § Topic kinds). **Pre-flight:**
+   (topic kinds: the process contract, § Topic kinds). **Pre-flight:**
    derive the predecessor's close state and any pending steps from
    durable state; finish an unfinished close from its first missing
    outcome; re-report each pending step with its command (*Defaults and
-   holds*: development-process). **Premature is read from the state
+   holds*: the process contract). **Premature is read from the state
    folder, never from this file**: no `<topic ID>: implement` commit over
    the topic folder — `git -C <state folder> log --oneline --grep
    '<topic ID>: implement' -- <repo>/YYYY/MM-DD-<topic>/`, empty — means
@@ -58,8 +58,8 @@ The cases of the review skill, moved here byte for byte from `SKILL.md`, which k
    implement's session is on the branch by construction, put there by its
    own readiness gate. Where the session's machinery
    edits are part of the increment, the machinery commits the record
-   names join the subject — the traceability-store list is the charter's
-   ground rule, read at § The lens pass — read per tree
+   names join the subject — the traceability-store list is the process
+   contract's (§ The traceability stores), read at § The lens pass — read per tree
    (`git -C <tree> show <ref>`, one per ref, per machinery tree the
    record names) plus that tree's working tree; on a meta topic
    they are the whole of it.
@@ -157,14 +157,14 @@ The cases of the review skill, moved here byte for byte from `SKILL.md`, which k
 5. `sketch.md`, **when it exists** — the contrast between the user's own
    attempt and the shipped code ("your sketch did X; the shipped code
    does Y"). This phase is its only reader (reader contract:
-   development-process § Artifacts). Not pre-test material; when there
+   the operations contract, § The topic's artifacts). Not pre-test material; when there
    is no sketch, nothing stands in for it.
 6. The developer's **knowledge docs** — the calibration input (→ Prep).
 
 ## The lens pass
 
 **Precondition: a diff or a change set exists** — read off what is already held (lens
-applicability: development-process, *Review effort*): on a code-repo
+applicability: the process contract, § Review effort): on a code-repo
 topic, `git log --first-parent --no-merges main..<topic> --oneline` is
 non-empty — the branch's own commits, read the way the delta is read
 below, its merge companion included; a three-dot `git diff
@@ -174,7 +174,7 @@ it empty on a branch that does carry the topic's own work; where the
 session edited machinery, `implemented.md` names at least one machinery
 commit ref per machinery tree it edited,
 so a meta topic whose session touched only a machinery tree has a diff like
-any other (topic kinds: development-process § Topic kinds). Where no
+any other (topic kinds: the process contract, § Topic kinds). Where no
 diff exists, the topic's **change set** (term: the plugin glossary)
 stands in: the caller hands code-review that set as its target, and
 the pass reads each payload as the change and its target in place, a
@@ -332,7 +332,7 @@ tree tokens the field already has: its commit is the running phase's
 own state-folder commit, made after this line and found by topic ID in the
 internal register; the fix list names the file as always. **This line is
 where a pass's fix refs live durably** — their traceability store
-(development-process § Process ground rules), written the moment the
+(the process contract, § The traceability stores), written the moment the
 fixes land by whichever operator ran the pass, on every close, and never
 rewritten.
 
@@ -361,7 +361,7 @@ are record, for the operator and for whoever reads the entry.
 Both halves of `Reviewed:` ride one line where both apply — `Reviewed:
 branch @ <sha> · <tree> <sha> · <tree> <sha>` — which is how a
 code-repo topic's machinery edits reach the next delta (topic kinds:
-development-process § Topic
+the process contract, § Topic
 kinds). How the next iteration reads the two lines is computed once, at
 § The lens pass; nothing recomputes it here.
 
@@ -376,7 +376,7 @@ reads that entry's line), and every edit made since — the decide-forward
 that fires no close above all, and the implement→review gap's developer
 edits with it. It
 is a code-review run scoped to that diff, its **tier keyed first** — by
-risk profile (charter: development-process, *Review effort*), before any
+risk profile (the process contract, § Review effort), before any
 skill loads: an inline-read delta is read in-session and loads nothing,
 the tier is the one risk profile derives and never one picked by hand,
 the line carries `<tier>` and no roster, and the pass runs **without

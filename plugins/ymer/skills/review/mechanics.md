@@ -33,12 +33,12 @@ and findings an earlier entry disposed stay disposed.
 Applied fixes land in the tree that holds the file each one fixes — the
 branch for the project's files, each machinery tree for its own files
 (one machinery tree or several), on either
-topic kind (topic kinds: development-process § Topic kinds) — and then
+topic kind (topic kinds: the process contract, § Topic kinds) — and then
 **ride their own commit(s), never the tree**: one commit per tree the
 fixes touched, public register, **its ref onto this entry's `Fixes
 applied (--fix):` line and onto no other store** — the traceability
 store for a pass's fix commits, whichever operator ran the pass and
-whichever close follows (development-process § Process ground rules; the
+whichever close follows (the process contract, § The traceability stores; the
 line's tree-marked grammar: → The Close). Work a pass covered and work
 no pass has seen never share a ref — the certification arithmetic is
 built on that separation — and nothing machine-authored is left
@@ -66,7 +66,7 @@ layer and are silent on the repo-specific layer where most stops live;
 and an empty index — a fresh install has no rows, and a node without
 the index's tables, or no node at all, reads as one — runs the walkthrough
 uncalibrated and says so in the `Calibration` tail. Docs unreachable →
-the fallback rule (*Defaults and holds*: development-process): retry
+the fallback rule (*Defaults and holds*: the process contract): retry
 while the session runs, and meanwhile calibrate from the artifacts
 alone, an unread doc counting exactly as an unchecked one; a doc that
 never lands before the close is named in the `Calibration` tail —
@@ -78,7 +78,7 @@ whole product is stop exposition, which the lane drops — and the
 ## Phase Close — three closes
 
 One continuous execution, state changes before announcements (*Defaults
-and holds*: development-process). **Every close commits every tree this
+and holds*: the process contract). **Every close commits every tree this
 session changed** and writes the record; only the ship close touches the
 project repo's main. In the **project checkout** that is exactly one
 commit per close — `git add -A` on the topic branch, public register:
@@ -95,8 +95,8 @@ landed (→ The lens pass) — **every close** commits them before its state-fol
 commit (the machinery commit: per tree, scoped `add <files>` *and* the same
 pathspec on the commit, never `-A`, or by hunk where the file also carries
 a foreign edit — recipe: the substrate contract; public register), whatever
-the topic's kind; why that is a duty rather than a convenience is the charter's
-(development-process § Topic kinds). Ship's
+the topic's kind; why that is a duty rather than a convenience is the process contract's
+(§ Topic kinds). Ship's
 ref joins the ship section; on an iterate or wait close every ref this
 session committed and no pass covered — the close's own project-checkout
 commit — rides the `Unreviewed:` line in the open `## Review` entry,
@@ -162,7 +162,7 @@ selects nothing: it fires no close.
    conflict as a finding with its disposition, then the iterate close's
    marker and ref lines, step 1's fold riding `Unreviewed:`. Nothing
    irreversible has run — review post-hoc at `review.md`** (*Defaults and
-   holds*: development-process). **A red at that run is the same
+   holds*: the process contract). **A red at that run is the same
    stop**, and takes that default whole, its abort aside: main
    untouched, the close re-derived into an iterate close before it is
    touched. The merge stays on the branch — it has concluded, so
@@ -194,7 +194,7 @@ selects nothing: it fires no close.
    pending push. The `Machinery
    commits:` line is **additive, never an alternative**: it names every
    machinery ref this increment carries, marked per tree — every
-   traceability store the charter's machinery-traceability ground rule
+   traceability store the process contract's § The traceability stores
    names, this close's own commit among them — so a code-repo topic
    whose session edited machinery carries both lines. It does not
    enumerate the stores, deliberately: a subset written here is the

@@ -22,7 +22,7 @@ Run these checks before writing any code — they are this phase's
 state and any pending steps from durable state; finish an unfinished
 close from its first missing outcome; re-report each pending step with
 its command, and stop only when the work depends on one
-(*Defaults and holds*: development-process). Then:
+(*Defaults and holds*: the process contract). Then:
 
 1. **The plan exists.** No `plan.md` in the topic directory → stop and name
    **write-plan**; this session is premature.
@@ -99,10 +99,10 @@ its command, and stop only when the work depends on one
    for its commit. **Hold: the concurrent session's own commit.** Absent
    the user's input this gate surfaces and stops; foreign uncommitted work
    is never reset, stashed, committed, or planned around (*Defaults and
-   holds*: development-process).
+   holds*: the process contract).
 4. **The project-checkout pre-flight** (code-repo topics; a meta topic has
    no branch — skip it and run shared-tree rules only; topic kinds:
-   development-process § Topic kinds). Run it as the substrate contract
+   the process contract, § Topic kinds). Run it as the substrate contract
    states it, Claude-run, in this order:
 
    ```
@@ -131,7 +131,7 @@ its command, and stop only when the work depends on one
    what remains is one question with a written answer: is every commit
    here a ref the record names? Sketch commits → **stop before the stash**
    and re-report the pending reset (*Defaults and holds*:
-   development-process): merging the sketch makes it this topic's and the
+   the process contract): merging the sketch makes it this topic's and the
    ship squash carries it into main, and a reset run afterwards would
    discard a merge of main along with it.
 
@@ -165,7 +165,7 @@ its command, and stop only when the work depends on one
    destroys nothing — record the conflict (the paths, the decision,
    main's ref) and stop through the drift valve, naming the phase that
    owns the decision — review post-hoc at `review.md`'s marker**
-   (*Defaults and holds*: development-process).
+   (*Defaults and holds*: the process contract).
 
 5. **The baseline is measured.** The plan's own whole-tree verification
    command — the one its last task names (`mix test`, the precommit
@@ -215,7 +215,7 @@ its command, and stop only when the work depends on one
 - **A payload is applied from its file.** A step that names a
   `payloads/` file lands by Reading that file and re-emitting its bytes
   through Write/Edit — never retyped from memory, never reconstructed
-  from plan prose (contract: development-process § Artifacts). The
+  from plan prose (contract: the process contract, § The payload contract). The
   plan's own `Run:` lines invoke the payload verifier at task
   boundaries; a FAIL on an earlier, already-ticked step is the clobber
   signal, or — with every gate's box ticked — a promised occurrence no
@@ -229,7 +229,7 @@ The open-decision stop's four close steps (the stop itself: `SKILL.md
 § Drift Valve`), in order:
 
   1. **Commit this session's machinery edits**, where it made any — the
-     duty every close carries (development-process § Topic kinds): the
+     duty every close carries (the process contract, § Topic kinds): the
      machinery trees it edited, each scoped `add <files>` plus the
      same pathspec on the commit, public register, exactly as the Phase
      Close's machinery commit below. The project checkout is not committed
@@ -275,14 +275,14 @@ The open-decision stop's four close steps (the stop itself: `SKILL.md
 
 No user gate: the close runs straight through, one continuous execution,
 state changes before announcements (*Defaults and holds*:
-development-process). Engaging the human with the real diff is review's
+the process contract). Engaging the human with the real diff is review's
 subject, and a "proceed?" here would be a round-trip every topic pays
-twice. A meta topic skips step 1 (topic kinds: development-process
-§ Topic kinds). **Where this session made machinery edits** — on either
+twice. A meta topic skips step 1 (topic kinds: the process
+contract, § Topic kinds). **Where this session made machinery edits** — on either
 kind, in any machinery tree — the **machinery commit** runs first, in
 step 1's place on a meta topic and beside it on a code-repo topic; why the
-commit is a duty rather than a convenience is the charter's
-(development-process § Topic kinds). Each tree is read from its own
+commit is a duty rather than a convenience is the process contract's
+(§ Topic kinds). Each tree is read from its own
 `status`/`log` and committed on its own. Public register — clean imperative
 message, no topic ID (registers: the substrate contract, § Commit registers); several machinery
 commits per topic are fine, and every ref is recorded in `implemented.md`:

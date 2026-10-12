@@ -49,7 +49,7 @@ trimmed option when the evidence supports it. An honest "the marginal half
 costs X and starts paying when Y" beats cheerleading the whole item.
 **Default: author per the stated recommendation, the alternative and its
 cost recorded in the plan header — review post-hoc there**
-(*Defaults and holds*: development-process).
+(*Defaults and holds*: the process contract).
 
 ## Grounding
 
@@ -60,21 +60,21 @@ steps from durable state; finish an unfinished close from its first
 missing outcome; re-report each pending step with its command, and stop
 only when this phase's work depends on one — a pending branch reset
 does, a pending push does not (*Defaults and holds*:
-development-process).
+the process contract).
 
 **Topic resolution** runs next (term: the plugin glossary): the task's
 status (*look up topic*, binding: the operations contract), the topic folder —
 present or not, and whether it holds `request*.md` — and, where the
 folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
-`Interview pending —` marker at its head (development-process
-§ Artifacts). A marker on top of `review.md` is **live** while its block
+`Interview pending —` marker at its head (the interview procedure,
+§ 4. Pending). A marker on top of `review.md` is **live** while its block
 holds no `Consumed —` line; the block, the line's grammar, who writes it
 and which phase it makes due are review § Input item 2's. A **drawn topic** — a `doing` task whose folder holds
 nothing but its `request.md` — and a task that is not in flight — open,
 or a **closed topic**, its task completed or cancelled — are all topics
 this phase does not plan: stop and name **brainstorm** ("External requests never skip
-phases": development-process § Process ground rules). A `doing` task
+phases": the process contract, § Where to enter). A `doing` task
 with no folder is a **split child** (→ Save plans to); in a code repo
 its branch is born here, `git switch -c <topic> main`, the way an
 idea-first topic's is. A **live marker naming write-plan** is this
@@ -94,12 +94,12 @@ a topic **in flight** — reuse the folder and plan as usual; where
 When the topic directory holds a `spec.md` from the define phase, it is the spec this plan implements — read it first: the decisions and their rationale, the domain rules and edge cases, the out-of-scope list, and its "open questions for write-plan", which the plan must answer. A split child holds no `spec.md` and is owed none (→ Save plans to): the parent's direction doc, which the task's description names, is read first in its place and is the brief this plan grounds in. Do not contradict a spec decision silently; a decision that turns out
 not to survive planning goes back to the user. **Default: record the
 contradiction in the plan header and stop, naming define — never plan
-against the spec silently** (*Defaults and holds*: development-process).
+against the spec silently** (*Defaults and holds*: the process contract).
 A contradiction the user has resolved in-session is not that case — it is a plan amendment: record its marker, sweep its footprint, and land the spec's dated amendment line per Task Structure's amendment-marker extension, then proceed.
 
 Before writing any task, gather the facts the plan depends on. Plans fail most often on facts that were assumed rather than checked: whether a target file exists (Create vs Modify), the real anchor an insertion lands on, the existing test module's `setup`/aliases/imports, and the actual signatures of the functions the plan will call.
 
-**File count is not the key, and neither is artifact kind.** A two-file plan whose whole risk sits in one function's input space needs harder grounding than a twenty-file mechanical rename. **Risk profile** governs how hard grounding probes what it does gather; **applicability** governs whether the fan-out shape applies at all. The key itself — its four dimensions, and the never-file-count-alone rule — lives in the development-process charter's *Review effort* section; this rule points there rather than restating it.
+**File count is not the key, and neither is artifact kind.** A two-file plan whose whole risk sits in one function's input space needs harder grounding than a twenty-file mechanical rename. **Risk profile** governs how hard grounding probes what it does gather; **applicability** governs whether the fan-out shape applies at all. The key itself — its four dimensions, and the never-file-count-alone rule — lives in the process contract's § Review effort; this rule points there rather than restating it.
 
 When the topic directory holds a `survey.md` from the scout phase, read it first and let it aim the fan-out: it already maps the relevant files, concepts, vocabulary, and conventions, so do not re-survey the codebase for any of that — grounding gathers only the plan-mechanical facts above. Treat the map as leads, not facts, and re-price them before any is treated as one: `git diff --stat <the survey's stamped rev>..HEAD` over the checkout names every file the corpus moved in since the map was taken — the predecessor phase's own commit, define's glossary delta, among the movers — and every claim whose corpus the diff names is re-measured first; then re-verify the claims the plan relies on, since anchors and signatures drift between sessions. Only when no survey exists does grounding widen enough to locate the files it needs to verify.
 
@@ -247,7 +247,7 @@ Skip rule: condition unmet → NOT a pass; record the step as deferred.
 
 *Read with this section: `mechanics.md` § Payloads (the mechanics) and `cases.md` § Payloads (the cases).*
 
-A **payload** — the verbatim content a task's edit carries (plugin glossary) — never appears in the plan, in a fence or in prose. There is no extent boundary and no per-step judgement (contract home: development-process § Artifacts):
+A **payload** — the verbatim content a task's edit carries (plugin glossary) — never appears in the plan, in a fence or in prose. There is no extent boundary and no per-step judgement (contract home: the process contract, § The payload contract):
 
 - **Always a `payloads/` file.** Every payload — one line or five hundred — becomes `payloads/<step-id>.<ext>` beside the plan with exactly one manifest gate, whatever its extent — the step ID's lowercase form, the target's extension — so a whole-file Create payload stays a compile-checkable unit (`payloads/t7s1.ex`) and a Modify payload shares the same scheme without any claim to compile. Every content-bearing edit has one, replacements included: the inserted final-state lines are the payload, and the removal half is verified where deletions always are, by a sweep gate. Gate coverage is a function of content, never of shape.
 - **Line-grain extent.** A payload's extent is whole physical lines of the target's final state, at least one: a sub-line edit (`all seven keys` → `all eight keys`) carries its full final line. The bytes are the target's exact final-state bytes for those lines, so a payload covering a target's unterminated last line is itself unterminated rather than inventing a newline the target will never contain; in the normal case the target's lines are newline-terminated and so is the payload.
@@ -277,7 +277,7 @@ A topic that iterates back to this phase already has a `plan.md` and a
 place**: completed tasks stand ticked, dropped ones are gone, and the
 delta is read from the plan's pre-image (term: the plugin glossary) —
 the parent of this iteration's own `: write-plan` commit where git
-tracks the state folder (charter: development-process, *Iteration*);
+tracks the state folder (the process contract, § Iteration);
 where the files are the record, the re-plan first copies `plan.md` and
 `payloads/` into the topic's `pre-image/` slot (the operations
 contract, § The topic's artifacts, which says how the copy replaces an
@@ -318,7 +318,7 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 **5. Linter-safe structure:** None of the code you propose would be rejected by the project's linters or formatter (nesting depth, cyclomatic complexity, banned dependencies, layering rules). Their config is the source of truth for the style/structure rules they enforce — check a non-trivial proposed structure against them, and reference a rule by name rather than transcribing a threshold that will drift. A coding-standards companion skill for the project's language, where the front has one installed, carries the specifics.
 **6. Claims traced:** Sweep the plan for claims in Grounding's classes — quoted commands, greppable references, embedded prose, units/types for measurements, runtime/harness claims. Each traces to a fact-sheet entry or sits in the Assumptions block.
 **7. Expectations measured, never typed:** Every `Expected:` line and every embedded gate carries its provenance — a grounding probe that ran, a delta derived from the task's own payload, a grounded absence, or a stamped baseline (sweep rule 4); the only bare defer is a planned assertion's green side. Every red whose tested target exists today records its authoring-time observed failure, and every step whose check discriminates only under a condition carries its discriminates-when line with the skip rule. The mechanical half: any `Expected:` asserting a baseline, an unchanged relation, or a whole-suite, gate or linter outcome is **run once at authoring**, whichever side of the change it sits on, and stamped with its observed result — "unchanged from its pre-task state" is a claim about the pre-image, which exists now, and the green-side defer never reaches it; and any verification command that exists today is executed rather than reasoned about.
-**8. Payloads extracted and gated:** No payload bytes remain in the plan — its fences and its prose carry only commands, output, anchors, and illustration. Every `payloads/` file has exactly one manifest gate and every gate its file, expected counts are final-state, and step IDs are unique and well-formed (`T<task>S<step>`). Check the join by eye, because the tool cannot: every manifest step-id, suffix stripped, must name the checkbox of the step that **applies** that payload, not merely some checkbox — a before-count step inserted ahead of the apply shifts the number, and the verifier only asks whether *a* checkbox exists. Two manifest tells, also by eye: a `whole` gate beside any other gate on the same target, and a payload whose last line is a container's closer in a file a later task edits — either one is the closed-file rule of § Payloads broken. And every verifier step's `Expected:` line quotes the tool's summary line with counts summed from `payloads/manifest` in plan order, never counted from the step list. Then run the verifier once against the topic directory: a fresh, correctly-authored plan reports every gate PENDING with exit 0 — a FAIL is the vacuous-payload analog (the planned content already exists in its target), and exit 2 is an authoring defect in the payload artifacts themselves (a gate whose payload file or checkbox is missing, a malformed manifest line, an orphan payload file, or a workflow-internal reference in a payload bound for a project repo — the frame bar's gate); rewrite that step before the plan ships. A plan whose steps carry no `Payload:` reference line authored no payload at all — its steps are deletions, commands, and behavior only — so it legitimately has no `payloads/` directory and no manifest (contract: development-process § Artifacts), the scan above *is* the whole check, and the verifier run does not apply. Never author an empty `payloads/manifest` to make this item read clean.
+**8. Payloads extracted and gated:** No payload bytes remain in the plan — its fences and its prose carry only commands, output, anchors, and illustration. Every `payloads/` file has exactly one manifest gate and every gate its file, expected counts are final-state, and step IDs are unique and well-formed (`T<task>S<step>`). Check the join by eye, because the tool cannot: every manifest step-id, suffix stripped, must name the checkbox of the step that **applies** that payload, not merely some checkbox — a before-count step inserted ahead of the apply shifts the number, and the verifier only asks whether *a* checkbox exists. Two manifest tells, also by eye: a `whole` gate beside any other gate on the same target, and a payload whose last line is a container's closer in a file a later task edits — either one is the closed-file rule of § Payloads broken. And every verifier step's `Expected:` line quotes the tool's summary line with counts summed from `payloads/manifest` in plan order, never counted from the step list. Then run the verifier once against the topic directory: a fresh, correctly-authored plan reports every gate PENDING with exit 0 — a FAIL is the vacuous-payload analog (the planned content already exists in its target), and exit 2 is an authoring defect in the payload artifacts themselves (a gate whose payload file or checkbox is missing, a malformed manifest line, an orphan payload file, or a workflow-internal reference in a payload bound for a project repo — the frame bar's gate); rewrite that step before the plan ships. A plan whose steps carry no `Payload:` reference line authored no payload at all — its steps are deletions, commands, and behavior only — so it legitimately has no `payloads/` directory and no manifest (contract: the process contract, § The payload contract), the scan above *is* the whole check, and the verifier run does not apply. Never author an empty `payloads/manifest` to make this item read clean.
 **9. Amendment ripple:** For every amendment marker in the plan (line-start `> **Amended (`), re-sweep the decision's footprint — the whole plan plus every `payloads/` file, no disposition-based exemptions, substring/stem content terms per the sweep skill, a spec decision ID only ever an additional term — and check each hit against the marker's final statement (the latest marker, where several mark one decision). A site still stating the pre-amendment form is a plan failure; fix it. A marker-free plan makes this item a no-op.
 **10. Glossary delta became tasks:** Every entry the spec's glossary delta records as deferred has a task that writes it — the entry itself, plus any code-home or prose-home sentence it needs — landing in the same change as its referent. A delta that defers nothing makes this item a no-op.
 **11. Vocabulary bans:** grep `plan.md` and every `payloads/` file for the `_Avoid_` terms of every glossary entry the plan touches **or cites** — the project glossary's, and the plugin glossary's on a meta topic. A hit is a plan failure. The banned word is the one the author has spent the session reading: a cross-repo topic speaks the upstream repo's blessed term one directory over, and an entry that entered the plan as a line number to pin was never read as vocabulary, so neither reading habit substitutes for the grep.

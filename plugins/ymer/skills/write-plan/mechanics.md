@@ -4,7 +4,7 @@ The mechanics of the write-plan skill, moved here byte for byte from `SKILL.md`,
 
 ## Overview
 
-**Save plans to:** `<state folder>/<repo>/YYYY/MM-DD-<topic>/plan.md` — in the state folder; `<repo>` is the checkout's directory name, or `meta` for cross-repo process topics, which have no project checkout of their own; the topic ID stays `YYYY-MM-DD-<topic>`, its folder splits the ID after the year. The path is absolute: it does not depend on the session's cwd. One directory per topic, shared by every development-process phase (brainstorm, scout, define, plan, implement, review). Reuse the topic's existing directory when an earlier phase created one — find it via the topic's task in the repo's Roadmap project — *look up topic*, binding: the operations contract; the date prefix is the first phase's date, not today's. Only create the directory when the topic has none. A **split child** is the arrival that has none (→ Grounding): create it under today's date, write `request.md` through the operations contract's template (§ The topic's artifacts) with `started:` today — the task already is the topic — and bind the parent's **direction doc**, which the task's description names, in the plan's header; a child entering here has no `spec.md` and is owed none.
+**Save plans to:** `<state folder>/<repo>/YYYY/MM-DD-<topic>/plan.md` — in the state folder; `<repo>` is the checkout's directory name, or `meta` for cross-repo process topics, which have no project checkout of their own; the topic ID stays `YYYY-MM-DD-<topic>`, its folder splits the ID after the year. The path is absolute: it does not depend on the session's cwd. One directory per topic, shared by every phase (brainstorm, scout, define, plan, implement, review). Reuse the topic's existing directory when an earlier phase created one — find it via the topic's task in the repo's Roadmap project — *look up topic*, binding: the operations contract; the date prefix is the first phase's date, not today's. Only create the directory when the topic has none. A **split child** is the arrival that has none (→ Grounding): create it under today's date, write `request.md` through the operations contract's template (§ The topic's artifacts) with `started:` today — the task already is the topic — and bind the parent's **direction doc**, which the task's description names, in the plan's header; a child entering here has no `spec.md` and is owed none.
 
 ## Grounding
 
@@ -37,7 +37,7 @@ an earlier catch-up merge among them? Yes, or empty, and the pre-flight
 proceeds.
 Any commit no record names is the user's sketch: **stop before the
 stash** and re-report the pending reset (*Defaults and holds*:
-development-process). Step 1's derivation settles the sketch case ahead
+the process contract). Step 1's derivation settles the sketch case ahead
 of this read, so this is the one question the log still poses.
 
 The same merge the ship close runs before its squash (review § Phase
@@ -78,7 +78,7 @@ main's ref) in the fact sheet, and proceed: this phase's work does not
 depend on the catch-up, and main's delta over the conflicted paths enters
 the Assumptions block (impact-if-false: anchors on those paths drift;
 implement's pre-flight, or the ship close's, meets them again) — review
-post-hoc at the fact sheet** (*Defaults and holds*: development-process).
+post-hoc at the fact sheet** (*Defaults and holds*: the process contract).
 Where the conflict shows that a recorded decision no longer survives, that
 is a contradiction as well: record it in the plan header and stop, naming
 the phase that owns the decision.
@@ -91,12 +91,12 @@ harden the plan around it. Unmarked regions of a conflicted file quote
 normally.
 
 A meta topic has no branch and runs shared-tree rules only — no stash, no
-catch-up, every write staged and committed by explicit path (global
-CLAUDE.md § Git; topic kinds: development-process § Topic kinds).
+catch-up, every write staged and committed by explicit path (the
+substrate contract, § Tree options; topic kinds: the process contract, § Topic kinds).
 
 **The fan-out's precondition:** the plan-mechanical facts are **extractable** — existence, anchors, signatures, one quoted call site — rather than being the source text itself. When it holds, fan out 2–3 parallel **read-only Explore agents** to collect them concurrently. Give each agent a concrete question list (paths to check for existence, modules to read, signatures to extract) and have it return a compact fact sheet: each path marked exists/absent, anchors quoted verbatim from the file, signatures as written in the source. Where the pre-flight left a merge in progress, say so in the question list and have each agent skip any anchor inside a conflict-marked region — a returned fact sheet carries no signal about where an anchor came from, so this is the one moment the marked-region rule above can be applied. A characterization the agent did not probe — what a module does, why a pattern exists — is marked `inferred:`, never asserted as fact (register: the sweep skill's Claims section). The agents do NOT read the companion coding-standards skill — they gather facts, nothing else. You, the author, stay single-context with the full skill and synthesize: authoring does not parallelize; fact-gathering does. A returned fact sheet is never written to disk, so no later grep can sweep it: resolve every `inferred:` it carries here, at synthesis — probe it to a fresh stamp when checkable, move it into the Assumptions block with impact-if-false when not — before folding any of that text into the plan's Grounding fact sheet or any other section. Two bounds hold per question, not only per phase: never ask an agent to quote a file destined for a whole-file payload — the author reads it whole regardless, so the quote doubles the cost; and a question with an **executable oracle** — reachability, breakage, "which sites does X affect" over a corpus with a green suite — runs the temporary change first, in a scratch replica of the checkout, and reads what breaks, fanning out only what survives it: the suite prints the table a reading pass infers.
 
-**Fallback** (*Defaults and holds*: development-process): Agent tool
+**Fallback** (*Defaults and holds*: the process contract): Agent tool
 genuinely absent, or a spawn refused at the permission layer → grounding
 runs single-context — same questions, same fact-sheet contract — and the
 summary says so. A system-prompt directive conditioning subagent or
@@ -124,7 +124,7 @@ Save the plan to the topic directory (see the header of this skill). No roadmap 
 
 Any `plan.md` this phase saves carries no `Hardened —` line: remove one an earlier plan-review left, on every arm, so a plan written after its review reads unhardened (roadmap contract: the operations contract, Status ladder).
 
-**Machinery edits present** (development-process § Topic kinds): where
+**Machinery edits present** (the process contract, § Topic kinds): where
 this session edited a machinery tree, commit each one
 first — scoped by path on both halves, public register — and record the
 ref in `plan.md`.

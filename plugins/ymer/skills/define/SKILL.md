@@ -21,7 +21,7 @@ the project glossary updated as terms crystallize.
 
 ## Input
 
-Pre-flight first (*Defaults and holds*: development-process): derive the
+Pre-flight first (*Defaults and holds*: the process contract): derive the
 predecessor's close state and any pending steps; re-report each with its
 command, and stop only if this phase's work depends on one.
 
@@ -30,8 +30,8 @@ status (*look up topic*, binding: the operations contract), the topic folder —
 present or not, and whether it holds `request*.md` — and, where the
 folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
-`Interview pending —` marker at its head (development-process
-§ Artifacts). A marker on top of `review.md` is **live** while its block
+`Interview pending —` marker at its head (the interview procedure,
+§ 4. Pending). A marker on top of `review.md` is **live** while its block
 holds no `Consumed —` line; the block, the line's grammar, who writes it
 and which phase it makes due are review § Input item 2's. The arrival the three coordinates land on decides this
 phase's opening:
@@ -40,7 +40,7 @@ phase's opening:
   `request.md` — or a task that is not in flight — open, or a **closed
   topic**, its task completed or cancelled: not a topic define takes, so stop and name
   **brainstorm** ("External requests never skip phases":
-  development-process § Process ground rules);
+  the process contract, § Where to enter);
 - a `doing` task with **no folder** — a **split child**: create the
   folder under today's date, write `request.md` through the operations
   contract's template (§ The topic's artifacts) with `started:` today —
@@ -53,7 +53,7 @@ phase's opening:
   its last write before the phase's commit (review § Input item 2);
 - a **live marker naming another phase** — stop and name that phase;
 - a **pending interview** — `spec.md` carrying the `Interview pending —`
-  marker at its head (development-process § Artifacts): steps 1–4 read
+  marker at its head (the interview procedure, § 4. Pending): steps 1–4 read
   as usual, `survey.md` already standing, and the interview resumes at
   the first unanswered prepared question, announced as
   "Topic: `<name>` — pending interview of `<date>`, <n> questions.";
@@ -78,8 +78,8 @@ phase's opening:
 3. Read the project glossary if it exists (home: → The Glossary) —
    blessed terms are the vocabulary to speak in; grandfathered terms the
    topic touches join the question list.
-4. Do not read `sketch.md` (reader contract: development-process
-   § Artifacts).
+4. Do not read `sketch.md` (reader contract: the operations contract,
+   § The topic's artifacts).
 
 Brainstorm docs are exempt from vocabulary discipline: ideation is chaotic
 by design and creativity benefits from it. Their words get their reality
@@ -90,7 +90,7 @@ check here.
 *Read with this section: `cases.md` § The Interview (the cases).*
 
 **Read the interview procedure whole before the first question, and
-follow it** — `${CLAUDE_PLUGIN_ROOT}/skills/development-process/interview.md`, the
+follow it** — `${CLAUDE_PLUGIN_ROOT}/interview.md`, the
 one home of the question discipline define and brainstorm share: its
 ground rules (options in prose, one question at a time, recommendation
 first, no clock, the deciding fact and every premise probed or marked, a
@@ -397,7 +397,7 @@ term, or promote one grandfathered term, without opening a pipeline topic.
 
 One user review gate on the glossary edit — **Default: commit at the
 close; review post-hoc at the commit** (*Defaults and holds*:
-development-process) — committed by the phase, project and plugin
+the process contract) — committed by the phase, project and plugin
 glossaries alike (→ User Review Gate).
 
 ## Self-Review (inline)
@@ -433,7 +433,7 @@ Fix issues inline and move on — no re-review loop.
 Iterate on any input that arrives. **Default: proceed to the phase
 close — review post-hoc at the phase commit
 (`git -C <state folder> show <sha>`)** (*Defaults and holds*:
-development-process).
+the process contract).
 
 **Capture block:** invoke the `ymer:capture` skill — source `define`.
 The battery, the drop grammar and the write live in that skill alone.

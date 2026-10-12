@@ -10,7 +10,7 @@ The common case (1) adds zero questions; the ambiguous cases and the discovered 
 
 ## The Interview
 
-**Hold: every question — the interview is the user's alone, never defaulted** (*Defaults and holds*: development-process). Unattended — read at the question, as the procedure says — the phase prepares every remaining question into this artifact's `## Interview` under the `Interview pending —` marker and closes around the interview as a pending step (the procedure's § 4. Pending; brainstorm's own close: → Unattended: closing around the interview, below).
+**Hold: every question — the interview is the user's alone, never defaulted** (*Defaults and holds*: the process contract). Unattended — read at the question, as the procedure says — the phase prepares every remaining question into this artifact's `## Interview` under the `Interview pending —` marker and closes around the interview as a pending step (the procedure's § 4. Pending; brainstorm's own close: → Unattended: closing around the interview, below).
 
 - A probe leaves live machine state as it found it — Docker image tags, containers, published ports, a kept install — and reports whatever it could not restore. Two idioms make that cheap: run a smoke under its own `-p` project name and its own port, and settle tag semantics with a throwaway tag rather than a rebuild that moves a real one.
 - Focus on purpose, constraints, and success criteria — what problem this solves and how we'd know it worked.

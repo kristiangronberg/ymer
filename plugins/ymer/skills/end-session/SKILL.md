@@ -45,8 +45,8 @@ never invent items to fill the list.
 
 This runs after the loose ends are settled, so their outcomes are
 routed too. Route anything durable the session surfaced to its
-chartered store; the knowledge-placement contract in
-development-process names the stores. A session's close has no later
+chartered store; the process contract's § Knowledge placement
+names the stores. A session's close has no later
 artifact to hand it to, so route it now. Route only what would change
 how a future session behaves, and never duplicate what a repository
 already records: "nothing needed a store" is a good outcome.
@@ -56,7 +56,7 @@ decisions, observations and reflections from this session that are not
 yet logged, linked to the entities they concern. Where the coordinator
 is not reached, the step is reported as not run, never skipped
 silently (the fallback rule: *Defaults and holds*,
-development-process).
+the process contract).
 
 **Report the result:** what was routed where, or that nothing needed
 changing. A change to what is known is never silent.

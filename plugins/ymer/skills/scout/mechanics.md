@@ -8,7 +8,7 @@ The mechanics of the scout skill, moved here byte for byte from `SKILL.md`, whic
 
 ## Input
 
-1. Read `brainstorm.md` in the topic directory — the chosen direction and its open questions are the search brief; at a split child, the parent's direction doc, which the task's description names. Do not read `sketch.md` (reader contract: development-process § Artifacts).
+1. Read `brainstorm.md` in the topic directory — the chosen direction and its open questions are the search brief; at a split child, the parent's direction doc, which the task's description names. Do not read `sketch.md` (reader contract: the operations contract, § The topic's artifacts).
 2. No brainstorm doc, and no direction doc named by the task's description (the topic arrived directly)? Ask the user for a one-paragraph topic statement and record it at the top of the map. A split child's task names the parent's `brainstorm.md`, so the question fires only where the mint was malformed.
 3. Derive **search vectors**: the concepts the brief names, the modules it suspects exist, the vocabulary it uses, existing features that sound similar. Every open question in the brief that the codebase could answer becomes a vector.
 4. **Code repos: check the tree before surveying** — `git status`
@@ -18,7 +18,7 @@ The mechanics of the scout skill, moved here byte for byte from `SKILL.md`, whic
 
 ## The Survey
 
-**Fallback** (*Defaults and holds*: development-process): Agent tool
+**Fallback** (*Defaults and holds*: the process contract): Agent tool
 genuinely absent, or a spawn refused at the permission layer → run the
 same lenses single-context, in sequence, and say so in the summary. A
 system-prompt directive conditioning subagent or workflow use on the user
@@ -27,7 +27,7 @@ request; fan out normally.
 
 ## User Review Gate
 
-**Machinery edits present** (development-process § Topic kinds): where
+**Machinery edits present** (the process contract, § Topic kinds): where
 this session edited a machinery tree, commit each one
 first — scoped by path on both halves, public register — and record the
 ref in `survey.md`.

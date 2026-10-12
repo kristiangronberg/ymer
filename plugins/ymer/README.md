@@ -20,21 +20,19 @@ works from.
 | `/ymer:implement` | execute the plan task by task, verifying as you go |
 | `/ymer:review` | inspect what was actually built, then ship it, iterate, or wait |
 
-You do not have to run all seven. The **development-process** skill is
-the map: it says when the pipeline applies, where to enter it, what each
-phase leaves behind, and which rule lives where. It has no slash command
-of its own — it is reference the session loads when it needs to route
-work, and any phase skill points at it.
+You do not have to run all seven. The **process contract** is the map:
+it says when the pipeline applies, where to enter it, and the rules
+several phases share. It is a file the phase skills cite by section,
+not a skill, so it has no slash command of its own.
 
 ## The supporting moves
 
 `/ymer:sweep` builds any find-every-site list so it is honest.
 `/ymer:code-review` attacks a diff. `/ymer:tutor` runs the learning track;
 its knowledge docs are ymer docs, so tutor needs a ymer connection.
-`/ymer:end-session` closes a session deliberately. **product-design** —
-like development-process, reference rather than a command — shapes a
-surface someone will operate, and loads itself when a session designs
-one.
+`/ymer:end-session` closes a session deliberately. **product-design**,
+reference rather than a command, shapes a surface someone will operate,
+and loads itself when a session designs one.
 
 ## Capture and mint
 
@@ -173,12 +171,14 @@ A **ymer.ax account** is optional, and the default where a
 session reaches it: with ymer, work is tracked in Roadmap projects;
 without it, in the node's `tasks` table.
 
-Three reference files travel with the plugin and are read on demand:
-`glossary.md`, the one home for the words these skills use;
+Reference files at the plugin's root travel with it and are read on
+demand: `glossary.md`, the one home for the words these skills use;
 `operations-contract.md`, which fixes what each roadmap operation must
 achieve and how it binds per coordinator, and states the product page's
-skeleton; and `substrate-contract.md`, the git rules the skills follow
-wherever git is there.
+skeleton; `substrate-contract.md`, the git rules the skills follow
+wherever git is there; `process-contract.md`, the rules the phases of
+the development process share; and `interview.md`, the procedure
+brainstorm and define follow when they put questions to you.
 
 ## Where it stops
 

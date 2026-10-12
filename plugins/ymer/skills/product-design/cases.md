@@ -11,7 +11,7 @@ section runs.
   fetch that lands before the verdict counts as run; when none lands,
   the verdict proceeds without the page and names the store that did
   not answer, never "no page" (the fallback rule: *Defaults and
-  holds*, development-process).
+  holds*, the process contract).
 - **This skill writes nothing on the page.** Its output is the verdict
   in the direction doc and, for material worth keeping that no settled
   section already holds, **vision** drops in the pool, several in one

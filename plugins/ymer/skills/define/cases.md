@@ -10,7 +10,7 @@ reality-vs-direction conflicts, and grandfathered glossary terms the topic
 will use.
 
 **Hold: every question — the interview is the user's alone, never
-defaulted** (*Defaults and holds*: development-process). Unattended —
+defaulted** (*Defaults and holds*: the process contract). Unattended —
 read at the question, as the procedure says — the phase prepares every
 remaining question into this artifact's `## Interview` under the
 `Interview pending —` marker and closes around the interview as a
@@ -50,7 +50,7 @@ then steps 1–4, and builds the question list as above. It writes
 paragraph, a `## What we mean (draft)` section stating the topic as far
 as it can be stated, with no decision in it and rewritten at
 consolidation, and the `## Interview` section in the shape
-development-process § Artifacts gives; decisions landed before a
+the interview procedure's § 4. Pending gives; decisions landed before a
 refusal mid-interview stand in their own section, each named by its
 question's `Answered:` line. On an iteration, where `spec.md`
 already stands, the marker and the section join it and its text stays as
@@ -179,7 +179,7 @@ retired referent.
 
 **Amending a decision in place.** A decision that changes after `spec.md`
 exists — a later phase's iteration, or a decide-forward taken at the code
-(charter: development-process, *Iteration*) — is recorded under its own
+(the process contract, § Iteration) — is recorded under its own
 `## Decisions` entry as a dated, attributed line:
 
 ```
@@ -210,8 +210,8 @@ because the sites that go stale are the plan's. Without it the record
 is amended while the plan still says the old thing, and the next
 implement applies those steps and payloads verbatim. **A footprint that
 resists mechanical correction** means this was not a decide-forward
-after all: stop, and let the route rule name the phase (charter:
-development-process, *Iteration*, where that rule lives).
+after all: stop, and let the route rule name the phase (the process
+contract, § Iteration, where that rule lives).
 
 A **partial** supersede (the premise died, the verdict lives) and a
 whole-section re-derive each take a dated note in place instead: the entry

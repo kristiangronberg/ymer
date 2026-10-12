@@ -58,8 +58,8 @@ the one that was not.
    plan is already committed (write-plan's phase commit), so the rewrite
    is always recoverable from the state folder's history; no stash or
    extra commit is needed before launch. On an **iteration** that same
-   commit's parent is the delta's pre-image — the charter states that
-   doctrine (*Iteration*, in the development-process skill) and leaves
+   commit's parent is the delta's pre-image — the process contract states
+   that doctrine (§ Iteration) and leaves
    the command here, at its one consumer: the subject is
    `git -C <state folder> diff <commit>^
    <commit> -- <repo>/YYYY/MM-DD-<topic>/plan.md
@@ -85,7 +85,7 @@ the one that was not.
 
 3. **Derive the facts, then derive the tier.** No sizing question reaches the
    user here: both the roster and the tier follow from the plan document
-   (charter: *Review effort*, in the development-process skill — the risk-key
+   (the process contract, § Review effort — the risk-key
    definition lives there and is not restated here).
 
    **a. Read the roster's declared preconditions.** Open
@@ -106,21 +106,21 @@ the one that was not.
    | `relocatesContent` | the File Structure has a delete or move row, or a step uses `git mv` / `rm`, or the plan carries a content-ownership map |
    | `recordsAmendment` | line-start `> **Amended (` occurs in `plan.md` — read off `plan.md` alone, never `payloads/`: a payload is verbatim target bytes and may carry the grammar as documentation (the whole-plan default below is carved out on this row) |
    | `companionSkill` | the plan header's line `Coding and documentation work in this plan must follow the <skill-name> skill.` — the skill name it states, or `null` when the line is absent |
-   | `glossaryPath` | the glossary that governs this plan — resolved here, at derivation (the workflow has no filesystem access): the project's `docs/glossary.md`, unless its CLAUDE.md says otherwise; for a meta topic (topic kinds: development-process § Topic kinds), the plugin's own glossary file |
+   | `glossaryPath` | the glossary that governs this plan — resolved here, at derivation (the workflow has no filesystem access): the project's `docs/glossary.md`, unless its CLAUDE.md says otherwise; for a meta topic (topic kinds: the process contract, § Topic kinds), the plugin's own glossary file |
 
    Only `hasCode` is anchored to the File Structure table, because the spec
    anchors it there, and only `recordsAmendment` is confined to `plan.md` —
    its row says why; every other fact is read off the **whole plan** — its
    steps and paths, plus the topic's `payloads/` files, which carry the
-   plan's payloads (contract: development-process § Artifacts) — and a fact
+   plan's payloads (contract: the process contract, § The payload contract) — and a fact
    whose rule names the File Structure also reads the steps where the same
    rule says so. A schema change described in a step, or a migration whose
    filename is not yet known, still makes `touchesPersistence` true.
 
    `glossaryPath` is a parameter, not a precondition — no lens is dropped for
    it. In doubt, a fact reads **true**: a precondition asks only whether the
-   lens has anything to read, never whether it would find anything (charter:
-   *Review effort*). Doubt is resolved **here**, where the fact is derived: a
+   lens has anything to read, never whether it would find anything (the process
+   contract, § Review effort). Doubt is resolved **here**, where the fact is derived: a
    fact you decline to derive is not a fact in doubt, and the workflow rejects
    a `facts` object with a key missing rather than reading the gap as `false`.
 
@@ -208,7 +208,7 @@ the one that was not.
    never a bare threshold.** code-review's ladder carries no floor: its tiers
    differ in depth of scrutiny, not in orchestration machinery.
 
-   Fallback (*Defaults and holds*: development-process): Workflow and
+   Fallback (*Defaults and holds*: the process contract): Workflow and
    Agent tools genuinely absent, or a call refused at the permission
    layer → the review runs inline in this context — same surviving
    lenses — and the summary says so. A system-prompt directive
@@ -293,7 +293,7 @@ the one that was not.
    unhardens the plan again (roadmap contract: the operations contract,
    Status ladder). Where git tracks the state folder, commit at phase
    close — state changes before announcements
-   (*Defaults and holds*: development-process):
+   (*Defaults and holds*: the process contract):
    `git -C <state folder> add <repo>/… && git -C <state folder>
    commit -m "YYYY-MM-DD-<topic>: plan-review" --
    <repo>/YYYY/MM-DD-<topic>/`. Verify scoped: status no
@@ -408,7 +408,7 @@ the one that was not.
 
    **A *needs a define session* ruling closes the phase at define
    instead.** A product or domain question's home is `spec.md`, so the
-   route derives to define (charter: *Iteration*), and the durable
+   route derives to define (the process contract, § Iteration), and the durable
    record is the iteration marker — `review.md` in the topic directory
    is its one home, whoever writes it (review § Iterate). No file yet →
    create it as the title line plus the marker; one exists → prepend
@@ -424,11 +424,11 @@ the one that was not.
    That `Unreviewed:` line is unconditional on every writer of the
    block: it names the close's own commits no pass covered (a lens
    pass's own fixes are the `Fixes applied (--fix):` line's, never this
-   one — development-process § Process ground rules), and reads `none`
+   one — the process contract, § The traceability stores), and reads `none`
    where it committed none. This phase's own
    steps commit only in the state folder, so `none` is the ordinary case —
    but the machinery-edit duty is session-level, not phase-level (topic
-   kinds: development-process § Topic kinds), so a session that did
+   kinds: the process contract, § Topic kinds), so a session that did
    commit machinery refs — in one machinery tree or several —
    rides them here, marked per tree, rather than dropping them.
 
@@ -448,7 +448,7 @@ the one that was not.
    sanctions later input landing as follow-up commits.
    **Default: every marker stands with the author's choice — review
    post-hoc at review's Input item 3** (*Defaults and holds*:
-   development-process). The question instrument **unavailable** and the call
+   the process contract). The question instrument **unavailable** and the call
    **refused at the permission layer** are distinct cases and both
    defer-and-retry each turn, the ask counting as run if it lands before
    the close (fallback rule: same section); a close the ask never

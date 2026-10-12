@@ -23,7 +23,7 @@ This phase is search, not dialogue — the interview belongs to define. Run most
 
 *Read with this section: `mechanics.md` § Input (the mechanics) and `cases.md` § Input (the cases).*
 
-Pre-flight first (*Defaults and holds*: development-process): derive the
+Pre-flight first (*Defaults and holds*: the process contract): derive the
 predecessor's close state and any pending steps; a pending brainstorm
 reset is re-reported with its commands and stops the survey —
 sketch-contaminated state is not surveyed.
@@ -33,12 +33,12 @@ status (*look up topic*, binding: the operations contract), the topic folder —
 present or not, and whether it holds `request*.md` — and, where the
 folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
-`Interview pending —` marker at its head (development-process
-§ Artifacts). The arrival those three coordinates land on decides the
+`Interview pending —` marker at its head (the interview procedure,
+§ 4. Pending). The arrival those three coordinates land on decides the
 opening. A **drawn topic** — a `doing` task whose folder holds nothing
 but its `request.md` — is intake nobody has brainstormed: stop and name
 **brainstorm** ("External requests never skip phases":
-development-process § Process ground rules). A task that is not in
+the process contract, § Where to enter). A task that is not in
 flight — open, or a **closed topic**, its task completed or cancelled —
 is not this topic: stop and name brainstorm the same way. A `doing` task
 with **no folder** is a **split child**: create the folder under today's
@@ -108,7 +108,7 @@ Fix issues inline and move on — no re-review loop.
 Iterate on any input that arrives. **Default: proceed to the phase
 close — review post-hoc at the phase commit
 (`git -C <state folder> show <sha>`)** (*Defaults and holds*:
-development-process).
+the process contract).
 
 **No project-repo writes:** this phase reads the project repo only; the
 state folder is committed by the phase at its close. **A probe leaves live

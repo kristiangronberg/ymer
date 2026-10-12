@@ -4,7 +4,7 @@ The mechanics of the brainstorm skill, which keeps the intent and the spine and 
 
 ## Overview
 
-**Topic directory:** `<state folder>/<repo>/YYYY/MM-DD-<topic>/` — in the state folder; `<repo>` is the checkout's directory name, or `meta` for cross-repo process topics, which have no project checkout of their own; the topic ID stays `YYYY-MM-DD-<topic>`, and its folder splits the ID after the year. The path is absolute: it does not depend on the session's cwd. Every development-process phase writes its artifact here; nothing ever moves. Brainstorm writes `brainstorm.md` (the direction doc) and, when a sketch exists, `sketch.md` (the verbatim sketch record). The topic's task lives in the repo's Roadmap project (binding: the operations contract); its pipeline rung derives from this folder, never stored.
+**Topic directory:** `<state folder>/<repo>/YYYY/MM-DD-<topic>/` — in the state folder; `<repo>` is the checkout's directory name, or `meta` for cross-repo process topics, which have no project checkout of their own; the topic ID stays `YYYY-MM-DD-<topic>`, and its folder splits the ID after the year. The path is absolute: it does not depend on the session's cwd. Every phase writes its artifact here; nothing ever moves. Brainstorm writes `brainstorm.md` (the direction doc) and, when a sketch exists, `sketch.md` (the verbatim sketch record). The topic's task lives in the repo's Roadmap project (binding: the operations contract); its pipeline rung derives from this folder, never stored.
 
 ## Branch Intake (code repos, when the session starts on a topic branch)
 
@@ -47,12 +47,12 @@ The user often sketches an idea in code — real or pseudo-code — right before
    it untouched, and skip the gate and the reset hand-off.
 
    **Hold: the user's own commit or stash of the keepers** (*Defaults and
-   holds*: development-process). Unattended — the session's question tool
+   holds*: the process contract). Unattended — the session's question tool
    absent from its tools, or the call that puts the gate's question
    refused — the session stops with nothing written, its report naming
    the gate: a dirty tree is never mined, reset, committed, or stashed
    without the user's answer.
-4. **Write the sketch record now** — `<state folder>/<repo>/YYYY/MM-DD-<topic>/sketch.md`: the raw diff, the full contents of untracked sketch files, and the paths the user wrote them at. Verbatim and uncurated — do not clean it up, summarize it, or fix it. Its one reader is review (reader contract: development-process § Artifacts), which contrasts the user's own attempt with the shipped code; editing the record would erase exactly the signal that contrast needs — the user's idioms, gaps, and first instincts.
+4. **Write the sketch record now** — `<state folder>/<repo>/YYYY/MM-DD-<topic>/sketch.md`: the raw diff, the full contents of untracked sketch files, and the paths the user wrote them at. Verbatim and uncurated — do not clean it up, summarize it, or fix it. Its one reader is review (reader contract: the operations contract, § The topic's artifacts), which contrasts the user's own attempt with the shipped code; editing the record would erase exactly the signal that contrast needs — the user's idioms, gaps, and first instincts.
 5. Ask one light question for the record: "Anything you were attempting, or unsure about, that the code doesn't show?" The answer goes into `sketch.md`. Skippable — don't turn intake into an interview.
 6. Treat the sketch as food for thought: the chosen direction may keep it, morph it, or discard it entirely.
 
@@ -76,7 +76,7 @@ The next phase starts from a clean tree with the artifacts committed. Skip the r
    ruling. The topic's own task is not a case: its description is frozen
    while the task is `doing` (the operations contract).
 
-2. **Machinery edits present** (development-process § Topic kinds): where this session edited a machinery tree, commit each one first — scoped by path on both halves, public register — and record the ref in `brainstorm.md`. Then commit the artifacts in the state folder — from any cwd, the commands are absolute (Claude-run — every phase commits its own state-folder writes):
+2. **Machinery edits present** (the process contract, § Topic kinds): where this session edited a machinery tree, commit each one first — scoped by path on both halves, public register — and record the ref in `brainstorm.md`. Then commit the artifacts in the state folder — from any cwd, the commands are absolute (Claude-run — every phase commits its own state-folder writes):
 
    ```
    git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/
@@ -91,7 +91,7 @@ The next phase starts from a clean tree with the artifacts committed. Skip the r
    step, commands written out — a pending reset blocks the phases that
    need clean state (scout's tree check, write-plan's grounding), so the
    successor's pre-flight re-reports it and stops (*Defaults and holds*:
-   development-process).
+   the process contract).
 
    On a topic branch (branch intake ran) — reset the branch to its floor:
    `main` normally, and on an iteration arrival the newest commit the
@@ -115,7 +115,7 @@ The next phase starts from a clean tree with the artifacts committed. Skip the r
 
 Destructive-of-uncommitted steps are holds — handed off, never
 Claude-run; all other local git is Claude-run at the moments this skill
-names (ownership: the substrate contract; contract: development-process,
+names (ownership: the substrate contract; contract: the process contract,
 *Defaults and holds*). State-folder and machinery commits stay each phase's
 own (decided 2026-07-06 and 2026-07-27; the machinery half is step 2
 above).

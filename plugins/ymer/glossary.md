@@ -167,12 +167,12 @@ the change and its target in place.
 _Avoid_: diff (for this), payload set
 
 ### chartered store
-A store the knowledge-placement contract names as a legitimate home for
+A store the process contract names as a legitimate home for
 durable process or project knowledge — membership is by charter, and
 there are no side stores. The store table, the push-vs-pull routing
-test, and the stop-and-pick rule live at development-process
+test, and the stop-and-pick rule live at the process contract,
 § Knowledge placement. Not the traceability stores of the
-machinery-traceability ground rule (→ traceability store).
+process contract (→ traceability store).
 
 ### checkout
 The repository checkout the session runs in — an environment-contract
@@ -189,7 +189,7 @@ literal until each file's lift)
 Defined in the `mint` skill, its one home.
 
 ### code-repo topic
-Defined in the development-process charter — the topic-kinds definition.
+Defined in the process contract, § Topic kinds.
 
 ### colleague test
 A station's close: the learner explains one chain of the station's material
@@ -312,7 +312,7 @@ chosen for depth. Recorded in the beat as an unchecked knowledge-doc
 leaf; no task, no edge.
 
 ### environment contract
-The named set of roles the development-process suite requires its
+The named set of roles the development process requires its
 environment to supply, each typed by how it binds and bound in exactly
 one binding home (→ binding): by **configuration** — the state folder
 and the front: their keys, or the front's initial instructions where the
@@ -401,7 +401,7 @@ client
 The action a gated moment names for the case where the user's input has not
 arrived by phase close: the action runs, the close commits it, and review
 moves post-hoc to the committed artifact. Named in one inline line at the
-moment, pointing at the Defaults-and-holds ground rule.
+moment, pointing at the process contract's § Defaults and holds.
 _Avoid_: lane (a), auto stage
 
 ### gate shape
@@ -432,10 +432,10 @@ of its own (contract: the verifier's own header; authoring: write-plan
 _Avoid_: payload step, gate step
 
 ### git is never guessed
-Defined in the development-process charter — the Defaults-and-holds ground
-rule: a git action no written rule determines is asked, never defaulted,
-and a step that cannot complete is undone to its pre-state. The
-environment's ruling: the substrate contract.
+Defined in the substrate contract, § Git is never guessed: a git action
+no written rule determines is asked, never defaulted, and a step that
+cannot complete is undone to its pre-state. The process contract's
+§ Defaults and holds applies it to gate defaults.
 
 ### goal contract
 An engagement's exit criteria, fixed at the opening: concrete,
@@ -636,7 +636,7 @@ write-plan's Grounding. The one legitimate defer is post-change behavior
 (a planned assertion's green side), which cannot exist before implement.
 
 ### meta topic
-Defined in the development-process charter — the topic-kinds definition.
+Defined in the process contract, § Topic kinds.
 _Avoid_: machinery-editing meta topic (a session fact, not a kind),
 prose-only meta topic, meta/plans topic
 
@@ -722,7 +722,7 @@ _Avoid_: byte-identity gate, arrival gate
 ### payload verifier
 The plugin's shipped script that evaluates every payload gate of one
 topic and reports each PASS / PENDING / FAIL; defined in its prose home,
-development-process mechanics' payload contract.
+the process contract's § The payload contract.
 _Avoid_: shared verifier, the bar's mechanical half
 
 ### pending interview
@@ -730,8 +730,8 @@ The state in which a phase's own artifact carries an
 `Interview pending — <date>: <n> questions` marker at its head, and the
 seventh arrival that reads it: the phase resumes the interview at the
 first unanswered prepared question. The `## Interview` section beneath
-the marker holds the prepared questions. Home: development-process
-§ Artifacts.
+the marker holds the prepared questions. Home: the interview procedure
+(`interview.md`), § 4. Pending.
 _Avoid_: prepared interview, parked interview, deferred interview,
 interview queue, pending record
 
@@ -804,6 +804,17 @@ Applicability with a skip clause, minutes not analysis; decomposing a
 subject stays with tutor's opening.
 _Avoid_: readiness check (pre-flight's phase-entry sense and
 implement's Readiness Gate own it), sizing check
+
+### process contract
+The reference file this plugin ships for the development process: the
+phases and where to enter them, the topic kinds, review effort,
+iteration, knowledge placement, defaults and holds, rule ownership, the
+payload contract, the traceability stores, parallel sessions and
+standalone repos. A skill cites the section
+it needs by name and never restates it; its one resolvable address is
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md`.
+_Avoid_: the charter, the development-process charter,
+development-process (as its name), router
 
 ### product alignment
 Brainstorm's convergence beat: a formed candidate direction is
@@ -955,7 +966,7 @@ lens pass it reads), walkthrough (its middle movement)
 The expected cost of a defect escaping a review: its probability of going
 unnoticed times what it costs if it does. Four dimensions — input-space
 complexity, trust boundaries, blast radius, and mechanicalness, which lowers
-it — enumerated at their home in the development-process charter. Keys the
+it — enumerated at their home, the process contract's § Review effort. Keys the
 tier; file count and artifact kind are never the key alone.
 _Avoid_: risk concentration, risk class
 
@@ -1076,7 +1087,7 @@ _Avoid_: claim stamp
 ### standalone repo
 A project repository that stands on its own — a fresh clone, with nothing
 beside it, builds and passes its own gate. Prose home:
-development-process's ground rules.
+the process contract, § Standalone repos.
 _Avoid_: self-contained (it names a Docker image elsewhere),
 self-sufficient, hermetic
 
@@ -1234,8 +1245,8 @@ consumed, and an `Interview pending —` marker at the head of
 phase's. The three coordinates land on one arrival, which decides the
 phase's first action. Carried by brainstorm, define, scout and
 write-plan, each stating the read at its own opening; the liveness
-read's one home is review § Input item 2, the pending-interview
-marker's development-process § Artifacts.
+read's one home is review § Input item 2, and the pending-interview
+marker's is the interview procedure (`interview.md`), § 4. Pending.
 _Avoid_: resolution (bare — seven senses in the suite), entry read,
 entry procedure
 
@@ -1248,10 +1259,10 @@ topic's `pre-image/` slot (→ pre-image). The word survives in nodes set
 up before then, which still carry the table and its `_meta` grammar row.
 
 ### traceability store
-Defined in the development-process charter — the machinery-traceability
-ground rule (§ Process ground rules), which names every one.
+Defined in the process contract, § The traceability stores, which
+names every one.
 _Avoid_: charter store, ref store, store (bare — `chartered store` is the
-knowledge-placement contract's word)
+process contract's word)
 
 ### tutoring contract
 The numbered ruleset every sitting runs under, engagement and study alike.
@@ -1326,7 +1337,7 @@ and, where the suite writes one, a placeholder spelling — `<topic ID>`;
 `<state folder>`, `<topic folder>`; `T<task>S<step>`, `<step-id>`;
 `<phase>` — and either spelling is the reference. Public-register commit
 messages carry none (the register rule: the substrate contract, § Commit registers,
-restated in development-process's ground rules and review's ship
+restated in review's ship
 sequence), and payload prose bound for a project repo carries none
 either (write-plan's Payloads section, gated by the payload verifier).
 A project repo has two sanctioned sites, both

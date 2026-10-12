@@ -18,7 +18,7 @@ the phase boundary at the end — the session's budget belongs to the
 implementation itself. The phase ends where the change is built: a
 commit on the topic branch, plus a machinery commit wherever the session
 edited machinery — one machinery tree or several, committed per tree
-(topic kinds: development-process § Topic kinds) — a meta topic has only
+(topic kinds: the process contract, § Topic kinds) — a meta topic has only
 the latter — recorded in `implemented.md`. The close
 then runs the **lens pass** over what it just committed and leaves the
 findings in `review.md`, so the review sitting opens on findings rather
@@ -96,8 +96,8 @@ When reality contradicts the plan:
   tree.
 - **Approach-level problem** — the plan's design cannot work as written,
   or a decision has to be remade: this is an **iteration**, and it forks
-  on the same derived fact review's dispositions fork on (charter:
-  development-process, *Iteration*). **The decision is already made** —
+  on the same derived fact review's dispositions fork on (the process
+  contract, § Iteration). **The decision is already made** —
   you are at the code, the third option is clear and you are confident:
   **decide-forward** in place. Write the dated amendment into the
   artifact that owns the statement — the decision's entry in `spec.md`
@@ -251,9 +251,9 @@ Fix issues inline and move on — no re-review loop.
    pass's own fix commits excepted**, whichever session ran the pass:
    those refs are the `## Review` entry's fixes line's (define's glossary
    commit is already in the spec's glossary delta). The refs here are not
-   bookkeeping: this file is one of the traceability stores the charter's
-   machinery-traceability ground rule names (development-process
-   § Process ground rules), and a later delta's subject is computed from
+   bookkeeping: this file is one of the traceability stores the process
+   contract names (§ The traceability stores), and a later delta's
+   subject is computed from
    those stores — so a ref missing here is work no pass will ever see.
    Keep it short — the blow-by-blow is in the ticked
    `plan.md` and git; this is the "what actually happened vs. the plan"

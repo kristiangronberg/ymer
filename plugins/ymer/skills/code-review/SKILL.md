@@ -37,7 +37,7 @@ more than avoiding false positives. Err on the side of surfacing.
 
 Three tiers, keyed by the diff's **risk profile**. The key itself — the four
 dimensions, and the rule that file count and artifact kind are never the key
-alone — lives in the development-process charter's *Review effort* section;
+alone — lives in the process contract's § Review effort;
 this ladder points there rather than restating it.
 
 - **inline read** — presentational HEEx/CSS, docs, config, and mechanical
@@ -75,7 +75,7 @@ Dropped: <lens name> — <the precondition that failed>
 
 Lenses with no `**Precondition:**` line always run. In doubt, a precondition
 reads **true** — it asks only whether the lens has anything to read, never
-whether it would find anything (charter: *Review effort*).
+whether it would find anything (the process contract, § Review effort).
 
 **Never spawn a lens to find out whether it applies.** Paying a full agent to
 discover it had nothing to say is the waste this gate removes.

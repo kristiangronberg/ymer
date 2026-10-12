@@ -22,7 +22,7 @@ on any diff — so this is a safety net for a future roster, not a live outcome.
 Should a later roster ever make every lens conditional and this fire, the
 handling is unchanged: report "no applicable
 lenses", drop to the ladder's inline read, and say so — never report it as a
-clean review (charter: *Review effort*).
+clean review (the process contract, § Review effort).
 
 ## Phase 0.6 — The decision digest
 

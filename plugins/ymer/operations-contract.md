@@ -5,7 +5,8 @@ project — and the state store **only** through the operations named
 here. Each operation is defined by its **required outcome**,
 backend-neutrally, so moving to another coordinator edits the binding at
 the foot of this file and nothing else. Skills name this file by its
-role phrase, *the operations contract*, and never by a path.
+role phrase, *the operations contract*, and never by a path, except in
+the line of a skill's spine that says when to read it.
 
 Read it whole once per session that operates the roadmap; the phase
 skills point here rather than restating any of it.
@@ -207,6 +208,22 @@ it; a folder moved out of git starts with an empty slot. The rewrites
 that fill it are brainstorm's consolidation, write-plan's re-plan and
 plan-review's; the other in-place rewrites keep no pre-image where the
 files are the record.
+
+**`sketch.md`** is read by exactly one phase, review, as the contrast
+between the user's own attempt and the shipped code ("your sketch did
+X; the shipped code does Y"). It keeps the user's sketch from before
+the session verbatim. This paragraph is that reader contract's one
+home: every phase between brainstorm and review leaves the file
+unread, and scout and define, the phases that would otherwise read it,
+say so by pointing here rather than by restating the rule.
+
+The folder may also hold committed **sweep artifacts** (plugin
+glossary), re-runnable measurements kept beside the artifact whose
+numbers they generate, under names of their own. Open a topic
+artifact with the file-read tool, never a shell print: a direction
+doc, a survey map or a plan routinely runs past the shell's output
+cap, and a print of one is diverted to a file and costs the read
+twice.
 
 **`request.md`** is the intake as it arrived, written once by whatever
 starts the topic and never rewritten afterwards — an existing one is a

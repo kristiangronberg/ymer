@@ -3,13 +3,14 @@
 The rules these skills follow for git: which steps they run, which they
 hand to the user, and how every write is staged and committed so that
 nothing another session or the user made rides along. Skills name this
-file by its role phrase, *the substrate contract*, and never by a path;
-they cite its sections and never restate them.
+file by its role phrase, *the substrate contract*, and never by a path,
+except in the line of a skill's spine that says when to read it; they
+cite its sections and never restate them.
 
 **When it applies.** Read it where git is there: where the state folder
 is its own git repository (its kind is read once, at a run's guard: the
 operations contract, § The topic's artifacts), where the topic has a
-project checkout (development-process § Topic kinds), or where the
+project checkout (the process contract, § Topic kinds), or where the
 session commits into a machinery tree, which is a git repository
 whatever the state folder's kind. A state folder in no git repository
 keeps no history beyond its files, and a meta topic has no branch, so a
@@ -30,7 +31,7 @@ commit, merge, `merge --abort`, switch, `stash push`, creating and
 deleting a branch, `git mv` and `git rm`. A step that destroys
 uncommitted work — `reset --hard`, `clean`, a `checkout` or `restore`
 over a dirty path, dropping or popping a stash — is a **hold**: never run
-without the user's input (*Defaults and holds*: development-process).
+without the user's input (*Defaults and holds*: the process contract).
 `--amend` and `reset --soft` repair the session's own commit, just made,
 and nothing else: read `git log -1` first and confirm this session wrote
 it. Nothing leaves the machine without the user, so every local commit

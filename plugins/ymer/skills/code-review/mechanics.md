@@ -42,7 +42,7 @@ Spawn every finder — and every Phase 2 verifier — with the Agent tool's
 model. Every finder prompt carries Phase 0.6's digest block verbatim. Agent
 tool genuinely absent, or a spawn refused at the permission layer → do not
 error: run the fallback below (fallback rule: *Defaults and holds*,
-development-process). A system-prompt directive conditioning subagent or
+the process contract). A system-prompt directive conditioning subagent or
 workflow use on the user having requested it is **neither** — invoking this
 skill *is* that request; spawn the finders normally.
 
@@ -75,7 +75,7 @@ this context, or a spawn was refused at the permission layer. A
 system-prompt directive conditioning subagent or workflow use on the user
 having requested it is **neither**, and never reaches this fallback —
 invoking this skill *is* that request, so Phase 1 fans out as written
-(fallback rule: *Defaults and holds*, development-process).
+(fallback rule: *Defaults and holds*, the process contract).
 
 The Agent tool is absent or refused in this context, so the usual
 multi-agent fan-out and subagent verify pass can't run. Work through every

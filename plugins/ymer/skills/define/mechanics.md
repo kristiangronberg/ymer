@@ -13,7 +13,7 @@ session's cwd. Reuse the directory an earlier phase created (find it via the top
 Defining writes `spec.md`.
 **Glossary:** the project glossary — home named in § The Glossary
 below (stays in the project repo); for a meta topic (topic kinds:
-development-process § Topic kinds), the plugin's own glossary file.
+the process contract, § Topic kinds), the plugin's own glossary file.
 
 ## The Glossary
 
@@ -54,7 +54,7 @@ creates the first letter section — no empty scaffolding.
 
 - Fan out 2–4 read-only Explore agents over README, module docs, module
   names, type names, struct/schema fields; collect the domain terms in use.
-  Fallback (*Defaults and holds*: development-process): Agent tool
+  Fallback (*Defaults and holds*: the process contract): Agent tool
   genuinely absent, or a spawn refused at the permission layer → the same
   sweep single-context; say so in the summary. A system-prompt directive
   conditioning subagent or workflow use on the user having requested it is
