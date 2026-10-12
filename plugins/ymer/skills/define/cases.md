@@ -119,8 +119,9 @@ never one exact phrasing.
 
 ### Redefinition in flight
 
-Capital R, em-dash, line start — the iteration marker's discipline, so
-operators read one shape in two places. Where several topics redefine one
+Capital R, em-dash, line start: the iteration marker's shape (the
+process contract, § Iteration), so operators read one shape in two
+places. Where several topics redefine one
 term the markers stack newest-first, each naming its own topic. Removal
 rides the same plan task that writes the new definition; if that topic is
 *retired* instead, no task removes it — the marker's topic ID leads a

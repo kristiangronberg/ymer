@@ -46,7 +46,7 @@ date, write `request.md` through the operations contract's template
 (§ The topic's artifacts) with `started:` today — the task already is
 the topic — and bind the parent's **direction doc**, which
 the task's description names, in the map's first paragraph. A marker on
-top of `review.md` that review § Input item 2's read finds **live**
+top of `review.md` that reads **live** (the process contract, § Iteration)
 names the phase the topic re-enters at, and no route names scout: stop
 and name that phase. The `Interview pending —` marker at the head of
 `brainstorm.md` or `spec.md` names its artifact's phase the same way —
@@ -54,8 +54,8 @@ stop and name it, the command written out. Anything else is a topic
 **in flight** — reuse the
 folder and survey as usual; where `review.md` tops with a consumed
 marker, the close appends `Consumed — <YYYY-MM-DD> by scout` to the
-marker's block as its last write before the phase's commit (review
-§ Input item 2).
+marker's block as its last write before the phase's commit (the process
+contract, § Iteration).
 
 ## The Survey
 

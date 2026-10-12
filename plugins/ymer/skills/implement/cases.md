@@ -7,8 +7,8 @@ The cases of the implement skill, moved here byte for byte from `SKILL.md`, whic
   No `implemented.md` is written: nothing was implemented to record. Its
   absence is **not** how a later session learns that — an earlier cycle's
   file may still be standing — so the state is read rather than inferred:
-  review § Input item 2 reads the marker's block, whose `Consumed —`
-  lines tell a live route from a consumed one, and `plan.md`'s ticks are
+  the marker's block is read (the process contract, § Iteration): its
+  `Consumed —` lines tell a live route from a consumed one, and `plan.md`'s ticks are
   the resume point. No new
   grammar is minted here: the marker and the `Unreviewed:` line are the
   ones review's closes already write.

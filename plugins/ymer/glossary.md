@@ -1245,8 +1245,9 @@ consumed, and an `Interview pending —` marker at the head of
 phase's. The three coordinates land on one arrival, which decides the
 phase's first action. Carried by brainstorm, define, scout and
 write-plan, each stating the read at its own opening; the liveness
-read's one home is review § Input item 2, and the pending-interview
-marker's is the interview procedure (`interview.md`), § 4. Pending.
+read's one home is the process contract, § Iteration, and the
+pending-interview marker's is the interview procedure (`interview.md`),
+§ 4. Pending.
 _Avoid_: resolution (bare — seven senses in the suite), entry read,
 entry procedure
 
@@ -1336,9 +1337,8 @@ decision or finding label (`spec D5`). Each class has a literal spelling
 and, where the suite writes one, a placeholder spelling — `<topic ID>`;
 `<state folder>`, `<topic folder>`; `T<task>S<step>`, `<step-id>`;
 `<phase>` — and either spelling is the reference. Public-register commit
-messages carry none (the register rule: the substrate contract, § Commit registers,
-restated in review's ship
-sequence), and payload prose bound for a project repo carries none
+messages carry none (the register rule: the substrate contract, § Commit registers),
+and payload prose bound for a project repo carries none
 either (write-plan's Payloads section, gated by the payload verifier).
 A project repo has two sanctioned sites, both
 markers: a remediation marker's `plan:` topic ID, and a

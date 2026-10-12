@@ -26,7 +26,8 @@ to be read on its own.
 - Topic kinds: code-repo and meta topics, machinery edits present
 - Review effort: lens applicability, the risk profile and its four
   dimensions, the orchestration floor
-- Iteration: the route, the executor, decide-forward, the delta
+- Iteration: the route, the executor, decide-forward, the marker's
+  block, the delta
 - Knowledge placement: the chartered stores, the routing test, the
   glossaries
 - Defaults and holds: gate defaults and holds, git is never guessed,
@@ -315,12 +316,47 @@ iteration, and the session stops at the route's phase.
 names learns that it is the route's destination at its own opening,
 where topic resolution reads `review.md`'s first recognizer beside the
 task's status and the topic folder; brainstorm, define, scout and
-write-plan each carry that read. A marker on top is live or consumed.
-Which it is, and the `Consumed —` line that decides it, live once, at
-review § Input item 2. A live marker naming the phase that is open is
-that session's brief, its finding the mandate; one naming another phase
-is the same read's other answer: stop and name the phase the marker
-names.
+write-plan each carry that read. A marker on top is live or consumed,
+and its block decides which.
+
+**The marker's block.** Nothing ever removes an iteration marker; the
+line's grammar is review's (review § Iterate). Its **block** is the
+marker line and the ref lines written with it (`Reviewed:`,
+`Unreviewed:`), up to the first blank line or the file's end. The route
+is recorded by lines appended to the end of that block, one per phase
+close, in the order written, so the newest is last:
+
+```markdown
+Consumed — <YYYY-MM-DD> by <phase>
+```
+
+The phase the marker names writes the first at its own close, a pending
+close included, and that line **consumes** the marker. Each later phase
+on the route (scout, define, write-plan, plan-review, implement,
+whichever run) appends its own at its close to a block that already
+holds one, and implement's close appends its line whatever the marker
+names, since implement ends the route. A phase writes its line as its
+close's last write before the phase's commit, with two exceptions:
+plan-review writes its `Hardened —` line after it (the operations
+contract, § Roadmap), and implement writes its line just before its
+`## Review` entry, which then takes the top. The line is the same on
+every kind of state folder. It is no recognizer, so the marker stays the
+first one top-down, and a session that stops at topic resolution writes
+none. Every marker line in `review.md` keeps one shape: a capital first
+letter, an em dash, at line start.
+
+**Reading the block.** No `Consumed —` line in it → the route is
+**live**. A live marker naming the phase that is open is that session's
+brief, its finding the mandate; one naming another phase stops the
+session, which names the phase the marker names, where the route
+entered. A consumed marker makes a phase **due**: after a last line
+`by implement` the route has run its course and review is due (review
+§ Recognizers); after any other last line the route is mid-way, and the
+phase due is the one after that line's phase in the pipeline's order
+(brainstorm, scout, define, write-plan, plan-review, implement). The
+phases that act on the phase due say so at their own opening. A stopped
+route writes no line, so it still names the phase it stopped before,
+which is the right answer.
 
 **Each phase keeps one artifact, rewritten in place.** The history is
 the state store's: git's phase commits where git tracks the state
@@ -569,8 +605,10 @@ the refs of the commits it made, keyed by the step that made them:
 - `implemented.md` records the task commits and every machinery commit
   ref its session made, per tree, except the lens pass's own fix
   commits;
-- a `review.md` entry's `Fixes applied (--fix):` line records that
-  pass's fix commits, wherever the pass ran;
+- a `review.md` entry's `Fixes applied (--fix):` line records the fix
+  commits of implement's pre-executed lens pass; a fallback pass at
+  review folds its fixes into that close's own commit, and the line
+  records the fold (review § The lens pass);
 - the same entry's `Unreviewed:` line records a close's own commits
   that no pass covered, such as the fold or a decide-forward's
   amendment commit; implement's drift-valve stop writes that line and

@@ -78,11 +78,11 @@ Shipped is not a rung — it is the end the rungs lead to, read from
 recognizer wins — `^## Shipped` → shipped; `^Iteration — <date> →
 <phase>:` on top → the topic iterated to the named phase, and whether
 that route is still live or has already run its course is a further
-read, owned by the review skill's § Input (nothing ever clears a
+read, owned by the process contract, § Iteration (nothing ever clears a
 marker); `^## Review` on top → one of three: the lens pass has run at
 implement's close and review has not begun, review is open, or it closed
 unshipped because a blocking lift-out's edge holds the ship — the entry
-itself tells them apart (the review skill's § Input).
+itself tells them apart (the review skill's § Recognizers).
 
 **Gating** is not a status. A topic that cannot start yet is either
 blocked by another topic — an **edge** (*order topics*), whose reason

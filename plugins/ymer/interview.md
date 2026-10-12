@@ -176,8 +176,8 @@ numbered on from the last `Q<n>`, and the interview's escapes stand:
 not worth pursuing, a split, define's route back to brainstorm. Where
 `review.md` tops with an iteration marker naming the phase, its finding
 is read first as at an iteration: the pending close appended the
-marker's `Consumed —` line, so the marker reads consumed (review § Input
-item 2). A resume that is itself unattended closes around the interview
+marker's `Consumed —` line, so the marker reads consumed (the process
+contract, § Iteration). A resume that is itself unattended closes around the interview
 again, the marker's date and count the newest close's. A topic carries
 one pending interview at most: define stops on a pending `brainstorm.md`
 before it writes anything.

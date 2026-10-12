@@ -69,8 +69,8 @@ folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
 `Interview pending —` marker at its head (the interview procedure,
 § 4. Pending). A marker on top of `review.md` is **live** while its block
-holds no `Consumed —` line; the block, the line's grammar, who writes it
-and which phase it makes due are review § Input item 2's. A **drawn topic** — a `doing` task whose folder holds
+holds no `Consumed —` line (the block, the line's grammar, who writes it
+and which phase it makes due: the process contract, § Iteration). A **drawn topic** — a `doing` task whose folder holds
 nothing but its `request.md` — and a task that is not in flight — open,
 or a **closed topic**, its task completed or cancelled — are all topics
 this phase does not plan: stop and name **brainstorm** ("External requests never skip
@@ -82,8 +82,8 @@ cycle's brief — read `review.md` first, the finding and the entries
 below it, and the cycle is a re-plan (→ Re-planning), whose close
 appends `Consumed — <YYYY-MM-DD> by write-plan` to the marker's block
 as its last write before the phase's commit. A live marker
-naming another phase stops the session and names that phase (review
-§ Input item 2). The
+naming another phase stops the session and names that phase (the
+process contract, § Iteration). The
 `Interview pending —` marker at the head of `brainstorm.md` or
 `spec.md` names its artifact's phase the same way — stop and name it,
 the command written out. Anything else is

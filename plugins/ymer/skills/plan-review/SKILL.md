@@ -279,7 +279,8 @@ the one that was not.
    workflow returns, and only then: where `review.md` topped with a
    consumed `Iteration —` marker when this phase opened, first append
    `Consumed — <YYYY-MM-DD> by plan-review` to that marker's block
-   (grammar and reading: review § Input item 2); then write the line
+   (grammar and reading: the process contract, § Iteration); then write
+   the line
    `Hardened — <YYYY-MM-DD>`, dated today, directly under `plan.md`'s
    title, with a blank line on either side, the earlier review's line
    having gone at step 2. It is the last write of the
@@ -422,9 +423,10 @@ the one that was not.
    ```
 
    That `Unreviewed:` line is unconditional on every writer of the
-   block: it names the close's own commits no pass covered (a lens
-   pass's own fixes are the `Fixes applied (--fix):` line's, never this
-   one — the process contract, § The traceability stores), and reads `none`
+   block: it names the close's own commits no pass covered (the
+   pre-executed lens pass's fix commits are the `Fixes applied (--fix):`
+   line's, never this one — the process contract, § The traceability
+   stores), and reads `none`
    where it committed none. This phase's own
    steps commit only in the state folder, so `none` is the ordinary case —
    but the machinery-edit duty is session-level, not phase-level (topic

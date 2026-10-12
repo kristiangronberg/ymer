@@ -32,8 +32,8 @@ folder exists, `review.md`'s first recognizer top-down (review
 § Recognizers) and whether `brainstorm.md` or `spec.md` carries the
 `Interview pending —` marker at its head (the interview procedure,
 § 4. Pending). A marker on top of `review.md` is **live** while its block
-holds no `Consumed —` line; the block, the line's grammar, who writes it
-and which phase it makes due are review § Input item 2's. The arrival the three coordinates land on decides this
+holds no `Consumed —` line (the block, the line's grammar, who writes it
+and which phase it makes due: the process contract, § Iteration). The arrival the three coordinates land on decides this
 phase's opening:
 
 - a **drawn topic** — a `doing` task whose folder holds nothing but its
@@ -50,7 +50,7 @@ phase's opening:
   order applies, the pass is recorded under § The Spec's re-define
   header or amendment marker, and the close, a pending close included,
   appends `Consumed — <YYYY-MM-DD> by define` to the marker's block as
-  its last write before the phase's commit (review § Input item 2);
+  its last write before the phase's commit (the process contract, § Iteration);
 - a **live marker naming another phase** — stop and name that phase;
 - a **pending interview** — `spec.md` carrying the `Interview pending —`
   marker at its head (the interview procedure, § 4. Pending): steps 1–4 read

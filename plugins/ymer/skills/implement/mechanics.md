@@ -34,9 +34,9 @@ its command, and stop only when the work depends on one
 
    **First, marker liveness.** Read `review.md`'s first recognizer
    top-down (review § Recognizers). An `Iteration —` marker on top is
-   **live** while its block holds no `Consumed —` line; the block, the
-   line's grammar, who writes it and which phase it makes due are
-   review § Input item 2's. A live marker naming **another phase** →
+   **live** while its block holds no `Consumed —` line (the block, the
+   line's grammar, who writes it and which phase it makes due: the
+   process contract, § Iteration). A live marker naming **another phase** →
    stop and name that phase. A live marker naming **implement** → this
    session is that re-entry, and its close consumes the marker (Phase
    Close, step 3); go on to the hardened read. A consumed marker → read

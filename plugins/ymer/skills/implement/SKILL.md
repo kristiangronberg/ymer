@@ -195,7 +195,8 @@ Fix issues inline and move on — no re-review loop.
 3. **Consume the marker, then write the `## Review` entry.** Where
    `review.md`'s first recognizer is an `Iteration —` marker, whatever
    phase it names, first append `Consumed — <YYYY-MM-DD> by implement`
-   to the end of its block (grammar: review § Input item 2). Then write the
+   to the end of its block (grammar: the process contract, § Iteration).
+   Then write the
    `## Review` entry into `review.md` in the topic
    directory — the pass's findings on disk, before this session goes
    further. The grammar is review's, whoever writes it (review § The
@@ -216,7 +217,7 @@ Fix issues inline and move on — no re-review loop.
 
    A pass that found nothing still writes the entry, and so does one
    that recorded `Lens pass: dropped — no diff or change set`: that line is what
-   review's pre-flight forks on (review § Input, item 2), and its
+   review's pre-flight forks on (review § Recognizers), and its
    absence sends the next session into a fallback pass it does not owe.
 
    **Verify what landed** — re-read the written entry rather than the
@@ -248,8 +249,9 @@ Fix issues inline and move on — no re-review loop.
    plus **every machinery commit ref** the
    session made — marked per machinery tree,
    several in one tree where the session made several — **the lens
-   pass's own fix commits excepted**, whichever session ran the pass:
-   those refs are the `## Review` entry's fixes line's (define's glossary
+   pass's own fix commits excepted**: the pre-executed pass's fix commits
+   are the `## Review` entry's fixes line's, and a fallback pass's fixes
+   fold into review's close commit (define's glossary
    commit is already in the spec's glossary delta). The refs here are not
    bookkeeping: this file is one of the traceability stores the process
    contract names (§ The traceability stores), and a later delta's
