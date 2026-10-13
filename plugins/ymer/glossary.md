@@ -279,6 +279,12 @@ or a pending interview the set is already in view and no confirmation
 fires.
 _Avoid_: found set, matches (bare)
 
+### drawn topic
+A topic `/ymer:mint` drew from the pool: its task minted at `doing`, its
+folder holding the `request.md` mint wrote. As an arrival, it is that
+topic before any phase has written beside its `request.md`.
+_Avoid_: minted topic, pool topic
+
 ### drop
 One thing in the pool, waiting to be drawn: an observation of a kind,
 with its body, its context, and optionally an anchor to the drop it
