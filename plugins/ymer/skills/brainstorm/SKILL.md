@@ -256,15 +256,15 @@ content: what was easier to write than to say?
 
 *Read with this section: `cases.md` § The Interview (the cases).*
 
-**Read the interview procedure whole before the first question, unless
-§ Topic Resolution already read it this session, and follow it**:
+**Read the interview procedure whole before the first question, and
+follow it**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/interview.md`, the one home of the question
 discipline brainstorm and define share: its ground rules, the agenda,
 the answers recorded as they land, and the pending interview where a
 question cannot be put.
 
 **At the first probe, read the sweep skill's § Claims now**, unless
-§ Drawn-topic Intake already read it this session:
+already read this session:
 `${CLAUDE_PLUGIN_ROOT}/skills/sweep/SKILL.md`,
 § Claims: stamps, controls and the sweep artifact, for stamps, controls,
 the `inferred:` register and the committed sweep artifact a family count
@@ -579,7 +579,7 @@ runs once the user has reviewed the doc, or once the gate's default has
 fired.
 
 **Read the substrate contract whole now, and the process contract's
-§ Topic kinds**, unless § Branch Intake read them this session:
+§ Topic kinds**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for the same rules
 § Branch Intake names. The substrate contract's head says where git is

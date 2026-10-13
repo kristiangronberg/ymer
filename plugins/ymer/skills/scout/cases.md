@@ -17,8 +17,10 @@ runs scout when no `survey.md` exists (the define skill, § Input,
 step 2), and a live marker naming define is then the caller's brief,
 not scout's stop.
 The survey proceeds, and the marker stays the caller's to consume. In
-that fused opening the vocabulary lens reads the project glossary
-itself: define's own glossary read comes after scout returns.
+that fused opening the vocabulary lens reads the project glossary, and
+where the lens ran in this session's own context rather than as a
+subagent, define's own glossary read (the define skill, § Input,
+step 3) then finds it already read.
 
 ## The Survey
 

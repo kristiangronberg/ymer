@@ -23,16 +23,12 @@ it is still the current one.
 ## A
 
 ### amendment marker
-The dated, attributed note recording an amendment — a decision added,
-widened, or changed after the artifact that owns it exists:
-`> **Amended (<source>, <date>):**` plus the decision's final
-statement, placed at the decision's home site — a step or decision site
-in `plan.md`, or the decision's entry under `spec.md`'s `## Decisions`.
-The source is the user for a ruling, the session otherwise.
-Append-only, and a later marker on the same decision supersedes the
-earlier — the latest statement is what ripple checks read sites against.
-One shape, two homes: the plan side's is write-plan's Task Structure,
-the spec side's define § The Spec.
+The dated, attributed note recording an amendment: a decision added,
+widened or changed after the artifact that owns it exists, its final
+statement written at the decision's own site in `plan.md` or `spec.md`
+as `> **Amended (<source>, <date>):**`. One shape, two homes for its
+grammar: the plan side's is write-plan § Task Structure, the spec
+side's define § The Spec.
 _Avoid_: Confirmed note, amendment note, decision marker
 
 ### anchor
@@ -443,6 +439,14 @@ no written rule determines is asked, never defaulted, and a step that
 cannot complete is undone to its pre-state. The process contract's
 § Defaults and holds applies it to gate defaults.
 
+### glossary delta
+The section of a topic's `spec.md` that records what its define session
+did to the glossary: the terms added, renamed or redefined, with the
+commits that wrote them; the entries the referent gate deferred, each
+with the definition sentence the plan must land; and the terms the topic
+brushed but did not resolve. Write-plan turns each deferred entry into a
+task.
+
 ### goal contract
 An engagement's exit criteria, fixed at the opening: concrete,
 solo-demonstrable usable skills, ticked only by demonstration, amendable at
@@ -490,12 +494,10 @@ _Avoid_: suggestion, next-call recipe
 
 ### historical entry
 The blessed shape for a term whose referent is gone while the word
-survives in records. Defined at its home, the define skill's glossary
-charter (§ Historical entries), which
-fixes the opener `Historical (retired <YYYY-MM-DD>):`, its clauses — what
-it named and where the word survives, always; what replaced it, where
-something did — and the admission rule: the retiring change's own sweep
-KEEP list, decided once and permanent.
+survives in records: the entry says, in the past tense, what the term
+named and which records still speak it, so a reader who meets the word
+in an old record can look it up where every other term is. Its opener
+and its admission rule are the define skill's (§ Historical entries).
 _Avoid_: tombstone entry, retired entry, obsolete term
 
 ### hold
@@ -904,23 +906,22 @@ anchor to the drop it recurs, whatever its kind.
 _Avoid_: recurrence row
 
 ### redefinition-in-flight marker
-The required one-line forward marker an entry carries while its
-redefinition is deferred — `Redefinition in flight — <date> → <topic ID>:
-<what changes>`, capital R, em-dash, line start, newest-first where a term
-carries several. Written by the define session (or by term mode at a
-bounce) and removed by the same plan task that writes the new definition.
-Admitted on every term kind, code-backed included, as glossary-native
-metadata with no code home.
+The one-line forward marker a glossary entry carries while a topic is
+changing its definition, so the entry is neither silently wrong nor
+silently rewritten: what stands below it is still the current
+definition. Its grammar, who writes it and who removes it are the define
+skill's (§ Redefinition in flight).
 _Avoid_: retiring marker, planned marker, superseded marker (the
 backward-looking shape is the historical entry, not a marker)
 
 ### referent gate
-The check define runs at every crystallized term: is the thing the term
-names real yet? Code-backed — the construct exists and its doc says it;
-prose-homed — its prose home says it; conceptual — the thing itself
-exists. No, on any of them, defers the entry to the spec's glossary delta,
-and writing it becomes plan work landing with the referent. What keeps the
-glossary a present-tense reference doc rather than a record of intentions.
+The check that holds a glossary entry back until everything it asserts
+is real: the thing its term names, and any rule its sentences say
+another home states. What is only planned waits in the topic spec's
+glossary delta and lands with its referent. What keeps a glossary a
+present-tense reference rather than a record of intentions. How define
+runs it, term kind by term kind, is the define skill's (§ The referent
+gate).
 _Avoid_: home gate, shipped/planned check, crystallize gate
 
 ### reframe

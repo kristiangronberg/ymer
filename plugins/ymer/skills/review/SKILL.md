@@ -376,8 +376,8 @@ re-asking what the developer already answered.
 
 *Read with this section: `cases.md` § Dispositions (the cases).*
 
-**Read the process contract's § Iteration now**, unless Recognizers
-already read it this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`,
+**Read the process contract's § Iteration now**, unless already read
+this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`,
 for how an iteration's route and executor are derived, decide-forward's
 amendment and sweep, and the marker's block this phase's iterate close
 writes. This section carries only review's own outcomes beside it.
@@ -678,8 +678,8 @@ here.
 takes its `Delta pass:` first, before step 1: everything after the
 entry's lens-pass coverage anchor (→ The Close; → `cases.md` § The
 Close). Its tier keys off the risk profile: **read the process
-contract's § Review effort now**, unless § The lens pass already read
-it this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`. A meta
+contract's § Review effort now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md`. A meta
 topic skips steps 1, 2 and 6 (the process contract, § Topic kinds); its
 machinery commit, where this session made machinery edits, stands where
 steps 1 and 2 stand, run before step 3 so the ship section can name its
