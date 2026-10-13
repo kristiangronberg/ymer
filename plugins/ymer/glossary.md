@@ -67,6 +67,11 @@ dates-inherit, stating an older basis is itself the staleness
 acknowledgment; a re-verified fact gets a fresh stamp instead. Home:
 the sweep skill's Claims section.
 
+### assumptions block
+Defined in the write-plan skill — § Plan Document Header carries the
+`**Assumptions (unverified):**` line, and § Grounding says which claims
+enter it.
+
 ### autotelic
 A product stance: the experience is the point — the user's goal does not
 lie beyond the artifact (games, art). Chosen difficulty is legitimate
@@ -275,6 +280,10 @@ or a pending interview the set is already in view and no confirmation
 fires.
 _Avoid_: found set, matches (bare)
 
+### discriminates-when line
+Defined in the write-plan skill — § Task Structure states the line's
+grammar and its skip rule.
+
 ### drawn topic
 A topic `/ymer:mint` drew from the pool: its task minted at `doing`, its
 folder holding the `request.md` mint wrote. As an arrival, it is that
@@ -373,6 +382,11 @@ direction. Pushes back like every settled section.
 _Avoid_: target shape, heading, roadmap (that is the task list),
 now/next/later, milestones
 
+### frame bar
+Defined in the write-plan skill — § Payloads states the bar a payload's
+prose meets.
+_Avoid_: the bar (bare)
+
 ### friction
 Defined in the `capture` skill, its one home — one kind of drop:
 everything worked as written, yet the work wasted effort.
@@ -430,7 +444,7 @@ a manual edit, a deletion — whose box no gate reads. The split the
 verifier's plan-complete predicate turns on: only gated boxes enter it,
 and an occurrence a later payload-less step adds by hand needs a gate
 of its own (contract: the verifier's own header; authoring: write-plan
-§ The manifest).
+§ Payloads).
 _Avoid_: payload step, gate step
 
 ### git is never guessed
