@@ -214,7 +214,7 @@ draws.
    with its drops, the open recurrences whose anchor was drained (the
    sharpest signal), and the vision drops per product. Then the
    ranking, highest score first, twenty-five per page, read until the
-   top drop is found (→ The pick rule), never the whole list. Frequency
+   walk ends (→ The pick rule), never the whole list. Frequency
    is shown beside the score and never folded into it.
 
    A drop that becomes a candidate for the pick is read whole, together
@@ -226,8 +226,11 @@ draws.
    than the top drop and its family, members the ranking pages do not
    surface, so they are read for the pick: a vision drop brings its
    product's whole vision cluster (→ Clustering), and a friction-batch
-   pick gathers its set from the ranking pages already read and from the
-   open frictions scored small.
+   pick gathers its frictions below the bar from the ranking pages
+   already read and from the open frictions scored small. Moot drops
+   reach the friction-batch only through the walk (→ The pick rule), so
+   a friction whose scorer `why` says its cause looks gone stays out of
+   the set until the walk reaches it.
 
    Then list this front's work nobody has started, in **every store this
    session reaches**, since they answer different questions: in the
@@ -243,7 +246,9 @@ draws.
    rule (→ Three exits) reads them.
 
 2. **Pick the top drop** (→ The pick rule): the highest-scored drop an
-   exit can take, unless a written reason passes it over.
+   exit can take, unless a written reason passes it over. Where it is a
+   moot bug, idea or friction, the walk goes on collecting more of them
+   below it (→ The pick rule).
 
 3. **Form the pick, then create or append its artifact.** Read the
    product's **Forward direction** once: the first settled section of
@@ -268,9 +273,11 @@ draws.
    `notebook` `execute`. The ids are this front's portion of the
    cluster, never the anchor's alone: the anchor where its front is this
    one, every open drop of this front anchored on it, by its id or by the
-   same named cause, the vision cluster
-   or friction-batch set step 1 gathered, and the neighbours step 3
-   folded in. The drain names where the drops went: the topic's folder
+   same named cause (for a moot drop, only those its evidence covers),
+   the vision cluster or friction-batch set step 1 gathered, the moot
+   drops the walk collected with the cluster members their evidence
+   covers, and the neighbours step 3 folded in.
+   The drain names where the drops went: the topic's folder
    as `<area>/YYYY/MM-DD-<topic>/`, the friction-batch's included, or
    the learning task's id. Drops are never deleted, and every other drop
    stays open: a friction left to accumulate produces a *better* root
@@ -395,6 +402,35 @@ ranks, with no tier, threshold or ladder above it. A top drop that might
 be a bug and might be trivial errs toward being drawn: drawing it is how
 the doubt is settled.
 
+**A moot drop is handled at the head.** A **moot drop** is a drop whose
+cause is gone or was handled elsewhere, re-verified by mint with its
+evidence. It costs mint nothing until it reaches the head of the
+ranking, so the walk is where it is found, and no run goes looking for
+one further down. Where the drop the walk lands on reads as likely
+moot, from its own text or from the scorer's `why` beside it on the
+ranking page, re-verify it before drawing it: name what closed it, a
+shipped topic or a fact, and the read or command that shows it, with
+what that showed. A cause you could not find is not a gone cause: such
+a drop is not moot, and the walk takes it as the drop it is. A
+re-verified moot bug, idea or friction is the top drop, and the
+friction-batch takes it (→ Three exits). The walk then goes on down the
+ranking, re-verifying as above each drop it lands on that reads as
+likely moot, and collects every moot bug, idea and friction it meets,
+each with the bugs, ideas and frictions of its same-cause cluster that
+its evidence covers, up to the first drop an exit can take
+that is not a moot bug, idea or friction. That drop ends the walk and
+waits one run: this run's one draw is the friction-batch. A friction
+below the bar that ends it does not wait, since that friction-batch is
+its own exit: it rides the set like any friction scored small. A drop
+the walk passes by is passed by still, and the walk goes on past it.
+Once the walk is collecting, a drop anchored to an unstarted topic is
+no fold: a moot one is collected like any other, its anchor beside the
+point once its cause is gone, and one that is not moot ends the walk. A
+vision or learning drop whose cause is gone is moot too, but the walk
+does not collect it: it keeps its own exit (→ Three exits), and the
+walk stops at it as at any drop an exit can take that is not a moot
+bug, idea or friction.
+
 **Passing the top drop over takes a written reason.** The score is the
 default, never a cage: draw something else when reading the top drop
 shows the ranking is wrong about it, weighing what the score cannot see
@@ -409,12 +445,12 @@ rules:
   `request.md` and drain it there. It is the same append the
   friction-batch uses; it costs nothing because nobody has read the
   file yet, and the intake gets strictly better.
-- **Anything else**: leave the drop open. If the topic shipped and what
-  it observed is gone, a later run carries the drop to the
-  friction-batch as moot. If it shipped and the observation persists,
-  **that recurrence after a ship is the sharpest signal the pool
-  gives**: a shipped change did not solve what it claimed, and it earns
-  its own topic.
+- **Anything else**: leave the drop out of that topic. If the topic
+  shipped and what it observed is gone, the drop is a moot drop, handled
+  at the head like any other (→ above). If it shipped and the
+  observation persists, **that recurrence after a ship is the sharpest
+  signal the pool gives**: a shipped change did not solve what it
+  claimed, and it earns its own topic.
 
 Everything wider than capture's bounded query is mint's, never
 capture's: the listings above, drained drops read in full, and an ad-hoc
@@ -473,28 +509,54 @@ thing, append the new drops to that topic's `request.md` instead of
 creating a second task for it, through the file and counting the
 heading first (→ `request.md`'s shape).
 
-**2. The friction-batch** is a shape mint may choose when the pick is a
-set of small frictions rather than one cause worth a topic: the topic
-`YYYY-MM-DD-friction-batch`, always under the area `meta`, because its
-contents are your own process prose and config by construction, so it
-always routes to `Meta Roadmap`. It takes exactly two kinds of drop:
+**2. The friction-batch** is the `meta` batch topic mint opens for
+small frictions to fix and moot bugs, ideas and frictions to confirm.
+Mint chooses it when the pick is several small frictions rather than
+one cause worth a topic, or when the walk has collected moot drops
+(→ The pick rule): the topic `YYYY-MM-DD-friction-batch`, always under
+the area `meta`, so it always routes to `Meta Roadmap`. That holds
+whatever product a moot drop is about: the friction-batch's fixes edit
+your own process prose or config, and confirming a moot drop reads a
+product's code without editing it. It takes exactly two kinds of drop:
 
-- **Below the bar but actionable**: the change is derivable from the
-  drop itself plus a locating search, no design choices are left, and
-  the edit surface is your process prose or config, never a project's
-  code.
-- **Moot or not worth doing**: the cause is gone, was handled
-  elsewhere, or is judged not worth acting on. Never drain such a drop
-  silently: the work that follows gets the final say on whether it is
-  done, including that it is not.
+- **Below the bar but actionable**: a friction whose change is
+  derivable from the drop itself plus a locating search, with no design
+  choices left, and whose edit surface is your process prose or config,
+  never a project's code.
+- **Moot, or judged not worth doing**: a moot drop the walk collected
+  (→ The pick rule), or a friction from the friction-batch's set judged
+  not worth doing. Never drain such a drop silently: the work that
+  follows gets the final say on whether it is done, including that it
+  is not.
 
-**Bugs and vision drops are neither kind.** A bug is drawn as its own
-pick, and a product's direction is not the friction-batch's edit
-surface. A product's vision drops drain as exit 1, as a **carve topic**:
-an ordinary topic in that product's area whose `request.md` names the
+**The work that follows rules on each moot drop**, and records each
+ruling in its own `brainstorm.md`, in a section of pool dispositions,
+never in `request.md`, which no later session rewrites (the operations
+contract, § The topic's artifacts):
+
+- **Confirmed moot**: it stays drained, as mint left it.
+- **Not moot, and a friction below the bar**: it is fixed in the
+  friction-batch, like the drops under the first heading.
+- **Anything else not moot**: it stays drained, and that session
+  captures a recurrence anchored to it, carrying the evidence that its
+  cause persists, which a later run draws as its own topic.
+
+A friction judged not worth doing gets the same say, recorded with the
+others: the session fixes it as a friction below the bar where it finds
+it worth doing after all, and otherwise it stays drained.
+
+**Only frictions go below the bar, and vision drops never ride the
+friction-batch.** A product's direction is not the friction-batch's
+edit surface. A product's vision drops drain as exit 1, as a **carve topic**: an
+ordinary topic in that product's area whose `request.md` names the
 product and carries the drops verbatim, and whose work writes them into
 the product's own description. That is the one door through which
-vision material reaches a product page.
+vision material reaches a product page. A vision drop whose content the
+page already carries goes there too, with its product's vision cluster,
+and a learning drop whose gap is closed goes to its learning task
+(exit 3), which its engagement, never mint, closes as moot (`closed` =
+demonstrated or moot: the operations contract, § Binding per
+coordinator).
 
 "The product has a Roadmap" reads per coordinator, like every other
 route. In ymer a `<Product> Roadmap` must exist, and a vision drop for a
@@ -559,7 +621,12 @@ its Forward direction says; then a **Passed over** line for each drop
 the pick passed over, so the topic's brainstorm reads why this pick and
 not the top one; then the drops. A friction-batch sorts its drops under
 two headings, below the bar and moot, which carry mint's judgement into
-the topic as real input for whoever works it.
+the topic as real input for whoever works it. Under the moot heading
+the drops are grouped by cause, one group for each thing that closed
+them, stamped once with the check that showed it, so the work that
+follows confirms a cause once rather than a drop at a time. A friction
+judged not worth doing goes in one group of its own after them, each
+with its reason and no stamp: a judgement is not a fact a check shows.
 
 A topic whose `request.md` is already there is one to append to, never
 to write again: the before-creating look is what finds it. An append
@@ -570,7 +637,8 @@ only on a count of 1; any other count stops the write, since the file
 quotes real sessions and a quoted heading would take the drops into the
 middle of a drop while the write reported success. Under the last
 heading there is nothing to count before, but the heading the append
-names must still be there (→ `cases.md` § `request.md`'s shape). A
+names must still be there (→ `cases.md` § `request.md`'s shape, for
+that check and for where a new group goes). A
 fresh `request.md` is written only after this session's own file tools
 show no file at that path (`mechanics.md` § `request.md`'s shape).
 
@@ -582,6 +650,7 @@ show no file at that path (`mechanics.md` § `request.md`'s shape).
 Picked: <name> — <one line: what doing it removes or builds>
 Topic:  <area>/YYYY/MM-DD-<name>/ (state folder, history in <git | the files alone>)
 Task:   <task name> (doing, <Product> Roadmap in <ymer | node `tasks`>)
+Moot:   <n> moot drops collected, under <c> causes
 Scored: <n> new drops (<n> scorers | in this session | next steps unreadable)
 Unscored: <m> left out of the ranking (ids <the first ten>)
 Next:   /brainstorm <name>
@@ -590,8 +659,9 @@ Still unstarted from earlier mints:
   <other-name>   (<area>/YYYY/MM-DD-<other-name>/)
 ```
 
-Two of those lines are conditional. `Unscored:` is written only where
-drops stayed unscored. `Scored:` also reads `0 new drops`, and takes a
+Three of those lines are conditional. `Moot:` is written only where the
+walk collected moot drops. `Unscored:` is written only where drops
+stayed unscored. `Scored:` also reads `0 new drops`, and takes a
 trailing `pages without next steps: <names>` wherever a page had no
 `## Next steps` heading, which is how a page that lost it is seen (the
 full values: `cases.md` § The close). A run that stopped on an empty
@@ -635,6 +705,10 @@ it, by name, what this run's scoring showed:
   exit can take: bugs lead by their weight, and passing the top drop
   over takes a written reason. The product's Forward direction forms
   the pick, its neighbours and its shape, and never ranks it
+- A moot drop costs nothing until it reaches the head, and the head is
+  where mootness is handled: the walk re-verifies it, collects every
+  moot bug, idea and friction it meets before the first drop an exit
+  can take that is not one, and the friction-batch takes them as the run's one draw
 - A score's components are written once and the score is computed at
   the draw: the weights in the ranking query's `VALUES` list
   (`mechanics.md` § The run), the rubric in `scorer.md`, each its one

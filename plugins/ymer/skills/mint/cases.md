@@ -124,8 +124,8 @@ there.
 ## `request.md`'s shape
 
 **Where Passed over lines go.** A friction-batch carries its Passed over
-lines directly under its intro paragraph (`Frictions drawn by …`),
-before `## Below the bar for their own topic`. An append adds one line
+lines directly under its intro paragraph (`Frictions to fix …`), before
+`## Below the bar for their own topic`. An append adds one line
 per newly passed-over drop beneath the Passed over lines already there,
 and leaves them and the rest of the file as they are. On a later append
 to a friction-batch, add drops under the right heading and leave
@@ -137,18 +137,26 @@ and only then, where git keeps the folder, commit it at step 5 as it now
 stands. The file is the artifact, and a commit records only what was
 written to it.
 
-**An append never writes blind.** Under a heading that has another
-heading after it, the first of the friction-batch's two, **count the
-heading in the file before inserting under it.** The file carries
-verbatim prose from real sessions: a drop quoting the next heading's
-text would take the new drops into the middle of that drop while the
-write still reported success. `1` is the only count that may be written
+**An append never writes blind.** **Count every heading the write
+places itself by before inserting**: the heading it inserts under where
+another heading follows it, and the heading it inserts before. In a
+friction-batch that is `## Below the bar for their own topic`, a
+`###` group under the Moot heading that another group follows, and
+`### Judged not worth doing` where a new cause group goes in before it.
+The file carries verbatim prose from real sessions: a drop quoting the
+next heading's text would take the new drops into the middle of that
+drop while the write still reported success. `1` is the only count that may be written
 on. `0` means the heading is not in the file; `2` or more means the
 literal sits somewhere besides its own heading. Both stop the write and
 send you to read the file. Under the last heading, or at the end of a
 normal pick's file, which has none, there is nothing to insert before;
 but a heading the append names must be there, or the drops land under
-whichever heading happens to be last.
+whichever heading happens to be last. Moot drops of a cause the file
+does not name yet open a new `###` group under `## Moot, or judged not
+worth doing`: before `### Judged not worth doing` where the file has
+that group, at the end of the file otherwise. A friction judged not
+worth doing joins that one group, which opens at the end of the file
+where it is absent.
 
 ## The close
 

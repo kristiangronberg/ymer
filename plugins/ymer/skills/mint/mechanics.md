@@ -159,10 +159,9 @@ ORDER BY id
 LIMIT 25 OFFSET <n>
 ```
 
-**Step 1, a friction-batch pick's set.** The scorer's `why` is where a
-drop whose cause looks already gone says so, the moot ones. One page is
-a friction-batch's worth; read the next only when the first leaves the
-friction-batch short:
+**Step 1, a friction-batch pick's set**, the frictions below the bar.
+One page is a friction-batch's worth; read the next only when the first
+leaves the friction-batch short:
 
 ```sql
 SELECT p.id, p.context, s.why, substr(COALESCE(p.title, p.body), 1, 200) AS lead
@@ -399,8 +398,14 @@ started: <YYYY-MM-DD>
 
 # friction-batch
 
-Frictions drawn by `/ymer:mint` to triage as one friction-batch.
-The triage decides which are done — including that some are not.
+Frictions to fix and moot drops to confirm, drawn by `/ymer:mint` to
+triage as one friction-batch. The triage decides which are done —
+including that some are not. A drop confirmed moot stays drained; one
+found not moot is fixed here where it is a friction below the bar (its
+change derivable from the drop plus a locating search, no design choices
+left, and its edit surface your process prose or config, never a
+product's code), and otherwise stays drained beside a recurrence anchored to it, captured
+with the evidence that its cause persists.
 
 ## Below the bar for their own topic
 
@@ -408,8 +413,23 @@ The triage decides which are done — including that some are not.
 
 ## Moot, or judged not worth doing
 
+### <what closed them: a shipped topic ID, or the fact>
+
+Checked: <the read or command, with what it showed>
+
 <drop as a line>
+
+### Judged not worth doing
+
+<drop as a line>
+Reason: <why it is not worth doing>
 ```
+
+A `###` group is written only when the friction-batch has a drop for
+it: a cause group with its first moot drop, `### Judged not worth doing`
+with its first such friction. Both `##` headings are always written, so
+a friction-batch with nothing below the bar still carries its heading
+for a later append to count.
 
 **Writing the file.** It is a file,
 `<area>/YYYY/MM-DD-<topic>/request.md` under the state folder, written

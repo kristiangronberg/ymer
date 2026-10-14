@@ -394,8 +394,9 @@ _Avoid_: finding (plan-review's and scout's investigation results),
 improvement (the fix, not the observed waste)
 
 ### friction-batch
-Defined in the `mint` skill, its one home — a shape mint may choose
-for a set of small frictions.
+Defined in the `mint` skill, its one home — the `meta` batch topic mint
+opens for small frictions to fix and moot bugs, ideas and frictions to
+confirm.
 _Avoid_: fix-now topic, the batch
 
 ### front
@@ -669,6 +670,11 @@ its evidence; the `mint` skill, drawing from the pool, is its main
 caller. Home: the operations contract, which names the moments that
 mint.
 _Avoid_: mint item, start topic, file a task, create an item, queue
+
+### moot drop
+Defined in the `mint` skill, its one home: a drop whose cause is gone
+or was handled elsewhere, as mint re-verified with evidence.
+_Avoid_: stale, obsolete, already-fixed
 
 ## N
 
