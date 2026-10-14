@@ -62,6 +62,16 @@ what a state folder in no git repository skips), split topics, the
 status ladder, and the topic ID's folder. This section carries only
 define's own reads beside them.
 
+**The pool.** The same read holds the pool's two operations, *draw
+drops* and *return drops* (the operations contract, § The pool): who
+draws, which closes draw, the `Drawn:` and `Returned:` lines and where
+they sit, the read and the read-back, the order at the close, a draw
+that cannot run and how its report names it, the pre-flight's finish,
+and how the front is read. The front comes from this one line, which the
+harness fills in as it loads this skill:
+
+> Front as configured: `${user_config.front}`
+
 **The pre-flight runs first**, as the process contract's § Defaults
 and holds gives it. It runs none of the project checkout's git steps,
 no switch, no stash and no merge: define reaches the checkout only at
@@ -461,6 +471,11 @@ of the topic that write-plan plans against. Its sections:
 - **Out of scope**: what was explicitly excluded, and why.
 - **Open questions for write-plan**: genuinely mechanical and
   deferrable only; a meaning question left open here is a defect.
+- **Drops**, last, where a decision drew a pool drop into the topic or
+  cut one: `## Drops`, the `Drawn:` and `Returned:` lines, every
+  earlier one carried verbatim through every rewrite, a re-define's
+  included, and this close's own appended (the operations contract,
+  § The pool).
 
 **A full re-define rewrites `spec.md` in place**, under a header block
 sitting between the title's metadata paragraph and `## What we mean`:
@@ -556,6 +571,13 @@ explicit path, concurrent edits on a shared tree, committing by hunk and
 the two commit registers; and the two topic kinds with the duty to
 commit machinery edits. The substrate contract's head says where git is
 in reach; a session that meets none of its cases reads nothing there.
+
+**Draw and return.** A close that consolidated `spec.md` draws and
+returns what this close's lines in its `## Drops` section name, right
+after the state-folder commit lands, or the save where the files are
+the record (the operations contract, § The pool: the read, the order
+at the close, a draw that cannot run). A pending close, and a close
+that names brainstorm instead of write-plan, draws nothing.
 
 **Capture block:** invoke the `ymer:capture` skill, source `define`.
 The battery, the drop grammar and the write live in that skill alone.

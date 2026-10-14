@@ -150,7 +150,7 @@ _Avoid_: kaizen block
 ### carve topic
 Defined in the `mint` skill, its one home.
 _Avoid_: carving session, lift-out, digest, carve-out (the ExDoc and
-plan-scope sense), drain (that is `/ymer:mint`'s act)
+plan-scope sense), drain (*drained* is the pool's status for a drawn drop)
 
 ### catch-up
 The merge of current main into a topic branch, run on a clean tree — dirt
@@ -284,6 +284,15 @@ _Avoid_: found set, matches (bare)
 Defined in the write-plan skill — § Task Structure states the line's
 grammar and its skip rule.
 
+### draw
+Defined in the operations contract, § The pool: the act that makes an
+open drop part of work and drains it there, by mint at a pick or by
+brainstorm, define, write-plan or review taking the drop into its
+topic; its inverse, *return*, puts a drop a later decision cut back in
+the pool.
+_Avoid_: take in (of a drop), ride (of a drop), drain (for the act
+itself: a draw drains the drop, *drained* being its status)
+
 ### drawn topic
 A topic `/ymer:mint` drew from the pool: its task minted at `doing`, its
 folder holding the `request.md` mint wrote. As an arrival, it is that
@@ -293,8 +302,7 @@ _Avoid_: minted topic, pool topic
 ### drop
 One thing in the pool, waiting to be drawn: an observation of a kind,
 with its body, its context, and optionally an anchor to the drop it
-recurs. Mint draws a drop, and the drop is drained. Home: the `capture`
-skill.
+recurs. A draw drains it. Home: the `capture` skill.
 _Avoid_: item (the retired inbox's noun), row (bare)
 
 ## E
@@ -694,8 +702,9 @@ it — they follow the public register's grammar instead.
 
 ## O
 ### operations contract
-The reference file this plugin ships for the roadmap and the state
-store: the roadmap model and its views, the operations with their
+The reference file this plugin ships for the roadmap, the state store
+and the pool's draw and return: the roadmap model and its views, the
+operations with their
 required outcomes and postconditions, the status ladder, the topic's
 artifacts with the `request.md` template, split topics, and each
 operation's binding per coordinator. Skills cite it by its role phrase
@@ -767,10 +776,13 @@ _Avoid_: prepared interview, parked interview, deferred interview,
 interview queue, pending record
 
 ### pending step
-A hold whose command has not run yet. Its pendingness is read from repo
-and worktree state, never from a stored status; a successor pre-flight
-surfaces every pending step it observes and stops only when its own work
-depends on one.
+A hold whose command has not run yet, or a close's draw or return the
+pool did not take (the operations contract, § The pool). Its
+pendingness is read from durable state, never from a stored status:
+repo and worktree state for a hold, the topic's `Drawn:` and
+`Returned:` lines beside the pool's rows for a draw. A successor
+pre-flight surfaces every pending step it observes and stops only when
+its own work depends on one.
 _Avoid_: pending record
 
 ### phase close
@@ -791,9 +803,9 @@ _Avoid_: plan done, all boxes ticked
 
 ### pool
 The one store of everything waiting to be drawn — drops in the node's
-`pool` table, written by the `capture` skill and drawn by the `mint`
-skill; nothing in it is work anyone has committed to. Mint draws a
-drop, and the drop is drained. Home: the `capture` skill.
+`pool` table, written by the `capture` skill and drawn by mint or by
+brainstorm, define, write-plan or review; nothing in it is work anyone
+has committed to. A draw drains a drop. Home: the `capture` skill.
 _Avoid_: backlog, inbox, staging, improvements pool, task pool, search
 pool; pool for a Roadmap project's tasks — say "a Roadmap project's
 tasks", or "the roadmap" for the ones in flight

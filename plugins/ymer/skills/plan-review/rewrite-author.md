@@ -37,6 +37,10 @@ against the current tree.
   manifest beside it. Never create a separate review file, and never
   append a notes section in place of fixing the body: fold every fix
   into the plan itself.
+- **Keep the plan's `## Drops` section as it stands.** Its `Drawn:`
+  and `Returned:` lines are the record a later pre-flight draws from,
+  and no finding rewrites them; a rewrite that moves the section
+  carries every line verbatim.
 - **Apply every confirmed fix.** Where a finding lists alternatives, it
   is a genuine design decision: pick the option this codebase's
   conventions (`CLAUDE.md`, `README.md`) and the companion skill best

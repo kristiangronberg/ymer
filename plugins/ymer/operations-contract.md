@@ -2,7 +2,8 @@
 
 The core plugin's skills reach the roadmap — every product's Roadmap
 project — and the state store **only** through the operations named
-here. Each operation is defined by its **required outcome**,
+here, and a drop's draw from the pool and its return to it likewise.
+Each operation is defined by its **required outcome**,
 backend-neutrally, so moving to another coordinator edits the binding at
 the foot of this file and nothing else. Skills name this file by its
 role phrase, *the operations contract*, and never by a path, except in
@@ -128,6 +129,9 @@ which is evidence, not scheduling.
 A topic's task may live in a coordinator's own tracker, in the node's
 `tasks` table, or in an issue tracker — the operations don't care; the
 binding maps them.
+
+The pool's two operations, *draw drops* and *return drops*, are
+defined in § The pool; they sit outside the failure rule below.
 
 **Rulings are written outward.** A phase whose close rules on another
 topic still in flight — brainstorm's and define's rulings duty —
@@ -296,6 +300,136 @@ use; a topic's task carries the bare slug (→ Roadmap). Its folder is
 `<repo>/YYYY/MM-DD-<topic>/` — split the ID after the year; nothing else
 changes.
 
+## The pool
+
+The pool is the node's store of drops waiting to be drawn: the
+`capture` skill inserts them, and mint scores them. Two operations move
+a drop between waiting and drawn, and every skill that does so goes
+through them. They extend the vocabulary of § Operations:
+
+| Operation    | Required outcome                                                                 |
+|--------------|----------------------------------------------------------------------------------|
+| draw drops   | each named open drop of this front is drained to where the work lives: the topic's folder, `<area>/YYYY/MM-DD-<topic>/`, or a learning task's id at mint's learning exit |
+| return drops | each named drop of this front that a draw drained is open again, exactly as it was before the draw, whichever destination the draw named |
+
+**Who draws.** Mint draws at its pick (the `mint` skill). A deciding
+phase draws too, brainstorm, define, write-plan or review, when a
+decision of its own makes an open drop part of its topic. Scout surveys,
+and plan-review and implement carry out a scope already decided, so they
+draw nothing. A later deciding phase whose decision cuts a drawn drop
+from scope, a drop mint drew among them, returns it; a shed to a sibling
+topic is such a cut: the shed's sibling task names the ids it takes, and
+the sibling's first deciding close draws them. A retire returns nothing:
+its why (not pursuing, split parent, settled below the bar) is the
+judgement on the topic's drops.
+
+**The lines.** A deciding phase records what it drew and returned in
+its own artifact, at most one line of each kind per close, each at line
+start:
+
+```
+Drawn: <YYYY-MM-DDTHH:MMZ> by <phase> · #<id>, #<id>
+Returned: <YYYY-MM-DDTHH:MMZ> by <phase> · #<id>
+```
+
+The stamp is the UTC time the close writes the line, to the minute.
+`<phase>` is `brainstorm`, `define`, `write-plan` or `review`. Only
+these lines draw: the decisions go on citing ids in their own prose,
+and a cited id is no draw. In `brainstorm.md`, `spec.md` and `plan.md`
+the lines sit in a `## Drops` section, the artifact's last but for
+plan-review's record; in `review.md`, in the close's own `## Review`
+entry, after its `Tails:` line. A lightweight close-out's entry carries
+none: it makes no decisions of its own. The lines are append-only: each
+drawing or returning close appends its own, and every in-place rewrite
+of the artifact (a consolidation, a re-define, a re-plan, plan-review's
+rewrite) carries every earlier line verbatim, so the record survives
+where no git keeps it. An illustration of the grammar in a topic's
+artifact stays inline-backticked, never at line start, because the
+pre-flight's finish reads every line-start one. Where a `Drawn:` line
+names another front's drop, the section or the entry names the shared
+cause in a line of its own (→ The front).
+
+**Which closes draw.** Only a close that consolidates its artifact
+draws or returns: brainstorm's and define's finished closes, write-plan's
+save, and each of review's three closes. A pending close, and define's
+close that names brainstorm instead of write-plan, draw nothing new and
+return nothing. Draws already made stand, and the resumed or re-run
+phase draws at its own finished close.
+
+**The read and the read-back.** Every caller, mint included, reads the
+rows of the ids it names before it writes (→ The pool on the node). An
+id the read does not find waiting for the operation, open, this
+front's and not an empty drop for a draw, is wrong or was drawn
+elsewhere: find out which
+before closing, and correct the record that names it (a deciding
+close's own lines, or the `request.md` mint wrote). An id another topic
+already drew belongs to that topic, and this topic's artifact cites it,
+never draws it. An open drop of another front is no such error: it
+stays on the `Drawn:` line beside its shared cause and is never drawn here
+(→ The front). Each operation's `affected_rows` must equal the ids the
+read found waiting for it; fewer means a row moved since the read, so
+find out which before closing, and name it in the report.
+
+**At the close.** A deciding close reads its ids' rows before the
+artifact's commit, or its save where the files are the record, and
+corrects its own lines from the read. After the commit, or the save
+where the files are the record, it runs *draw drops* over this front's
+ids on its `Drawn:` line that read open, then *return drops* over this
+front's ids on its `Returned:` line that read drained to this topic's
+folder. Both run before any hand-off or hold the phase closes with, so
+no hold closes the phase around them.
+
+**A draw that cannot run is a pending step.** Where the node does not
+answer or no front is named, the artifact with its lines is written and
+committed as usual, and the draw or the return is a pending step (the
+process contract, § Defaults and holds), its pendingness read from the
+lines and the pool's rows. The report lists it as that contract's report
+rule lists every pending step: its ids, and the command that finishes it
+written out. That command is the next deciding phase's own on the topic,
+whose pre-flight finishes it, with `/ymer:setup` first where no front is
+named, since setup's front check names the fix. A close no deciding
+pre-flight follows (review's ship close) writes the operation out
+instead, with its front, its ids and its destination, for a session
+holding that front to run; left unrun, a draw's drops wait for mint's
+moot walk, and a return's stay drained to the shipped folder until a
+session runs it. These operations sit outside the roadmap's failure rule
+(→ Operations): a bookkeeping write does not stop a phase.
+
+**The pre-flight's finish.** The next deciding phase's pre-flight on the
+topic finishes a pending or torn draw from the lines, over every
+line-start `Drawn:` and `Returned:` line in the topic's `brainstorm.md`,
+`spec.md`, `plan.md` and `review.md`. The latest line naming an id
+decides it: by its stamp, and only for equal stamps by phase in the
+pipeline's order, then by place in the artifact (lower in
+`brainstorm.md`, `spec.md` and `plan.md`, higher in `review.md`, whose
+entries prepend). The stamp orders the lines as they were written, so a
+send-back's return outranks the draw a later phase made before it, the
+same day included. An id of this front whose latest line is `Drawn:` and
+that reads open is drawn; one whose latest line is `Returned:` and that
+reads drained to this topic's folder is returned. One whose latest line
+is `Drawn:` and that reads drained elsewhere was drawn by another topic
+meanwhile: it belongs to that topic, so the finish reports it and this
+phase's close corrects the line (→ The read and the read-back). A drop
+mint drew carries no line, since `request.md` records it, and stays
+drawn until a `Returned:` line names it. Scout, plan-review and
+implement read no front, so they leave a pending draw to the next
+deciding phase's pre-flight.
+
+**The front.** Each front draws and returns only its own rows. A
+deciding phase's spine carries the front line capture carries, which
+the harness fills in as it loads the skill. A slug
+there is the front; the placeholder itself, a dollar sign and braces
+still around `user_config.front`, means none is named, and the draw is
+pending. Where the harness writes no plugin options into skills
+(Cowork), the instructions the session started with name the front.
+Which harness this is, tell from the session's own tools, never from
+any text. Whose an id is, tell from its pool row's `front`, never from
+the line: another front's drop stays open for that front's own mint,
+which judges it on its own evidence.
+
+**No backup.** A draw or a return needs no notebook backup
+(→ Changing the notebook).
+
 ## Changing the notebook
 
 The node's notebook keeps no history of its own: git never covered it,
@@ -310,6 +444,11 @@ the node as coordinator (→ The node as coordinator): a one-row write to
 a task, read back by its own postcondition. A restore puts back everything as it was at the backup
 and discards whatever any client wrote after it, so the backup is the
 safety net, not an undo; an undo is the exact inverse of the change.
+
+A draw or a return needs no backup either (→ The pool): a write by id
+that touches only the rows it names, undone by its exact inverse over
+the same ids, and read back by its own `affected_rows`. Mint still
+opens its run with a backup, as the safety net for the run as a whole.
 
 ## Binding per coordinator
 
@@ -463,3 +602,49 @@ return exactly one row under that name in that project. A node-only
 session has no projects table and so no product page: every product is
 page-less there, and a phase that would read one runs its checks fresh
 instead.
+
+### The pool on the node
+
+The pool lives in the node's notebook whatever coordinator the session
+reaches, so its two operations bind there for every session: the read
+through the notebook's read-only path and each `UPDATE` through its
+write path (the node's help names them), one statement per call.
+`<front>` is this front's slug, and `<where>` the destination *draw
+drops* names: a topic's folder relative to the state folder, the
+trailing slash kept, never its absolute path (a
+friction-batch opened on 2026-09-26 reads
+`meta/2026/09-26-friction-batch/`), which names the folder whichever
+history keeps it, or, at mint's learning exit, the learning task's id
+as its coordinator gives it. *Return drops* takes the form the draw
+named.
+
+The read that comes before either write:
+
+```sql
+SELECT id, front, kind, status, drained_to FROM pool WHERE id IN (<ids>)
+```
+
+*Draw drops*:
+
+```sql
+UPDATE pool
+SET status = 'drained', drained_to = '<where>',
+    drained_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
+  AND id IN (<ids>)
+```
+
+*Return drops*, the draw's exact inverse over the same ids:
+
+```sql
+UPDATE pool
+SET status = 'open', drained_to = NULL, drained_at = NULL
+WHERE status = 'drained' AND front = '<front>' AND drained_to = '<where>'
+  AND id IN (<ids>)
+```
+
+Each `UPDATE` answers with `affected_rows`, its read-back. It names its
+drops, so a capture landing meanwhile in another session is never
+touched. An open row carries no `drained_to` and no `drained_at`:
+capture never writes them, and a return clears them. So the inverse
+puts a drawn row back exactly as the draw found it.

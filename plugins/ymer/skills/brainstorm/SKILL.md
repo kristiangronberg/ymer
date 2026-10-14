@@ -74,6 +74,16 @@ failure rule, the outward-write rule for rulings, the topic's artifacts
 folder in no git repository skips), split topics, and the topic ID's
 folder. This section carries only brainstorm's own reads beside them.
 
+**The pool.** The same read holds the pool's two operations, *draw
+drops* and *return drops* (the operations contract, § The pool): who
+draws, which closes draw, the `Drawn:` and `Returned:` lines and where
+they sit, the read and the read-back, the order at the close, a draw
+that cannot run and how its report names it, the pre-flight's finish,
+and how the front is read. The front comes from this one line, which the
+harness fills in as it loads this skill:
+
+> Front as configured: `${user_config.front}`
+
 **The pre-flight runs first**: derive the predecessor's close state and
 any pending step from durable state, finish an unfinished close from
 its first missing outcome, and re-report each pending step with its
@@ -496,6 +506,10 @@ rewrite, their answered questions landing in the sections below:
 - Optional: a verified-state section for measurements the session ran,
   whose contract is `cases.md` § The Interview
 - Open questions handed to the next phase
+- `## Drops`, last, where a decision drew a pool drop into the topic or
+  cut one: the `Drawn:` and `Returned:` lines, every earlier one
+  carried verbatim and this close's own appended (the operations
+  contract, § The pool)
 
 ## Self-Review (inline)
 
@@ -584,6 +598,16 @@ fired.
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for the same rules
 § Branch Intake names. The substrate contract's head says where git is
 in reach; a session that meets none of its cases reads nothing there.
+
+**Draw and return.** A finished close, one that consolidated
+`brainstorm.md` or a narrow-and-go split child's that wrote its shape
+directly, draws and returns what this close's lines in its `## Drops`
+section name, right after the commit's verify (`mechanics.md` § Commit
+the Artifacts, Then Reset, step 2), or the save where the files are the
+record, and before the reset hand-off, so the hold cannot close the
+phase around the draw (the operations contract, § The pool: the read,
+the order at the close, a draw that cannot run). A pending close draws
+nothing.
 
 **Capture block:** invoke the `ymer:capture` skill, source
 `brainstorm`. The battery, the drop grammar and the write live in that

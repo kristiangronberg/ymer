@@ -84,11 +84,12 @@ sign and braces still around `user_config.state_folder`, means the
 option is unset, and the run stops naming `/ymer:setup`. On Cowork the
 front's initial instructions name the folder instead.
 
-**Its kind** decides what keeps the history of what this run writes. It
-is read the way the operations contract states it
-(`${CLAUDE_PLUGIN_ROOT}/operations-contract.md`, § The topic's
-artifacts), which gives the reading and every outcome, and the way setup
-runs it. Where the reading gives git, the run commits what it wrote.
+**Its kind** decides what keeps the history of what this run writes.
+**Read the operations contract's § The topic's artifacts now**, unless
+already read this session, before the guard reads the folder:
+`${CLAUDE_PLUGIN_ROOT}/operations-contract.md`, which gives the reading
+and every outcome; run it the way setup runs it. Where the reading
+gives git, the run commits what it wrote.
 Where it gives the files as the record, the run writes each file and
 commits nothing. Where it refuses the folder, the run stops naming
 `/ymer:setup`.
@@ -123,7 +124,7 @@ refused by the reading of its kind; a ymer call that errors; a lapsed
 sign-in; a notebook that answers but lacks `tasks`, `tasks_log` or
 `pool_scores`; and a `<front>` the node's `fronts` table does not list
 (→ Nothing to draw). Repair nothing here, never guess a path, and never
-write a topic anywhere else: a run with no state folder drains nothing,
+write a topic anywhere else: a run with no state folder draws nothing,
 and its drops stay open for the run after setup passes.
 
 ## The way of working mint draws into
@@ -161,13 +162,14 @@ goes stale the next time the server moves.
 
 **Notebook calls are named the same way, and their SQL is written out**
 in `mechanics.md`, under the heading of the section that runs each
-statement (most of it in § The run and § Scoring): the tool and the
-action are the node's, and the SQL is this plugin's own, over its own
-tables. The node runs one statement per
-`execute` call and drops the rest of a multi-statement call without a
-word, so each statement is a call of its own. A result too large to
-come back whole, a notebook read or a `projects list`, is read whole
-from wherever the harness kept it, never from a preview of it.
+statement (most of it in § The run and § Scoring), except step 4's draw,
+whose SQL is the operations contract's (§ The pool on the node): the
+tool and the action are the node's, and the SQL is this plugin's own,
+over its own tables. The node runs one statement per `execute` call and
+drops the rest of a multi-statement call without a word, so each
+statement is a call of its own. A result too large to come back whole, a
+notebook read or a `projects list`, is read whole from wherever the
+harness kept it, never from a preview of it.
 
 ## Nothing to draw
 
@@ -183,7 +185,7 @@ Then, if the pool holds no open drop on this front, or none but drops
 no exit can take (empty drops, vision drops no exit can place, and
 drops anchored to a topic in flight, started and not yet shipped), there
 is no run to make. Say so and stop, naming `/ymer:capture` as the way to
-put a drop there: no drain, no commit, no task. Both states are
+put a drop there: no draw, no commit, no task. Both states are
 ordinary, a drained pool and an accumulation of drops nothing ever
 draws.
 
@@ -192,11 +194,12 @@ draws.
 *Read with this section: `mechanics.md` § The run (the mechanics) and `cases.md` § The run (the cases).*
 
 1. **Back up, score, then survey.** Take a notebook backup first
-   (`notebook` `create`) and note its id: the drain in step 4 changes
+   (`notebook` `create`) and note its id: the draw in step 4 changes
    drops that no commit records. The backup is the whole-notebook safety
-   net, not the drain's undo, because `restore` also discards every drop
-   any session inserted after it. A wrong drain is undone by its exact
-   inverse instead, which touches nothing else.
+   net for the run, not the draw's undo, because `restore` also discards
+   every drop any session inserted after it. A wrong draw is undone by
+   *return drops* instead (binding: the operations contract), which
+   touches nothing else.
 
    Then score (→ Scoring): every open drop on this front that is not
    empty and has no `pool_scores` row gets one before anything is
@@ -269,15 +272,21 @@ draws.
    (→ `request.md`'s shape). Where git keeps it, step 5 commits that
    file; otherwise the file is the save.
 
-4. **Drain the drops the pick took**, every one of them, in one
-   `notebook` `execute`. The ids are this front's portion of the
+4. **Draw the drops the pick took** (*draw drops*, binding: the
+   operations contract), every one of them. **Read the operations
+   contract's § The pool and § The pool on the node now**, unless
+   already read this session:
+   `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`, for the operation,
+   the read before it and the `affected_rows` read-back with what a
+   short one means, and its SQL on the node. The ids are this front's
+   portion of the
    cluster, never the anchor's alone: the anchor where its front is this
    one, every open drop of this front anchored on it, by its id or by the
    same named cause (for a moot drop, only those its evidence covers),
    the vision cluster or friction-batch set step 1 gathered, the moot
    drops the walk collected with the cluster members their evidence
    covers, and the neighbours step 3 folded in.
-   The drain names where the drops went: the topic's folder
+   The draw names where the drops went: the topic's folder
    as `<area>/YYYY/MM-DD-<topic>/`, the friction-batch's included, or
    the learning task's id. Drops are never deleted, and every other drop
    stays open: a friction left to accumulate produces a *better* root
@@ -290,7 +299,7 @@ draws.
    and a bare commit sweeps in their staged work. Where the files are
    the record, the file step 3 wrote is the save, and this step ends
    there. A learning-task pick writes no file and records nothing: its
-   drain is already durable in the table.
+   draw is already durable in the table.
 
 6. **Close with the runnable reminder** (→ The close).
 
@@ -373,7 +382,7 @@ A bug's cluster is the thing that is broken and every drop that saw it
 break.
 
 **Vision drops cluster per product instead.** They carry no root cause
-to terminate at, and one product's direction is what their drain
+to terminate at, and one product's direction is what their draw
 writes. A product's vision drops are one cluster however unrelated their
 contents, and they never join a friction cluster.
 
@@ -442,7 +451,7 @@ over (→ `request.md`'s shape), and hand it to capture at the close.
 rules:
 
 - **Topic created but nobody has started it**: fold the drop into its
-  `request.md` and drain it there. It is the same append the
+  `request.md` and draw it there. It is the same append the
   friction-batch uses; it costs nothing because nobody has read the
   file yet, and the intake gets strictly better.
 - **Anything else**: leave the drop out of that topic. If the topic
@@ -525,7 +534,7 @@ product's code without editing it. It takes exactly two kinds of drop:
   never a project's code.
 - **Moot, or judged not worth doing**: a moot drop the walk collected
   (→ The pick rule), or a friction from the friction-batch's set judged
-  not worth doing. Never drain such a drop silently: the work that
+  not worth doing. Never draw such a drop silently: the work that
   follows gets the final say on whether it is done, including that it
   is not.
 
@@ -547,7 +556,7 @@ it worth doing after all, and otherwise it stays drained.
 
 **Only frictions go below the bar, and vision drops never ride the
 friction-batch.** A product's direction is not the friction-batch's
-edit surface. A product's vision drops drain as exit 1, as a **carve topic**: an
+edit surface. A product's vision drops are drawn as exit 1, as a **carve topic**: an
 ordinary topic in that product's area whose `request.md` names the
 product and carries the drops verbatim, and whose work writes them into
 the product's own description. That is the one door through which
@@ -561,7 +570,7 @@ coordinator).
 "The product has a Roadmap" reads per coordinator, like every other
 route. In ymer a `<Product> Roadmap` must exist, and a vision drop for a
 product with none waits, as capture says. In the node it always holds,
-since `project` is the derived label, so a vision cluster there drains
+since `project` is the derived label, so a vision cluster there is drawn
 like any other pick, and writing the page itself happens wherever that
 page lives once the topic is promoted.
 
@@ -579,7 +588,7 @@ its *opening* date: every drop carries its own.
 
 **3. A learning task.** A `learning` drop exits here. Mint **never opens
 the learning in-session**, exactly as it never runs the topic: it
-creates a task, drains the drops to that task, and closes. The task's
+creates a task, draws the drops to that task, and closes. The task's
 name is the gap **as a goal-contract-shaped statement**, not a bare
 subject name: "enough Postgres query planning to read an EXPLAIN and
 fix the index myself", not "Postgres". The drained drops ride the
@@ -727,7 +736,7 @@ it, by name, what this run's scoring showed:
   that product's, with `Meta Roadmap` excluded from the candidates. In
   ymer a missing Roadmap halts the run and says what to create; in the
   node the Roadmap is a derived label and nothing can be missing
-- Every run opens with a notebook backup, and the drain is one `UPDATE`
-  by id to `drained`: drops are never deleted
+- Every run opens with a notebook backup, and the draw is *draw drops*,
+  one write by id: drops are never deleted
 - The pool itself lives in no git tree; only the topic's folder is
   recorded in the state folder's history

@@ -413,7 +413,7 @@ in a pull store, reached by a trigger description or by a pointer.
 | the plugin's skills and contract files (pull) | process knowledge: each rule lives in the skill that owns the moment it fires, and a rule several skills share lives once, in a contract file the skills read at the moment they name |
 | the coordinator's tasks and projects | work state, the roadmap of work in flight, plus each product's **product page**, the governed prose in its Roadmap project's description (binding: the operations contract) |
 | the coordinator's docs | reference knowledge reusable across projects: notes on tools and languages, and the knowledge docs, the learning track's substrate (the tutor skill). The dividing line: useful independent of one repo's current code, a coordinator doc; about specific files or decisions of a repo, that repo's docs |
-| the pool (the `pool` table in the node's notebook) | work nobody has started: drops of every kind, written by the `capture` skill and drawn by the `mint` skill |
+| the pool (the `pool` table in the node's notebook) | work nobody has started: drops of every kind, written by the `capture` skill and drawn by the `mint` skill or by brainstorm, define, write-plan or review (the operations contract, § The pool) |
 
 Knowledge with no fitting store means stopping to pick one, or to
 charter one, with the user. Never open a scratch store.
@@ -489,7 +489,9 @@ the delegation may end.
 **Pre-flight.** Whichever session next touches the topic derives the
 predecessor's close state and every pending step from durable state:
 the repo trees, the worktree list, the topic folder, the task's state,
-and both repos on a close that spans two. It finishes an unfinished
+both repos on a close that spans two, and, in a deciding phase's
+pre-flight, the pool's rows for a pending draw or return (the operations
+contract, § The pool). It finishes an unfinished
 close from its first missing outcome, re-reports each pending step with
 its command written out, and stops only when this phase's own work
 depends on one: a pending reset blocks grounding, and a pending push

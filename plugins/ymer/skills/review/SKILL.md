@@ -79,6 +79,16 @@ postcondition, the failure rule, how a call's shape is read from the
 coordinator at the moment of the call, and how the state folder's kind
 is read. This section carries only review's own reads beside them.
 
+**The pool.** The same read holds the pool's two operations, *draw
+drops* and *return drops* (the operations contract, § The pool): who
+draws, which closes draw, the `Drawn:` and `Returned:` lines and where
+they sit, the read and the read-back, the order at the close, a draw
+that cannot run and how its report names it, the pre-flight's finish,
+and how the front is read. The front comes from this one line, which the
+harness fills in as it loads this skill:
+
+> Front as configured: `${user_config.front}`
+
 Find the topic directory through the topic's task, then run the
 pre-flight and read, in this order:
 
@@ -515,6 +525,8 @@ Where-to-look:
 - when <X misbehaves>, check <Y>
 - never <X> — <consequence>
 Tails: Learning: none · Calibration: none
+Drawn: <YYYY-MM-DDTHH:MMZ> by review · #<id>, …     [where a decision of this close drew an open drop into the topic (→ Phase Close)]
+Returned: <YYYY-MM-DDTHH:MMZ> by review · #<id>, …  [where a decision of this close cut a drawn drop from scope]
 Reviewed: branch @ <sha> · <tree> <sha> <sha> · <tree> <sha>     [iterate and wait closes: what this entry's pass covered]
 Unreviewed: branch <sha> · <tree> <sha> <sha> · <tree> <sha>     [the same closes, always; `none` where the close committed nothing]
 ```
@@ -673,6 +685,12 @@ decide-forward disposition selects nothing, since it fires no close.
 record; only the ship close touches the project repo's main. Where the
 lens pass's fixes landed is § The lens pass's to say, never restated
 here.
+
+**Each of the three closes draws and returns** what its entry's `Drawn:`
+and `Returned:` lines name, right after the state-folder commit of step
+5, or the save where the files are the record (the operations contract,
+§ The pool: the read, the order at the close, a draw that cannot run).
+The lightweight close-out's entry carries no such lines.
 
 **Ship**: Claude-run end to end except the push. Work no pass has seen
 takes its `Delta pass:` first, before step 1: everything after the

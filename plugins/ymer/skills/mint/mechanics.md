@@ -11,9 +11,9 @@ Contents:
 - The front, the state folder and the coordinator: Cowork's readings,
   the home directory in a path, where the kind is read, a lapsed sign-in
 - Nothing to draw: the fronts check
-- The run: the backup's inverse, the census and the aggregates, the
-  ranking, the candidate reads, the vision cluster, the friction set,
-  the unstarted listings, the drain, the commit
+- The run: the census and the aggregates, the ranking, the candidate
+  reads, the vision cluster, the friction set, the unstarted listings,
+  the commit
 - Scoring: the unscored ids, the next-steps block, the dispatch, the
   read-back, the fallback's bounds
 - The pick rule: the recurrence search
@@ -61,15 +61,6 @@ SELECT slug FROM fronts
 `<front>` must be among the slugs listed.
 
 ## The run
-
-**Step 1, the backup's inverse.** A wrong drain is undone by this, over
-the same ids, in one `notebook` `execute`:
-
-```sql
-UPDATE pool
-SET status = 'open', drained_to = NULL, drained_at = NULL
-WHERE id IN (<the same ids>)
-```
 
 **Step 1, the census and the aggregates**, each through `notebook`
 `query`:
@@ -211,24 +202,6 @@ FROM tasks
 WHERE project = 'Learning' AND status IN ('new', 'reopened')
 ORDER BY id
 ```
-
-**Step 4, the drain**, in one `notebook` `execute`:
-
-```sql
-UPDATE pool
-SET status = 'drained', drained_to = '<where they went>',
-    drained_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-WHERE status = 'open' AND id IN (<ids>)
-```
-
-`drained_to` for a topic is its folder under the state folder, the date
-split after the year and the trailing slash kept: a friction-batch
-opened on 2026-09-26 reads `meta/2026/09-26-friction-batch/`. That
-names the folder whichever history keeps it, so the value never encodes
-the history. The call's `affected_rows` must equal the number of ids;
-fewer means an id is wrong or a drop was already drained, so find out
-which before closing. The update names its drops, so a capture landing
-meanwhile in another session is never touched.
 
 **Step 5, the commit**, where git keeps the state folder:
 

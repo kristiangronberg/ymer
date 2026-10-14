@@ -73,6 +73,16 @@ skips, the `pre-image/` slot), split topics, the status ladder and its
 `Hardened —` line, and the topic ID's folder. This section carries
 only write-plan's own reads beside them.
 
+**The pool.** The same read holds the pool's two operations, *draw
+drops* and *return drops* (the operations contract, § The pool): who
+draws, which closes draw, the `Drawn:` and `Returned:` lines and where
+they sit, the read and the read-back, the order at the close, a draw
+that cannot run and how its report names it, the pre-flight's finish,
+and how the front is read. The front comes from this one line, which the
+harness fills in as it loads this skill:
+
+> Front as configured: `${user_config.front}`
+
 **The pre-flight's derivation of pending steps runs first**, as the
 process contract's § Defaults and holds gives it: a pending reset stops
 this phase, and a pending push does not. Its git steps on a code-repo
@@ -193,9 +203,10 @@ A spec that covers several independent subsystems is several topics.
 **Offer a split into topics** (the operations contract, § Split topics:
 a mid-pipeline split, shed siblings), never separate plans: a topic has
 one `plan.md`. On the user's yes, shed the split children (*mint task*,
-binding: the operations contract, each read back), record the shed in
-the plan header, and plan the narrowed topic. Each part should produce
-working, testable software on its own.
+binding: the operations contract, each read back, each sibling's task
+naming the ids of the drawn drops it takes, which this save returns),
+record the shed in the plan header, and plan the narrowed topic. Each
+part should produce working, testable software on its own.
 
 Before drafting a large plan, or when one balloons mid-draft, offer an
 unprompted worth-it assessment. Ground it in real data (row counts,
@@ -370,6 +381,11 @@ present; leave out a line whose condition does not hold.
 
 Then the plan's own sections: the answers to the spec's open questions,
 the Grounding fact sheet, the `## File Structure`, and the tasks.
+
+Where a planning decision drew a pool drop into the topic or cut one,
+a `## Drops` section follows the tasks with the `Drawn:` and
+`Returned:` lines, every earlier one carried verbatim (the operations
+contract, § The pool).
 
 ## Task Structure
 
@@ -588,6 +604,10 @@ line over. There is no "delta plan" shape and never a second plan
 file: a reader must never have to work out which plan is the plan,
 which is the sibling-files confusion moved inside one file.
 
+The re-plan carries the plan's `## Drops` section with every `Drawn:`
+and `Returned:` line verbatim, and appends its own (the operations
+contract, § The pool).
+
 ## No Placeholders
 
 Every step contains the actual content an engineer needs. These are
@@ -734,6 +754,12 @@ now**, unless already read this session:
 path, the commit registers, concurrent edits on a shared tree, and the
 machinery-edit duty. A meta topic on a state folder in no git
 repository with no machinery edit reads nothing there.
+
+**Draw and return.** Saving the plan is write-plan's consolidating
+close: it draws and returns what this close's lines in the plan's
+`## Drops` section name, right after the state-folder commit lands, or
+the save where the files are the record (the operations contract,
+§ The pool: the read, the order at the close, a draw that cannot run).
 
 ## Next Phase
 

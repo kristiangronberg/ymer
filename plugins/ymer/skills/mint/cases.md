@@ -24,14 +24,14 @@ Contents:
 **A cluster can span fronts.** Capture's recurrence check searches the
 whole pool, so a drop on this front may be anchored on another front's
 drop, and the candidate read in step 1 shows each drop's `front`. The
-pick takes this front's portion only: step 4 drains the drops whose
+pick takes this front's portion only: step 4 draws the drops whose
 `front` is `<front>`, and the other front's drops stay open for that
 front's own mint. Where the cause is shared, say so in a line of the
 artifact the pick writes.
 
 **An open pointer on a drained anchor** reads as the sharpest signal at
-the next run. So after a drain, an open pointer on a drained anchor
-means one of two things: it was captured after the drain, or it is
+the next run. So after a draw, an open pointer on a drained anchor
+means one of two things: it was captured after the draw, or it is
 another front's drop, left open for that front's own mint.
 
 ## Scoring
