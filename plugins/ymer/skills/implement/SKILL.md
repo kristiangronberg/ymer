@@ -125,7 +125,8 @@ phase the route rule names.
 
 Calibration: only flag what would make the record a lie.
 
-1. Every ticked box backed by a verification actually run this session?
+1. Every ticked box backed by its own verification, run and passed at
+   that box's step — never by a pass observed at another step?
 2. Full test suite green?
 3. Every drift correction edited into `plan.md`?
 4. Anything built that the plan does not contain — or anything in the plan
