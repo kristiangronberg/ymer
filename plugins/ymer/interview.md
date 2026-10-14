@@ -33,7 +33,7 @@ answer.
   prose the question cannot hide: the analysis message with the question
   at its end, or the analysis in one turn and the tool's bubble in the
   next, never a bare bubble over hidden prose (one same-turn rule:
-  plan-review § Steps, step 5, "Never in the relay's turn").
+  plan-review § The Relay, "Never in the relay's turn").
 - **One question at a time**, never a bulk list. Questions are never
   compressed or bundled to save turns; a topic that needs more
   exploration is broken into several questions, each put on its own.

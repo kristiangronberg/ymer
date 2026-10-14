@@ -544,7 +544,7 @@ and keeping the two apart is what stops work shipping unseen:
   its four writers: the iterate close, the wait close, the drift-valve
   stop's marker block (implement § Drift Valve, which writes this line
   and no `Reviewed:`, since a stop runs no pass), and plan-review's
-  *needs a define session* branch (plan-review § Steps, step 5), which
+  *needs a define session* branch (plan-review § The Relay), which
   ordinarily writes `none`. So its absence carries information: an entry
   with a `Reviewed:` line and no `Unreviewed:` line predates the split.
 

@@ -282,7 +282,7 @@ delta by construction. Nothing uncovered, no line.
 drift-valve stop and plan-review's *needs a define session* branch are
 the others, writing the same marker into this same file. Each owns its
 own steps and states them once (implement § Drift Valve; plan-review
-§ Steps, step 5).
+§ The Relay).
 
 A learning drop captured, or a Learning task minted, mid-session is
 untouched by this exit: it carries its own evidence, so it needs no line

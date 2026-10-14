@@ -714,6 +714,9 @@ The authoritative source set an engagement fixes at its opening — which
 documents, versions, or systems count as truth when material and tutor
 disagree.
 
+### orchestration floor
+Defined in the process contract — § Review effort.
+
 ### order topics
 The operation that records one topic as blocked by another, with a reason,
 and reads the edge back. The only ordering primitive: order is partial by
@@ -988,6 +991,13 @@ decide-forward, and declined — a finding weighed and left as it stands.
 Its closure is what ships a topic. Writes `review.md`.
 _Avoid_: briefing (the retired pre-implement phase), code review (the
 lens pass it reads), walkthrough (its middle movement)
+
+### rewrite author
+The single agent of plan-review's workflow that folds every confirmed
+finding into the plan and its payloads in place, writing beside the step
+it affects each design decision it made and each question it left for
+the user.
+_Avoid_: the author (bare), the rewrite (for the agent), rewriter
 
 ### risk profile
 The expected cost of a defect escaping a review: its probability of going
@@ -1322,8 +1332,8 @@ their job as written: every `Expected:` line and embedded gate carries its
 measurement, derivation, or stamp; observed reds are recorded; run-condition
 steps carry their discriminates-when line; a gate's corpus obeys sweep
 rule 2 — provenance never launders an allowlisted corpus. Named in the
-testability lens (in `plan-review.workflow.js`), whose body the
-lightweight pass is handed verbatim when the surviving roster falls below
+testability lens (plan-review's `lenses/testability.md`), whose file the
+lightweight pass is handed when the surviving roster falls below
 plan-review's orchestration floor — a check cluster, not a lens key.
 
 ### verify lane

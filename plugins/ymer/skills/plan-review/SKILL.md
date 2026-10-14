@@ -1,512 +1,521 @@
 ---
 name: plan-review
-description: Use to adversarially review an implementation plan before it is implemented, rewriting it in place with the fixes applied — phase 5 of the development process.
+description: Attacks an implementation plan before any code is written: independent reviewers each check one concern against the real code, a verifier throws out what does not hold up, and the plan is rewritten in place with the fixes in. Use right after a plan is written, before implementing it.
 ---
 
 # Plan Review
 
-Replaces the manual "look for shortcomings in plan X, list them, propose fixes"
-loop with a single autonomous multi-agent pass. The review runs in isolated
-agent contexts (so it does not consume the main conversation's context — the
-reason the old hand-rolled review loops kept running out of room) and rewrites
-the plan in place when it finishes.
+Plan-review attacks an implementation plan before any code is written.
+Write-plan decided how to build the topic; plan-review checks that plan
+against the real code and hardens it. Independent reviewers each check
+one concern, a verifier throws out what does not hold up, and one
+rewrite author folds every confirmed fix into the plan and its payloads
+in place. The review runs in agent contexts of its own, so it does not
+spend the session's context (the reason hand-run review loops kept
+running out of room), and the plan comes back rewritten and marked
+reviewed, for implement to run.
 
-This skill is the **default next step after write-plan saves a plan** — run
-it on the freshly saved plan without being asked, unless the user explicitly
-said to skip review.
+This file is plan-review's spine: its intent and its moments in order.
+Its **mechanics** (the Claude Code way: the Workflow launch, the Agent
+tool, git, recovery) are in `mechanics.md`, and its **cases** (the
+earned precision: the facts' edge rules, how a marker becomes a
+question, the failure modes of real runs) are in `cases.md`, both under
+this file's headings. A section with entries there says so in its first
+line. Its **agent prompts** are files beside it: one per role
+(`reviewer.md`, `verifier.md`, `rewrite-author.md`) and one per lens
+(`lenses/<key>.md`). Each agent Reads its own, so sharpening a lens or
+adding one is an edit to the prompt files and the roster, and this
+spine stays as it is.
 
-This skill instructs you to call the **Workflow** tool — that is its intended,
-sanctioned use of multi-agent orchestration.
+## Overview
 
-## Operating model
+**Read the plugin glossary's entries for plan-review's vocabulary
+now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/glossary.md`, each entry by its heading:
+*pre-image*, *decision digest*, *lens*, *lens applicability*,
+*effort ladder*, *risk profile*, *orchestration floor*, *rewrite
+author*, *payload*, *payload verifier*, *amendment marker*,
+*iteration*, *gated moment*, *workflow-internal reference*,
+*content-ownership map*, *machinery tree*. This file uses those terms
+and never defines them.
 
-The workflow is **autonomous and runs to completion** — it cannot stop to ask
-the user anything mid-run. All user leverage is **before launch** (refine the
-plan and the input) and **after**: the rewritten plan reviewed via `git
-diff`, and — when the rewrite left a `> Needs confirmation:` marker
-standing — one question per marker at the close, before implement builds
-on the guess (→ step 5). The skill's close carries that one conditional
-gated moment; the workflow itself still stops for nothing and never
-touches git. Lens agents **may** probe the project working tree — but they
-leave it as they found it: a scratch file written to ground a finding is
-removed before the agent returns, and step 5's assertion is what catches
-the one that was not.
+Plan-review is the default next step after write-plan saves a plan: run
+it on the freshly saved plan without being asked, unless the user said
+to skip review. Its top tier calls the Workflow tool, the tool's
+intended, sanctioned use of multi-agent orchestration.
 
-## Steps
+The workflow is autonomous and runs to completion: it cannot stop to
+ask the user anything. The user's leverage is all before launch (refine
+the plan and the input) and after: the rewritten plan, reviewed
+post-hoc at the surface the relay hands over, and one question for
+each `> Needs confirmation:` marker the rewrite author left standing, put at
+the close before implement builds on the guess (§ The Relay). That
+question is this skill's one gated moment; the workflow itself stops
+for nothing and changes no git state. Lens agents probe only under the
+session scratchpad, never writing a file in the project checkout, and
+run no git that changes state; read-only git such as `log` or `blame`
+grounds a finding. The relay's tree assertion is the net for a file an
+agent left behind.
 
-1. **Resolve inputs.**
-   - `planPath` — absolute path to the plan file. If the user named a plan, use
-     it; otherwise find it under `<state folder>/<repo>/` (`<repo>` is the
-     checkout's directory name, or `meta` for a cross-repo
-     process topic), and if ambiguous, ask which one. It is required,
-     and so is `verifierCommand`.
-   - `specPath` — absolute path to the spec the plan was written from. Default:
-     the topic directory's `spec.md` (the define phase's artifact, next to the
-     plan) when it exists; otherwise a separate spec/requirements doc the user
-     named. Omit only when no spec exists apart from the plan.
-   - `focus` — free text, only if the user asked to emphasise something this run
-     (e.g. "lean hard on security" or "architecture"). Pass it through verbatim.
-   - `verifierCommand` — the payload verifier as this session runs it:
-     `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify`, then one
-     `--exempt <tree>` per machinery tree the front binds. The
-     workflow's rewrite author runs it on the topic directory; a
-     workflow script cannot resolve the plugin root itself.
+The run goes in order: resolve the inputs and keep the plan's
+pre-image, derive the facts and the tier, run the tier, write the
+record and the hardened line and commit, then relay the result and put
+the open questions to the user.
 
-2. **Note the in-place rewrite.** Briefly remind the user the workflow
-   rewrites the plan in place, and keep the plan's pre-image (term: the
-   plugin glossary). Where git tracks the state folder, the pre-rewrite
-   plan is already committed (write-plan's phase commit), so the rewrite
-   is always recoverable from the state folder's history; no stash or
-   extra commit is needed before launch. On an **iteration** that same
-   commit's parent is the delta's pre-image — the process contract states
-   that doctrine (§ Iteration) and leaves
-   the command here, at its one consumer: the subject is
-   `git -C <state folder> diff <commit>^
-   <commit> -- <repo>/YYYY/MM-DD-<topic>/plan.md
-   <repo>/YYYY/MM-DD-<topic>/payloads/`, with the untouched plan as
-   context, and the tier is keyed over that delta like any other
-   subject. Where the files are the record, an iteration's subject is
-   the topic's `pre-image/` slot, which write-plan filled before its
-   re-plan, against the current `plan.md` and `payloads/`: read it and
-   keep it for step 3 first. Then, on every run where the files are the
-   record, first cycle or iteration, copy `plan.md` and `payloads/` into
-   the slot (the operations contract, § The topic's artifacts) before
-   the workflow launches; step 4 removes the copy's stamp before the
-   commit. A resumed run that finds the slot's stamp
-   standing skips that copy, as the contract says, and on an iteration
-   the slot then holds this phase's own pre-image rather than
-   write-plan's: the subject is the whole plan, the safe side.
+## Input
 
-   Last before launch, on any kind of state folder: remove a
-   `Hardened —` line an earlier review left under `plan.md`'s title.
-   The plan about to be rewritten is no longer the plan that line
-   certified, so a run torn mid-rewrite must read unhardened, and
-   step 4 writes the line afresh.
+*Read with this section: `mechanics.md` § Input (the mechanics).*
 
-3. **Derive the facts, then derive the tier.** No sizing question reaches the
-   user here: both the roster and the tier follow from the plan document
-   (the process contract, § Review effort — the risk-key
-   definition lives there and is not restated here).
+Input resolves what the run is given, keeps the plan's pre-image, and
+on an iteration takes the delta the review keys on.
 
-   **a. Read the roster's declared preconditions.** Open
-   `${CLAUDE_PLUGIN_ROOT}/skills/plan-review/plan-review.workflow.js` and read the `LENSES`
-   array's `key`, `requires`, and `requiresText` fields. That array is the
-   single source of truth for what each lens checks and what it needs; this
-   skill never restates either, so the two cannot drift apart.
+**Read the process contract's § Defaults and holds now, and the
+operations contract whole**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
+`${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the gate
+defaults and holds, the fallback rule and the report rule; and the
+topic's artifacts (how the state folder's kind is read, the
+`pre-image/` slot and its stamp), the status ladder with its
+`Hardened —` line, and the topic ID's folder. Where `review.md` tops
+with an `Iteration —` marker, **read the process contract's
+§ Iteration now** as well, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for whether the marker is
+live or consumed, its `Consumed —` line, and the plan's pre-image as an
+iteration's delta.
 
-   **b. Derive the facts from the plan.** Each is read off the plan document by
-   the rule below, never judged:
+Resolve the run's inputs:
 
-   | Fact | Read off |
-   |---|---|
-   | `hasCode` | the plan's File Structure names at least one non-prose source file (any extension other than `.md` / `.txt` — a JSON or config file counts) |
-   | `touchesConcurrency` | the plan's steps or any of its `payloads/` files name a process or concurrency construct: a GenServer, Task, Agent, Supervisor, Registry, ETS table, named process, background job, or an `async:` test setting |
-   | `touchesTrustBoundary` | the plan's paths or steps name an externally-reachable entry point (a route/controller, an MCP tool or action, an API or webhook handler, a CLI argument parser, a deserializer of external input), or change authentication/authorization, or change a query that scopes data per tenant or user |
-   | `touchesPersistence` | the File Structure names a migration or schema file, a step describes creating or editing a migration or changing a schema, or a step runs a data transform or backfill |
-   | `relocatesContent` | the File Structure has a delete or move row, or a step uses `git mv` / `rm`, or the plan carries a content-ownership map |
-   | `recordsAmendment` | line-start `> **Amended (` occurs in `plan.md` — read off `plan.md` alone, never `payloads/`: a payload is verbatim target bytes and may carry the grammar as documentation (the whole-plan default below is carved out on this row) |
-   | `companionSkill` | the plan header's line `Coding and documentation work in this plan must follow the <skill-name> skill.` — the skill name it states, or `null` when the line is absent |
-   | `glossaryPath` | the glossary that governs this plan — resolved here, at derivation (the workflow has no filesystem access): the project's `docs/glossary.md`, unless its CLAUDE.md says otherwise; for a meta topic (topic kinds: the process contract, § Topic kinds), the plugin's own glossary file |
+- `planPath`: the absolute path of the plan file. Where the user named
+  a plan, use it; otherwise find it under `<state folder>/<repo>/`
+  (`<repo>` is the checkout's directory name, or `meta` for a
+  cross-repo process topic), in the topic's folder (the operations
+  contract, § Topic ID ↔ folder mapping), and where that is ambiguous,
+  ask which one. Required.
+- `specPath`: the absolute path of the spec the plan was written from:
+  the topic folder's `spec.md` where it exists, otherwise a separate
+  spec the user named. Omitted only where no spec exists apart from the
+  plan.
+- `focus`: free text, only where the user asked to emphasise something
+  this run ("lean hard on security"), passed through on one line.
+- `verifierCommand`: the payload verifier as this session runs it,
+  `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify` followed by one
+  `--exempt <tree>` per machinery tree the front binds. Required: the
+  rewrite author runs it on the topic folder, and no agent can resolve
+  the plugin root itself.
+- `promptDir`: the directory holding the agent prompts,
+  `${CLAUDE_PLUGIN_ROOT}/skills/plan-review` resolved to its absolute
+  path, or the scratchpad copy's where the launch falls back to one
+  (`mechanics.md` § The Run). Required: every agent Reads its prompt
+  files there, and its shared homes under the plugin root that path
+  sits in.
 
-   Only `hasCode` is anchored to the File Structure table, because the spec
-   anchors it there, and only `recordsAmendment` is confined to `plan.md` —
-   its row says why; every other fact is read off the **whole plan** — its
-   steps and paths, plus the topic's `payloads/` files, which carry the
-   plan's payloads (contract: the process contract, § The payload contract) — and a fact
-   whose rule names the File Structure also reads the steps where the same
-   rule says so. A schema change described in a step, or a migration whose
-   filename is not yet known, still makes `touchesPersistence` true.
+**Keep the plan's pre-image** (term: the plugin glossary). Tell the
+user briefly that the run rewrites the plan in place. Where git tracks
+the state folder, write-plan's phase commit already holds the plan, so
+the rewrite is recoverable from the state folder's history and nothing
+is stashed or committed before launch. Where the files are the record,
+copy `plan.md` and `payloads/` into the topic's `pre-image/` slot
+before launch, on every run, first cycle or iteration, as the
+operations contract's § The topic's artifacts says.
 
-   `glossaryPath` is a parameter, not a precondition — no lens is dropped for
-   it. In doubt, a fact reads **true**: a precondition asks only whether the
-   lens has anything to read, never whether it would find anything (the process
-   contract, § Review effort). Doubt is resolved **here**, where the fact is derived: a
-   fact you decline to derive is not a fact in doubt, and the workflow rejects
-   a `facts` object with a key missing rather than reading the gap as `false`.
+**On an iteration, take the delta.** The process contract's
+§ Iteration states the doctrine and leaves the read here, at its one
+consumer: the subject is the steps the iteration changed or added and
+their payloads, with the untouched plan as context. Where git tracks
+the state folder, it is the diff of the iteration's own write-plan
+commit against its parent (`mechanics.md` § Input). Where the files are
+the record, it is the `pre-image/` slot write-plan filled before its
+re-plan, against the current `plan.md` and `payloads/`: read it and
+keep it before this run's own copy replaces it. A resumed run that
+finds the slot's stamp standing skips that copy, as the contract says,
+and on an iteration the slot then holds this phase's own pre-image
+rather than write-plan's: the subject is the whole plan, the safe side.
 
-   **c. Compose the decision digest — spec-level only.** Copy `spec.md`'s
-   `## Decisions` and `## Out of scope` **verbatim**: each section runs from
-   its `## ` heading to the next line-start `## ` heading standing
-   outside a fenced block (or to the file's end), heading included, and all
-   of it is copied, preceded by its `spec.md § <section>` citation on a line
-   of its own. The heading match is a prefix, so a suffixed
-   `## Out of scope (YAGNI)` or `## Decisions — settled in this session's
-   interview` is that section, suffix and all; and it is **plural** — every
-   heading matching the prefix is such a section, so a spec carrying two is
-   copied twice, in document order. No per-entry lines and no
-   selection — an amendment marker rides along under the decision it amends,
-   because a marker states what changed and presupposes the entry it sits
-   under, so picking either text alone drops the half the other needs.
-   **No size bound** — the extraction is mechanical, so a huge digest is a
-   true signal about the plan, not a formatting problem, and a bound would
-   reintroduce the judgement the extraction rule removes. Pass the copied
-   text through `decisionDigest`; the workflow itself wraps it in the
-   `SETTLED` header and the travelling rule, so do not add either here.
-   **Never the plan's own decisions.** code-review reviews the diff against
-   the plan, so plan decisions are settled for it; this skill reviews *the
-   plan*, so plan-level decisions are precisely what is under review, and
-   feeding them back as settled would convert an adversarial pass into a
-   consistency check — trading re-litigation waste for blindness. No
-   `spec.md` → no digest, and the rule that travels with it is simply not
-   stated.
+Last before launch, on any kind of state folder, **remove a
+`Hardened —` line** an earlier review left under `plan.md`'s title. The
+plan about to be rewritten is no longer the plan that line certified,
+so a run torn mid-rewrite must read unhardened, and § The Hardened
+Line writes the line afresh.
 
-   **d. Count survivors and pick the tier.** A lens survives when it declares
-   no `requires`, or when the fact its `requires` names is true. Report the
-   surviving roster and every dropped lens **with the precondition that
-   failed** — a dropped lens is never silence.
+## Facts and Tier
 
-   - **≤ 3 survivors → the lightweight pass.** One fresh-context reviewer (a
-     single Agent-tool subagent), handed **the surviving lenses' bodies
-     verbatim** from the `LENSES` array plus the digest, and additionally
-     checking the two things no lens covers: internal consistency across the
-     touched prose, and anchor/path correctness against the current tree.
-     The reviewer reads the topic's `payloads/` (files and manifest)
-     beside the plan, and its fixes land in whichever surface carries
-     the defect — plan or payload file. A pass that edited either
-     surface closes by re-running the join:
-     `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify <the topic directory>`,
-     one `--exempt <tree>` after it per machinery tree the front binds.
-     Nothing is implemented yet, so a
-     correctly-authored plan reports every gate PENDING and exits 0;
-     exit 2 means the rewrite desynced `plan.md` and
-     `payloads/manifest` — a gate whose checkbox or payload file is
-     gone, a malformed line — or that a payload bound for a project
-     repo carries a workflow-internal reference; exit 1 means a
-     payload already sits in its target (the vacuous-payload case)
-     — or, on a re-plan whose carried steps keep their ticks, a count
-     gate short with every gate box ticked: an occurrence a
-     payload-less step would add by hand, which needs a gate of its
-     own. Fix whichever it names before
-     finishing. A plan whose steps carry no `Payload:` reference line
-     authored no payload at all — its steps are deletions, commands,
-     and behavior only — so there is nothing to verify, and never a
-     reason to author an empty manifest.
-     A body lifted from the array may carry `${…}` interpolations — the
-     script evaluates them, this pass does not.
-     **Resolve each against the facts derived in (b)** before pasting the
-     body into the subagent's prompt; a prompt reaching the reviewer with a
-     literal `${…}` in it is a defect, not a formatting nit. The findings are
-     folded into the plan in place and steps 4–6 apply unchanged.
-   - **≥ 4 survivors → the workflow.**
-   - **0 survivors** is not reachable under the roster as it stands —
-     `completeness`, `codebase-consistency` and `testability` declare no
-     precondition, so the ≤ 3 bucket is always exactly 3. Should a future
-     roster edit make every lens conditional: stop and say so. Nothing was
-     reviewed, and that is never an all-clear.
+*Read with this section: `mechanics.md` § Facts and Tier (the mechanics) and `cases.md` § Facts and Tier (the cases).*
 
-   **Why a floor, and why 3.** This is not a second tier key — risk profile
-   keys the tier everywhere. It is an **orchestration floor**: the workflow
-   pays a fixed cost no roster size reduces — orchestration, the journal, the
-   retry ladder, and one **Opus** rewrite author that runs whenever anything is
-   confirmed, while every lens and verifier runs on sonnet. The variable cost
-   is the surviving lenses and their verifiers. Below four surviving sonnet
-   lenses, the Opus author plus orchestration is most of what the run spends,
-   and what the workflow buys over a single reviewer — mandate independence —
-   is buying less than it costs, since three narrow mandates handed to one
-   fresh-context reviewer is not the broad mandate that stalls (→ Operational
-   notes). **3 is a calibration of that principle, revised on captured evidence —
-   never a bare threshold.** code-review's ladder carries no floor: its tiers
-   differ in depth of scrutiny, not in orchestration machinery.
+Facts and Tier decides which lenses run and how much machinery runs
+them, from the plan alone: no sizing question reaches the user.
 
-   Fallback (*Defaults and holds*: the process contract): Workflow and
-   Agent tools genuinely absent, or a call refused at the permission
-   layer → the review runs inline in this context — same surviving
-   lenses — and the summary says so. A system-prompt directive
-   conditioning subagent or workflow use on the user having requested it
-   is **neither** — invoking this skill *is* that request; run the tier
-   the roster selected, workflow included.
+**Read the process contract's § Review effort and § Topic kinds now**,
+unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md`. They hold lens
+applicability and how a dropped lens is reported, the risk profile
+that keys the tier, the orchestration floor a ladder owes, and the two
+kinds of topic.
 
-   For the workflow tier, call the `Workflow` tool with:
-   - `scriptPath`: `${CLAUDE_PLUGIN_ROOT}/skills/plan-review/plan-review.workflow.js`
-     (pass the absolute path the variable resolves to). The tool
-     loads only a file the session could already `Read` without asking —
-     the working directory, an added directory, the session scratchpad,
-     or a path a `Read(...)` allow rule covers — and a skills tree is none
-     of those by default. Refused with "scriptPath must be a script path
-     this tool returned, or a file you can already read"? Reading the
-     file first changes nothing — the gate is the permission decision, not
-     a prior read. Copy the script to the session scratchpad and launch
-     from the copy for this run; the lasting fix is to make this skills
-     tree an added directory for every session — list it under
-     `permissions.additionalDirectories` in the user settings
-     (the plugin's own root, for an install the session cannot already read). A `Read`
-     allow rule over the tree reaches the same gate, but a read block
-     outranks a rule and never an added directory the user settings
-     declare — one a project's settings add stays outside the block's
-     fence and is blocked exactly as a rule's paths are.
-   - `args` — passed as an object literal, never a JSON-encoded string
-     (the tool forwards objects as objects; the script's string-parsing
-     prologue is a net, not the channel):
+**The roster.** Open
+`${CLAUDE_PLUGIN_ROOT}/skills/plan-review/plan-review.workflow.js` and
+read the `LENSES` array's `key`, `requires` and `requiresText` fields.
+That array is the one source of what each lens needs, and each lens's
+file under `lenses/` the one source of what it checks; this skill
+restates neither, so they cannot drift apart.
 
-     ```json
-     {
-       "planPath": "<abs path>",
-       "specPath": "<abs path or omit>",
-       "focus": "<text or omit>",
-       "verifierCommand": "sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify --exempt <tree>",
-       "facts": {
-         "hasCode": true,
-         "touchesConcurrency": false,
-         "touchesTrustBoundary": true,
-         "touchesPersistence": false,
-         "relocatesContent": false,
-         "recordsAmendment": false,
-         "companionSkill": "<the coding-standards skill the plan header names, or null>",
-         "glossaryPath": "docs/glossary.md"
-       },
-       "decisionDigest": "<the copied spec.md sections, or omit when there is no spec>"
-     }
-     ```
+**The facts.** Each is read off the plan by the rule in its row, never
+judged. The subject is the whole plan on a first cycle: its steps and
+paths, and the topic's `payloads/` files, which carry its payloads (the
+process contract, § The payload contract). On an iteration it is the
+delta § Input took, and ticked, carried steps are context for the
+lenses, never a fact's source: a row that reads `## File Structure` or
+`plan.md` itself counts only what the delta's steps add or change
+there. Every rule reads what a step changes,
+its action and its payload's changed bytes, never what it names: a
+change confined to comments, doc text or prose stored in any file is
+prose, and makes no fact true. The edge rules, and the runs that taught
+them, are in `cases.md` § Facts and Tier.
 
-     The `facts` values above are an example, not a default: derive each one
-     from the plan per the table in (b), and pass **all eight keys on every
-     call**. The script has no filesystem access, so anything it is not
-     passed it cannot know — and it does not guess: it checks that every fact
-     is present and correctly typed, and throws before spawning anything when
-     one is not. An omitted key would otherwise read as `false` and drop that
-     lens exactly as a genuinely false precondition does, leaving the two
-     indistinguishable in the report. The throw costs no tokens (nothing has
-     spawned yet) — fix the call and re-invoke. (d)'s dropped-lens report is
-     still the postcondition to read before trusting the run; with the
-     omission case removed, every line in it now means what it says.
+| Fact | Read off |
+|---|---|
+| `hasCode` | the plan's `## File Structure` names a file whose planned change is code or configuration, not only its comments, doc text or prose (a JSON or config value counts) |
+| `touchesConcurrency` | a step or a payload adds or changes a process or concurrency construct: a long-lived process, a supervisor, a shared in-memory table, a background job, or a setting that runs tests concurrently |
+| `touchesTrustBoundary` | a step or a payload changes an externally reachable entry point (a route or controller, a tool or action called from outside the system, an API or webhook handler, a command-line argument parser, a deserializer of external input), changes authentication or authorization, or changes a query that scopes data per tenant or user |
+| `touchesPersistence` | the `## File Structure` names a migration or a data-at-rest schema file the plan changes, a step creates or edits a migration or changes such a schema, or a step runs a data transform or backfill |
+| `relocatesContent` | a content unit can lose its home: the `## File Structure` has a delete or move row, a step moves or deletes a file (`git mv`, `git rm` or a bare `rm`), a step replaces a content-bearing file's body or a whole section of it, or the plan carries a content-ownership map; a file the plan creates and removes itself is no relocation |
+| `recordsAmendment` | line-start `> **Amended (` occurs in `plan.md`: read off `plan.md` alone, never `payloads/`, since a payload is verbatim target bytes and may carry the grammar as documentation |
+| `companionSkill` | the plan header's line `Coding and documentation work in this plan must follow the <skill-name> skill.`: the skill name it states, or `null` where the line is absent |
+| `glossaryPath` | the glossary that governs this plan, resolved here because the workflow cannot read files: the project's `docs/glossary.md`, unless its `CLAUDE.md` says otherwise; for a meta topic, the plugin's own glossary file |
 
-   The workflow fans out one reviewer per **surviving** lens, pipelines each
-   lens's findings into an adversarial verifier (false positives are dropped),
-   then has a single author apply every confirmed fix to the plan file
-   directly.
+`glossaryPath` is a parameter, not a precondition: no lens is dropped
+for it. Doubt is resolved here, where the fact is derived: a fact you
+decline to derive is not a fact in doubt, and the workflow rejects a
+`facts` object with a key missing rather than reading the gap as
+`false`.
 
-4. **Mark the plan hardened, then commit.** No roadmap write. When the
-   workflow returns, and only then: where `review.md` topped with a
-   consumed `Iteration —` marker when this phase opened, first append
-   `Consumed — <YYYY-MM-DD> by plan-review` to that marker's block
-   (grammar and reading: the process contract, § Iteration); then write
-   the line
-   `Hardened — <YYYY-MM-DD>`, dated today, directly under `plan.md`'s
-   title, with a blank line on either side, the earlier review's line
-   having gone at step 2. It is the last write of the
-   rewrite, so a run torn before it leaves the plan unhardened, the safe
-   side. Where the files are the record, remove the slot's stamp
-   `pre-image/plan.md.taken` too, on every run. That line is plan-review's only mark on the path to implement:
-   the rewritten plan does not otherwise say it was reviewed. On the
-   define branch this phase also writes the iteration marker into
-   `review.md`, which implement's readiness gate reads before the line.
-   A re-plan never carries the line over, so a later write-plan
-   unhardens the plan again (roadmap contract: the operations contract,
-   Status ladder). Where git tracks the state folder, commit at phase
-   close — state changes before announcements
-   (*Defaults and holds*: the process contract):
-   `git -C <state folder> add <repo>/… && git -C <state folder>
-   commit -m "YYYY-MM-DD-<topic>: plan-review" --
-   <repo>/YYYY/MM-DD-<topic>/`. Verify scoped: status no
-   longer lists the topic's paths; foreign dirty paths may remain — leave
-   them (concurrent edits: the substrate contract).
+**The decision digest, spec-level only.** Copy `spec.md`'s
+`## Decisions` and `## Out of scope` verbatim, each section whole with
+its heading, preceded by its `spec.md § <section>` citation on a line
+of its own, by the extraction rule in `cases.md` § Facts and Tier. The
+extraction is mechanical, so the digest is passed whole whatever its
+size: a huge digest is a true signal about the plan, and a bound would
+bring back the judgement the rule removes. Pass the copied text as
+`decisionDigest`. The workflow adds the `SETTLED` header, and the rule
+that travels with the digest is in the reviewer's and the verifier's
+prompts, so add neither here. Never the plan's own decisions:
+code-review reviews the diff against the plan, so the plan's decisions
+are settled for it, but this skill reviews the plan, and feeding its
+decisions back as settled would turn an adversarial pass into a
+consistency check. No `spec.md`, no digest.
 
-5. **Relay the result.** On a code-repo topic, assert the project tree
-   first: `git -C <checkout> status --short` → empty, or
-   every entry named and
-   justified in the relay (a lens agent's leftover scratch file is neither —
-   remove it, and say so). A meta topic has no project checkout, so the
-   assertion is
-   **skipped, not failed**. Then, when the workflow returns its summary,
-   report:
-   - `changesApplied` — what was fixed in the plan.
-   - `designDecisions` — multi-option calls the rewrite made on the
-     user's behalf, with the alternatives not taken and the rationale.
-     Surface these clearly; they are where the user is most likely to
-     want to override.
-   - `unresolved` — anything left flagged in the plan needing the user's
-     product/domain input.
-   - `droppedLenses` — every lens whose precondition failed, with the
-     precondition. Relay these beside `skippedLenses`: a dimension that
-     never ran is not a dimension that came back clean.
-   - `unverifiedFindings` — findings the verifier could not check, dropped
-     unchecked rather than judged false. Relay each; a run that returns
-     any is not a clean run, and an empty `changesApplied` beside them
-     means nothing was cleared.
-   - `rewriteFailed` — present and true means the author never ran: the
-     plan is untouched and every confirmed finding is still open. Say so
-     and re-run; never report that pass as a review that found nothing.
-   The returned summary is the convenient source, not the only one: the
-   author writes every design decision into the plan as a `> Design
-   decision:` note and every unresolved item as a `> Needs confirmation:`
-   marker, so a truncated notification is recovered from the plan
-   itself — `grep -n -e 'Design decision:' -e 'Needs confirmation:'
-   <plan.md>` — never by digging the run's journal or output file.
-   `changesApplied` is the diff below; `droppedLenses` was derived in
-   step 3(d) before launch.
-   Then hand over the post-hoc review surface with real refs (report
-   rule: *Defaults and holds*): `git -C <state folder> diff
-   <write-plan-sha> <plan-review-sha> -- <repo>/YYYY/MM-DD-<topic>/`
-   (the whole topic folder — the rewrite may touch `plan.md` and
-   `payloads/` both; both refs from `git -C <state folder> log
-   --oneline -- <topic folder>`), and offer to adjust any design
-   decision the user disagrees with.
+**The tier.** A lens survives when it declares no `requires`, or when
+the fact its `requires` names is true. Report the surviving roster and
+every dropped lens with the precondition that failed: a dropped lens is
+never silence.
 
-   **Then put every surviving marker to the user — one question each.**
-   A `> Needs confirmation:` marker is the rewrite author's record of a
-   product or domain question it could not settle on the user's behalf,
-   and the next session to read it is implement, which asks nothing: left
-   standing, the topic spends its implementation on a guess the record
-   itself flags as open, and review meets the question after the tokens
-   are spent.
+- **Three survivors or fewer: the lightweight pass.** One
+  fresh-context subagent, handed the reviewer's prompt, the surviving
+  lenses' files and the rewrite author's prompt with the run data
+  (`mechanics.md` § The Run). It reviews, and folds its own findings
+  into whichever surface carries each defect, the plan or a payload
+  file.
+- **Four survivors or more: the workflow.**
+- **No survivors** cannot happen under the roster as it stands:
+  `completeness`, `codebase-consistency` and `testability` declare no
+  precondition, so the lightweight bucket always holds exactly three.
+  Should a later roster make every lens conditional, stop and say so:
+  nothing was reviewed, and that is never an all-clear.
 
-   **Trigger — the plan, not the summary.** The recovery grep above is
-   what fires this beat: a marker it finds in `plan.md` is the trigger,
-   and a non-empty `unresolved` is corroboration where a workflow ran.
-   The plan is the durable source, and the summary field exists only on
-   the workflow tier — a trigger keyed to it would never fire on the
-   lightweight pass, whose steps 4–6 run unchanged. The grep's hits are
-   **read, not counted**: a plan that discusses the marker in prose,
-   and the null form `> **Needs confirmation:** none.`, are both hits
-   and neither is a marker. The `Design decision:` term in that same
-   command is what proves the matcher prints when the
-   `Needs confirmation:` side comes back empty. **Never in the relay's
-   turn** — a question bubble hides the prose printed beside it, so the
-   relay lands first and the questions open the next turn.
+The line between the two tiers is this ladder's orchestration floor,
+three survivors: a calibration of the principle in the process
+contract's § Review effort, its reasoning in `mechanics.md` § Facts and
+Tier, revised on captured evidence and never a bare threshold.
 
-   **Reconcile the summary against the markers** wherever a workflow
-   ran: for each `designDecisions` entry one line-start `> Design
-   decision:` note, and for each `unresolved` entry one line-start
-   `> Needs confirmation:` marker, must exist in `plan.md`. A mismatch —
-   a non-empty field with no marker of its kind — is the relay's own
-   finding, never an all-clear: the relaying session writes the missing
-   markers from the entry's text at the sites its notes name **before**
-   the questions are put, so the union of the two channels fires — never
-   the intersection, never either alone.
+## The Run
 
-   One question through the question instrument per marker, one marker at a time, its options
-   built from that marker's own text. The cap is four options and
-   *Other* is always offered, so three slots are rule-fixed and one is
-   not: the author's provisional choice comes first, labelled
-   `(Recommended)` — it is what the plan already says — and the two
-   standing exits come last, **defer to review** (the marker stands as
-   it is) and **needs a define session** (the question is too open to
-   implement around). The one middle slot goes to the best alternative
-   the marker or its neighbouring `> Design decision:` note names. A
-   marker naming no alternative asks the three; a marker naming several
-   puts the rest in the question's text, where *Other* reaches them.
+*Read with this section: `mechanics.md` § The Run (the mechanics) and `cases.md` § The Run (the cases).*
 
-   **A ruling is written into the plan** — *as written* included: a
-   ruling on an open question is a decision *added*, so it lands as the
-   amendment marker the plan format already takes, on its own line
-   directly beneath the marker it answers — `> **Amended (user,
-   <YYYY-MM-DD>):**` plus the decision's final statement. That is the
-   resolved-marker recognizer downstream: a marker is resolved iff an
-   amendment marker follows it at the same site (review § Input, item
-   3). *Defer to review* therefore writes nothing — leaving the marker
-   unresolved is exactly what puts it in front of review. Then sweep
-   the decision's footprint across the whole plan and every `payloads/`
-   file, per the recipe write-plan § Task Structure carries; the sweep
-   is this session's, because the workflow's amendment-ripple lens has
-   already finished and will never see this marker. On an *as written*
-   ruling the final statement is what the plan already states, so no
-   site can carry a pre-amendment form and the sweep is one pass rather
-   than a rewrite — it still runs. Where the topic has a `spec.md` and
-   the ruling changes one of its decisions, the spec's dated amendment
-   line lands under that entry too, in-session (define § The Spec) —
-   the same duty write-plan § Task Structure states, with the reason
-   it gives.
+The Run hands the plan to its tier and gets it back rewritten.
 
-   **A *needs a define session* ruling closes the phase at define
-   instead.** A product or domain question's home is `spec.md`, so the
-   route derives to define (the process contract, § Iteration), and the durable
-   record is the iteration marker — `review.md` in the topic directory
-   is its one home, whoever writes it (review § Iterate). No file yet →
-   create it as the title line plus the marker; one exists → prepend
-   the marker above its entries, title kept:
+**Read the process contract's § The payload contract now, and the
+payload verifier's header**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
+`${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify` (its opening comment).
+They hold where payloads live, the manifest and who writes what; and
+how the verifier runs, and what each of its lines and exits means.
+
+**Prep that pays**, before launch: verify the plan's Create and Modify
+labels and its anchors against the current tree, fix drift in the plan
+directly, and pass what you verified into `focus` as "pre-verified
+facts — do not re-flag", together with any directive the user gave.
+Before the first fact goes in, **read the sweep skill's § Claims
+now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/skills/sweep/SKILL.md` (§ Claims: stamps,
+controls and the sweep artifact), for what a stamp carries and what an
+absence's control is. Only stamped facts ride the list (`cases.md`
+§ The Run).
+
+- **The workflow**: call the Workflow tool with the script
+  `${CLAUDE_PLUGIN_ROOT}/skills/plan-review/plan-review.workflow.js`
+  and the run's `args` (`mechanics.md` § The Run). It fans out one
+  reviewer per surviving lens, pipes each lens's findings into an
+  adversarial verifier that drops false positives, and has one rewrite
+  author apply every confirmed fix to the plan and its payloads.
+- **The lightweight pass**: the one subagent § Facts and Tier names. A
+  pass that edited the plan or a payload closes with the verifier run
+  its prompt asks for.
+
+**Fallback** (the process contract, § Defaults and holds, read at
+§ Input). Where the Workflow tool is absent and the Agent tool is
+present, run the workflow's shape with the Agent tool: one subagent per
+surviving lens, an adversarial verifier subagent over each lens's
+findings, and one rewrite author subagent, each handed the same prompt
+files and run data the workflow would hand it (`mechanics.md` § The
+Run). The summary says the workflow tier ran through the Agent tool.
+Where both tools are absent, where the lightweight pass needs the
+Agent tool and it is absent, or where a call is refused at the
+permission layer, the review runs inline in this context with the
+same surviving lenses: Read `reviewer.md`, each surviving lens's `lenses/<key>.md` and
+`rewrite-author.md` beside this file, and follow them as the
+lightweight pass's subagent would, closing with the verifier run its
+prompt asks for. The summary says so.
+
+**A prompt that will not Read** is retried once, never counted at
+first sight. An agent that returns `promptUnreadable`, on the
+lightweight pass or through the Agent tool, is spawned once more with
+`promptDir` set to the scratchpad copy a refused launch makes; on the
+workflow, a lens skipped for an unreadable prompt sends the run fresh
+from that copy (`mechanics.md` § The Run). A second `promptUnreadable`
+is a dimension not reviewed, and a lightweight pass that ends there
+reviewed nothing.
+
+Before trusting the result, read the summary's `skippedLenses`,
+`degradedLenses`, `droppedLenses` and `unverifiedFindings` beside its
+`changesApplied`: a lens that failed, was skipped or never ran is a
+dimension not reviewed, never one that came back clean (`cases.md`
+§ The Run).
+
+## The Hardened Line
+
+*Read with this section: `mechanics.md` § The Hardened Line (the mechanics).*
+
+The Hardened Line records the run in the plan and marks the plan
+reviewed. No roadmap write. When the run returns, and only then, in
+this order:
+
+1. Where `review.md` topped with a consumed `Iteration —` marker when
+   this phase opened, append `Consumed — <YYYY-MM-DD> by plan-review`
+   to that marker's block (the process contract, § Iteration, read at
+   § Input).
+2. Write the run's record as the plan's last section, replacing an
+   earlier run's record whole:
 
    ```markdown
-   # <topic> — review
+   ## Plan review
 
-   Iteration — <YYYY-MM-DD> → define: <the question the marker asks>
-   Unreviewed: none
+   <YYYY-MM-DD>, <the tier: the lightweight pass, the workflow, the workflow through the Agent tool, or inline>.
+   Lenses run: <keys>. Dropped: <key> (<precondition>), …, or none. Skipped: <keys>, or none.
+   Findings: <n> confirmed, <n> refuted, <n> unverified.
    ```
 
-   That `Unreviewed:` line is unconditional on every writer of the
-   block: it names the close's own commits no pass covered (the
-   pre-executed lens pass's fix commits are the `Fixes applied (--fix):`
-   line's, never this one — the process contract, § The traceability
-   stores), and reads `none`
-   where it committed none. This phase's own
-   steps commit only in the state folder, so `none` is the ordinary case —
-   but the machinery-edit duty is session-level, not phase-level (topic
-   kinds: the process contract, § Topic kinds), so a session that did
-   commit machinery refs — in one machinery tree or several —
-   rides them here, marked per tree, rather than dropping them.
+   A run that found nothing records that too: it is feedback. On the
+   workflow the three counts come from its summary: confirmed is
+   `verifiedFindingCount`, counted after duplicates at one location and
+   title were merged; refuted is `refutedFindingCount`; unverified is
+   the length of `unverifiedFindings`. A count whose field the summary
+   does not carry, as on a run that confirmed nothing or had no lens to
+   run, is 0. Through the Agent tool the host counts the same three from
+   its subagents' returns. On the lightweight pass and inline no
+   verifier runs, so the findings line reads
+   `Findings: <n> folded in; no verifier on this tier.`, `<n>` the
+   length of the returned `changesApplied`. Where `rewriteFailed` is
+   true, the findings line closes with `; rewrite failed, none
+   applied.` The record carries no checkbox and no line opening with a
+   marker the relay or the facts read (`> Design decision:`, `> Needs confirmation:`,
+   `> **Amended (`).
+3. Write `Hardened — <YYYY-MM-DD>`, dated today, directly under
+   `plan.md`'s title, with a blank line on either side, as the run's
+   last write to the plan. Why it comes last, and what removes it
+   later, is the line's lifecycle (the operations contract, § Roadmap,
+   read at § Input).
 
-   Either outcome — a ruling written into `plan.md`, a marker'd
-   `review.md`, or both — commits in the state folder as a follow-up
-   `<topic ID>: plan-review`, staged and committed by explicit path —
-   `git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/ && git -C
-   <state folder> commit -m "<topic ID>: plan-review" --
-   <repo>/YYYY/MM-DD-<topic>/`, the pathspec on the commit too, because
-   concurrent sessions leave staged work a bare commit would sweep in
-   (concurrent edits: the substrate contract). Either way the
-   `Hardened —` line step 4 wrote still stands, so the hardened read
-   stays green (step 4; roadmap contract: the operations contract,
-   Status ladder); on
-   the define route the stop is the iteration marker, which implement's
-   readiness gate reads before the hardened read. Next Phase already
-   sanctions later input landing as follow-up commits.
-   **Default: every marker stands with the author's choice — review
-   post-hoc at review's Input item 3** (*Defaults and holds*:
-   the process contract). The question instrument **unavailable** and the call
-   **refused at the permission layer** are distinct cases and both
-   defer-and-retry each turn, the ask counting as run if it lands before
-   the close (fallback rule: same section); a close the ask never
-   reached reports it as not-run and takes that default.
+   A run that reviewed nothing, every surviving lens skipped, or
+   whose `rewriteFailed` is true, writes no line: implement reads the
+   line as a reviewed plan, and this plan is not one. Its record still
+   lands and says why, and the relay says run again.
+4. Where the files are the record, remove the slot's stamp
+   `pre-image/plan.md.taken`, on every run.
 
-6. **Capture block:** invoke the `ymer:capture` skill — source
-   `plan_review`. The battery, the drop grammar and the write live in
-   that skill alone.
+On the define branch this phase also writes the iteration marker into
+`review.md` (§ The Relay), which implement's readiness gate reads
+before the line.
+
+Then the phase close. **Read the substrate contract whole now**, unless
+already read this session: `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`,
+for staging by explicit path, concurrent edits on a shared tree and the
+commit registers; its opening says when it applies. Where git tracks
+the state folder, commit the topic folder (`mechanics.md` § The
+Hardened Line), state changes before announcements (the process
+contract, § Defaults and holds). The machinery-edit duty is the
+session's, whichever phase it is (the process contract, § Topic kinds,
+read at § Facts and Tier).
+
+## The Relay
+
+*Read with this section: `mechanics.md` § The Relay (the mechanics) and `cases.md` § The Relay (the cases).*
+
+The Relay tells the user what the run did, then puts every question the
+rewrite author left open to them, one at a time.
+
+**Assert the project tree first** on a code-repo topic: its status is
+empty, or every entry is named and justified in the relay
+(`mechanics.md` § The Relay). A file an agent left behind is neither:
+remove it, and say so. A meta topic has no project checkout,
+so the assertion is skipped, not failed.
+
+Then report the summary's fields:
+
+- `changesApplied`: what was fixed in the plan.
+- `designDecisions`: the calls the rewrite author made on the user's
+  behalf, each with the alternatives not taken and its rationale.
+  Surface these clearly: they are where the user is most likely to
+  want to override.
+- `unresolved`: anything left flagged in the plan for the user's
+  product or domain input.
+- `droppedLenses`, beside `skippedLenses`: every lens whose
+  precondition failed, with the precondition, and every lens that
+  failed or was skipped. A dimension that never ran is not a dimension
+  that came back clean.
+- `unverifiedFindings`: findings the verifier could not check, dropped
+  unchecked rather than judged false. A run that returns any is not a
+  clean run, and an empty `changesApplied` beside them means nothing
+  was cleared.
+- `verifiedFindingCount` and `refutedFindingCount`: the findings
+  confirmed, after duplicates were merged, and the findings the
+  verifiers refuted; the record's counts.
+- `rewriteFailed`: present and true means the rewrite author never
+  ran, so the plan is untouched and every confirmed finding still
+  open. Say so and run again; never report that pass as a review that
+  found nothing.
+
+The summary is the convenient source, not the only one. The rewrite
+author writes every design decision into the plan as a
+`> Design decision:` note and every open question as a
+`> Needs confirmation:` marker, so a truncated notification is
+recovered from the plan itself by the recovery grep (`mechanics.md`
+§ The Relay), never by digging through the run's journal or output
+file. `changesApplied` is the diff below, and `droppedLenses` was
+derived at § Facts and Tier before launch.
+
+Then hand over the post-hoc review surface with real refs, the diff of
+the topic folder from write-plan's save to this phase's (`mechanics.md`
+§ The Relay; the report rule: the process contract, § Defaults and
+holds), since the rewrite may touch `plan.md` and `payloads/` both, and
+offer to adjust any design decision the user disagrees with.
+
+**Then put every surviving marker to the user, one question each.** A
+`> Needs confirmation:` marker is the rewrite author's record of a
+product or domain question it could not settle on the user's behalf,
+and the next session to read it is implement, which asks nothing. Left
+standing, the topic spends its implementation on a guess the record
+itself flags as open, and review meets the question after the tokens
+are spent.
+
+- **The trigger is the plan, not the summary.** A marker the recovery
+  grep finds in `plan.md` fires this beat, and a non-empty `unresolved`
+  corroborates it wherever the run returned a summary. The plan is the
+  durable source, and a summary can come back truncated or not at all,
+  so a trigger keyed to it could fail to fire. The grep's hits are read,
+  not counted (`cases.md` § The Relay).
+- **Reconcile the summary against the markers** wherever the run
+  returned one, on every tier that runs the rewrite author: each `designDecisions` entry has one line-start
+  `> Design decision:` note in `plan.md`, and each `unresolved` entry
+  one line-start `> Needs confirmation:` marker. A field with no marker
+  of its kind is the relay's own finding, never an all-clear: write the
+  missing markers from the entry's text, at the sites its notes name,
+  before the questions are put, so the union of the two channels fires,
+  never the intersection and never either alone.
+- **Never in the relay's turn.** A question bubble hides the prose
+  printed beside it, so the relay lands first and the questions open
+  the next turn.
+- **One question per marker**, through the question instrument, one
+  marker at a time, its options built from that marker's own text
+  (`cases.md` § The Relay): the rewrite author's provisional choice
+  first, labelled `(Recommended)`, since it is what the plan already
+  says, and the two standing exits last, **defer to review** (the
+  marker stands as it is) and **needs a define session** (the question
+  is too open to implement around).
+
+**A ruling is written into the plan**, *as written* included. Before
+the first, **read the write-plan skill's § Task Structure now**, unless
+already read this session:
+`${CLAUDE_PLUGIN_ROOT}/skills/write-plan/SKILL.md` and
+`${CLAUDE_PLUGIN_ROOT}/skills/write-plan/cases.md` (§ Task Structure in
+each), for the amendment marker's grammar and the amendment's
+footprint recipe. A ruling on an open question is a decision added, so
+it lands as an amendment marker on its own line directly beneath the
+marker it answers, `> **Amended (user, <YYYY-MM-DD>):**` with the
+decision's final statement. That is the resolved-marker recognizer
+downstream: a marker is resolved where an amendment marker follows it
+at the same site (the review skill, § Input, item 3). *Defer to
+review* therefore writes nothing: leaving the marker unresolved is
+exactly what puts it in front of review. Then sweep the decision's
+footprint by write-plan's recipe. The sweep is this session's, because
+the workflow's amendment-ripple lens has already finished and never
+sees this marker. On an *as written* ruling the final statement is
+what the plan already says, so no site can carry a pre-amendment form
+and the sweep is one pass rather than a rewrite; it still runs. Where
+the ruling changes a decision of the topic's `spec.md`, **read the
+define skill's § The Spec now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/skills/define/SKILL.md`, for the spec's dated
+amendment line, and land it under that decision in this session, for
+the reason write-plan's recipe gives.
+
+**A *needs a define session* ruling closes the phase at define
+instead.** Before writing it, **read the review skill's § Iterate —
+the re-entry close and § The Close, and the process contract's § The
+traceability stores, now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/skills/review/SKILL.md` and
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for the iteration marker's
+one home and its grammar, the `Unreviewed:` line's rule, and where a
+close's commit refs are recorded. A product or domain question's home
+is `spec.md`, so the route derives to define (the process contract,
+§ Iteration), and the durable record is the iteration marker in the
+topic folder's `review.md`, with its `Unreviewed:` line (`cases.md`
+§ The Relay).
+
+Either outcome, a ruling written into `plan.md`, a marked `review.md`,
+or both, commits in the state folder as a follow-up (`mechanics.md`
+§ The Relay). The `Hardened —` line § The Hardened Line wrote still
+stands, so the hardened read stays green; on the define route the stop
+is the iteration marker, which implement's readiness gate reads before
+the hardened read.
+
+**Default: every marker stands with the rewrite author's choice —
+review post-hoc at the review skill's § Input, item 3** (the process
+contract, § Defaults and holds). The question instrument unavailable
+and the call refused at the permission layer are distinct cases of the
+fallback rule, read at § Input; a close the ask never reached reports
+it as not run and takes this default.
 
 ## Next Phase
 
-Stop after relaying the result, and name the next phase, in a fresh
-session: **implement** — or **define**, when step 5's ask returned
-*needs a define session* and the iteration marker names it. The user
-reviews the rewritten plan post-hoc via the relayed diff command; later
+**Capture block first:** invoke the `ymer:capture` skill, source
+`plan_review`; the battery, the drop grammar and the write live in that
+skill alone.
+
+Then stop after the relay, and name the next phase, in a fresh session:
+**implement**, or **define** where the relay's ask returned *needs a
+define session* and the iteration marker names it. The user reviews the
+rewritten plan post-hoc at the surface the relay handed over, and later
 input lands as follow-up commits. Implementation never starts in this
-session — it comes later, in its own session, from a clean tree and the
-hardened plan.
+session: it comes later, in its own session, from a clean tree and the
+hardened plan. This skill hardens the plan; the diff gets its own
+adversarial pass at review, the phase after implement, through this
+plugin's code-review skill (the review skill, § The lens pass).
 
-## After the plan is implemented (downstream)
+## Remember
 
-This skill hardens the *plan*. The *diff* gets its own adversarial pass
-in review, the phase after implement — mechanics there (review's lens
-pass, running this plugin's own **code-review** skill).
-
-## Operational notes — failure modes
-
-From real runs (2026-06/07):
-
-- **Broad-mandate lenses stall at high effort** ("Stream idle timeout") — the
-  binding constraint is mandate breadth at a given effort, not effort alone;
-  narrow mandate + full-plan context + high effort completes.
-- **A dead lens is indistinguishable from "no findings":** a stalled or killed
-  review agent returns null and flows in as an all-clear. Before trusting a
-  clean result, always check the summary's `skippedLenses`, `degradedLenses`,
-  `droppedLenses` and `changesApplied`: a lens with a `failures` entry did not
-  run, and a lens in `droppedLenses` never ran at all.
-- **Recovery:** prefer `Workflow({scriptPath, resumeFromRunId})` for a run
-  that died mid-flight — valid only while the plan file is unchanged since
-  that run and agent opts are untouched (edited plan or retuned opts → run
-  fresh, or harvest). When resume isn't possible, harvest completed agents
-  from the run's `journal.jsonl` (`{"type":"result",…}` lines; dedupe by
-  `.key` — resumes re-record cached results) and apply findings by hand,
-  vetting each against verified facts before editing.
-- **Session-limit kill:** TaskStop the workflow immediately — running agents
-  keep burning budget; resume is same-session-only.
-- **Prep that pays:** before launching, verify the plan's Create/Modify
-  labels and anchors against the current tree, fix drift in the plan
-  directly, then pass the result into `focus` as "pre-verified facts — do
-  not re-flag" together with any user directives. Only stamped facts ride
-  the list — each names its command with the observed result, an absence
-  its `control:` — an unstamped "pre-verified" fact is not pre-verified
-  and stays off.
-
-## Tuning
-
-The review lenses, their prompts, and the severity schema live in
-`plan-review.workflow.js`. Edit that file to add a lens or sharpen one — the
-skill instructions here stay stable.
+- The workflow stops for nothing and changes no git state: the user's
+  leverage is before launch and after.
+- Every fact is read off what a step changes, by its rule (the process
+  contract, § Review effort).
+- The plan, not the summary, is the durable record of the rewrite
+  author's decisions and open questions.
+- The run's record, then `Hardened —` as the last write.
+- One question per surviving marker, never in the relay's turn.

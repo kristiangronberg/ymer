@@ -387,7 +387,7 @@ anything else (→ Review effort). Two reads:
 - **The plan**: its pre-image, the parent of this iteration's own
   `: write-plan` commit where git tracks the state folder, or the slot
   write-plan filled before its re-plan where it does not. The read that
-  takes it lives once, at plan-review § Steps step 2, its one consumer.
+  takes it lives once, at plan-review § Input, its one consumer.
   Implement's plan edits, mechanical corrections and decide-forward
   amendments alike, belong to the standing record rather than to the
   new delta: their substance is reviewed as code by that cycle's lens
