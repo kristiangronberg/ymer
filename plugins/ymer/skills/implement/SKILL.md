@@ -1,380 +1,468 @@
 ---
 name: implement
-description: Use to execute the hardened implementation plan task by task — normally ending at a commit on the topic branch and implemented.md, with review next over the real diff; a plan whose design gives out closes by iterating instead. Phase 6 of the development process.
+description: Builds what a reviewed implementation plan describes, task by task: checks that the plan and the code checkout are ready, carries out each task's edits and checks exactly as written, and stops to send the work back when the plan's design does not hold. It ends with the work committed, a record of what happened, and a first code review waiting. Use once a plan has passed plan-review, before the work is reviewed.
 ---
 
 # Implementing
 
-This file is the implement skill's spine: its intent and the moments in order. Its **mechanics** — the Claude Code way: git, the state folder, the harness's tools — are in `mechanics.md`, and its **cases** — the earned precision: edge cases, exceptions and rulings — in `cases.md`, both under this file's headings; a section that has entries there says so in its first line, and those entries are read at the moment the section runs.
+Implement builds what a hardened plan describes. The plan already holds
+the method: ordered small tasks, every edit's content in a payload file,
+and exact commands with their expected output. Implement adds what the
+plan cannot. It checks that the plan is the reviewed one and that the
+checkout is ready, carries the tasks out as written, keeps the plan the
+true record where reality differs in detail, and stops to send the topic
+back where the design itself gives out. At its close it commits the
+work, runs the first code review over it, and writes down what happened.
+Nothing ships here: making the change official is review's, the next
+phase.
+
+This file is implement's spine: its intent and its moments in order. Its
+**mechanics** (the Claude Code way: git, the state folder, the harness's
+tools) are in `mechanics.md`, and its **cases** (the earned precision:
+edge cases, exceptions and rulings) are in `cases.md`, both under this
+file's headings. A section with entries there says so in its first line,
+and those entries are read when the section runs.
 
 ## Overview
 
-*Read with this section: `mechanics.md` § Overview (the mechanics).*
+**Read the plugin glossary's entries for implement's vocabulary now**,
+unless already read this session: `${CLAUDE_PLUGIN_ROOT}/glossary.md`,
+each entry by its heading: *pre-flight*, *catch-up*, *iteration*,
+*decide-forward*, *lens pass*, *change set*, *payload*, *payload gate*,
+*payload verifier*, *gated step*, *step ID*, *plan complete*, *machinery
+tree*, *shared tree*, *project checkout*, *traceability store*, *gated
+moment*, *hold*, *amendment marker*, *workflow-internal reference*. This
+file uses those terms and never defines them.
 
-The plan is the single source of truth and already contains the method:
-ordered bite-sized tasks, complete code, exact commands, expected output.
-This skill adds only a readiness gate at the start, guardrails during, and
-the phase boundary at the end — the session's budget belongs to the
-implementation itself. The phase ends where the change is built: a
-commit on the topic branch, plus a machinery commit wherever the session
-edited machinery — one machinery tree or several, committed per tree
-(topic kinds: the process contract, § Topic kinds) — a meta topic has only
-the latter — recorded in `implemented.md`. The close
-then runs the **lens pass** over what it just committed and leaves the
-findings in `review.md`, so the review sitting opens on findings rather
-than on a wait. Nothing
-ships here — inspecting the real diff and making it official is
-**review**'s whole subject, the next phase.
+The phase ends where the change is built: a commit per task on the topic
+branch, plus a machinery commit per tree wherever the session edited
+machinery (a meta topic has only those), all recorded in
+`implemented.md`. The close then runs the lens pass over what it just
+committed and leaves the findings in `review.md`, so the review sitting
+opens on findings rather than on a wait.
 
-**Announce at start:** "I'm using the implement skill to execute the plan for <topic>."
+The session runs straight through: a brief progress note per task, no
+approval asked between tasks, and no user gate at the close. The human
+meets the real diff in review, and a "proceed?" here would be a round
+trip every topic pays twice.
 
-- (Repo-specific preferences in CLAUDE.md override these defaults)
+The run goes in order: read the plan and confirm this phase is due,
+ready the trees, carry out the tasks, verify the change end to end, then
+close: commit, lens pass, review entry, record, state-folder commit and
+capture.
+
+**Announce at start:** "I'm using the implement skill to execute the
+plan for <topic>." Repo-specific preferences in a repo's `CLAUDE.md`
+override this skill's defaults.
+
+## Input
+
+*Read with this section: `mechanics.md` § Input (the mechanics).*
+
+Input reads the plan and decides whether this session runs at all.
+
+**Read the process contract's § Defaults and holds now, and the
+operations contract whole**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
+`${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the
+pre-flight, close binding, gate defaults and holds, the fallback rule
+and the report rule; and the topic's folder, how the state folder's kind
+is read and what a state folder in no git repository skips, the status
+ladder with its `Hardened —` line, and the backup a notebook change
+takes.
+
+Find the topic folder through the topic's task (*look up topic*,
+binding: the operations contract; `mechanics.md` § Input), and read the
+state folder's kind as the operations contract gives it: implement has
+no guard, so this is the session's one reading. The pre-flight's
+derivation of pending steps runs first, as the process contract's
+§ Defaults and holds gives it. Then three reads, in this order, each a
+stop that names the missing phase, with nothing to ask:
+
+1. **The plan exists.** No `plan.md` in the topic folder: stop and name
+   write-plan.
+2. **This phase is due.** Read `review.md`'s first recognizer top-down
+   (the review skill, § Recognizers). Where it is an `Iteration —`
+   marker, **read the process contract's § Iteration now**, unless
+   already read this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`,
+   for the marker's block, its `Consumed —` lines, whether the route is
+   live or consumed, and which phase it makes due. A live marker naming another
+   phase: stop and name that phase. A live marker naming implement: this
+   session is that re-entry, and its close consumes the marker. A
+   consumed marker: where implement is due, or the block's last line is
+   `by implement`, go on; any other phase due, stop and name it. A `##
+   Review` entry, a `## Shipped` section or no `review.md` at all: go
+   on. This read comes first because a live marker naming another phase
+   stands beside a plan and its `Hardened —` line, so only this read
+   catches it. It reads `review.md` alone, never the task's status.
+3. **The plan is the reviewed one.** Read the head of `plan.md` for
+   plan-review's `Hardened —` line, the `hardened` rung of the
+   operations contract's status ladder. Present: go on. Absent: the plan
+   in front of this session is not the plan that was reviewed, or was
+   never reviewed: stop and name plan-review.
+
+The plan is written for an engineer with no context and stands alone:
+read `spec.md` only where a task's intent is unclear. Its tasks end
+where its `## Plan review` section begins: that section is plan-review's
+run record, carries no box, and is read past.
+
+**The companion skill.** The plan header names the coding-standards
+skill its work must follow, or says that none was found. Read a named
+skill before the first task. Where the header carries neither line, look
+for one as write-plan's § Language-specific companion skills does, and
+go on with the plan alone where none turns up.
 
 ## Readiness Gate
 
 *Read with this section: `mechanics.md` § Readiness Gate (the mechanics).*
 
-The plan is written for an engineer with zero context and is
-self-contained; read `spec.md` only when a task's intent is unclear.
+The Readiness Gate runs the pre-flight's readiness checks (term: the
+plugin glossary) on the trees, before any task edits a file.
 
-## Companion Skill
+**Read the substrate contract whole now, and the process contract's §
+Topic kinds and § The traceability stores**, unless already read this
+session: `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md` and
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md`. They hold the two tree
+options, the project checkout's pre-flight steps with the catch-up's
+outcomes and how its conflicts are classed, git is never guessed,
+staging by explicit path, concurrent edits on a shared tree, committing
+by hunk and the commit registers; the topic kinds and the duty to commit
+machinery edits; and the list of traceability stores the record names
+its refs in.
 
-The plan header says which coding-standards skill its work must follow,
-or that none was found — read a named skill before the first task. A
-header with neither line predates that rule: look for one the way
-write-plan § Language-specific companion skills does, and proceed with
-the plan alone when none turns up.
+- **The trees the plan targets are ready.** Which trees are read is
+  keyed on the plan's targets, never on the topic kind: the paths
+  `payloads/manifest` names, plus any target a step names. How each is
+  read is keyed on its tree option. A project checkout is read whole,
+  and its dirt is stashed by the pre-flight below, never a stop. A
+  shared tree is read scoped to the plan's targets in it (`mechanics.md`
+  § Readiness Gate), except a state folder in no git repository, the
+  kind read at Input: its files are the record, so it is not read. A
+  dirty target in a shared tree is the one question this check asks the
+  user, and the substrate contract's § Concurrent edits on a shared tree
+  says what each answer means. **Hold: the concurrent
+  session's own commit.** Absent the user's answer, the session names
+  the target and stops.
+- **The project-checkout pre-flight**, on a code-repo topic; a meta
+  topic has no branch and skips it. It runs the substrate contract's
+  steps in the order `mechanics.md` § Readiness Gate gives, and before
+  anything else runs, its record-names-it test reads the branch's own
+  commits: a commit no record names is the user's sketch, so stop before
+  the stash and re-report the pending reset. A conflict in the catch-up
+  is classed as the substrate contract's § Project checkout says.
+  **Default: absent the answer by the close, `git merge --abort`, which
+  restores the pre-merge tip and destroys nothing; record the conflict
+  (the paths, the decision, main's ref) and take the stop at the drift
+  valve, naming the phase that owns the decision — review post-hoc at
+  `review.md`'s marker** (the process contract, § Defaults and holds).
+- **The baseline is measured.** The plan's own whole-tree verification
+  command, the one its last task names, runs once here, after the
+  catch-up and before the first edit. Its result is the session's
+  inherited baseline, the plan's `Expected:` lines are read against it,
+  and the final run reads as a delta against a measured start. A red the
+  plan's fact sheet names is the expected start; one it does not name is
+  a finding for the opening message, never discovered at the last task.
+  A plan naming no whole-tree command runs none.
 
 ## Execution
 
-*Read with this section: `mechanics.md` § Execution (the mechanics).*
+*Read with this section: `mechanics.md` § Execution (the mechanics) and `cases.md` § Execution (the cases).*
 
-- **Tasks in order, steps as written.** Run every verification step
-  literally — including "run the test to verify it fails". Skipping a
-  verification and assuming its outcome is an implementation failure.
-  A step's `<the payload verifier>` is `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify`
-  run on the topic directory, with one `--exempt <tree>` per machinery
-  tree the front binds.
+Execution carries the tasks out in order, every step as written.
 
-- **A notebook backup before a store change.** Before the first step that
-  applies a payload to the node's notebook, or runs DDL, an `UPDATE` or a
-  `DELETE` there, take a notebook backup and note its id in
-  `implemented.md` (the operations contract, § Changing the notebook).
+**Read the process contract's § The payload contract now, and the
+payload verifier's header**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
+`${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify` (its opening comment).
+They hold where payloads live and who writes them, the manifest and its
+one gate per payload, and how the verifier reads progress from the
+plan's ticked boxes and reports PASS, PENDING and FAIL.
 
-- **Straight through.** A brief progress note per task; no pause at
-  the end either — the close runs straight through, no user gate, lens
-  pass included, and the human meets the real diff in review. Do not ask
-  for approval between tasks.
-- **Nothing outside the plan gets built.** An improvement or problem
-  noticed along the way is recorded for `implemented.md` — never done
-  ad hoc.
-- **The glossary is read-only.** A term mismatch discovered here is
-  flagged in `implemented.md`, not fixed.
+- **Every verification runs literally**, "run the test to verify it
+  fails" included. Skipping a verification and assuming its outcome is
+  an implementation failure.
+- **A payload is applied from its file**: Read the file and write its
+  bytes out through the file-edit tools, never retyped from memory or
+  rebuilt from the plan's prose.
+- **The payload verifier**, where a step names `<the payload verifier>`,
+  is `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify` run on the topic
+  folder, with one `--exempt <tree>` per machinery tree the front binds.
+  A FAIL on an earlier, ticked step is the clobber signal or, with the
+  plan complete, an occurrence no gated step landed in full; the
+  verifier keeps no history, so the target's own history tells which.
+  Either way, enter the drift valve.
+- **A task ends at its commit, and its boxes tick after it.** On a
+  code-repo topic, once the task's verifications before its verifier
+  step have passed, commit its bytes on the topic branch (`mechanics.md`
+  § Execution), tick the task's boxes but the verifier step's, then run
+  the verifier step, and tick its box when its `Expected:` holds. Ticks
+  never run ahead of the branch: the next pre-flight stashes what is
+  uncommitted, and a tick over uncommitted bytes would send a resuming
+  session past work no longer in the tree. So the first unticked box is
+  a task boundary or, at most, the verifier step of a task already
+  committed, and a torn session leaves at most the current task's
+  fragment, which the next pre-flight stashes. A task that writes
+  no file in the checkout, verification-only or with its files all in
+  shared trees, ticks as its last verification passes and runs its
+  verifier step then, and so does every task of a meta topic, which has
+  no branch: the tick lives in `plan.md` in the state folder, and a
+  shared tree is never stashed, so nothing a later pre-flight could bury
+  is at risk.
+- **The plan's gates are sweeps.** Before the first sweep a task runs,
+  **read the sweep skill's § 2. Corpus and § 4. Survivors now**, unless
+  already read this session:
+  `${CLAUDE_PLUGIN_ROOT}/skills/sweep/SKILL.md` (§ 2. Corpus:
+  everything, minus exclusions you name; § 4. Survivors: every gate must
+  be able to fail), for the corpus a sweep covers and the pairing every
+  zero-hit gate carries. What implement does with them is in `cases.md`
+  § Execution.
+- **A notebook backup before a notebook change.** Before the first step
+  that applies a payload to the node's notebook, or runs DDL, an
+  `UPDATE` or a `DELETE` there, take a backup as the operations
+  contract's § Changing the notebook says, and note its id in
+  `implemented.md`.
+- **Nothing outside the plan gets built.** An improvement or a problem
+  noticed along the way is recorded for `implemented.md`, never done ad
+  hoc. The glossary is read-only here: a term mismatch is flagged in
+  `implemented.md`, not fixed.
 
 ## Drift Valve
 
 *Read with this section: `mechanics.md` § Drift Valve (the mechanics) and `cases.md` § Drift Valve (the cases).*
 
-When reality contradicts the plan:
+The drift valve decides what happens when reality contradicts the plan.
 
-- **Mechanical drift** — an anchor moved, a rename, a signature differing
-  in detail but not in shape: fix it, edit the correction into `plan.md`
-  so the plan stays the accurate record of what was built, and keep
-  going. A correction whose content is a payload's lands in the payload
-  file the same way — the payload stays the plan's current truth — and
-  its gate re-runs green before moving on. A correction that gives the
-  plan a **new target** — a file no manifest row and no step named until
-  now — brings gate 3's per-file cleanliness check with it: read that one
-  file's status in its own tree, at the moment the target is added, on
-  the same terms the gate states (→ Readiness Gate, gate 3). That
-  window opens only when
-  the plan was wrong: a botched apply — landed bytes differing from the
-  payload file — is redone from the file, never written back into it;
-  editing the payload to match what landed greens its gate vacuously,
-  and so does lowering a manifest gate's `expected` count to what
-  landed — the count is the plan's promise, never a reading of the
-  tree.
-- **Approach-level problem** — the plan's design cannot work as written,
-  or a decision has to be remade: this is an **iteration**, and it forks
-  on the same derived fact review's dispositions fork on (the process
-  contract, § Iteration). **The decision is already made** —
-  you are at the code, the third option is clear and you are confident:
-  **decide-forward** in place. Write the dated amendment into the
-  artifact that owns the statement — the decision's entry in `spec.md`
-  (define § The Spec) or its home site in `plan.md` (write-plan § Task
-  Structure) — sweep the decision's footprint in this same session, per
-  the recipe that home carries, make the edit, and keep implementing;
-  the edit rides this topic's normal review. A footprint that resists
-  mechanical correction says the decision was not made after all: take
-  the open branch instead. **The decision is open**: stop the session —
-  and the stop is a **close**, not an abandonment. Name the phase the
-  route rule gives — the one owning the artifact where the contested
-  statement lives, never write-plan by default — and run the four close
-  steps in order, at `mechanics.md § Drift Valve`.
+- **Mechanical drift**: an anchor moved, a rename, a signature that
+  differs in detail but not in shape. Fix it, edit the correction into
+  `plan.md` so the plan stays the true record of what was built, and go
+  on. A correction to a payload's content lands in the payload file the
+  same way, and its gate re-runs green before the next step. A
+  correction that gives the plan a new target, a file no manifest line
+  or step named, brings the Readiness Gate's read of that one file with
+  it, in its own tree, the moment the target is added. That window opens
+  only where the plan was wrong. A botched apply, landed bytes that
+  differ from the payload file, is redone from the file, never written
+  back into it: editing the payload to match what landed greens its gate
+  vacuously, and so does lowering a manifest count to what landed, since
+  the count is the plan's promise, never a reading of the tree.
+- **An approach-level problem**: the plan's design cannot work as
+  written, or a decision has to be remade. This is an iteration. **Read
+  the process contract's § Iteration now**, unless already read this
+  session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for the route,
+  the executor's fork on whether the new decision is already made,
+  decide-forward's amendment and footprint sweep, and the marker's
+  block. Implement's own actions, by branch:
+  - **Decide-forward**, where the decision is made. **Read the
+    amendment's home now**, unless already read this session:
+    write-plan's § Task Structure in
+    `${CLAUDE_PLUGIN_ROOT}/skills/write-plan/SKILL.md` and
+    `${CLAUDE_PLUGIN_ROOT}/skills/write-plan/cases.md`, for the amendment
+    marker and the footprint recipe, on either side; and where the
+    statement lives in `spec.md`, define's § The Spec in
+    `${CLAUDE_PLUGIN_ROOT}/skills/define/SKILL.md` and
+    `${CLAUDE_PLUGIN_ROOT}/skills/define/cases.md`, for the spec-side
+    marker and the same-session sweep it carries. Write
+    the dated amendment at the decision's home, sweep its footprint in
+    this session, make the edit and go on implementing: the edit rides
+    this topic's normal review. A footprint that resists mechanical
+    correction says the decision was not made: take the stop.
+  - **The stop**, where the decision is open. The session ends, and the
+    stop runs as a close, never an abandonment. It names the phase the
+    route gives, never write-plan by default. **Read the review skill's
+    § Iterate — the re-entry close and § The Close now**, unless already
+    read this session: `${CLAUDE_PLUGIN_ROOT}/skills/review/SKILL.md`,
+    for the marker line's grammar and the `Unreviewed:` line's rule. The
+    stop's own steps, in order (`mechanics.md` § Drift Valve): commit
+    this session's machinery edits, per tree; write the marker with its
+    `Unreviewed:` line into `review.md`, the line naming every commit
+    this session made, its task commits on the branch among them, and
+    `none` only where it committed nothing; commit the phase's writes in
+    the state folder, where git keeps its history; and run the capture
+    block. It writes no `implemented.md`: nothing was implemented to
+    record.
 
 ## Verify
 
-*Read with this section: `cases.md` § Verify (the cases).*
-
-After the last task, exercise the changed behavior end-to-end yourself,
-beyond the plan's per-step test runs. A failure here re-enters the drift
-valve — a mechanical fix, a decide-forward in place, or a stop at the
-phase the route rule names.
+Verify checks the change end to end. After the last task, exercise the
+changed behaviour yourself, beyond the plan's per-step runs; a sweep
+built here follows § Execution's sweep rules. A failure re-enters the
+drift valve: a mechanical fix, a decide-forward in place, or the stop at
+the phase the route names.
 
 ## Self-Review (inline)
 
-Calibration: only flag what would make the record a lie.
+Self-review asks one question of the record: would it lie? Flag only
+that.
 
-1. Every ticked box backed by its own verification, run and passed at
-   that box's step — never by a pass observed at another step?
-2. Full test suite green?
-3. Every drift correction edited into `plan.md`?
-4. Anything built that the plan does not contain — or anything in the plan
-   not built?
+1. Is every ticked box backed by its own verification, run and passed at
+   that box's step, never by a pass observed at another step?
+2. Is the full test suite green?
+3. Is every drift correction edited into `plan.md`?
+4. Was anything built that the plan does not contain, or anything in the
+   plan not built?
 
-Fix issues inline and move on — no re-review loop.
+Fix issues inline and move on: there is no re-review loop.
 
 ## Phase Close
 
-*Read with this section: `mechanics.md` § Phase Close (the mechanics).*
+*Read with this section: `mechanics.md` § Phase Close (the mechanics) and `cases.md` § Phase Close (the cases).*
 
-1. **Commit whatever the last task left** (Claude-run; public
-   register — imperative subject, no topic IDs or phase names). On the
-   ordinary path there is nothing to commit: § Execution commits each task
-   as it closes, so the tree is already clean, still on `<topic>`, and this
-   step verifies that — an empty `git status --short` means the add/commit
-   line is skipped, not that the close failed.
+The close makes the work durable, reviews it once, and leaves the
+record. It runs under the process contract's close binding (§ Defaults
+and holds), in the order of the sections below: the work's commits, the
+branch's and each machinery tree's, land before the lens pass, so every
+ref the pass covers is already durable, and the pass's findings are on
+disk before the record is written.
 
-   ```
-   git rev-parse -q --verify MERGE_HEAD   # assert: no output, exit 1 — output → stop and ask
-   git status --short          # nothing listed → nothing to commit, skip the next line
-   git add -A && git commit -m "<imperative subject ≈50 chars>"
-   git log --oneline -1        # this close's commit if one landed, else the
-                               # last task's — either way the ref → implemented.md
-   ```
+### The commit
 
-   `git add -A` is the whole of it — a project checkout is read and
-   committed whole (the substrate contract), and every path in it is this
-   topic's by construction. The branch stays: no squash, no merge, no
-   delete — review's ship does those.
+On a code-repo topic each task committed as it closed, so the tree is
+normally clean and on the topic branch: this step verifies that, and
+commits whatever the last task left (`mechanics.md` § Phase Close). The
+branch commit is Claude-run, in the public register (the substrate
+contract, § Commit registers). The branch stays: no squash, no merge
+and no delete, which are review's ship. Where this session edited
+machinery, on either kind of topic, each tree it edited takes its
+machinery commit here, the duty the process contract's § Topic kinds
+names, in the public register, staged as the substrate contract's
+§ Stage by explicit path only and § Committing by hunk say. A meta
+topic's machinery commits stand where the branch commit would.
 
-2. **Run the lens pass** over the increment just committed — on a
-   code-repo topic the branch's own commits since main, every task commit
-   § Execution made and never the last one alone, plus every machinery
-   commit — the
-   code-review run with `--fix` that review has always run, pre-executed
-   here so the human meets findings instead of a wait. **The procedure
-   is review's and is not restated**: the precondition, the subject
-   computation, the `--fix` content rules, where fixes land and what
-   their commit and re-green owe all live at review § The lens pass,
-   operated from here by pointer, the way the drift valve operates the
-   iteration marker. What belongs to this close is only where the pass
-   sits — after the commits above, so every ref it covers is already
-   durable, and before the record below, so nothing it produces is left
-   in context.
+### The lens pass
 
-   A second fact the pointer needs: the subject's left edge is the
-   record's newest `Reviewed:` anchor — `main` on a first cycle — never
-   this session's own first commit. An earlier close's fix commits are
-   recorded work no `Reviewed:` line names, so they stay in the subject
-   by construction, and a pass anchored on "the commits this session
-   added" skips exactly them. The close's report prints that anchor
-   beside the range it diffed (`<anchor>..HEAD`), so a wrong left edge is
-   visible rather than silent.
+**Read the process contract's § Review effort now**, unless already read
+this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for lens
+applicability, how a dropped lens is reported, and the risk profile that
+keys a tier. The traceability stores the pass collects refs from are the
+process contract's § The traceability stores, read at the Readiness
+Gate. Then **read the review skill's § The lens pass now**, unless
+already read this session, in
+`${CLAUDE_PLUGIN_ROOT}/skills/review/SKILL.md`,
+`${CLAUDE_PLUGIN_ROOT}/skills/review/mechanics.md` and
+`${CLAUDE_PLUGIN_ROOT}/skills/review/cases.md`, for the pass's whole
+procedure: its precondition, the subject with its left edge, the `--fix`
+run, where implement's fixes land and how they are committed, and the
+re-green.
 
-   One fact the pointer needs from here: the fixes' commit(s) are
-   ordinary commits of this close — the branch fix commit on a code-repo
-   topic, a further machinery commit, per tree, where machinery files were
-   fixed, public register,
-   every ref onto the entry's fixes line and onto no other store;
-   several machinery
-   commits per topic were always fine, so nothing new is permitted here. The re-green
-   after them is recorded on that same line (grammar: review
-   § The Close), and a red one is a finding there besides — never a stop
-   and never the drift valve.
+Run the pass over the increment just committed, pre-executed here so
+review opens on findings. This close owns only where the pass sits, its
+fix commits and the entry below; the procedure is review's. A red
+re-green is a finding for review, never a stop and never the drift
+valve. The terminal report prints the subject's left edge beside what
+it diffed, per tree (`<anchor>..HEAD` on the branch, the ref list in
+each machinery tree), so a wrong edge shows rather than hides.
 
-3. **Consume the marker, then write the `## Review` entry.** Where
-   `review.md`'s first recognizer is an `Iteration —` marker, whatever
-   phase it names, first append `Consumed — <YYYY-MM-DD> by implement`
-   to the end of its block (grammar: the process contract, § Iteration).
-   Then write the
-   `## Review` entry into `review.md` in the topic
-   directory — the pass's findings on disk, before this session goes
-   further. The grammar is review's, whoever writes it (review § The
-   Close), exactly as the drift valve's marker is: the `## Review —
-   <date>` heading dated today, the lens-pass line with its coverage
-   slot, the `Fixes applied (--fix):` line carrying its `re-green:`
-   result where fixes landed, the `Refuted/skipped:` line, then the
-   findings list with dispositions still to come — of the pass's lines a
-   dropped pass writes the first alone, none of the rest written `none`,
-   and it seeds the findings list with nothing (review § The Close). No
-   file yet → create
-   it as the title line
-   plus the entry; one exists → prepend the entry above what is there,
-   title kept. **No ref lines**: `Reviewed:` and `Unreviewed:` are the
-   iterate and wait closes' writes and this close is neither — the fix
-   commits reach the next delta from this entry's own fixes line, their
-   store (the collection: review § The lens pass, step 1).
+### The review entry
 
-   A pass that found nothing still writes the entry, and so does one
-   that recorded `Lens pass: dropped — no diff or change set`: that line is what
-   review's pre-flight forks on (review § Recognizers), and its
-   absence sends the next session into a fallback pass it does not owe.
+**Read the review skill's § The Close now**, unless already read this
+session, in `${CLAUDE_PLUGIN_ROOT}/skills/review/SKILL.md` and
+`${CLAUDE_PLUGIN_ROOT}/skills/review/cases.md`, for the entry's grammar:
+its lines and their order, what a dropped pass writes, and the
+review-owned lines that stay absent.
 
-   **Verify what landed** — re-read the written entry rather than the
-   intent: every line the entry-writer's shape names — the lens-pass
-   line, the fixes line, `Refuted/skipped:`, the findings list — is
-   present, in its order, with the `re-green:` result wherever fixes
-   were applied, and the review-owned lines — Walkthrough, Fitness,
-   Where-to-look, Tails — are **absent**, never placeholders (review
-   § The Close: a placeholder there reads to review's pre-flight as an
-   answer); a dropped pass meets the check by its own exemption (review
-   § The Close). A miss or an excess is repaired here, in this step —
-   the next session reads the record, never this one's memory.
+Where `review.md`'s first recognizer is an `Iteration —` marker,
+whatever phase it names, first append `Consumed — <YYYY-MM-DD> by
+implement` to the end of its block (the process contract, § Iteration).
+Then write the pass's `## Review — <YYYY-MM-DD>` entry, dated today. No
+file yet: create it as the title line plus the entry. One exists:
+prepend the entry under the title. The entry carries no ref lines:
+`Reviewed:` and `Unreviewed:` are the iterate and wait closes' lines,
+and the fix commits reach the next delta from the entry's fixes line.
 
-4. **Write `implemented.md`** in the topic directory — this phase's own
-   record (every phase has one): what the plan and the code don't
-   already say. Deviations from the plan during implementation and why;
-   mishaps or surprises; anything noticed but deliberately not done
-   (follow-ups — capture them, one invocation of the `ymer:capture`
-   skill, source `implement`, handing each over as an observed drop —
-   an `idea` for work left undone, a `bug` for something seen broken —
-   and list each here with the id capture reports); the final
-   verification result (suite green, live smoke); the **pre-flight**
-   gate #4 ran — own commits found, main's delta, the stash entry where
-   the tree was dirty, and the catch-up's outcome: a fast-forward, the
-   merge ref (with a conflict's resolution where one arose), or an
-   already-up-to-date no-op where main had not moved; and the topic's
-   durable refs — for a code-repo topic **every task commit** § Execution
-   made plus whatever step 1 added,
-   plus **every machinery commit ref** the
-   session made — marked per machinery tree,
-   several in one tree where the session made several — **the lens
-   pass's own fix commits excepted**: the pre-executed pass's fix commits
-   are the `## Review` entry's fixes line's, and a fallback pass's fixes
-   fold into review's close commit (define's glossary
-   commit is already in the spec's glossary delta). The refs here are not
-   bookkeeping: this file is one of the traceability stores the process
-   contract names (§ The traceability stores), and a later delta's
-   subject is computed from
-   those stores — so a ref missing here is work no pass will ever see.
-   Keep it short — the blow-by-blow is in the ticked
-   `plan.md` and git; this is the "what actually happened vs. the plan"
-   note, and review reads it as walkthrough material.
+A pass that found nothing still writes the entry, and so does one that
+recorded `Lens pass: dropped — no diff or change set`: that line is what
+review's pre-flight forks on, and its absence would send the next
+session into a fallback pass it does not owe.
 
-5. **Commit the phase's writes** (the ticked plan, `implemented.md`, and
-   the `review.md` step 3 wrote) in the state folder, pathspec-scoped. The
-   state folder is a **shared tree** like every machinery tree, and
-   its commit is keyed the same way — **scoped to what this topic wrote
-   in it**: the topic folder, which every phase writes, **plus each file
-   outside that folder the plan names or this session edited**. The
-   plan's names are the ones gate #3 already read — the paths its
-   `payloads/manifest` names, plus any target its steps name — and a
-   drift-valve addition is one of this session's edits (contract:
-   the substrate contract, "Stage by explicit path only").
-   A topic that wrote nothing outside its folder commits the folder
-   alone, and the commands below reduce to the pathspec they have always
-   carried.
+Then read the written entry back against the grammar, never against the
+intent: every line the pass owes present and in order, the `re-green:`
+clause wherever fixes landed, and every review-owned line absent, never
+a placeholder. A miss or an excess is repaired here: the next session
+reads the record, never this one's memory.
 
-   ```
-   git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/ <each such file>
-   git -C <state folder> commit -m "YYYY-MM-DD-<topic>: implement" \
-       -- <repo>/YYYY/MM-DD-<topic>/ <each such file>
-   ```
+### The record
 
-   Both halves carry the same pathspec, never `-A`: the add alone scopes
-   the add, while a concurrent session's already-*staged* path still
-   rides a bare commit in this shared tree.
+Write `implemented.md` in the topic folder: implement's record of what
+the plan and the code do not already say, which review reads as
+walkthrough material. Keep it short; the ticked `plan.md` and git hold
+the blow-by-blow. It records:
 
-   **Where such a file also carries a foreign edit** — a state-folder
-   file outside the topic folder is the one place two sessions touch
-   the same bytes (the substrate contract) — the commit becomes a
-   **composite**,
-   and it is the one state-folder commit that ends **without** a pathspec: the
-   by-hunk recipe's commit half is bare by construction, because
-   `git commit -- <the mixed file>` would commit that file whole, foreign
-   hunk included (recipe: the substrate contract):
+- the deviations from the plan, and why;
+- mishaps and surprises;
+- what was noticed and deliberately not built, each captured as a drop
+  through one invocation of the `ymer:capture` skill, source `implement`
+  (an `idea` for work left undone, a `bug` for something seen broken),
+  and listed here with the id capture reports;
+- the final verification result: the suite and the end-to-end run;
+- what the pre-flight found: the branch's own commits, main's delta, the
+  stash entry where the tree was dirty, and the catch-up's outcome;
+- the notebook backup's id, where one was taken;
+- the topic's refs, `implemented.md`'s share of the process contract's §
+  The traceability stores: every task commit, the close's own commit
+  where one landed, and every machinery commit, per tree. A ref missing
+  here is work no later pass will see.
 
-   ```
-   git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/ <each such file carrying no foreign edit>
-   git -C <state folder> reset -- <the mixed file>      # only if it is already staged: the diff below must be taken unstaged
-   git -C <state folder> diff -U0 -- <the mixed file>   # cut this session's own hunks into <patch>: hand-written from the hunks you keep, never the whole diff redirected
-   git -C <state folder> apply --cached --unidiff-zero <patch>
-   git -C <state folder> diff --cached --stat           # assert: the topic folder and each such file, nothing else
-   git -C <state folder> commit -m "YYYY-MM-DD-<topic>: implement"
-   ```
+### The state-folder commit
 
-   The reset, diff and apply run once per mixed file; the plain files
-   ride the first `add` beside the folder. That `--stat` assertion is a
-   stop, not a formality: a concurrent
-   session's already-staged path listed there would ride the bare
-   commit — stop and ask, never commit around it and never drop it.
+Commit the phase's writes in the state folder, where git keeps its
+history: the ticked plan, `implemented.md` and `review.md`. Where the
+files are the record, each save already is the record, and this step
+runs nothing (the operations contract, § The topic's artifacts). The
+state folder is a shared tree, so the commit is scoped to what this
+topic wrote there: the topic folder, plus each file outside it that the
+plan names or this session edited (`mechanics.md` § Phase Close). Its
+message is `<topic ID>: implement`, in the internal register.
 
-   Verify **on the same list**, never on the topic folder alone — a check
-   keyed like the old folder-only step is blind to exactly the omission
-   this keying exists to prevent:
+### The capture block
 
-   ```
-   git -C <state folder> status --short -- <repo>/YYYY/MM-DD-<topic>/ <each such file>
-   ```
-
-   Expect no output for the topic folder and for every named file
-   committed on the plain path above. A file committed through the
-   composite is the one exception: it still carries the foreign hunk
-   this close deliberately left uncommitted for the other session, so
-   one ` M ` row per such file is the correct outcome, not a stop.
-   Assert that residual positively rather than waving it through —
-   `git -C <state folder> diff -- <the mixed file>` shows the foreign
-   hunk and **none** of this session's own edits, which the composite
-   already put in HEAD — and never re-stage or re-commit the file to
-   silence the row: that sweep is the record loss this recipe exists to
-   prevent. Foreign dirty paths elsewhere in the repo, outside this
-   pathspec, stay listed by an unscoped `status` and are not a stop
-   either — other topics' in-flight work, leave them (concurrent edits:
-   the substrate contract).
-
-6. **Capture block:** invoke the `ymer:capture` skill — source
-   `implement`. The battery, the drop grammar and the write live in that
-   skill alone.
+Invoke the `ymer:capture` skill, source `implement`: the battery, the
+drop grammar and the write live in that skill alone.
 
 ## Next Phase
 
-Name the next phase, in a fresh session — **review** where this session
-implemented, the phase the marker names where it stopped at the drift
-valve; the topic's task stays
-`doing` until review's closure. The terminal report states the
-deviations made, the verification result, the refs recorded (every task
-commit, any commit step 1 added, any machinery commits — one machinery
-tree or several — and the lens pass's own fix commits),
-**the stash entry** where gate #4 made one — its message, and whether the
-dirt was recognisably this topic's own torn fragment, since that tells the
-user the entry is safe to drop —
-and **what the lens pass did** — the `## Review` entry it wrote, how
-many findings it left for review's dispositions, and which fixes it
-applied, or that the pass was dropped for want of a diff or a change set — and lists
-every pending step with
-its command written out (report rule: *Defaults and holds*) — normally
-none on a code-repo topic: the branch is local and nothing has reached
-main. A session that made machinery edits lands each machinery commit on
-its tree's own main, so its report lists a push per tree — `git push` from
-each machinery tree it committed in; the user's alone. **A
-session that stopped at the drift valve** reports differently: what the
-plan could not do, the marker it wrote, the refs on its `Unreviewed:`
-line, and the same pushes where it committed machinery — `plan.md`'s ticks
-are where the work stands, at a task boundary. One
-phase per session; the artifact this session leaves — `implemented.md`
-and the findings beside it, or the marker after a stop — is the
-compaction boundary: do not invoke the next skill.
+Name the next phase, for a fresh session, and stop: review where this
+session implemented, or the phase the marker names where it took the
+stop at the drift valve. The topic's task stays `doing` until review
+closes it. One phase per session: what this session leaves,
+`implemented.md` with the findings beside it or the marker after a stop,
+is the compaction boundary, so do not invoke the next skill.
+
+The terminal report names, as the process contract's report rule asks:
+
+- the deviations made and the verification result;
+- the refs recorded: every task commit, the close's own commit, each
+  machinery commit, and the lens pass's fix commits;
+- the stash entry, where the pre-flight made one: its message, and
+  whether the dirt was recognisably this topic's own torn fragment, so
+  the user knows the entry is safe to drop;
+- what the lens pass did: the entry it wrote, how many findings it left
+  for review, the fixes it applied and the range it diffed with its left
+  edge, or that it was dropped for want of a diff or a change set;
+- every pending step with its command written out: normally none for the
+  branch, which is local, and a `git push` from each machinery tree the
+  session committed in, the user's alone.
+
+A session that took the stop reports what the plan could not do, the
+marker it wrote, the refs on its `Unreviewed:` line, the current task's
+uncommitted fragment, and the same pushes. `plan.md`'s ticks show where
+the work stands.
 
 ## Remember
 
-- The plan is the method — this skill gates, guards, and closes
-- A box is ticked only by a verification that actually ran — and, on a code-repo topic, only once the task's bytes are committed on the branch; the task's boxes tick together at its commit, and a task that writes no file has no bytes and no commit, so it ticks on its verification alone
-- Mechanical drift is fixed and edited into the plan; an approach change is an iteration — decide-forward in place when the decision is already made, otherwise the session stops, and the stop is a close: machinery commit (per tree), the marker plus its `Unreviewed:` line into `review.md`, state-folder commit, capture block — and no `implemented.md`
-- Nothing outside the plan gets built — record it, don't do it
-- No user gate at the end: the close runs straight through, lens pass included, and the human meets the real diff in review
-- The phase ends with the branch carrying a commit per task that wrote files (a meta topic has none), plus a machinery commit wherever the session edited machinery — one machinery tree or several, committed per tree — public-register message; then the lens pass over what was just committed, its fixes on their own commit(s), and its findings into `review.md`'s `## Review` entry — no squash, no merge, no branch delete, no task close, those are review's ship
-- The lens pass's procedure is review's, operated here by pointer (review § The lens pass); this close owns only where the pass sits, its fix commits, and the entry it writes
-- `implemented.md` records deviations, mishaps, follow-ups (each captured as a drop), verification, the pre-flight's stash and catch-up, and the durable refs — every task commit, plus every machinery commit ref, per tree, the lens pass's own fix commits excepted: those ride the `## Review` entry's fixes line
-- Every pre-flight in a project checkout stashes what it finds and then catches up, with no exception for a session that picks the plan up mid-way: it restarts at a task boundary with a clean branch behind it
-- Next is review, in a fresh session; the task stays `doing` until its closure
+- The plan is the method: this skill checks, guards and closes.
+- A box is ticked only by a verification that ran and passed; on a
+  code-repo topic a task's boxes tick after its commit, its verifier
+  step's last.
+- Mechanical drift is fixed and edited into the plan. An approach change
+  is an iteration: decide-forward where the decision is made, otherwise
+  the stop, which runs as a close and writes no `implemented.md`.
+- Nothing outside the plan gets built: record it, never build it.
+- No user gate at the end: the close runs straight through, lens pass
+  included, and the human meets the real diff in review.
+- The lens pass's procedure is review's; this close owns where it sits,
+  its fix commits and the entry it writes.
+- Every pre-flight in a project checkout stashes what it finds and
+  catches up, a session picking the plan up mid-way included: it
+  restarts at a task boundary.
+- Next is review, in a fresh session; the task stays `doing` until
+  review closes it.

@@ -75,6 +75,16 @@ Each phase that runs here opens with a pre-flight:
 5. Anything else, a refusal after the stash included, is a state no rule
    names: ask, run nothing.
 
+A conflict in the catch-up, at a phase's pre-flight or at the ship
+close's merge, is one of two kinds. An **ordinary** conflict (disjoint
+hunks in one file, changes that compose, one side a pure superset of
+the other) is resolved on the branch, Claude-run, and the merge
+concluded. A conflict that would **remake a recorded decision**, where
+the record does not say which side wins, is the user's to settle,
+asked before anything runs. Where the two cannot be told apart, that is
+itself a question, never a guess (→ Git is never guessed). Each phase
+states its own default for an answer that has not come by its close.
+
 Review is the one phase that folds instead of stashing: the dirt it
 finds is the developer's own edits since implement, which its close
 commits on the branch before it catches up.

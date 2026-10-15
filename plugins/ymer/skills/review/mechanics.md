@@ -102,7 +102,8 @@ git -C <tree> log --oneline -1    # the ref, onto the fixes line
 ```
 
 On the branch the tree is the project checkout, staged whole
-(`git add -A`) since step 1 of implement's close emptied it. A machinery
+(`git add -A`) since the commit at implement's close emptied it (the
+implement skill, § Phase Close). A machinery
 tree is staged by explicit path, and by hunk where a fixed file also
 carries another session's edit (the substrate contract, § Committing by
 hunk). A fallback pass at review runs none of these: its fixes fold into
@@ -206,19 +207,15 @@ pre-executed fix commits stay on the fixes line, their one store.
    tree this merge can touch. Its result rides step 3's `Catch-up:`
    line.
 
-   An **ordinary** conflict (disjoint hunks in one file, changes that
-   compose, one side a pure superset of the other) is resolved on the
-   branch, Claude-run, and the merge concluded. A conflict that would
-   **remake a recorded decision** is the user's to settle: ask before
-   anything runs, and where telling the two kinds apart is not clear,
-   that is itself a question. **Default: absent the answer by the
-   close, `git merge --abort`, which restores the pre-merge tip and
-   destroys nothing, and the close re-derives into an iterate close
-   before main is touched: the open `## Review` entry gains the conflict
-   as a finding with its disposition, then the iterate close's marker
-   and ref lines, step 1's fold riding `Unreviewed:`. Nothing
-   irreversible has run. Review post-hoc at `review.md`** (the process
-   contract, § Defaults and holds).
+   A conflict is classed and asked as the substrate contract's
+   § Project checkout says. **Default: absent the answer by the close,
+   `git merge --abort`, which restores the pre-merge tip and destroys
+   nothing, and the close re-derives into an iterate close before main
+   is touched: the open `## Review` entry gains the conflict as a
+   finding with its disposition, then the iterate close's marker and ref
+   lines, step 1's fold riding `Unreviewed:`. Nothing irreversible has
+   run. Review post-hoc at `review.md`** (the process contract,
+   § Defaults and holds).
 
    **A red at the re-green is the same stop** and takes that default
    whole, the abort aside: main untouched, the close re-derived into an

@@ -81,25 +81,19 @@ the baseline every later `Expected:` is relative to, and a stash that
 set aside a load-bearing hand edit (a relock) shows up here as a red
 the plan names rather than ships against.
 
-An **ordinary** conflict in the catch-up (disjoint hunks in one file,
-changes that compose, one side a pure superset of the other) is
-resolved on the branch, Claude-run, the resolution and the merge ref
-recorded in the same fact sheet. A conflict that would **remake a
-recorded decision**, where the record does not say which side wins, is
-a contested-record finding and the user's to settle: ask before
-anything runs, and where telling the two kinds apart is not clear, that
-is itself a question rather than a guess (the substrate contract, § Git
-is never guessed). **Default: absent the answer by the close, `git
-merge --abort`, which restores the pre-merge tip and destroys nothing;
-record the conflict (the paths, the decision, main's ref) in the fact
-sheet and proceed, since this phase's work does not depend on the
-catch-up; main's delta over the conflicted paths enters the assumptions
-block (impact-if-false: anchors on those paths drift, and implement's
-pre-flight, or the ship close's, meets them again) — review post-hoc at
-the fact sheet** (the process contract, § Defaults and holds). Where the
-conflict shows that a recorded decision no longer survives, that is a
-contradiction too: record it in the plan header and stop, naming the
-phase that owns the decision.
+A conflict in the catch-up is classed and asked as the substrate
+contract's § Project checkout says. An ordinary one's resolution and
+merge ref are recorded in the same fact sheet. **Default: absent the
+answer by the close, `git merge --abort`, which restores the pre-merge
+tip and destroys nothing; record the conflict (the paths, the decision,
+main's ref) in the fact sheet and proceed, since this phase's work does
+not depend on the catch-up; main's delta over the conflicted paths
+enters the assumptions block (impact-if-false: anchors on those paths
+drift, and implement's pre-flight, or the ship close's, meets them
+again) — review post-hoc at the fact sheet** (the process contract,
+§ Defaults and holds). Where the conflict shows that a recorded decision
+no longer survives, that is a contradiction too: record it in the plan
+header and stop, naming the phase that owns the decision.
 
 While such a question is open the tree carries conflict markers, and
 the fact-gathering reads it: **never quote an anchor out of a marked

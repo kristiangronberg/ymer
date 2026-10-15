@@ -22,7 +22,8 @@ first line, and those entries are read when the section runs.
 
 ## Overview
 
-**Read the plugin glossary's entries for review's vocabulary now**:
+**Read the plugin glossary's entries for review's vocabulary now**,
+unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/glossary.md`, each entry by its heading: *review*,
 *lens pass*, *walkthrough*, *stop*, *fitness question*, *head-scratch
 test*, *facilitator*, *iteration*, *decide-forward*, *ship*, *wait*,
@@ -68,7 +69,8 @@ preferences in a repo's `CLAUDE.md` override the defaults below.
 *Read with this section: `mechanics.md` § Input (the mechanics) and `cases.md` § Input (the cases).*
 
 **Read the process contract's § Defaults and holds and § Topic kinds
-now, and the operations contract whole**:
+now, and the operations contract whole**, unless already read this
+session:
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the
 pre-flight, close binding, gate defaults and holds, the fallback rule
@@ -142,7 +144,8 @@ from the **first recognizer top-down**:
 - **`Iteration —`** → mid-iteration, the marker naming the phase.
   Whether that route is still live, and which phase it makes due, is
   read off the marker's block: **read the process contract's
-  § Iteration now**, `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for
+  § Iteration now**, unless already read this session:
+  `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for
   the block, its `Consumed —` lines and what each reading makes due.
   A live route, or one due at any phase but review, stops this
   session, naming that phase. A block whose last line is `by implement`
@@ -175,7 +178,8 @@ There is no skip recognizer: nothing downstream gates on this phase.
 *Read with this section: `mechanics.md` § The lens pass (the mechanics) and `cases.md` § The lens pass (the cases).*
 
 **Read the process contract's § Review effort and § The traceability
-stores now**: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for lens
+stores now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for lens
 applicability and how a dropped lens is reported, the risk profile that
 keys a tier, and the list of stores every recorded ref is read from.
 This section holds the pass's whole procedure, whichever phase operates
@@ -228,8 +232,8 @@ apply set.
 **Where the fixes go depends on the operator.** Each fix lands in the
 tree that holds the file it fixes, and then:
 
-- **Implement's pre-executed pass** runs on a tree its step 1 already
-  emptied, so its fixes ride **their own commit**, one per tree they
+- **Implement's pre-executed pass** runs on a tree its close's commit
+  already emptied, so its fixes ride **their own commit**, one per tree they
   touched, public register, each ref onto this entry's `Fixes applied
   (--fix):` line and onto no other store. Work a pass covered and work
   no pass has seen never share a ref: the certification arithmetic
@@ -668,7 +672,8 @@ Fix issues inline and move on: there is no re-review loop.
 
 *Read with this section: `mechanics.md` § Phase Close — three closes (the mechanics).*
 
-**Read the substrate contract whole now**:
+**Read the substrate contract whole now**, unless already read this
+session:
 `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`, for the network boundary,
 commit ownership, git is never guessed, the two tree options, the branch
 workflow, staging by explicit path, concurrent edits on a shared tree,
