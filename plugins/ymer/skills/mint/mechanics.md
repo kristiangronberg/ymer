@@ -95,10 +95,16 @@ ORDER BY drops DESC
 ```
 
 ```sql
--- the sharpest signal: open recurrences whose anchor was drained
-SELECT r.id, r.captured_on, r.kind, r.context, r.body, a.id AS anchor, a.drained_to
-FROM pool r JOIN pool a ON a.id = r.anchor_id
-WHERE r.status = 'open' AND a.status = 'drained' AND r.front = '<front>'
+-- the sharpest signal: open faces created after their family was first
+-- drained, by its anchor or by the earliest of a named cause's faces
+SELECT r.id, r.captured_on, r.kind, r.context, r.body,
+       COALESCE('#' || r.anchor_id, r.anchor_text) AS anchor,
+       d.drained_to, min(d.drained_at) AS drained_at
+FROM pool r
+JOIN pool d ON d.status = 'drained' AND (d.id = r.anchor_id OR d.anchor_text = r.anchor_text)
+WHERE r.status = 'open' AND r.front = '<front>'
+GROUP BY r.id
+HAVING min(d.drained_at) < r.created_at
 ORDER BY r.id
 ```
 

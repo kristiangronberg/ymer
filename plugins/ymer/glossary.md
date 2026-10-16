@@ -357,6 +357,11 @@ these.
 
 ## F
 
+### face
+A recurrence seen as a member of its family: one drop carrying the
+family's key. A family's anchor is not one of its faces.
+_Avoid_: occurrence, instance
+
 ### facilitator
 The withholding role a gated learning surface runs: the user produces —
 predictions, explanations, hand-written attempts — and the facilitator
@@ -370,6 +375,13 @@ the pipeline proceeds unblocked but the user wants depth enough to dive
 in and develop the area themselves. Captured as a learning drop — no
 task and no edge; mint creates its learning task when it draws the
 drop.
+
+### family
+Every drop sharing one anchor key, on any front: an anchor and the drops
+whose `anchor_id` names it, or the drops sharing one named cause. Its
+size is how often a thing bites. Mint's *cluster* is wider: a family
+plus what a pick folds in beside it.
+_Avoid_: group; cluster (for the family alone)
 
 ### fitness question
 Review's closing beat: the does-it-do-the-job question(s) asked once over
@@ -682,6 +694,12 @@ or was handled elsewhere, as mint re-verified with evidence.
 _Avoid_: stale, obsolete, already-fixed
 
 ## N
+
+### named cause
+The `anchor_text` form of a family's key: a slug, or a key carried over
+from an earlier store, that several drops share where no single drop is
+the anchor.
+_Avoid_: cause slug, text anchor
 
 ### next step
 One bullet of a product page's `Next steps` section, the settled section
@@ -1073,6 +1091,14 @@ file also carries another session's edit — and foreign dirt left alone.
 Derived from the branch, never from the tree's address. Contrast:
 project checkout.
 _Avoid_: shared working tree, the three trees
+
+### sharpest signal
+An open face created after its family was drained (after its anchor's
+drain, or for a named cause after the first drain among its faces): a
+cause coming back after it was drawn into work, the strongest evidence
+the pool gives.
+_Avoid_: recurrence after a ship (for the signal itself), drained-anchor
+recurrence (for the status-only reading)
 
 ### ship
 A topic reaching main: the Claude-run squash-merge of the topic

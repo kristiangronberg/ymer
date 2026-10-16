@@ -214,8 +214,8 @@ draws.
    first, the one read across fronts, so a run can say what sits on
    a front that has not drawn from it; every read after it is this
    front's. Then the aggregates: drops per kind and source, every anchor
-   with its drops, the open recurrences whose anchor was drained (the
-   sharpest signal), and the vision drops per product. Then the
+   with its drops, the sharpest signal (term: the plugin glossary), and
+   the vision drops per product. Then the
    ranking, highest score first, twenty-five per page, read until the
    walk ends (→ The pick rule), never the whole list. Frequency
    is shown beside the score and never folded into it.
@@ -278,14 +278,29 @@ draws.
    already read this session:
    `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`, for the operation,
    the read before it and the `affected_rows` read-back with what a
-   short one means, and its SQL on the node. The ids are this front's
-   portion of the
-   cluster, never the anchor's alone: the anchor where its front is this
-   one, every open drop of this front anchored on it, by its id or by the
-   same named cause (for a moot drop, only those its evidence covers),
-   the vision cluster or friction-batch set step 1 gathered, the moot
-   drops the walk collected with the cluster members their evidence
-   covers, and the neighbours step 3 folded in.
+   difference means, the families the operation adds and its exact form,
+   and its SQL on the node. Every moot drop the pick took, the top drop
+   included where it is moot, goes through the exact form with the
+   cluster members its evidence covers, and so does every other drop the
+   pick chose that sits in a moot drop's family; each is drawn as named,
+   and a face the moot evidence does not cover stays open. The rest of
+   the pick goes through the family form, naming the drops the pick
+   chose, this front's: a top drop that is not moot, the vision cluster
+   or friction-batch set step 1 gathered, and the neighbours step 3
+   folded in. The operation adds the families each one sits in, so the
+   draw takes the cluster, never the anchor's alone. The family form
+   never names a moot drop or a drop of a moot drop's family, so no
+   family it reaches, one level from a named drop, is a moot drop's. A
+   pick with both makes two draws, the exact draw first, so the family
+   draw finds the exact draw's drops already drained and leaves them
+   alone. The family read can find drops the artifact does not quote
+   yet: append a drop line for each before step 5, so the artifact
+   quotes every drop the draw moved. In `request.md` the append goes
+   through the file as every append goes (→ `request.md`'s shape), in a
+   friction-batch under the heading of the drop whose family brought it;
+   at the learning exit it goes to the learning task's description,
+   keeping what is there (the statement: `cases.md` § Three exits, all
+   artifact-depositing).
    The draw names where the drops went: the topic's folder
    as `<area>/YYYY/MM-DD-<topic>/`, the friction-batch's included, or
    the learning task's id. Drops are never deleted, and every other drop
@@ -457,9 +472,10 @@ rules:
 - **Anything else**: leave the drop out of that topic. If the topic
   shipped and what it observed is gone, the drop is a moot drop, handled
   at the head like any other (→ above). If it shipped and the
-  observation persists, **that recurrence after a ship is the sharpest
-  signal the pool gives**: a shipped change did not solve what it
-  claimed, and it earns its own topic.
+  observation persists, a shipped change did not solve what it claimed,
+  and it earns its own topic; it is **a sharpest-signal drop whose topic
+  has shipped** only where it is a sharpest-signal drop (term: the plugin
+  glossary).
 
 Everything wider than capture's bounded query is mint's, never
 capture's: the listings above, drained drops read in full, and an ad-hoc
@@ -737,6 +753,7 @@ it, by name, what this run's scoring showed:
   ymer a missing Roadmap halts the run and says what to create; in the
   node the Roadmap is a derived label and nothing can be missing
 - Every run opens with a notebook backup, and the draw is *draw drops*,
-  one write by id: drops are never deleted
+  keyed by the ids the pick chose, which the family form widens to their
+  families: drops are never deleted
 - The pool itself lives in no git tree; only the topic's folder is
   recorded in the state folder's history

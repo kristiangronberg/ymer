@@ -8,7 +8,7 @@ runs.
 Contents:
 
 - The run: a cluster that spans fronts, an open pointer on a drained
-  anchor
+  anchor, a family read that finds more than the artifact quotes
 - Scoring: a page with no next steps, a block that could not be read, a
   scorer that wrote beyond its rows, the ids left unscored, an empty
   ranking
@@ -30,9 +30,21 @@ front's own mint. Where the cause is shared, say so in a line of the
 artifact the pick writes.
 
 **An open pointer on a drained anchor** reads as the sharpest signal at
-the next run. So after a draw, an open pointer on a drained anchor
-means one of two things: it was captured after the draw, or it is
-another front's drop, left open for that front's own mint.
+the next run only when it was created after its anchor was drained
+(term: the plugin glossary). A draw takes the family (*draw drops*,
+binding: the operations contract), so after one, an open pointer on a
+drained anchor is one of three things: captured after the draw, the
+signal itself; another front's drop, left open for that front's own
+mint; or a face no draw took, created before its anchor was drained,
+which the signal leaves out. A moot drop's face that its evidence did
+not cover is one.
+
+**The family read finds more than the artifact quotes** whenever a
+named drop's family reaches past what the candidate read showed: a
+folded-in neighbour that is a face brings its anchor and that anchor's
+other faces, which step 1 never read. Those are the drops step 4's
+append adds to the artifact: `request.md`, or the learning task's
+description.
 
 ## Scoring
 
@@ -78,9 +90,8 @@ over:
   a symptom whose cause is still fuzzy make a better topic once they
   have gathered more faces: a reason to pick something else this run,
   never a reason to never pick it.
-- **The sharpest signal.** An open recurrence whose anchor was drained
-  and whose topic has shipped, ranked below the top, may be drawn over
-  it.
+- **A sharpest-signal drop whose topic has shipped** (term: the plugin
+  glossary), ranked below the top, may be drawn over it.
 
 ## Three exits, all artifact-depositing
 

@@ -84,8 +84,10 @@ is read. This section carries only review's own reads beside them.
 **The pool.** The same read holds the pool's two operations, *draw
 drops* and *return drops* (the operations contract, § The pool): who
 draws, which closes draw, the `Drawn:` and `Returned:` lines and where
-they sit, the read and the read-back, the order at the close, a draw
-that cannot run and how its report names it, the pre-flight's finish,
+they sit, the families a draw and a return take, the read and the
+read-back, the order at the close with a returning close's correction
+of its own `Returned:` line, a draw that cannot run and how its report
+names it, the pre-flight's finish,
 and how the front is read. The front comes from this one line, which the
 harness fills in as it loads this skill:
 

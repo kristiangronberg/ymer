@@ -309,8 +309,30 @@ through them. They extend the vocabulary of § Operations:
 
 | Operation    | Required outcome                                                                 |
 |--------------|----------------------------------------------------------------------------------|
-| draw drops   | each named open drop of this front is drained to where the work lives: the topic's folder, `<area>/YYYY/MM-DD-<topic>/`, or a learning task's id at mint's learning exit |
-| return drops | each named drop of this front that a draw drained is open again, exactly as it was before the draw, whichever destination the draw named |
+| draw drops   | each named open drop of this front is drained, with the open drops of this front in each family it sits in, to where the work lives: the topic's folder, `<area>/YYYY/MM-DD-<topic>/`, or a learning task's id at mint's learning exit; in the exact form, the named drops alone |
+| return drops | each named drop of this front that a draw drained is open again, with the drops of this front in each family it sits in that the same draw drained, each exactly as it was before the draw, whichever destination the draw named |
+
+**A draw takes the family.** *Draw drops* widens each named id the
+read finds waiting to every family it sits in (term: the plugin
+glossary): where it is a face, its anchor and that anchor's other faces;
+its own faces; and the drops sharing its named cause. The reach is one
+level from the named drop and never further, so a chain of anchors is
+never walked, and a drop that is both a face and an anchor brings both
+its families. Only this front's open drops that are not empty are
+drawn; another front's stay open for that front's own mint. An id that
+reads drained to this topic already widens nothing, so a face captured
+while the topic is in flight stays open until a close names it. The
+`Drawn:` line names only what the close chose, and the operation adds
+the rest. **The exact form** draws the named ids alone: mint is its one
+caller, for the moot drops its pick took with the members their evidence
+covers, and the other drops the pick chose in a moot drop's family,
+since a moot drop's evidence may not cover every face of its family.
+*Return drops* takes, from each named id's families, the drops the same
+draw took with it, one level from the returned id: a drop further from
+it stays drained though the same draw took it, and a drop of the family
+that an earlier or a later draw took stays drained. So a cut reaches
+every drop of its families that one draw took together, and one of them
+cannot be cut alone; a face a later close drew by naming it can be.
 
 **Who draws.** Mint draws at its pick (the `mint` skill). A deciding
 phase draws too, brainstorm, define, write-plan or review, when a
@@ -357,27 +379,43 @@ return nothing. Draws already made stand, and the resumed or re-run
 phase draws at its own finished close.
 
 **The read and the read-back.** Every caller, mint included, reads the
-rows of the ids it names before it writes (→ The pool on the node). An
-id the read does not find waiting for the operation, open, this
-front's and not an empty drop for a draw, is wrong or was drawn
-elsewhere: find out which
-before closing, and correct the record that names it (a deciding
-close's own lines, or the `request.md` mint wrote). An id another topic
-already drew belongs to that topic, and this topic's artifact cites it,
-never draws it. An open drop of another front is no such error: it
-stays on the `Drawn:` line beside its shared cause and is never drawn here
-(→ The front). Each operation's `affected_rows` must equal the ids the
-read found waiting for it; fewer means a row moved since the read, so
-find out which before closing, and name it in the report.
+rows of the ids it names before it writes, then, for the family form
+and the return, the family read: every drop the write will move,
+through the write's own `WHERE` (→ The pool on the node). An id the
+first read does not find waiting for the operation, open, this front's
+and not an empty drop for a draw, is wrong or was drawn elsewhere: find
+out which before closing, and correct the record that names it (a
+deciding close's own lines, or what mint wrote, its `request.md` or at
+the learning exit its learning task's description, which quotes every
+drop the family read moves). An id another topic already
+drew belongs to that topic, and this topic's artifact cites it, never
+draws it. An open drop of another front is no such error: it stays on
+the `Drawn:` line beside its shared cause and is never drawn here
+(→ The front). Each operation's `affected_rows` must equal the drops
+its read found: the family read for the family form and the return, the
+named ids the first read found waiting for the exact form. A difference,
+fewer or more, means a drop moved since the read (a face captured
+meanwhile joins a named family, for one), so find out which before
+closing, and name it in the report.
 
 **At the close.** A deciding close reads its ids' rows before the
 artifact's commit, or its save where the files are the record, and
-corrects its own lines from the read. After the commit, or the save
-where the files are the record, it runs *draw drops* over this front's
-ids on its `Drawn:` line that read open, then *return drops* over this
-front's ids on its `Returned:` line that read drained to this topic's
-folder. Both run before any hand-off or hold the phase closes with, so
-no hold closes the phase around them.
+corrects its own lines from the read. It reads the families as well,
+before any write: the draw's family read for its `Drawn:` ids and the
+return's for its `Returned:` ids. The return reaches only the drops the
+same draw took with a returned id, so it never reopens what this close
+draws. A family moves whole: where a drop the draw takes sits in a
+family the return reopens, the close corrects its own lines so that
+family stands on one side only. A returning close also extends its own
+`Returned:` line, from the return's family read, to every id the
+earlier lines drew that the return reopens, so the finish never draws
+one of them again. The other drops it reopens, those an operation added
+to a draw and those mint drew, carry no line before or after. After the
+commit, or the save where the files are the record, it runs *draw
+drops* over this front's ids on its `Drawn:` line that read open, then
+*return drops* over this front's ids on its `Returned:` line that read
+drained to this topic's folder. Both run before any hand-off or hold
+the phase closes with, so no hold closes the phase around them.
 
 **A draw that cannot run is a pending step.** Where the node does not
 answer or no front is named, the artifact with its lines is written and
@@ -410,8 +448,11 @@ reads drained to this topic's folder is returned. One whose latest line
 is `Drawn:` and that reads drained elsewhere was drawn by another topic
 meanwhile: it belongs to that topic, so the finish reports it and this
 phase's close corrects the line (→ The read and the read-back). A drop
-mint drew carries no line, since `request.md` records it, and stays
-drawn until a `Returned:` line names it. Scout, plan-review and
+mint drew carries no line, since `request.md` quotes every drop its
+family read moved, and stays drawn until a `Returned:` line names it or
+a return over a drop of its family
+that the same draw took reopens it.
+Scout, plan-review and
 implement read no front, so they leave a pending draw to the next
 deciding phase's pre-flight.
 
@@ -445,10 +486,12 @@ a task, read back by its own postcondition. A restore puts back everything as it
 and discards whatever any client wrote after it, so the backup is the
 safety net, not an undo; an undo is the exact inverse of the change.
 
-A draw or a return needs no backup either (→ The pool): a write by id
-that touches only the rows it names, undone by its exact inverse over
-the same ids, and read back by its own `affected_rows`. Mint still
-opens its run with a backup, as the safety net for the run as a whole.
+A draw or a return needs no backup either (→ The pool): a write keyed
+by the ids it names, which touches only the drops of their families. A
+return undoes a draw within each family, reopening what that draw took
+and nothing another draw to the same destination took, and each is read
+back by its own `affected_rows`. Mint still opens its run with a backup,
+as the safety net for the run as a whole.
 
 ## Binding per coordinator
 
@@ -618,13 +661,43 @@ history keeps it, or, at mint's learning exit, the learning task's id
 as its coordinator gives it. *Return drops* takes the form the draw
 named.
 
-The read that comes before either write:
+The read that comes before either write, one row per named id:
 
 ```sql
-SELECT id, front, kind, status, drained_to FROM pool WHERE id IN (<ids>)
+SELECT id, front, kind, status, drained_to, drained_at FROM pool WHERE id IN (<ids>)
 ```
 
-*Draw drops*:
+*Draw drops*, the family form, every caller's but mint's exact draw. Its
+`WHERE` is where the family lives: each named id that reads waiting,
+that drop's anchor, every drop anchored on it or on its anchor, and
+every drop sharing its named cause, this front's open drops alone:
+
+```sql
+UPDATE pool
+SET status = 'drained', drained_to = '<where>',
+    drained_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
+  AND (id IN (<ids>)
+       OR id IN (SELECT anchor_id FROM pool WHERE id IN (<ids>)
+                 AND status = 'open' AND front = '<front>' AND kind <> 'empty')
+       OR anchor_id IN (SELECT id FROM pool WHERE id IN (<ids>)
+                 AND status = 'open' AND front = '<front>' AND kind <> 'empty')
+       OR anchor_id IN (SELECT anchor_id FROM pool WHERE id IN (<ids>)
+                 AND status = 'open' AND front = '<front>' AND kind <> 'empty')
+       OR anchor_text IN (SELECT anchor_text FROM pool WHERE id IN (<ids>)
+                 AND status = 'open' AND front = '<front>' AND kind <> 'empty'))
+```
+
+The family read is `SELECT id, front, kind, status, anchor_id,
+anchor_text FROM pool` followed by that `WHERE`, unchanged. The family
+is written as subqueries inside the `WHERE`, never as a `WITH` clause
+ahead of the `UPDATE`: the node answers a statement that opens with
+`WITH` with `affected_rows` 0, whatever it changed, and the read-back
+would read every draw as moved.
+
+*Draw drops*, the exact form, for mint's moot drops with the members
+their evidence covers, and the other drops its pick chose in a moot
+drop's family, alone:
 
 ```sql
 UPDATE pool
@@ -634,17 +707,43 @@ WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
   AND id IN (<ids>)
 ```
 
-*Return drops*, the draw's exact inverse over the same ids:
+Its read-back is the first read: `affected_rows` equals the named ids
+that read waiting.
+
+*Return drops*, from each named id's families the drops the same draw
+took with it, among the drops drained to that destination. Its family
+read is the same `SELECT` over this `WHERE`:
 
 ```sql
 UPDATE pool
 SET status = 'open', drained_to = NULL, drained_at = NULL
 WHERE status = 'drained' AND front = '<front>' AND drained_to = '<where>'
-  AND id IN (<ids>)
+  AND drained_at IN (SELECT drained_at FROM pool WHERE id IN (<ids>)
+                 AND status = 'drained' AND front = '<front>' AND drained_to = '<where>')
+  AND (id IN (<ids>)
+       OR id IN (SELECT anchor_id FROM pool WHERE id IN (<ids>)
+                 AND status = 'drained' AND front = '<front>' AND drained_to = '<where>')
+       OR anchor_id IN (SELECT id FROM pool WHERE id IN (<ids>)
+                 AND status = 'drained' AND front = '<front>' AND drained_to = '<where>')
+       OR anchor_id IN (SELECT anchor_id FROM pool WHERE id IN (<ids>)
+                 AND status = 'drained' AND front = '<front>' AND drained_to = '<where>')
+       OR anchor_text IN (SELECT anchor_text FROM pool WHERE id IN (<ids>)
+                 AND status = 'drained' AND front = '<front>' AND drained_to = '<where>'))
 ```
 
+One draw is one `UPDATE`, so every drop it drains carries the same
+`drained_at`, and the return's `drained_at` test keeps it to the drops
+drawn with a named id: a drop of the family that another draw took stays
+drained. Where the first read shows the named ids carrying more than one
+stamp, the return runs once per stamp, over the ids carrying it, its
+family read and its read-back with it, so each family is matched against
+its own draw alone. The stamp is to the second, so two draws to one
+destination in the same second read as one draw to the return.
+
 Each `UPDATE` answers with `affected_rows`, its read-back. It names its
-drops, so a capture landing meanwhile in another session is never
-touched. An open row carries no `drained_to` and no `drained_at`:
-capture never writes them, and a return clears them. So the inverse
-puts a drawn row back exactly as the draw found it.
+drops and their families, so a capture landing meanwhile in another
+session is never touched unless it joins a named family between the
+read and the write, which the read-back shows. An open drop carries no
+`drained_to` and no `drained_at`: capture never writes them, and a
+return clears them. So the return puts each drawn drop back exactly as
+the draw found it.

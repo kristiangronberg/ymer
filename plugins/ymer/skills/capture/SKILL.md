@@ -217,9 +217,11 @@ files, no cost data, no tooling.
    terms from the drop — a literal token it would share with an earlier
    drop of the same thing: an option name, a path fragment, a slug —
    rarest first, and run this through `notebook` `query` once per term.
-   It returns families — every face of one cause under its anchor — so
-   twenty rows are twenty causes, and `families` says how many the term
-   matched in all:
+   It returns families (term: the plugin glossary), one row each, so
+   twenty rows are twenty causes. `drops` counts the drops of a
+   family that the term matched, its anchor's own among them where the
+   term matched it, and `families` says how many the term matched in
+   all:
 
    ```sql
    WITH hit AS (
@@ -231,16 +233,16 @@ files, no cost data, no tooling.
    ),
    family AS (
      SELECT COALESCE(anchor_id, CASE WHEN anchor_text IS NULL THEN id END) AS anchor_row,
-            anchor_text, count(*) AS faces, sum(status = 'open') AS open,
+            anchor_text, count(*) AS drops, sum(status = 'open') AS open,
             min(id) AS first, max(id) AS latest
      FROM hit
      GROUP BY anchor_row, anchor_text
    )
-   SELECT COALESCE('#' || f.anchor_row, f.anchor_text) AS anchor, f.faces, f.open,
+   SELECT COALESCE('#' || f.anchor_row, f.anchor_text) AS anchor, f.drops, f.open,
           f.first, f.latest, a.kind, a.status AS anchor_status, a.context,
           substr(COALESCE(a.title, a.body), 1, 300) AS lead, count(*) OVER () AS families
    FROM family f LEFT JOIN pool a ON a.id = f.anchor_row
-   ORDER BY f.faces DESC, f.latest DESC
+   ORDER BY f.drops DESC, f.latest DESC
    LIMIT 20
    ```
 
@@ -253,9 +255,10 @@ files, no cost data, no tooling.
    which only widens the match. Read only the rows that come back. The
    same thing observed again — not the same wording — is a recurrence
    (→ Recurrences). This is the whole of capture's search, by design: a
-   tail is the worst moment for a wide one, and a recurrence that shares
-   no words with its anchor is left for mint, which surveys the whole
-   pool.
+   tail is the worst moment for a wide one. Mint searches again around a
+   drop it is about to pick, by that drop's own terms, so a recurrence
+   that shares no words with its anchor is found by neither search: an
+   accepted miss.
 7. **Urgent?** Tell the user now, outside the pool — above all a bug that
    blocks work in flight — and still write the drop: the evidence is
    needed either way.

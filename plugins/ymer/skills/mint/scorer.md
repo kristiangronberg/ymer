@@ -25,10 +25,11 @@ SELECT p.id, p.kind, p.product, p.context, p.title, p.body,
        COALESCE('#' || p.anchor_id, p.anchor_text) AS anchor,
        CASE
          WHEN p.anchor_id IS NULL AND p.anchor_text IS NULL THEN NULL
-         WHEN a.status = 'drained' THEN 'drained'
+         WHEN a.status = 'drained' AND a.drained_at < p.created_at THEN 'drained'
          WHEN p.anchor_text IS NOT NULL AND EXISTS (
            SELECT 1 FROM pool d
-           WHERE d.anchor_text = p.anchor_text AND d.status = 'drained') THEN 'drained'
+           WHERE d.anchor_text = p.anchor_text AND d.status = 'drained'
+             AND d.drained_at < p.created_at) THEN 'drained'
          ELSE 'open'
        END AS anchor_state
 FROM pool p LEFT JOIN pool a ON a.id = p.anchor_id
