@@ -29,13 +29,8 @@ the grammar review's closes already write; the stop mints none.
 
 ## Phase Close
 
-**A file committed by hunk keeps its row.** After a by-hunk commit, in
-the state folder or a machinery tree, the file still carries the foreign
-hunk this close left for the other session, so one ` M ` row per such
-file in the verify is the right outcome, not a stop. Assert it rather
-than wave it through: `git -C <tree> diff -- <the file>` shows the
-foreign hunk and none of this session's edits, which the commit already
-put in HEAD. Never re-stage or re-commit the file to silence the row:
-that sweep is the record loss the by-hunk commit exists to prevent.
+**The verify is not always empty.** A file committed by hunk, in the
+state folder or a machinery tree, keeps one row in the close's scoped
+verify, asserted as the substrate contract's § Committing by hunk says.
 Foreign dirt outside the pathspec stays listed by an unscoped `status`,
 and is no stop either.

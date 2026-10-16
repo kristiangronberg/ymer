@@ -118,7 +118,8 @@ Name the paths on both halves, `git -C <tree> add <paths>` and then
 the add, and a concurrent session's already-staged path still rides a
 bare commit. Never `add -A`, never `commit -a`. After the commit, read
 `git -C <tree> status` scoped to those paths: they are gone from it,
-and other paths may remain.
+and other paths may remain. A file committed by hunk keeps one row
+there (→ Committing by hunk).
 
 ## Concurrent edits on a shared tree
 
@@ -147,6 +148,14 @@ uncommitted edit:
 5. Commit **without** a pathspec: `git -C <tree> commit -m "<message>"`.
    `git commit -- <file>` would commit the working-tree file whole,
    the foreign hunk included.
+6. Read the scoped `status` that follows the commit: each file
+   committed by hunk keeps one ` M ` row, for the foreign hunk left in
+   the working tree, and that row is the right outcome, not a stop.
+   Assert it: `git -C <tree> diff -- <file>` shows the foreign hunk and
+   none of this session's edits, which the commit put in HEAD. Never
+   re-stage or re-commit the file to silence the row: that sweeps the
+   other session's work into this commit, the loss this recipe exists
+   to prevent.
 
 ## Commit registers
 

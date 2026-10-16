@@ -141,6 +141,10 @@ git is never guessed, staging by explicit path, the commit registers,
 the topic kinds and the machinery-edit duty, and the list of refs the
 topic's record names. Then run the project-checkout pre-flight
 (`mechanics.md` § Input), the branch birth of a split child included.
+Where it stashes dirt, **read the implement skill's `mechanics.md`
+§ Readiness Gate now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/skills/implement/mechanics.md`, for the task
+boundary a torn implement session's fragment ends at.
 
 Then the material, in this order. **Before the first read, read the
 process contract's § Knowledge placement and the sweep skill's § Claims

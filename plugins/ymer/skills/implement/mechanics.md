@@ -165,7 +165,8 @@ git -C <tree> status --short -- <the same files>   # verify: none listed
 
 A file the topic edited that also carries another session's edit is
 committed by hunk instead (the substrate contract, § Committing by
-hunk), and keeps one row in this verify (`cases.md` § Phase Close).
+hunk), and keeps one row in this verify, asserted as that section
+says.
 
 **The state-folder commit**, scoped as `SKILL.md` § Phase Close says;
 the files outside the topic folder that the plan names are the targets
@@ -184,5 +185,5 @@ whose `add` keeps its pathspec; that recipe's commit carries none. The
 reset, diff and apply run once per mixed file; the commit runs once
 after all of them. The verify reads the same list, never the topic
 folder alone, which is blind to exactly the omission this keying
-prevents; a file committed by hunk keeps one row there (`cases.md`
-§ Phase Close).
+prevents; a file committed by hunk keeps one row there (the substrate
+contract, § Committing by hunk).

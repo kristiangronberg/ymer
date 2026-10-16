@@ -292,13 +292,10 @@ pre-executed fix commits stay on the fixes line, their one store.
    ```
 
    Expect no output for the topic folder and for every file committed on
-   the plain path. A file committed by hunk still carries the foreign
-   hunk this close left uncommitted, so one ` M ` row per such file is
-   the correct outcome: assert that `git -C <state folder> diff -- <the
-   mixed file>` shows the foreign hunk and none of this session's own
-   edits, and never re-stage the file to silence the row. Foreign dirty
-   paths outside this pathspec are not a stop (the substrate contract,
-   § Concurrent edits on a shared tree).
+   the plain path. A file committed by hunk keeps one ` M ` row, the
+   right outcome, asserted as the substrate contract's § Committing by
+   hunk says. Foreign dirty paths outside this pathspec are not a stop
+   (the substrate contract, § Concurrent edits on a shared tree).
 6. **Delete the branch** (`-D` is expected: git considers a
    squash-merged branch unmerged):
 

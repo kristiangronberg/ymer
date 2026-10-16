@@ -67,13 +67,12 @@ untracked alike, are unreachable after the stash, so a refusal the
 catch-up meets is a state no written rule names.
 
 The stash entry is named in the terminal report. Where the dirt is
-recognisably a torn session's own fragment (the plan's current task
-unticked, the branch's commits ending at the previous task that wrote
-files; a verification-only task commits nothing and takes the one
-before it as its boundary), the report says so, so the user knows the
-entry is safe to drop. Record what the pre-flight found in the plan's
-Grounding fact sheet (on a re-plan, its dated `### Re-plan` block,
-`cases.md` § Re-planning): the branch, its own commits, main's delta,
+recognisably a torn implement session's own fragment, ending at the
+task boundary implement's commit cadence leaves (the implement skill,
+`mechanics.md` § Readiness Gate, read at `SKILL.md` § Input), the report
+says so, so the user knows the entry is safe to drop. Record what the
+pre-flight found in the plan's Grounding fact sheet (on a re-plan, its
+dated `### Re-plan` block, `cases.md` § Re-planning): the branch, its own commits, main's delta,
 the stash entry and the catch-up's outcome. After a stash, run the
 repo's cheapest whole-tree gate once (`mix test`, or the precommit
 alias where the repo keeps one) and record its result there too: it is

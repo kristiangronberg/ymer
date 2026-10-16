@@ -208,7 +208,8 @@ topic ID, so "this topic's refs" cannot be read off either tree's log.
    names is beyond reach, which is what makes each phase's recording
    duty load-bearing. At implement's close the stores trail the pass,
    so the refs that close has already committed join the collection
-   directly, read off its own verify output.
+   directly, read off the ref line each of its commits prints (the
+   implement skill, `mechanics.md` § Phase Close).
 2. Drop each ref named on **any** entry's `Reviewed:` line: a pass
    already covered it.
 3. What remains is the diff this pass reads, one `git -C <tree> show
