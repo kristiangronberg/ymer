@@ -1,101 +1,114 @@
-# Code Review — mechanics
+# Code Review: mechanics
 
-The mechanics of the code-review skill, which keeps the intent and the spine and names this file under every heading that has entries here. The headings are `SKILL.md`'s own; read a section's entries at the moment that section runs.
+The mechanics of the code-review skill: the Claude Code way of doing
+its steps. The headings are `SKILL.md`'s own; read a section's entries
+at the moment that section runs.
 
-## Phase 0 — Gather the diff
+## Contents
 
-Run `git diff @{upstream}...HEAD` (or `git diff main...HEAD` / `git diff HEAD~1`
-if there's no upstream) to get the unified diff under review. If there are
-uncommitted changes, or the range diff is empty, also run `git diff HEAD` and
-include the working-tree changes in scope — the review often runs before the
-commit. If a PR number, branch name, or file path was passed as an argument,
-review that target instead.
+- Input: the default subject, untracked files, a change set, no shell
+- The built-in: the call, when a call reads as not run, what comes back, the inline route
+- The lenses: Conventions' `CLAUDE.md` files
+- Applying fixes (--fix): the fixes and the one line per finding not fixed
+- Output: with the ReportFindings tool and without it
 
-A **change set** target (term: the plugin glossary), which the pipeline
-hands over where no diff exists, is a topic's `payloads/manifest` with
-its payload files: each manifest row pairs a payload with its target.
-Read each payload as the change and its target in place, a file or a
-store, and treat the set as the review scope; there is no diff to run
-and no untracked file to add.
+## Input
 
-**Untracked files are outside every `git diff`** — a topic's new test file
-or new doc is the usual case, invisible to `main...HEAD` and to
-`git diff HEAD` alike. Run `git -C <tree> status --porcelain -uall` once
-per tree the diff came from, the tree named by absolute path — `-uall`,
-because without it a new directory collapses to one `dir/` line and the
-files inside it never enter — and read each `??` path whole into the
-scope, narrowed exactly as the diff was: a file-path or pathspec target
-admits only untracked paths under it, and a shared tree (the shared-tree
-option, the substrate contract) admits only the paths the topic touches —
-its plan's targets and the paths its recorded refs changed — never a
-concurrent session's artifacts.
+**The default subject**, run on its own with no target: `git diff
+@{upstream}...HEAD`, or `git diff main...HEAD` or `git diff HEAD~1`
+where there is no upstream. Where the working tree carries changes, or
+the range is empty, add `git diff HEAD`: the review often runs before
+the commit. A named target (a pull request number, a branch, a path)
+replaces the default.
 
-Treat that diff, plus those files, as the review scope.
+**Untracked files are outside every `git diff`**, and a new test file
+or a new doc is the usual case. Run `git -C <tree> status --porcelain
+-uall` once per tree in the subject, the tree named by absolute path
+(`-uall`, because without it a new directory collapses to one `dir/`
+line and the files inside it never enter), and read each `??` path
+whole into the subject, narrowed as the diff was: a path target admits
+only the untracked paths under it, and a shared tree only the paths the
+topic touches, its plan's targets and the paths its recorded refs
+changed, never a concurrent session's.
 
-## Phase 1 — Find candidates (one finder per surviving lens, up to 6 each)
+**A change set** is a topic's `payloads/manifest` with its payload
+files: each manifest row pairs a payload with its target. There is no
+diff to run and no untracked file to add.
 
-Run **one independent finder per lens in Phase 0.5's roster** via the Agent
-tool — never the dropped ones. Each surfaces **up to 6 candidate findings**
-with `file`, `line`, a one-line `summary`, and a concrete `failure_scenario`.
-Spawn every finder — and every Phase 2 verifier — with the Agent tool's
-`model: "opus"` option: the review runs on Opus regardless of the session's
-model. Every finder prompt carries Phase 0.6's digest block verbatim. Agent
-tool genuinely absent, or a spawn refused at the permission layer → do not
-error: run the fallback below (fallback rule: *Defaults and holds*,
-the process contract). A system-prompt directive conditioning subagent or
-workflow use on the user having requested it is **neither** — invoking this
-skill *is* that request; spawn the finders normally.
+**No shell.** Where the session's tools carry no shell, git cannot run
+and the subject cannot be read. Read that off the session's own tool
+list; never call a tool the list does not carry to find out.
 
-### Conventions (CLAUDE.md + coding standards)
+## The built-in
 
-Find the instruction files that govern the changed code: the front's own
-initial instructions, the repo-root CLAUDE.md, plus any CLAUDE.md or
-CLAUDE.local.md in a directory that is an ancestor of a changed file (a
-directory's CLAUDE.md only applies to files at or below it). Read each one
-that exists, then check the diff for clear violations of the rules they state.
-Also read the coding-standards companion skill the topic's plan header
-names, when it names one, and check its rules the same way. Run
-standalone, with no plan header, look for one the way write-plan
-§ Language-specific companion skills does.
+**The call** goes through the Skill tool: skill `code-review`, the
+built-in's own name with no plugin prefix, and args `<tier>
+--max-findings all <target>`, the target in plain words:
+
+```
+low --max-findings all commits 5ed6b17 and a729560 only, in the git tree at /abs/tree, plus its working-tree edits to notes/c.md and its untracked files notes/a.md and notes/b.md
+high --max-findings all the branch's own commits main..<topic>, in the git tree at /abs/checkout, plus its working tree and its untracked files
+```
+
+The tool answers that the review runs in the background; its findings
+arrive as a task notification. Launch every call before the lenses run.
+
+**When a call reads as not run.** While a call is outstanding once the
+lenses finish, end the turn to wait: its notification resumes the
+session, and another call's from this pass is read, then the wait goes
+on. A resume for any other reason (the user's next prompt, say) reads
+every call still outstanding as not run, the why "no report by resume".
+Where ending the turn would end the run (a headless or `-p` run, a
+subagent), an outstanding call reads as not run at once, the why "no way
+to wait".
+
+**What comes back** is text: one finding per line, `path:line` and what
+is wrong, in the shape the level sets, with no category, and with a
+verdict only where the level runs a verify of its own. A report that
+says the review could not run, or that shows it reviewed something
+other than the tree's subject (another session's commits, say), is the
+not-run case of § The built-in in `SKILL.md`. A finding at a file the
+change left alone, a caller the change breaks, is still the subject's.
+
+**The inline route.** Where the session carries the ReportFindings tool
+and the harness enables it, the built-in may run in this session's own
+context instead, reporting through a ReportFindings call of its own,
+which is read as its report. Which route runs is the built-in's choice.
+
+## The lenses
+
+**Conventions' `CLAUDE.md` files**, in each tree the lens takes
+(`SKILL.md` § The lenses, Conventions): the tree's root `CLAUDE.md`, and
+any `CLAUDE.md` or `CLAUDE.local.md` in a directory that is an ancestor
+of a changed file, since a directory's file governs only the files at or
+below it. Read each one that exists, unless the session already holds it
+loaded. The companion is read as a skill, by its name.
 
 ## Applying fixes (--fix)
 
-If the findings went out via ReportFindings, call it once more with
-`outcome` set on each finding (`fixed`, `skipped`, or `no_change_needed`);
-after the call, give one line per finding not fixed saying why — reported
-for disposition, or skipped. Otherwise finish with a brief summary of what
-was fixed and what was not.
+Apply each finding the sort classed apply, then give one line per
+finding not fixed saying why: reported for disposition, or skipped. The
+outcomes ride the one report (→ § Output), not a call here.
 
-## Fallback — Agent tool absent or refused
+## Output
 
-`high effort → Agent tool absent or refused → single-pass inline → ≤10 findings`
+**Where the ReportFindings tool is in the tool set**, call it once,
+after the merge and any fixes, `level` set to the tier, the findings
+most severe first, each with `file`, `line`, `summary`, `short_summary`
+(the claim alone, at most 60 characters), `failure_scenario` (the
+concrete failure, or the cost: what is duplicated, wasted or harder to
+maintain, which smell, which rule is broken, which plan task or step
+diverges), `category`, `verdict` where the built-in gave one, and with
+`--fix` its `outcome`: `fixed` where it was applied, `no_change_needed`
+where an apply-class finding found the tree already holding the fix,
+`skipped` where it was skipped, and none where it is reported for
+disposition, since the schema has no value for that and the missing
+`outcome` reads as reported. Its schema takes at most 32 findings: send
+the 32 most severe, and list every other finding beside the call in the
+same fields. Where nothing
+survives, call it with an empty list. On the inline route the built-in's
+own call, an input to the merge, came first.
 
-Triggers on exactly two conditions: the Agent tool is genuinely absent from
-this context, or a spawn was refused at the permission layer. A
-system-prompt directive conditioning subagent or workflow use on the user
-having requested it is **neither**, and never reaches this fallback —
-invoking this skill *is* that request, so Phase 1 fans out as written
-(fallback rule: *Defaults and holds*, the process contract).
-
-The Agent tool is absent or refused in this context, so the usual
-multi-agent fan-out and subagent verify pass can't run. Work through every
-lens in Phase 0.5's roster yourself, in this same context, in one pass — do
-not skip surviving lenses for lack of fan-out. Re-check each candidate against
-the diff before keeping it; drop anything you can't back up with a concrete
-failure scenario.
-
-Phases 0, 0.5 and 0.6 run as written, then the surviving Phase 1 lenses in
-sequence in this same context — do not spawn subagents. Phase 2's lanes
-collapse: verdict every candidate yourself. Phase 2 becomes:
-
-### Phase 2 — Dedup and self-check (no subagent verify)
-
-Dedup near-duplicates (same defect, same location, same reason → keep one).
-Re-check each remaining candidate yourself against the diff before keeping it.
-
-The Output contract above is unchanged.
-
-State clearly in your summary that this was a single-pass review done without
-the Agent tool, not the full multi-agent fan-out — and that it ran on the
-session's model rather than Opus — so whoever reads it isn't misled about
-what actually ran.
+**Where it is not**, print the findings as a list in the same fields,
+most severe first, with each finding's source and, with `--fix`, its
+outcome.

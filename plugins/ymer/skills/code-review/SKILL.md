@@ -1,385 +1,361 @@
 ---
 name: code-review
-description: Use to adversarially review a code diff — the implementation, not the plan (that is plan-review). Invoked with --fix as the pipeline's lens pass — pre-executed at implement's close, run by review as the fallback — or standalone as /ymer:code-review [target]; --fix applies the findings that have one right answer.
+description: Reviews a code change before it reaches main: runs Claude Code's built-in code review at the depth the change's risk calls for, checks the change against its plan and the project's coding standards, and applies the fixes that have one right answer. Use at the end of implementing and in review, or on its own over a diff.
 ---
 
 # Code Review
 
-This file is the code-review skill's spine: its intent and the moments in order. Its **mechanics** — the Claude Code way: git, the state folder, the harness's tools — are in `mechanics.md`, and its **cases** — the earned precision: edge cases, exceptions and rulings — in `cases.md`, both under this file's headings; a section that has entries there says so in its first line, and those entries are read at the moment the section runs.
+Code review is the last net before a change reaches main: it reviews
+the implementation, as plan-review reviews the plan. Claude Code's
+built-in code review does the general search for bugs and cleanups, at
+the depth the change's risk calls for. This skill owns what the
+built-in cannot do: it checks the change against the topic's plan,
+against a fixed smell baseline and against the coding standards no
+other check covers (the companion the plan names, and the `CLAUDE.md`
+files the built-in did not read), holds every finding against what the
+record already settles, and decides which fixes to apply and which to
+report. The pipeline runs it with `--fix` as the lens pass,
+pre-executed at implement's close and run by review as the fallback
+(the review skill, § The lens pass), and anyone can run it on its own
+as `/ymer:code-review [target]`.
 
-Adversarial review of a code **diff** — the last net before main, and
-plan-review's implementation-side sibling (that skill reviews the plan
-document; this one reviews the code). Seeded verbatim from the front's own
-built-in code-review command's high-effort cell; provenance and the complete
-fragment record live in the topic folder.
-Three deliberate additions on top of the seed: the Smells lens, the
-Plan-fidelity lens, and the Conventions lens widened to the plan-named
-coding-standards skill. Nothing in a review run is set by hand — the tier is
-keyed by risk profile and routing inside it is derived; evolution rides
-captured evidence, not ad-hoc edits.
+This file is code-review's spine: its intent and its moments in order.
+Its **mechanics** (the Claude Code way: git, the built-in's call, the
+harness's tools) are in `mechanics.md`, and its **cases** (the earned
+precision: edge cases, exceptions and rulings) are in `cases.md`, both
+under this file's headings. A section with entries there says so in its
+first line, and those entries are read when the section runs.
 
-**Announce at start:** "I'm using the code-review skill to review the diff."
+## Overview
 
-Invoked as the pipeline's lens pass — implement's close pre-executes it,
-review runs it as the fallback; the primary context either way, and the
-caller supplies the diff scope, the `--fix` flag, and the topic's
-`plan.md` and `spec.md` paths — or standalone as `/ymer:code-review [target]`.
+**Read the plugin glossary's entries for code-review's vocabulary
+now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/glossary.md`, each entry by its heading: *lens*,
+*lens pass*, *lens applicability*, *change set*, *payload*, *effort
+ladder*, *tier*, *risk profile*, *iteration*, *machinery tree*, *shared
+tree*. This file uses those terms and never defines them.
 
-`high effort → the surviving lens roster × 6 candidates → lane-routed 1-vote verify (recall-biased) → ≤10 findings`
+The run goes in order: read the subject and the record, key the tier,
+call the built-in once per tree, run the lenses while it works, merge
+every finding and hold it against the record, sort the survivors into
+apply, report and skip, and report. Nothing in a run is set by hand:
+the tier is keyed by the change's risk profile, the roster by each
+lens's precondition, and each finding's disposition by where it came
+from.
 
-You are reviewing for **recall** at high effort: catch every real bug a careful
-reviewer would catch in one sitting. At this level, catching real bugs matters
-more than avoiding false positives. Err on the side of surfacing.
+**Announce at start:** "I'm using the code-review skill to review the
+change."
 
-## Right-size the effort — the tier ladder
+## Input
 
-*Read with this section: `cases.md` § Right-size the effort — the tier ladder (the cases).*
+*Read with this section: `mechanics.md` § Input (the mechanics) and `cases.md` § Input (the cases).*
 
-Three tiers, keyed by the diff's **risk profile**. The key itself — the four
-dimensions, and the rule that file count and artifact kind are never the key
-alone — lives in the process contract's § Review effort;
-this ladder points there rather than restating it.
+Input reads two things: the subject the pass reviews, and the record it
+reviews against.
 
-- **inline read** — presentational HEEx/CSS, docs, config, and mechanical
-  refactors that are already TDD-green: high mechanicalness, no trust
-  boundary, contained blast radius.
-- **this skill's full pass** — non-trivial business logic, new context
-  functions, changed query semantics.
-- **`ultra`**, the front's own escalated code-review run — correctness-critical
-  diffs: concurrency, money, data migrations, security/trust boundaries, gnarly
-  state machines, where a missed bug is expensive.
+**The subject.** Run as the lens pass, the caller hands it over: the
+diff the review skill's § The lens pass computes, tree by tree, or the
+topic's change set where no diff exists, with `--fix` and the paths of
+the topic's `plan.md` and `spec.md`. Run on its own, the subject is the
+target the user names (a branch, a pull request, a path, or refs and a
+tree in plain words), else the current branch against its upstream
+plus the working tree (`mechanics.md` § Input). Either way the subject
+takes in each tree's untracked files, and on a shared tree only the
+paths the topic touches. **Read the substrate contract's § Tree options
+now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`, for which trees are
+shared and why a shared tree is read scoped to the paths this
+session's topic touches.
 
-**Nothing in this run is set by hand.** The tier is keyed by risk profile;
-inside the tier, the roster comes from Phase 0.5's applicability gate and each
-candidate's verify lane from the lens that produced it. There is no per-run
-sizing question and no hand-maintained exclusion list. A rule that would have to be
-phrased "judge whether…" belongs in neither place.
+**A subject that cannot be read is a pass not run.** Where the session
+cannot read the subject at all (no shell to run git in, a tree git
+refuses), nothing is reviewed, and the report says the pass did not
+run and the built-in did not run, with the why (→ Output). An empty
+subject is a different answer: a pass with nothing to review reports
+`Lens pass: dropped — no diff or change set`, the line the review
+skill's § The Close names. Neither is ever reported as a clean review.
 
-## Phase 0 — Gather the diff
+**The record.** Read the topic's `spec.md` and `plan.md` whole, and on
+an iteration `review.md`'s earlier dispositions: they are what the
+merge holds every finding against (→ The merge). A topic that entered
+at write-plan has no `spec.md`; a run with no topic has neither, and
+then nothing is held as settled. Run on its own, the topic is the one
+the current branch names, found through its task (*look up topic*,
+binding: the operations contract); for that lookup, **read the
+operations contract whole now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/operations-contract.md`, for *look up topic* and
+the folder a topic ID names. Where the coordinator does not answer or
+names no topic, the plan reads absent: plan fidelity is dropped at its
+precondition, and the run goes on.
 
-*Read with this section: `mechanics.md` § Phase 0 — Gather the diff (the mechanics).*
+## The ladder
 
-## Phase 0.5 — The applicability gate (before any spawn)
+*Read with this section: `cases.md` § The ladder (the cases).*
 
-*Read with this section: `cases.md` § Phase 0.5 — The applicability gate (before any spawn) (the cases).*
+**Read the process contract's § Review effort now**, unless already
+read this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for the
+risk profile's four dimensions that key the tier, lens applicability
+and how a precondition is read, and how a dropped lens is reported.
 
-Every lens below either opens with a `**Precondition:**` line or is
-unconditional. Evaluate each precondition against what you already hold — the
-diff, the topic's `plan.md` path, the CLAUDE.md files that govern the changed
-paths — and **output the result as a two-part list before spawning anything**:
+Three tiers, each the level this skill passes to the built-in:
+
+- **`low`**: presentational and mechanical changes, docs and
+  configuration: high mechanicalness, no trust boundary, a contained
+  blast radius. At `low` the built-in reviews no test or fixture
+  change, so a change whose risk sits in a test, a gate or a probe
+  keys `high` by its risk profile; plan fidelity still reads every
+  test change.
+- **`high`**: non-trivial logic, a changed interface or query,
+  behaviour a caller depends on.
+- **`max`**: correctness-critical changes: concurrency, money, data
+  migrations, trust boundaries, intricate state machines, wherever a
+  missed defect is expensive.
+
+The tier is the token the record writes on the `Lens pass:` and `Delta
+pass:` lines (the review skill, § The Close). A delta pass keys its
+tier the same way, `low` included, and every tier calls the built-in.
+Claude Code's own `ultra` review is the user's command, never a tier of
+this ladder.
+
+## The built-in
+
+*Read with this section: `mechanics.md` § The built-in (the mechanics) and `cases.md` § The built-in (the cases).*
+
+Call Claude Code's built-in code review **once per tree** in the
+subject, at the keyed tier. Every call carries the level,
+`--max-findings all` and a target naming, in plain words, the tree, its
+refs or range, its working tree and its untracked paths, on a shared
+tree only the paths the topic touches, and no call carries `--fix`.
+Passing the level and the limit keeps the user's own last choices at
+their `/code-review` out of the run; leaving out `--fix` keeps the
+apply decision this skill's (→ Applying fixes (--fix)). The built-in
+runs in the background and reports when it finishes: run the lenses
+meanwhile.
+
+The built-in is used through what it documents: its levels, its flags
+and the findings it reports, never its internal prompts. Its own steps
+after the review, a `/verify` run among them, are its business: this
+skill neither asks for them nor suppresses them, and nothing they
+report is a finding of this pass.
+
+**A built-in that did not run is said, never passed off as clean.**
+**Read the process contract's § Defaults and holds now**, unless
+already read this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`,
+for the fallback rule a checkpoint that cannot run follows. The
+built-in did not run over a tree when it is absent or its call is
+refused, when its call is still outstanding at the moment
+`mechanics.md` § The built-in reads it as not run, when its report
+cannot be read, or when the report shows it read something other than
+that tree's subject. The pass then goes on with the lenses, and its
+report names the tree and the why, which the caller's line closes with
+as `· built-in not run — <why>`: the `Lens pass:` line, or the `Delta
+pass:` line where the run was a delta pass (the review skill, § The
+Close). A change set gets no call at all, since the built-in reviews
+diffs, and its line closes `· built-in not run — change set`.
+
+## The lenses
+
+*Read with this section: `mechanics.md` § The lenses (the mechanics) and `cases.md` § The lenses (the cases).*
+
+Three lenses run in this session, each behind its precondition.
+Evaluate the preconditions from what is already held (the subject, the
+plan header, the changed-file list, which built-in calls were made) and
+state the result before any lens runs:
 
 ```
 Roster (will run): <lens names>
 Dropped: <lens name> — <the precondition that failed>
 ```
 
-Lenses with no `**Precondition:**` line always run. In doubt, a precondition
-reads **true** — it asks only whether the lens has anything to read, never
-whether it would find anything (the process contract, § Review effort).
-
-**Never spawn a lens to find out whether it applies.** Paying a full agent to
-discover it had nothing to say is the waste this gate removes.
-
-## Phase 0.6 — The decision digest
-
-*Read with this section: `cases.md` § Phase 0.6 — The decision digest (the cases).*
-
-Compose one record of what is already settled and embed it **verbatim
-in every finder prompt and every verifier prompt**. Inline, not a path: an
-agent cannot skip text already in its prompt, whereas a path is an instruction
-it may deprioritise — and a finder that silently skips the digest produces
-exactly the re-litigated candidate the digest exists to stop. A scratchpad file
-would also add a tool call per agent and create a file whose lifetime nobody
-owns.
-
-**Extraction is mechanical — named sections only, no judgement:**
-
-| Source | Section |
-|---|---|
-| `spec.md` | `## Decisions` |
-| `spec.md` | `## Out of scope` |
-| `plan.md` | the `**Assumptions (unverified):**` block |
-| `plan.md` | every `> Needs confirmation:` note |
-| `plan.md` | every `> Design decision:` note |
-| `plan.md` | every line-start `> **Amended (…):**` amendment marker |
-
-Render it exactly like this and paste the whole block into each prompt:
-
-```
-SETTLED — DO NOT RE-LITIGATE
-
-spec.md § Decisions
-
-## Decisions
-
-### D3 — retry policy
-Q: how do we handle transient failures?
-A: 3 attempts, exponential backoff.
-Rationale: bounded work per request.
-
-> **Amended (<source>, <date>):** retries unbounded; a circuit breaker caps
-> the damage instead.
-
-spec.md § Out of scope
-
-## Out of scope
-
-<the section's own lines, verbatim>
-
-plan.md § Assumptions (unverified)
-
-<the block's own lines, verbatim>
-
-- <the entry's statement, verbatim, on one line> — plan.md § Task 4 › Design decision
-
-Contradicting a settled decision requires arguing why the decision is wrong —
-otherwise do not report the contradiction.
-```
-
-## Phase 1 — Find candidates (one finder per surviving lens, up to 6 each)
-
-*Read with this section: `mechanics.md` § Phase 1 — Find candidates (one finder per surviving lens, up to 6 each) (the mechanics) and `cases.md` § Phase 1 — Find candidates (one finder per surviving lens, up to 6 each) (the cases).*
-
-### Lens A — line-by-line diff scan
-
-Read every hunk in the diff, line by line. Then Read the enclosing function for
-each hunk — bugs in unchanged lines of a touched function are in scope (the PR
-re-exposes or fails to fix them). For every line ask: what input, state, timing,
-or platform makes this line wrong? Look for inverted/wrong conditions,
-off-by-one, null/undefined deref, missing `await`, falsy-zero checks,
-wrong-variable copy-paste, error swallowed in catch, unescaped regex metachars.
-
-### Lens B — removed-behavior auditor
-
-For every line the diff DELETES or replaces, name the invariant or behavior it
-enforced, then search the new code for where that invariant is re-established.
-If you can't find it, that's a candidate: a removed guard, a dropped error
-path, a narrowed validation, a deleted test that was covering a real case.
-
-### Lens C — cross-file tracer
-
-**Precondition:** the diff touches at least one non-prose source file (any
-extension other than `.md`/`.txt` — a JSON or config file counts).
-
-For each function the diff changes, find its callers (Grep for the symbol) and
-check whether the change breaks any call site: a new precondition, a changed
-return shape, a new exception, a timing/ordering dependency. Also check callees:
-does a parallel change in the same PR make a call unsafe?
-
-### Reuse
-
-The lenses above hunt for bugs; this one and the next three hunt for cleanup in
-the changed code. Flag new code that re-implements something the codebase
-already has — Grep shared/utility modules and files adjacent to the change,
-and name the existing helper to call instead.
-
-### Simplification
-
-Flag unnecessary complexity the diff adds: redundant or derivable state,
-copy-paste with slight variation, deep nesting, dead code left behind. Name
-the simpler form that does the same job.
-
-### Efficiency
-
-**Precondition:** the diff touches at least one non-prose source file (any
-extension other than `.md`/`.txt` — a JSON or config file counts).
-
-Flag wasted work the diff introduces: redundant computation or repeated I/O,
-independent operations run sequentially, blocking work added to startup or
-hot paths. Also flag long-lived objects built from closures or captured
-environments — they keep the entire enclosing scope alive for the object's
-lifetime (a memory leak when that scope holds large values); prefer a
-class/struct that copies only the fields it needs. Name the cheaper
-alternative.
-
-### Smells (Fowler baseline)
-
-**Precondition:** the diff touches at least one non-prose source file (any
-extension other than `.md`/`.txt` — a JSON or config file counts).
-
-Match the changed code against this fixed smell baseline (Fowler,
-_Refactoring_ ch. 3); it applies even when a repo documents nothing. Each
-smell reads *what it is* → *how to fix*:
-
-- **Mysterious Name** — a function, variable, or type whose name doesn't
-  reveal what it does or holds. → rename it; if no honest name comes, the
-  design's murky.
-- **Duplicated Code** — the same logic shape appears in more than one hunk
-  or file in the change. → extract the shared shape, call it from both.
-- **Feature Envy** — a method that reaches into another object's data more
-  than its own. → move the method onto the data it envies.
-- **Data Clumps** — the same few fields or params keep travelling together
-  (a type wanting to be born). → bundle them into one type, pass that.
-- **Primitive Obsession** — a primitive or string standing in for a domain
-  concept that deserves its own type. → give the concept its own small
-  type.
-- **Repeated Switches** — the same `switch`/`if`-cascade on the same type
-  recurs across the change. → replace with polymorphism, or one map both
-  sites share.
-- **Shotgun Surgery** — one logical change forces scattered edits across
-  many files in the diff. → gather what changes together into one module.
-- **Divergent Change** — one file or module is edited for several
-  unrelated reasons. → split so each module changes for one reason.
-- **Speculative Generality** — abstraction, parameters, or hooks added for
-  needs the spec doesn't have. → delete it; inline back until a real need
-  shows.
-- **Message Chains** — long `a.b().c().d()` navigation the caller
-  shouldn't depend on. → hide the walk behind one method on the first
-  object.
-- **Middle Man** — a class or function that mostly just delegates onward.
-  → cut it, call the real target direct.
-- **Refused Bequest** — a subclass or implementer that ignores or
-  overrides most of what it inherits. → drop the inheritance, use
-  composition.
-
-Two rules bind the baseline: a documented repo standard overrides it —
-where the repo endorses something the baseline would flag, suppress the
-smell — and anything tooling already enforces is skipped. Every smell
-finding is a labelled judgment call ("possible Feature Envy"), never a
-hard violation.
-
-### Altitude
-
-Check that each change is implemented at the right depth, not as a fragile
-bandaid. Special cases layered on shared infrastructure are a sign the fix
-isn't deep enough — prefer generalizing the underlying mechanism over adding
-special cases.
-
-### Conventions (CLAUDE.md + coding standards)
-
-*Read with this section: `mechanics.md` § Conventions (CLAUDE.md + coding standards) (the mechanics).*
-
-**Precondition:** at least one CLAUDE.md governs a changed path, or a
-coding-standards companion applies — named by the topic's plan header, or,
-run standalone with no plan header, found the way write-plan § Language-specific
-companion skills finds one.
-
-Only flag a violation when you can quote the exact rule and the exact line
-that breaks it — no style preferences, no vague "spirit of the doc"
-inferences. In the finding, name the CLAUDE.md path (or the skill) and quote
-the rule so the report can cite it.
+Each precondition is read by the process contract's § Review effort,
+read at → The ladder. A lens reports every candidate with a failure
+scenario it can name, even one it only half believes: the merge, not
+the lens, drops. A change set is read payload by payload: each payload
+as the change, its target in place, a file or a store.
 
 ### Plan fidelity
 
-*Read with this section: `cases.md` § Plan fidelity (the cases).*
+**Precondition:** a `plan.md` applies (→ Input).
 
-**Precondition:** a `plan.md` applies. The lens pass's caller supplies the
-path; standalone, resolve it from the current branch name (the topic slug)
-and the repo's Roadmap project (*look up topic* — binding: the
-operations contract). No
-pipeline topic → no plan, and this lens is dropped at Phase 0.5 rather than
-spawned to return nothing.
+Review the subject against the plan it claims to implement, and
+surface:
 
-Review the diff against the topic's `plan.md` — the implementation plan the diff
-claims to implement. Surface:
+- planned behaviour that is missing or partial;
+- behaviour the plan did not ask for;
+- planned behaviour that looks implemented but wrong.
 
-- planned behavior that is missing or partial,
-- behavior the plan did not ask for,
-- planned behavior that looks implemented but wrong.
+Each finding names the plan task or step it diverges from. Read every
+change against the plan, test changes included.
 
-Each finding names the plan task or step it diverges from.
+### Smells
 
-Pass every candidate with a nameable failure scenario through — finders that
-silently drop half-believed candidates bypass the verify step and are the
-dominant cause of misses.
+**Precondition:** the subject touches at least one file that is not
+prose (any extension other than `.md` or `.txt`; a JSON or config file
+counts).
 
-## Phase 2 — Verify (1-vote, recall-biased, lane-routed)
+Match the changed code against this fixed baseline, Fowler's
+(_Refactoring_, chapter 3). It applies even where a repo documents
+nothing. Each smell reads *what it is*, then *how to fix it*:
 
-*Read with this section: `cases.md` § Phase 2 — Verify (1-vote, recall-biased, lane-routed) (the cases).*
+- **Mysterious Name**: a function, variable or type whose name does not
+  reveal what it does or holds. → Rename it; where no honest name
+  comes, the design is murky.
+- **Duplicated Code**: the same logic shape appears in more than one
+  hunk or file of the change. → Extract the shared shape and call it
+  from both.
+- **Feature Envy**: a function that reaches into another object's data
+  more than its own. → Move it onto the data it envies.
+- **Data Clumps**: the same few fields or parameters keep travelling
+  together, a type wanting to be born. → Bundle them into one type and
+  pass that.
+- **Primitive Obsession**: a primitive or a string standing in for a
+  domain concept that deserves its own type. → Give the concept its own
+  small type.
+- **Repeated Switches**: the same switch or conditional cascade on the
+  same type recurs across the change. → Replace it with polymorphism,
+  or with one map both sites share.
+- **Shotgun Surgery**: one logical change forces scattered edits across
+  many files. → Gather what changes together into one module.
+- **Divergent Change**: one file or module is edited for several
+  unrelated reasons. → Split it so each module changes for one reason.
+- **Speculative Generality**: abstraction, parameters or hooks added
+  for needs the spec does not have. → Delete it, and inline back until
+  a real need shows.
+- **Message Chains**: a long `a.b().c().d()` walk the caller should not
+  depend on. → Hide the walk behind one call on the first object.
+- **Middle Man**: a class or function that mostly delegates onward. →
+  Cut it and call the real target directly.
+- **Refused Bequest**: a subclass or implementer that ignores or
+  overrides most of what it inherits. → Drop the inheritance and use
+  composition.
 
-Dedup near-duplicates (same defect, same location, same reason → keep one).
-Then route each survivor to its **verify lane** — keyed to the lens that
-produced it, never judged:
+Two rules bind the baseline. A documented repo standard overrides it:
+where the repo endorses something the baseline would flag, the smell is
+suppressed. And what tooling already enforces is skipped. Every smell
+finding is a labelled judgement call ("possible Feature Envy"), never a
+hard violation.
 
-| Lane | Producing lens | Verify |
-|---|---|---|
-| correctness | A, B, C, **Plan fidelity** | one Opus verifier per candidate |
-| cleanup | Reuse, Simplification, Efficiency, Smells, Altitude | batched, digest in hand |
-| quote-vs-rule | Conventions | host-inline verdict |
+### Conventions
 
-Every verifier — per-candidate, batched, or the host verdicting inline — gets
-the diff, the relevant file(s), the candidate, and Phase 0.6's digest block
-verbatim, and returns exactly one of **CONFIRMED / PLAUSIBLE / REFUTED**.
-Subagent verifiers run via the Agent tool on Opus, as in Phase 1.
+**Precondition:** a coding-standards companion applies, named by the
+plan header's companion line, or a tree in the subject has a
+`CLAUDE.md` governing a changed path that the built-in does not check:
+any tree other than the session's own working tree, and the session's
+own tree wherever the built-in did not run over it (a change set
+always).
 
-**PLAUSIBLE by default** — do not refute a candidate for being "speculative" or
-"depends on runtime state" when the state is realistic: concurrency races,
-nil/undefined on a rare-but-reachable path (error handler, cold cache, missing
-optional field), falsy-zero treated as missing, off-by-one on a boundary the
-code does not exclude, retry storms / partial failures, regex/allowlist that
-lost an anchor. These are PLAUSIBLE.
+Check the changed code against the companion's rules and against those
+`CLAUDE.md` files (`mechanics.md` § The lenses). The built-in checks
+the session's own tree's `CLAUDE.md` files only where it ran over that
+tree: it starts with them loaded, and reads no other tree's. Where it
+reads as not run over the session's own tree after the roster was
+stated, this lens takes that tree's files then, running even where the
+roster dropped it, and the report amends the roster to say so. Flag a
+violation only where you can quote the exact rule and the exact line
+that breaks it, naming the companion or the `CLAUDE.md` path: no style
+preferences, and no reading of a document's spirit.
 
-**REFUTED** only when constructible from the code: factually wrong (quote the
-actual line); provably impossible (type/constant/invariant — show it); already
-handled in this diff (cite the guard); or pure style with no observable effect.
+Run on its own with no plan header, look for the companion as write-plan
+does: **read the write-plan skill's § Language-specific companion
+skills now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/skills/write-plan/SKILL.md`, for the two places a
+companion is looked for.
 
-Keep **CONFIRMED and PLAUSIBLE**. Drop REFUTED.
+## The merge
 
-## Output
+*Read with this section: `cases.md` § The merge (the cases).*
 
-**When the ReportFindings tool is in your tool set:** call it once to
-report this review's results with `{level: "high", findings}`. `findings`
-is at most 10 entries ranked most-severe first; each entry has `file`,
-`line`, `summary`, `short_summary` — the claim compressed to ≤60
-characters, no rationale or consequence clause — `failure_scenario`, and
-`category` — a short kebab-case slug for the lens that produced it
-(`correctness`, `reuse`, `simplification`, `efficiency`, `smell`,
-`altitude`, `conventions`, `plan-fidelity`, or a more specific slug like
-`test-coverage` when one fits better) — plus `verdict` when a verify pass
-produced one. If more than 10 survive, keep the 10 most severe. If nothing
-survives verification, call it with an empty array. Do not also print the
-findings as text, and do not create or publish an artifact of the review —
-the tool call is the report. That binds this run's own output: a caller
-recording the findings and their dispositions in its own phase artifact
-(review's `review.md`) is the caller's record, not this run's.
+Once every built-in call has reported or been read as not run, and
+every lens has run, merge their findings:
 
-**Beside the report, always state Phase 0.5's two lists** — the roster that ran
-and every dropped lens with the precondition that failed — plus any lens that
-was batched in waves (→ Phase 2). A findings list read without the roster
-cannot distinguish "this dimension was clean" from "this dimension never ran".
+- **One finding per defect.** Findings that name the same defect at the
+  same place for the same reason are one, whichever sources raised it.
+- **A category for each.** A finding keeps its source's category: the
+  lens that raised it, or the built-in's category. Where the built-in
+  gave none, assign one from the finding's text (correctness, reuse,
+  simplification, efficiency, altitude, conventions) before the sort.
+- **Held against the record.** Check every finding, the built-in's and
+  the lenses' alike, against `spec.md` and `plan.md` read whole and, on
+  an iteration, `review.md`'s earlier dispositions. A finding that
+  contradicts what the record settles (a decision, an amendment, a
+  design decision, an accepted gap) without arguing why the settlement
+  is wrong is dropped as settled, naming where it is settled. One that
+  makes that case is kept: the record can be wrong, and the bar must
+  not make it unfalsifiable. The plan's unverified assumptions settle
+  nothing: they are risk, and a finding that one fails is kept.
+- **Refuted only by the code.** A finding the code shows to be wrong,
+  quoting the line that does, is dropped as refuted. A realistic state
+  the code does not exclude (a race, a nil on a reachable error path, a
+  falsy zero, a boundary or an anchor lost) is never refuted as
+  speculative.
+- **No cap.** Every finding that survives is in the result, however
+  many there are.
 
-**When it is not:** return findings as a JSON array of at most 10 objects:
-
-```json
-[
-  {
-    "file": "path/to/file.ext",
-    "line": 123,
-    "summary": "one-sentence statement of the bug",
-    "failure_scenario": "concrete inputs/state → wrong output/crash"
-  }
-]
-```
-
-Ranked most-severe first. If more than 10 survive, keep the 10 most
-severe. If nothing survives verification, return `[]`.
+A finding carries a `verdict` only where the built-in gave one.
 
 ## Applying fixes (--fix)
 
-*Read with this section: `mechanics.md` § Applying fixes (--fix) (the mechanics).*
+*Read with this section: `mechanics.md` § Applying fixes (--fix) (the mechanics) and `cases.md` § Applying fixes (--fix) (the cases).*
 
-Only when the `--fix` flag was passed. After producing the findings list,
-apply the findings to the working tree instead of stopping at the report.
-**The line is attention-worthiness, not behavior-preservation**: apply what
-has one right answer, report what decides something.
+Only when `--fix` was passed: after the merge, apply findings to the
+working tree instead of stopping at the report. **The line is
+attention-worthiness, not behaviour-preservation**: apply what has one
+right answer, report what decides something. A survivor's class is
+keyed on its source and category, never on a fresh read of the single
+finding:
 
-- **Apply** — a correctness bug with an obvious intended fix;
-  reuse/simplification/efficiency cleanups; a violation of an existing
-  documented convention (a quoted CLAUDE.md or coding-standards rule).
-- **Report for disposition, never apply** — a fix that decides between
-  genuine alternatives: a representation change (map → struct), a real
-  trade-off, a possible new convention direction, a smell or altitude
-  finding (labelled judgement calls by construction); and **every
-  plan-fidelity finding** — deviation from the plan is the caller's
-  disposition subject, and the caller may have deviated on purpose.
-- **Skip** — a fix that would change intended behavior, reach well
-  outside the reviewed diff, or that you judge a false positive — note
-  the skip rather than arguing with it.
+- **Apply**: a reuse, simplification or efficiency cleanup; a
+  convention violation quoting its rule; a correctness finding with one
+  obvious fix.
+- **Report for disposition, never apply**: every smell, altitude and
+  plan-fidelity finding; and any fix that would change or relax what the
+  record settles. Deviation from the plan is the caller's to dispose,
+  and the caller may have deviated on purpose.
+- **Skip**: a fix that would change intended behaviour, reach well
+  outside the reviewed subject, or that you judge a false positive.
+  Note the skip rather than arguing with it.
 
-## Fallback — Agent tool absent or refused
+Where two sources raised one finding and their classes disagree, it is
+reported, never applied: a lens raising it marks it a judgement call. A
+finding on a change set's store target is always reported, never
+applied: no fix lands in a store. Without `--fix`, every survivor is
+reported.
 
-*Read with this section: `mechanics.md` § Fallback — Agent tool absent or refused (the mechanics).*
+## Output
 
-### Phase 2 — Dedup and self-check (no subagent verify)
+*Read with this section: `mechanics.md` § Output (the mechanics) and `cases.md` § Output (the cases).*
 
-*Read with this section: `mechanics.md` § Phase 2 — Dedup and self-check (no subagent verify) (the mechanics).*
+Report every surviving finding, ranked most severe first, correctness
+and plan fidelity above cleanup. Each carries its file and line, a
+one-sentence statement, its concrete failure scenario or cost, its
+source and category, and with `--fix` its outcome: applied, reported
+or skipped. Beside the findings, the report states:
+
+- the lens roster that ran, and every dropped lens with the
+  precondition that failed;
+- the tier the pass keyed where it read a subject, and for each tree
+  whether the built-in ran at it, or that it did not run and why;
+- what the merge dropped, each a short name with a one-clause why:
+  refuted, settled (naming where it is settled), or skipped.
+
+A findings list read without these cannot tell "this dimension was
+clean" from "this dimension never ran". The caller writes the record
+from them: the `Lens pass:` line, or a delta pass's `Delta pass:` line,
+with its `· built-in not run — <why>` clause where the built-in did not
+run, and the `Fixes applied (--fix):` and `Refuted/skipped:` lines are
+the review skill's grammar (the review skill, § The Close), and this
+report gives each its facts. Create or publish no artifact of the
+review: the report is this run's output, and the caller's record is the
+caller's.
+
+## Remember
+
+- The built-in once per tree, at the keyed tier, with `--max-findings
+  all` and never `--fix`.
+- A built-in or a pass that did not run is said, never passed off as
+  a clean review.
+- Every finding is held against the record read whole; a settled one is
+  dropped only where it makes no case against the settlement.
+- A finding's class is keyed on its source, and where two sources
+  disagree the report class wins.
+- No cap on what the result carries.

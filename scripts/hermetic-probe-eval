@@ -7,8 +7,10 @@
 # What a case asserts is in its case.yaml: the skill fired (the child's
 # init event names the plugin and the slash command, and the skill's own
 # announce line appears in the trace), it stopped (no write tool, no MCP
-# tool, and — read here — no run error such as the turn cap), and it named
-# its door — setup anywhere in the run, the others in their last message.
+# tool, and — read here — no run error such as the turn cap), and it gave
+# the report its guard owes: a door named, setup's anywhere in the run and
+# the others' in their last message, or code-review's built-in review
+# reported not run, in its last message.
 # The model is the entry script's pin, so a model rollout is never
 # mistaken for a plugin regression; the run uses the credential of the
 # config dir this script runs under, in the runner's own isolation.
@@ -198,6 +200,6 @@ stage_eval() {
 	elif [ "$rc" != 0 ] || [ "$passed" != "$cases" ]; then
 		fail cases "$passed of $cases cases passed (exit $rc) — each failed grader's explanation is in $result$kept_note"
 	else
-		pass cases "$cases cases, $cases passed on $probe_model — fired, stopped, door named"
+		pass cases "$cases cases, $cases passed on $probe_model — fired, stopped, guard's report given"
 	fi
 }

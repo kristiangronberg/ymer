@@ -119,7 +119,8 @@ pre-flight and read, in this order:
    review gate. Read every hand-off the record addresses to review,
    in `implemented.md` or in `spec.md`, too. Each one whose answer the
    shipped code does not visibly settle is a finding (→ Dispositions).
-   These two files are also the lens pass's decision-digest sources.
+   The lens pass reads these two files whole too, holding every finding
+   against what they settle.
 4. **`brainstorm.md`**: which decisions the user co-decided, and so
    which stops compress to a line (→ Prep).
 5. **`sketch.md`, when it exists**: the contrast between the user's own
@@ -215,10 +216,9 @@ topic ID, so "this topic's refs" cannot be read off either tree's log.
    working tree.
 
 Invoke the **code-review** skill **with `--fix`** on the diff, passing
-the topic's `plan.md` and `spec.md` paths: code-review extracts the
-decision digest from them, which stops its finders re-deriving what the
-spec and plan already settled. The tier is code-review's to key, never
-set here.
+the topic's `plan.md` and `spec.md` paths, which code-review holds
+every finding against (the code-review skill, § The merge). The tier is
+code-review's to key, never set here.
 
 **The line is attention-worthiness, not behaviour-preservation.** What
 `--fix` applies, reports or skips lives in code-review's Applying-fixes
@@ -511,10 +511,10 @@ Pending: git push · git push from <tree> · git push from <tree>   [each push t
      writes `Task closed completed` alone, with no refs line]
 
 ## Review — <YYYY-MM-DD>
-Lens pass: <tier> over branch @ <sha> · <tree> <sha…> · <tree> <sha…>   [what this pass covered; no branch half on a meta topic]
+Lens pass: <tier> over branch @ <sha> · <tree> <sha…> · <tree> <sha…> · built-in not run — <why>   [what this pass covered; no branch half on a meta topic; the not-run clause only where code-review's built-in review did not run]
 Fixes applied (--fix): <list, or none> · branch <sha> · <tree> <sha…> · folded · state · re-green: <result>   [refs per tree the fixes touched; `folded` for a fallback pass's fixes, `state` for a state-folder fix; the clause where fixes landed]
 Refuted/skipped: refuted — <name (why)>, … · skipped — <name (why)>, …   [or none; wherever the lens pass ran, the dropped pass excepted]
-Delta pass: <tier> over <the refs and edits no pass had seen> · re-green: <result>   [ship close, when any existed; the clause where the re-run rule fired]
+Delta pass: <tier> over <the refs and edits no pass had seen> · re-green: <result> · built-in not run — <why>   [ship close, when any existed; the clause where the re-run rule fired; the not-run clause only where code-review's built-in review did not run over the delta]
 Findings & dispositions:
 - F1 <file:line> — <finding> — iterated in scope: <what was done>
 - F2 <file:line> — <finding> — decide-forward: <the decision taken, one clause> · amended <artifact> <handle>

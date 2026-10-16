@@ -240,15 +240,11 @@ as a delta. Not a close — the session continues.
 _Avoid_: push-forward
 
 ### decision digest
-The record of already-settled decisions that every review agent receives
-inline, extracted mechanically from named sections of `spec.md` and
-`plan.md`: the `spec.md` sections copied whole and verbatim, amendments in
-place; each `plan.md` entry copied too — one line plus its citation where
-the entry is one, its own line breaks kept where it is not. Its rule travels
-with it — contradicting a settled decision requires arguing why the
-decision is wrong, otherwise the contradiction is not reported.
-code-review's carries plan-level and spec-level entries; plan-review's
-carries spec-level only, since the plan is what it reviews.
+The record of already-settled decisions that plan-review's agents receive
+inline, extracted mechanically from named sections of `spec.md`, copied whole
+and verbatim, amendments in place. Its rule travels with it — contradicting a
+settled decision requires arguing why the decision is wrong, otherwise the
+contradiction is not reported.
 _Avoid_: decisions register
 
 ### delta gate
@@ -309,9 +305,9 @@ _Avoid_: item (the retired inbox's noun), row (bare)
 
 ### effort ladder
 A skill's ordered menu of whole review procedures, each entry a tier, ordered
-by machinery rather than by degree: code-review's runs inline read → full
-pass → ultra, plan-review's lightweight pass → workflow, write-plan
-grounding's direct verification → Explore fan-out.
+by machinery rather than by degree: code-review's runs low → high → max,
+plan-review's lightweight pass → workflow, write-plan grounding's direct
+verification → Explore fan-out.
 
 ### engagement
 The unit of /tutor work: a days-to-weeks acquisition effort on one subject
@@ -607,14 +603,15 @@ self-assessment. Distinct from a learning drop (the captured
 observation mint draws into one).
 
 ### lens
-One agent's assigned mandate within a fan-out — the dimension it reviews, the
-question list it carries, or the search vector it follows. code-review,
-plan-review and scout all fan out one agent per lens.
+One assigned mandate within a review — the dimension it reviews, the question
+list it carries, or the search vector it follows — run by one agent of a
+fan-out or by the host itself. plan-review and scout fan out one agent per
+lens; code-review's lenses run in the host.
 _Avoid_: angle
 
 ### lens applicability
 The precondition a lens declares, saying what must be true for it to have
-anything to bite on, evaluated by the host *before* the agent is spawned. The
+anything to bite on, evaluated by the host *before* the lens is spawned or run. The
 mechanism that drops structurally-empty lenses instead of paying an agent to
 discover it has nothing to say; a dropped lens is reported with the
 precondition that failed, never silently.

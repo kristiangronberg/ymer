@@ -6,8 +6,8 @@
 #   scripts/hermetic-probe          static, then eval — a skill lift's beat 5
 #   scripts/hermetic-probe static   the shipped files alone, no model
 #   scripts/hermetic-probe eval     every skill fired in `claude plugin eval`
-#                                   with no Ymer Node — fires, stops, names
-#                                   its door
+#                                   with no Ymer Node — fires, stops, gives
+#                                   the report its guard owes
 #   scripts/hermetic-probe live     static, eval, then a scratch Ymer Node
 #                                   and the README's own install lines inside
 #                                   the probe dir

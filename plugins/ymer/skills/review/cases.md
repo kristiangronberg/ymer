@@ -130,9 +130,10 @@ One pass, and no re-review loop. Every applied fix is listed in
 finding earns a stop when the story calls for it. Every finding
 code-review reported for disposition, correctness and plan fidelity
 above all, seeds the walkthrough's agenda and enters dispositions.
-Candidates its verify refuted or its judgment skipped are named on the
-entry's `Refuted/skipped:` line and disposed of nowhere: dropping them
-was the pass's call, and the line records it rather than reopening it.
+Candidates its merge refuted, a settled one among them, or its judgment
+skipped are named on the entry's `Refuted/skipped:` line and disposed of
+nowhere: dropping them was the pass's call, and the line records it
+rather than reopening it.
 
 ## Prep — building the walkthrough
 
@@ -194,7 +195,14 @@ the pass actually diffed: the branch tip it read as `branch @ <sha>`,
 and the machinery refs as a list per tree, `<tree> <sha…>`, `·`-joined
 where more than one applies. A meta topic's line carries the machinery
 halves alone, and a pass over a change set carries `change set @ <n>
-payloads`. A pass whose precondition failed writes `Lens pass: dropped
+payloads`. Where code-review's built-in review did not run over a tree,
+the line closes `· built-in not run — <why>`, naming the tree where the
+pass covered several, and a change set's line always closes `· built-in
+not run — change set`; the line still opens `Lens pass:`. `<tier>` is
+the tier code-review keyed, `low`, `high` or `max`, whether or not the
+built-in ran at it; an older entry's
+`inline read`, `full pass` or `ultra` is history. A pass whose
+precondition failed writes `Lens pass: dropped
 — no diff or change set` and no slot, and that line is then the whole of
 the pass's lines: no fixes line and no `Refuted/skipped:`, neither
 written `none`. The findings list is not the pass's to drop: it is a
@@ -228,11 +236,12 @@ pass's fixes are recorded durably**, written the moment the fixes land
 by whichever operator ran the pass, and never rewritten.
 
 **`Refuted/skipped:` records the candidates the lens pass dropped**,
-the ones its verify refuted and the ones its judgment skipped, each a
+the ones its merge refuted, as wrong or as settled (`refuted — <name>
+(settled: <where>)`), and the ones its judgment skipped, each a
 short name with a one-clause why and no locator. Two kind-groups carry
 them, `·`-joined (`refuted — <name (why)>, … · skipped — <name (why)>,
 …`), so the kind is written once, and a group may take one shared why
-for all its members (`skipped — below the cap or churn bar: a, b, c`). A
+for all its members (`skipped — changes intended behaviour: a, b`). A
 group with no members is absent, and the whole line reads `none` where
 the pass dropped nothing. The line is **unconditional wherever the lens
 pass ran**, the dropped pass its one exemption, so its absence carries
@@ -260,9 +269,10 @@ every edit made since, the decide-forward that fires no close above all,
 with the developer's edits from the gap between implement and review.
 
 It is a code-review run scoped to that diff, its **tier keyed first**,
-by risk profile (the process contract, § Review effort), before any
-skill loads: an inline-read delta is read in-session and loads nothing,
-and the line carries `<tier>` and no roster. It runs **without
+by risk profile (the process contract, § Review effort), like any other
+run, a `low` delta included, passing the topic's `plan.md` and
+`spec.md` paths as the lens pass does, and the line carries `<tier>`
+and no roster. It runs **without
 `--fix`**: a delta finding goes to disposition like a walkthrough's,
 because a ship never trusts a fix unseen. The re-run rule of § Developer
 edits stands beside it: where that rule fired, the line closes with
@@ -270,9 +280,12 @@ edits stands beside it: where that rule fired, the line closes with
 did not fire the line carries no clause, and which it was stays
 derivable: the only subject content that owes no re-run is implement's
 fix commits, their green already on the fixes line, so anything else in
-the subject is post-pass work whose green never ran. A delta pass's own
-refuted or skipped candidates go unrecorded: the line carries tier,
-subject and re-green alone. Iterate and wait closes run nothing extra:
+the subject is post-pass work whose green never ran. Where code-review's
+built-in review did not run over the delta, the line closes last with
+`· built-in not run — <why>`, as the lens-pass line does. A delta pass's
+own refuted or skipped candidates go unrecorded: the line carries tier,
+subject, re-green and the not-run clause alone. Iterate and wait closes
+run nothing extra:
 their own commits ride `Unreviewed:` and land in the next iteration's
 delta by construction. Nothing uncovered, no line.
 

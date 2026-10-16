@@ -73,8 +73,8 @@ under the contract):
    checkable claim is a plan failure. A claim that genuinely cannot be
    checked enters the plan header's `**Assumptions (unverified):**`
    block, one bullet per claim with its impact-if-false and the tasks
-   affected, read downstream as risk, not fact (its reader: the
-   code-review skill's decision digest). A probe that justifies a claim
+   affected, read downstream as risk, not fact (one reader: the
+   code-review skill, § The merge). A probe that justifies a claim
    about a gate runs the gate's exact invocation and configuration:
    probing the underlying tool with default flags grounds nothing. A
    dependency the project has not fetched yet is fetched at its target

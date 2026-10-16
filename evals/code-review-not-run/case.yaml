@@ -1,0 +1,72 @@
+schema_version: "1.1"
+name: code-review-not-run
+description: With no shell to read a diff, /ymer:code-review fires, announces itself, and reports that the built-in review did not run, never a clean review.
+plugins: ["../../plugins/ymer"]
+runs: 1
+execution:
+  max_turns: 20
+  timeout_seconds: 300
+  # This case reports a guard's not-run, not a door: an eval run carries no
+  # shell, so the skill can read no subject and its built-in review cannot
+  # run. Skill is left out only because nothing here needs it; leaving it
+  # out withholds nothing, since the run still lists Skill among its tools.
+  allowed_tools: [Read, Glob, Grep]
+  prompt: "/ymer:code-review"
+graders:
+  - name: fired-plugin
+    type: regex
+    target: trace
+    pattern: 'ymer@inline'
+  - name: fired-command
+    type: regex
+    target: trace
+    pattern: '"slash_commands":\[[^\]]*"ymer:code-review"'
+  - name: fired-announce
+    type: regex
+    target: trace
+    pattern: 'using the code-review skill to review the'
+  - name: no-mcp-server
+    type: regex
+    target: trace
+    pattern: '"mcp_servers":\[\]'
+  - name: no-mcp-call
+    type: regex
+    target: trace
+    match: not_contains
+    pattern: '"name":"mcp__'
+  # The facts, never the line's literal form: the model dresses a right
+  # report differently from run to run.
+  - name: not-run-reported
+    type: regex
+    target: last_message
+    flags: i
+    pattern: "built-in[^.\\n]{0,80}(not\\s+run|n't\\s+run|never\\s+ran)"
+  # A clean claim beside the not-run report is the conflation the guard
+  # exists to prevent. Only affirmative claims match, so a right report that
+  # says "never a clean review" or "not a clean review" stays green.
+  - name: no-clean-claim
+    type: regex
+    target: last_message
+    flags: i
+    match: not_contains
+    pattern: "(\\bno\\s+(issues|findings|defects|problems|bugs)\\s+(were\\s+)?found|\\blooks\\s+good\\b|\\blgtm\\b|\\ball\\s+clear\\b|\\b(review|change|diff|code)\\s+(is|was|looks|came\\s+back)\\s+clean\\b|(^|[\\n.!?:]\\s*)nothing\\s+to\\s+review)"
+  - name: never-write
+    type: tool_used
+    tool: Write
+    min: 0
+    max: 0
+  - name: never-edit
+    type: tool_used
+    tool: Edit
+    min: 0
+    max: 0
+  - name: never-bash
+    type: tool_used
+    tool: Bash
+    min: 0
+    max: 0
+  - name: never-notebookedit
+    type: tool_used
+    tool: NotebookEdit
+    min: 0
+    max: 0

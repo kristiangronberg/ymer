@@ -183,19 +183,22 @@ the improvisation this section exists to remove.
 **Lens applicability** answers which lenses run at all, and it does most
 of the work. Each lens declares a **precondition**, what must be true
 for it to have anything to bite on, and the host evaluates it before
-spawning, from observables it already holds: the artifact under review,
-the plan header, the changed-file list. A lens whose precondition fails
-is dropped unspawned. Never spawn a lens to find out whether it applies:
-paying a full agent to learn it had nothing to say is the waste this
-mechanism removes.
+the lens is spawned or run, from observables it already holds: the
+artifact under review, the plan header, the changed-file list. A lens
+whose precondition fails is dropped without running. Never run a lens
+to find out whether it applies: paying an agent, or the host's own
+reading, to learn it had nothing to say is the waste this mechanism
+removes.
 
 A dropped lens is reported with the precondition that failed, never
 silently. A dead lens is otherwise indistinguishable from "no findings",
 and a wrong precondition has to surface as a lens that stopped running
 rather than as silence: that is what keeps applicability falsifiable.
 When every lens is dropped, the run reports "no applicable lenses" and
-bottoms out at the ladder's cheapest tier; it is never reported as a
-clean review.
+is never reported as a clean review. A run of lenses alone then bottoms
+out at the ladder's cheapest tier; a review that runs beside its lenses
+(code-review's call to Claude Code's built-in code review) keeps the
+tier the risk profile keys.
 
 A precondition is a derived fact, never a judgement. Each is read off
 the artifact under review by a stated rule, and in doubt it reads true:
@@ -228,9 +231,10 @@ than a code plan.
 
 Each phase names its own ladder and reads the key here; the four
 dimensions live in this section and nowhere else. The ladders today:
-code-review's inline read, then a full pass, then `ultra`; plan-review's
-lightweight pass, then the workflow; write-plan grounding's direct
-verification, then the Explore fan-out.
+code-review's `low`, then `high`, then `max`, the levels it passes to
+Claude Code's built-in code review; plan-review's lightweight pass,
+then the workflow; write-plan grounding's direct verification, then the
+Explore fan-out.
 
 **One qualification, and it is not a second key.** Where a ladder's
 tiers differ in orchestration machinery rather than in depth of
@@ -392,8 +396,8 @@ anything else (→ Review effort). Two reads:
   amendments alike, belong to the standing record rather than to the
   new delta: their substance is reviewed as code by that cycle's lens
   pass, and a decide-forward's decision stays readable through its
-  amendment marker, which plan-review's amendment-ripple item and the
-  decision digest pick up.
+  amendment marker, which plan-review's amendment-ripple item and
+  code-review's read of the record pick up.
 
 ## Knowledge placement
 
