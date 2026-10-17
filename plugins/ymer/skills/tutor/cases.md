@@ -9,7 +9,7 @@ section runs.
 
 **Why a missing table can mean the wrong node.** A project's
 development instance of the node, or any other server that exposes a
-`notebook` tool, answers `tables` just as the user's own node does, and
+`notebook` tool, answers the same query as the user's own node does, and
 holds no `tutor_*` table. Read as a missing setup, that would send the
 user to `/ymer:setup` for a node no other session reads.
 

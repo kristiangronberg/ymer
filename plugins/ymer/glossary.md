@@ -22,6 +22,13 @@ it is still the current one.
 
 ## A
 
+### agent definition
+The file a plugin ships in its `agents/` that fixes one agent's
+description, tools list, model and prompt; the harness lists it to
+every session that loads the plugin as `<plugin>:<name>`, and loads its
+body as that agent's prompt.
+_Avoid_: plugin agent, subagent file, agent file
+
 ### amendment marker
 The dated, attributed note recording an amendment: a decision added,
 widened or changed after the artifact that owns it exists, its final
@@ -1060,8 +1067,9 @@ _Avoid_: triage, rating, priority
 
 ### scorer
 Defined in the `mint` skill, its one home — the cheap-model agent that
-scores drops for mint, its whole world the rubric, the next steps and a
-batch of drops.
+scores drops for mint, dispatched as `ymer:scorer` from its agent
+definition, `agents/scorer.md`, its whole world the rubric, the next
+steps and a batch of drops.
 _Avoid_: triager, triage run
 
 ### settled section

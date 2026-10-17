@@ -8,10 +8,11 @@ the moment that section runs.
 
 Contents:
 
-- 1. The Ymer Node and its store skeletons: the eight tables' statements,
-  the grammar rows and their eight texts, the kinds and their six rows,
-  adding a missing column, the required columns, the retired `topics`
-  table's statements and its hand move
+- 1. The Ymer Node and its store skeletons: the first read, the node's
+  server name, the eight tables' statements, the grammar rows and their
+  eight texts, the kinds and their six rows, adding a missing column,
+  the required columns, the retired `topics` table's statements and its
+  hand move
 - 2. This installation's front: the fronts read and insert, the front on
   Cowork
 - 3. The state folder: the state folder on Cowork
@@ -22,7 +23,31 @@ Contents:
 
 ### 1. The Ymer Node and its store skeletons
 
-Each statement below is one `execute` call.
+**The first read**, through `notebook` `query`, names the eight tables
+and the retired one, and asks `_meta` for the retired table's row. A
+table name that does not come back is a table the notebook does not
+hold; `table:topics` coming back without `topics` is the retired
+table's `_meta` row left without its table:
+
+```sql
+SELECT name FROM sqlite_master WHERE type = 'table'
+  AND name IN ('fronts', 'kinds', 'pool', 'pool_scores', 'tasks', 'tasks_log', 'tutor_subjects', 'tutor_engagements', 'topics')
+UNION ALL
+SELECT target FROM _meta WHERE target = 'table:topics'
+```
+
+**The node's server name**, on Claude Code, is the one this session's
+notebook tool carries, `mcp__<server>__notebook`. Where `<server>` is
+not `ymer-node`, read the registration with `claude mcp get <server>`:
+it prints the scope and URL the node is registered with, and the remove
+command for that scope. The node's line notes the name with the commands
+that register the node again as `ymer-node`: that remove command, then
+the `claude mcp add` line `SKILL.md` § 1 names, carrying the URL `get`
+printed in place of the default. Where `get` finds no server by that
+name, the tool name carrying an altered form of it, the line names
+`claude mcp list` to find the registration instead.
+
+Every statement below is one `execute` call.
 
 `fronts`:
 

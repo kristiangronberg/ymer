@@ -10,14 +10,14 @@ Contents:
 - The run: a cluster that spans fronts, an open pointer on a drained
   anchor, a family read that finds more than the artifact quotes
 - Scoring: a page with no next steps, a block that could not be read, a
-  scorer that wrote beyond its rows, the ids left unscored, an empty
+  stray and why it is never undone, the ids left unscored, an empty
   ranking
 - The pick rule: what the score cannot see
 - Three exits, all artifact-depositing: the two halts, the learning
   append in the node
 - `request.md`'s shape: where Passed over lines go, an append through
   the file, the heading count
-- The close: the `Scored:` and `Unscored:` lines
+- The close: the `Scored:`, `Strays:` and `Unscored:` lines
 
 ## The run
 
@@ -57,10 +57,15 @@ not be read. Score nothing this run and go to the read-back, so the run
 ranks the rows already written and names what it left unscored. No id
 gets the in-session try that run either.
 
-**A table that appeared or vanished** between the two table listings
-means a scorer wrote beyond its rows. Stop the run before ranking, name
-the difference, and hand it to capture; the backup step 1 took is the
-way back.
+**A stray, and why it is never undone.** A row on an id no list held
+comes from a scorer that wrote beyond its list, or from another front's
+mint scoring that front's drops at the same time, and the rows alone
+cannot tell which. So the read-back names it, capture records it, and
+the run goes on. Restoring the backup would discard everything every
+session wrote since it was taken, and deleting the row would undo
+another front's legitimate score. A scorer that keeps writing strays
+shows as a recurrence in the pool. A row on a drop captured during the
+run, which only the count shows, is named and left for the same reasons.
 
 **An id the second unscored query still lists** was not written: a
 refused statement, a malformed row, a scorer that stopped. It gets one
@@ -172,11 +177,19 @@ where it is absent.
 ## The close
 
 **`Scored:`** says how many drops this run scored and by whom: scorers,
-or this session where scoring fell back. It reads `0 new drops` where
-there were none, and `next steps unreadable` where the next-steps block
-could not be read and nothing was scored for that reason;
+or this session where no scorer started, followed by the cause the
+harness gave, quoted as it wrote it. It reads `0 new drops` where there
+were none, `next steps unreadable` where the next-steps block could not
+be read and nothing was scored for that reason, and `definition
+unreadable` where no scorer started and this session could not read the
+agent definition either, quoting both causes;
 `pages without next steps: <names>` follows wherever a page had no
 `## Next steps` heading.
+
+**`Strays:`** is written only where the read-back found a stray, a
+deletion or an excess row: how many rows sat on ids no list held, the
+first ten of those ids, how many rows were deleted, and how many sat on
+drops captured during the run.
 
 **`Unscored:`** is written only where drops stayed unscored: how many,
 and the first ten ids, so the reader knows this run's pick came from a

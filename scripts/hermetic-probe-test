@@ -501,16 +501,22 @@ for v in loaded nested noenv missing subagent; do
 	sed "s/\"session_id\":\"s-run\"/\"session_id\":\"s-$v\"/" "$canned/run-capture.jsonl" >"$canned/run-capture-$v.jsonl"
 done
 # A mint that dispatched its scorers: the healthy mint trace under a
-# session of its own, one subagent call pinned to haiku before its result
-# line, and that session's transcripts kept with a subagent's beside it
+# session of its own, one call to the ymer:scorer agent before its result
+# line, and that session's transcripts kept with a subagent's beside it;
+# then the same trace with that call naming a model, with another agent
+# type in its place, and under a session that kept no subagent transcript
 mkdir -p "$kept/-w/s-scorer/subagents"
 printf '%s\n' "$env_line" >"$kept/-w/s-scorer.jsonl"
 printf '%s\n' "$env_line" >"$kept/-w/s-scorer/subagents/agent-1.jsonl"
 {
 	sed -e '$d' -e 's/"session_id":"s-run"/"session_id":"s-scorer"/' "$canned/run-mint.jsonl"
-	printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t99","name":"Agent","input":{"description":"score drops","subagent_type":"general-purpose","model":"haiku","prompt":"x"}}]}}'
+	printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t99","name":"Agent","input":{"description":"score drops","subagent_type":"ymer:scorer","prompt":"x"}}]}}'
 	tail -n 1 "$canned/run-mint.jsonl"
 } >"$canned/run-mint-scorer.jsonl"
+sed 's/"subagent_type":"ymer:scorer",/"subagent_type":"ymer:scorer","model":"sonnet",/' "$canned/run-mint-scorer.jsonl" >"$canned/run-mint-scorer-model.jsonl"
+sed 's/"subagent_type":"ymer:scorer"/"subagent_type":"general-purpose"/' "$canned/run-mint-scorer.jsonl" >"$canned/run-mint-other-agent.jsonl"
+printf '%s\n' "$env_line" >"$kept/-w/s-scorer-alone.jsonl"
+sed 's/"session_id":"s-scorer"/"session_id":"s-scorer-alone"/' "$canned/run-mint-scorer.jsonl" >"$canned/run-mint-scorer-alone.jsonl"
 # The control call: its trace names a session of its own, and its effect —
 # run in the control's working directory, as the call is — plants the
 # runs' transcripts kept above and that session's own, recording the
@@ -1246,7 +1252,7 @@ check "live: the node line" 1 "$(lines '✔ node         up on http://127.0.0.1:
 check "live: the install line" 1 "$(lines '✔ install      marketplace from')"
 check "live: front, setup, setup-node, setup-retired, setup-tutor, setup-report, capture, mint-stop, state-folder, converge, converge-calls, converge-report, setup-folder, drift, mint, scored, mint-capture, bug-first, append, append-keep, tutor-ymer, tutor-stop, encl-folder, setup-enclosed, mint-enclosed" 25 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (front|setup|setup-node|setup-retired|setup-tutor|setup-report|capture|mint-stop|state-folder|converge|converge-calls|converge-report|setup-folder|drift|mint|scored|mint-capture|bug-first|append|append-keep|tutor-ymer|tutor-stop|encl-folder|setup-enclosed|mint-enclosed) ')"
 check "live: the front line names the probe's front" 1 "$(lines '✔ front        front set to probe_front')"
-check "live: the dispatch line reports a run that scored in-session, neither passed nor failed" 1 "$(lines '– dispatch     not run — run 6 scored in-session — 0 haiku subagent call(s), 0 subagent transcript(s)')"
+check "live: the dispatch line reports a run that scored in-session, neither passed nor failed" 1 "$(lines '– dispatch     not run — run 6 scored in-session — 0 ymer:scorer call(s), 0 subagent transcript(s)')"
 check "live: the mint-capture line counts the mint's own drops" 1 "$(lines '✔ mint-capture 2 source mint drop(s) after /ymer:mint — its capture block ran')"
 check "live: the mint line names the drained topic and its file" 1 "$(lines "✔ mint         1 tasks row(s) at claimed in a Roadmap project, the friction drained to $drained_to, its request.md in state/ carrying source: mint")"
 check "live: the bug-first line names the bug's topic" 1 "$(lines "✔ bug-first    the bug drawn ahead of ten open frictions, drained to $bug_to — one request.md there in state/, quoting its title once — the ten seed frictions still open")"
@@ -1327,15 +1333,36 @@ check "live mint with no capture drop: the mint-capture line names the count" 1 
 check "live mint with no capture drop: the mint line still passes" 1 "$(lines '✔ mint ')"
 
 # ── 15e · live, the mint dispatched its scorers ───────────────────────
-# a mint trace carrying a subagent call pinned to haiku, its session's
-# transcripts planted with a subagent's beside the run's own
+# a mint trace carrying a call to the ymer:scorer agent, its session's
+# transcripts planted with a subagent's beside the run's own; then the
+# same call naming a model, which outranks the agent definition's; then a
+# call to another agent type, and a scorer call with no subagent
+# transcript beside it, each the scorer path unproven
 live_case
 live_queue
 reanswer 'claude -p /ymer:mint' "@$canned/run-mint-scorer.jsonl"
 probe "$fx" live
 check "live mint that dispatched scorers exits 0" 0 "$rc"
-check "live mint that dispatched scorers: the dispatch line passes and counts both" 1 "$(lines '✔ dispatch     1 haiku subagent call(s) in run 6, 1 subagent transcript(s)')"
+check "live mint that dispatched scorers: the dispatch line passes and counts both" 1 "$(lines '✔ dispatch     1 ymer:scorer call(s) in run 6, 1 subagent transcript(s)')"
 check "live mint that dispatched scorers: no in-session line" 0 "$(lines '– dispatch')"
+live_case
+live_queue
+reanswer 'claude -p /ymer:mint' "@$canned/run-mint-scorer-model.jsonl"
+probe "$fx" live
+check "live mint whose scorer call names a model exits 1" 1 "$rc"
+check "live mint whose scorer call names a model: the dispatch line fails, naming the count" 1 "$(lines '✘ dispatch     1 of 1 ymer:scorer call(s) in run 6 name a model')"
+live_case
+live_queue
+reanswer 'claude -p /ymer:mint' "@$canned/run-mint-other-agent.jsonl"
+probe "$fx" live
+check "live mint that dispatched another agent type exits 0" 0 "$rc"
+check "live mint that dispatched another agent type: the dispatch line reads not run, counting no scorer call" 1 "$(lines '– dispatch     not run — run 6 scored in-session — 0 ymer:scorer call(s), 1 subagent transcript(s)')"
+live_case
+live_queue
+reanswer 'claude -p /ymer:mint' "@$canned/run-mint-scorer-alone.jsonl"
+probe "$fx" live
+check "live mint whose scorer call left no subagent transcript exits 0" 0 "$rc"
+check "live mint whose scorer call left no subagent transcript: the dispatch line reads not run, counting no transcript" 1 "$(lines '– dispatch     not run — run 6 scored in-session — 1 ymer:scorer call(s), 0 subagent transcript(s)')"
 
 # ── 15f · live, the guard's stop wrote scores ─────────────────────────
 live_case

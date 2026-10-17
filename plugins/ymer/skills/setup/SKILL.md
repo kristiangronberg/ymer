@@ -86,6 +86,12 @@ claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
 Name that command only on Claude Code. On a harness with no such door,
 say that the node is unreachable from this session and leave it there.
 
+**The node's name.** Register the node as `ymer-node`, the name that
+line gives it: mint's scorer lists the node's `notebook` tool under that
+server name. A node reached under another name passes this check, and
+on Claude Code its line notes the name it was reached under, with the
+commands that register it again as `ymer-node` (`mechanics.md` § 1).
+
 *With the node reached, read with this section: `mechanics.md` § 1. The Ymer Node and its store skeletons (the mechanics) and `cases.md` § 1. The Ymer Node and its store skeletons (the cases).*
 
 **The skeletons.** Eight tables, created in this order:
@@ -107,8 +113,11 @@ The order is load-bearing: `pool` keys on `fronts(slug)` and
 `kinds(kind)`, `pool_scores` on `pool(id)`, `tasks_log` on `tasks(id)`,
 and `tutor_engagements` on `tutor_subjects(subject)`.
 
-Read what is there first, with the `notebook` `tables` action, and then
-work table by table. **The node runs one statement per `execute` call
+Read what is there first, with one `notebook` `query` that names the
+eight tables and the retired `topics` in `sqlite_master` and asks
+`_meta` for the retired table's row (the statement and how to read its
+answer: `mechanics.md` § 1), and then work table by table.
+**The node runs one statement per `execute` call
 and drops the rest of a multi-statement call without a word**, so every
 statement is a call of its own: a batched skeleton creates its first
 table and silently loses every write after it.
@@ -456,7 +465,8 @@ it first, then the same two statements. A `_meta` row left without its
 table gets the same line, with its one statement.
 
 The node's line counts its tables: the number this run created, with
-`created`, when it created any, and otherwise the number the node holds.
+`created`, when it created any, and otherwise how many of the eight the
+node holds.
 The front's line names the slug, with `added` after it only when this
 run wrote its row. So a first run on an empty node reads
 `8 tables created` and `` `work_laptop` added ``, and a re-run on a
@@ -476,6 +486,13 @@ Setup — ymer environment
 
 Ready. Re-run /ymer:setup whenever you like — it changes nothing that is
 already right.
+```
+
+A node reached under a name other than `ymer-node` passes, and on Claude
+Code its line says so, with the fix:
+
+```
+  ✔ node          reachable — 8 tables; reached as `my-node`, not `ymer-node`, so mint's scorer cannot start and mint scores in-session — claude mcp remove my-node -s user, then claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
 ```
 
 A folder in no git repository passes the same way, and a machine

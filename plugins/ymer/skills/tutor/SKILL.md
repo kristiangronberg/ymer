@@ -52,10 +52,12 @@ that defers tools until they are needed still has it.
 1. **The node.** The subject index is reached through the node's
    `notebook` tool, on the node your Ymer Node install serves. A
    project's development instance, or another server that also exposes
-   a `notebook` tool, is not it. `notebook` `tables` shows both that the
-   node answers and which tables it holds. Stop when this session has no
-   `notebook` tool, when the node does not answer, or when the notebook
-   lacks `tutor_subjects` or `tutor_engagements`: say which, and name
+   a `notebook` tool, is not it. One `notebook` `query` shows both that
+   the node answers and whether it holds the two tables:
+   `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN
+   ('tutor_subjects', 'tutor_engagements')`. Stop when this session has
+   no `notebook` tool, when the node does not answer, or when either name
+   does not come back: say which, and name
    `/ymer:setup`, which creates both tables. Tutor never creates them,
    and runs no `CREATE`, `ALTER` or `DROP` of its own. With more than
    one `notebook` tool loaded, a missing `tutor_*` table is first

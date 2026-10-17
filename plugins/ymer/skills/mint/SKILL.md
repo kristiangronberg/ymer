@@ -19,8 +19,8 @@ This file is the spine: what each moment is for, in the order the run
 meets them. The exact queries and commands are in `mechanics.md`, and
 the cases that went wrong once are in `cases.md`, both under this file's
 headings; a section with entries there names them in its first line.
-`scorer.md` is mint's agent prompt, the whole prompt each scorer is
-handed (→ Scoring).
+The scorer is an agent this plugin ships, in its agent definition
+`agents/scorer.md` (term: the plugin glossary; → Scoring).
 
 **Announce at start:** "Mint — drawing from the pool."
 
@@ -34,8 +34,11 @@ before it holds.
 The pool is the `pool` table in the notebook of the user's own Ymer
 Node, reached through the node's `notebook` tool. Before reading
 anything further in this skill, check that this session has that tool
-and that the node answers: `notebook` `tables` shows both, and which
-tables the notebook holds.
+and that the node answers. One `notebook` `query` shows both, and which
+of the tables this skill needs the notebook holds:
+`SELECT name FROM sqlite_master WHERE type = 'table' AND name IN
+('pool', 'kinds', 'fronts', 'pool_scores', 'tasks', 'tasks_log')`. A
+name that does not come back is a table the notebook lacks.
 
 Where the tool is missing or the node does not answer, stop here. Say
 that the Ymer Node is not reached and is brought back before anything
@@ -325,26 +328,48 @@ draws.
 A drop's **score** ranks it: its kind's weight times the sum of three
 components, direction value, time criticality and risk reduction,
 divided by a fourth, size. Each component is 1, 3 or 5, written once
-into the drop's `pool_scores` row by a **scorer**: a subagent on the
-cheapest model the harness offers, whose whole world is its prompt. The
-score itself is computed by the ranking query at every run and never
-stored. A row is never revised: a changed rubric, or a product's changed
-next steps, applies to drops scored after the change, and older rows
-keep the numbers they were given.
+into the drop's `pool_scores` row by a **scorer**: the agent
+`ymer:scorer`, on the cheapest model the harness offers, whose whole
+world is its prompt. Its **agent definition** (term: the plugin
+glossary) is `agents/scorer.md` in this plugin. The score itself is
+computed by the ranking query at every run and never stored. A row is
+never revised: a changed rubric, or a product's changed next steps,
+applies to drops scored after the change, and older rows keep the
+numbers they were given.
 
 The kind weights have one home, the ranking query's `VALUES` list in
 `mechanics.md` § The run; a kind it does not name, one a front added,
 weighs 1.
-The rubric, what every 1, 3 and 5 means, has one home too:
-[`scorer.md`](scorer.md), mint's agent prompt. A retune is an edit in
-that home, and the next run ranks with it without rewriting a row. Bugs
-lead because of their weight, not because of a rule above the formula.
+The rubric, what every 1, 3 and 5 means, has one home too: the
+scorer's prompt, in [its agent definition](../../agents/scorer.md). A
+retune is an edit in that home, and the next run ranks with it without
+rewriting a row. Bugs lead because of their weight, not because of a
+rule above the formula.
+
+**What the agent definition guards, and what it does not.** A scorer
+reads text other sessions wrote, so its tools list names the node's
+`notebook` tool and nothing else: no shell, no files, no web. The
+harness still adds tools of its own to an agent it starts, so the list
+fixes what is listed, never all a scorer can call. Inside the notebook
+nothing is narrowed: `execute` runs any statement, and `restore` rolls
+the whole notebook back. A scorer's writes are bounded by its prompt, by
+step 4's read-back of the rows and by the backup step 1 of the run took,
+and by nothing more. The list names the node by the server name
+`ymer-node`, the name the node's `claude mcp add` line gives it (the
+README, § Installing, and `/ymer:setup` check 1): under another name
+the list resolves to no tool, the harness refuses to start the scorer,
+and the fallback below scores instead.
 
 Invoking this skill is the request to dispatch scorers: a standing
 instruction to use subagents only when the user asks for them is met by
 the invocation itself.
 
-1. **The unscored drops**, their ids only, so that this session reads
+1. **The unscored drops.** First read every pool id that holds no
+   `pool_scores` row, whatever its front, status or kind, and count the
+   `pool_scores` rows: the read-back compares what the scorers left
+   against both, and taking them before this front's list is what puts
+   every drop of this front they hold in some list. Then list this
+   front's unscored drops, their ids only, so that this session reads
    none of their text. None listed, and scoring is done for this run.
 2. **The next steps.** Where the node is the coordinator there are no
    pages (the product-design skill § The product page): the block says
@@ -357,36 +382,51 @@ the invocation itself.
    read-back, which ranks the rows already written, and no id gets the
    in-session try
    (→ `cases.md` § Scoring).
-3. **Dispatch.** Split the ids into lists and hand each list to a fresh
-   scorer: the text of `scorer.md` verbatim, then the next-steps block
-   and the list. A scorer reads text other sessions wrote, so give it
-   the node's `notebook` tool and nothing else where the harness lets a
-   dispatch name tools; list the notebook's tables before the first
-   dispatch; and run a bounded few at a time (the list size and the
+3. **Dispatch.** Split this front's list from step 1 into lists and
+   dispatch `ymer:scorer` once per list, handing it the next-steps block
+   and the list and nothing else: its prompt, its tools and its model
+   come from its agent definition. Name no model in the dispatch, since
+   a model named there outranks the definition's. Run a bounded few at a
+   time (the reads and how step 4 compares them, the list size and the
    bound: `mechanics.md` § Scoring). Wait for every scorer's answer
    before anything is ranked.
-4. **Read back.** Where scorers ran, check that they wrote their rows
-   and nothing else: compare the notebook's tables with the list taken
-   before the first dispatch. A table that appeared or vanished means a scorer
-   wrote beyond its rows, and stops the run before ranking: name the
-   difference and hand it to capture; the backup step 1 of the run took
-   is the way back (→ `cases.md` § Scoring). Then list the unscored
-   drops again. An id still listed gets one more try, scored in this
-   session, unless step 2's block could not be read: then no id is
-   tried. An id unscored after that is left out of the ranking until a
-   later run, never ranked on a guess, and the ids left out are named
-   before the draw. Where the ranking holds no drop at all while open
-   drops wait unscored, stop and draw nothing: a judgement pick over
-   unscored drops is never the way around an empty ranking. Keep each
-   scorer's note on the drops that were hard to score: the close hands
-   it to capture.
+4. **Read back.** Where scorers ran, check the rows they wrote against
+   their lists: read the unscored ids and the count again. An id that
+   gained a row and sat in no list is a **stray**. A count below the
+   first count plus the ids that gained a row means rows were deleted; a
+   count above it means rows on drops captured during the run, which
+   the first read never held, written by another front's mint or by a
+   scorer outside its list. Name each stray, each deletion and that
+   excess, hand them to capture, and go on. Every open unscored drop of
+   this front that the first read held sat in some list, so a stray
+   cannot move this run's ranking; a row on a drop captured during the
+   run can, which is why the excess is named. Never restore the backup
+   over a stray and never delete one (→ `cases.md` § Scoring). The count
+   shows only the net: a deletion and an excess row cancel, and an
+   `UPDATE` to a row already there stays unseen. Then list this front's
+   unscored drops again. An id still listed gets one more try, scored
+   in this session, unless step 2's block or the agent definition could
+   not be read: then no id is tried. An id unscored after that is left out of the
+   ranking until a later run, never ranked on a guess, and the ids left
+   out are named before the draw. Where the ranking holds no drop at all
+   while open drops wait unscored, stop and draw nothing: a judgement
+   pick over unscored drops is never the way around an empty ranking.
+   Keep each scorer's note on the drops that were hard to score: the
+   close hands it to capture.
 
-**Fallback: score in this session.** Where no subagent can be
-dispatched (the tool is absent, or a spawn is refused at the permission
-layer), this session reads `scorer.md` and follows it as a scorer would,
-within the bounds in `mechanics.md` § Scoring, and the close says
-scoring ran in-session. The rows are the same rows, so the ranking stays
-one formula on every front.
+**Fallback: score in this session.** Where no scorer starts, whatever
+the cause the harness gives (the Agent tool absent, a refusal at the
+permission layer, a refusal to start an agent whose tools list resolved
+to nothing, `Agent type 'ymer:scorer' not found` on a harness that loads
+no agent definitions, or any other), this session reads the agent
+definition, `${CLAUDE_PLUGIN_ROOT}/agents/scorer.md`, and follows its
+prompt as a scorer would, within the bounds in `mechanics.md`
+§ Scoring. The close quotes the cause as the harness wrote it. The rows
+are the same rows, so the ranking stays one formula on every front.
+Where this session cannot read the agent definition either, nothing is
+scored this run, as with a next-steps block that could not be read: go
+to the read-back, which ranks the rows already written, and the close
+quotes both causes.
 
 ## Clustering
 
@@ -676,7 +716,8 @@ Picked: <name> — <one line: what doing it removes or builds>
 Topic:  <area>/YYYY/MM-DD-<name>/ (state folder, history in <git | the files alone>)
 Task:   <task name> (doing, <Product> Roadmap in <ymer | node `tasks`>)
 Moot:   <n> moot drops collected, under <c> causes
-Scored: <n> new drops (<n> scorers | in this session | next steps unreadable)
+Scored: <n> new drops (<n> scorers | in this session: <cause> | next steps unreadable | definition unreadable: <cause>; <cause>)
+Strays: <n> rows on ids no list held (ids <the first ten>), <d> rows deleted, <e> rows on drops captured during the run
 Unscored: <m> left out of the ranking (ids <the first ten>)
 Next:   /brainstorm <name>
 
@@ -684,14 +725,16 @@ Still unstarted from earlier mints:
   <other-name>   (<area>/YYYY/MM-DD-<other-name>/)
 ```
 
-Three of those lines are conditional. `Moot:` is written only where the
-walk collected moot drops. `Unscored:` is written only where drops
-stayed unscored. `Scored:` also reads `0 new drops`, and takes a
-trailing `pages without next steps: <names>` wherever a page had no
-`## Next steps` heading, which is how a page that lost it is seen (the
-full values: `cases.md` § The close). A run that stopped on an empty
-ranking picks nothing and closes with `Scored:`, `Unscored:` and the
-reason alone.
+Four of those lines are conditional. `Moot:` is written only where the
+walk collected moot drops. `Strays:` is written only where the
+read-back found a stray, a deletion or an excess row. `Unscored:` is
+written only where drops stayed unscored. `Scored:` also reads `0 new
+drops`, and takes a trailing `pages without next steps: <names>`
+wherever a page had no `## Next steps` heading, which is how a page
+that lost it is seen (the full values: `cases.md` § The close). A run
+that stopped on an empty ranking picks nothing and closes with
+`Scored:`, `Strays:` where it applies, `Unscored:` and the reason
+alone.
 
 Naming the store on the `Topic:` and `Task:` lines is the whole report
 the reach rule owes: it tells you where to look, and makes a run
@@ -713,6 +756,8 @@ it, by name, what this run's scoring showed:
 
 - every scorer's note on the drops that were hard to score, as the
   scorer wrote it;
+- every stray and every deletion the read-back named, with its ids,
+  and the count of rows on drops captured during the run;
 - the ids left unscored, the first ten, as the `Unscored:` line names
   them;
 - this session's own answer to "Did the scoring look reasonable, and
@@ -736,8 +781,8 @@ it, by name, what this run's scoring showed:
   can take that is not one, and the friction-batch takes them as the run's one draw
 - A score's components are written once and the score is computed at
   the draw: the weights in the ranking query's `VALUES` list
-  (`mechanics.md` § The run), the rubric in `scorer.md`, each its one
-  home
+  (`mechanics.md` § The run), the rubric in the scorer's agent
+  definition, `agents/scorer.md`, each its one home
 - The coordinator is ymer where this session reaches it, else the
   node's `tasks`, resolved once and asked never. The state folder is
   required, and the operations contract's reading of its kind decides

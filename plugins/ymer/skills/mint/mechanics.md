@@ -124,7 +124,7 @@ name weighs 1. `anchor` finds a drop's line in the frequency aggregate
 above, or its own `#<id>` line there when other drops recur on it:
 
 ```sql
-WITH weight(kind, w) AS (VALUES ('bug', 20), ('vision', 9), ('idea', 5), ('learning', 3), ('friction', 1))
+WITH weight(kind, w) AS (VALUES ('bug', 10), ('vision', 7), ('idea', 5), ('learning', 3), ('friction', 1))
 SELECT p.id, p.kind, p.product, p.context,
        round(COALESCE(w.w, 1) * (s.direction_value + s.time_criticality + s.risk_reduction) * 1.0 / s.size, 1) AS score,
        COALESCE('#' || p.anchor_id, p.anchor_text) AS anchor,
@@ -222,7 +222,22 @@ dirty paths may remain, and are left alone.
 
 ## Scoring
 
-**Step 1, the unscored ids:**
+**Step 1, the unscored ids.** First the two reads the read-back
+compares against, each through `notebook` `query`:
+
+```sql
+-- every pool id with no score, whatever its front, status or kind
+SELECT p.id
+FROM pool p LEFT JOIN pool_scores s ON s.drop_id = p.id
+WHERE s.drop_id IS NULL
+ORDER BY p.id
+```
+
+```sql
+SELECT count(*) AS scored FROM pool_scores
+```
+
+Then this front's unscored ids:
 
 ```sql
 SELECT p.id
@@ -239,19 +254,15 @@ the same list step 3 of the run and the routing read too. Write one
 block per product: its name, then its bullets as they stand, or `none`
 where the heading is there with no bullet under it.
 
-**Step 3, the dispatch.** Split the ids into lists of at most 100,
-oldest first, one list per scorer. A scorer runs on the cheapest model
-the harness offers, `haiku` on Claude Code. It is a fresh subagent,
-never a fork: a fork inherits this session's context and model, which
-is exactly what scoring keeps out. A scorer reads text other sessions
-wrote, so where the harness lets a dispatch name the subagent's tools,
-give it the node's `notebook` tool and nothing else: no shell, no file
-writes. Before the first dispatch, list the notebook's tables
-(`notebook` `tables`). Dispatch up to four at a time.
+**Step 3, the dispatch.** Split this front's unscored ids from step 1 into lists of at most 100, oldest first, one
+list per scorer, and dispatch each through the Agent tool with the
+agent type `ymer:scorer`. A scorer is a fresh agent, never a fork: a
+fork inherits this session's context and model, which is exactly what
+scoring keeps out. Dispatch up to four at a time.
 
-**Step 4, the read-back.** Where scorers ran, list the tables again and
-compare them with the list taken before the first dispatch; then run
-step 1's query again.
+**Step 4, the read-back.** Where scorers ran, take the same two reads
+again. An id has gained a row where the first read lists it and the
+second does not. Then run step 1's query again.
 
 **The fallback's bounds.** In-session scoring takes ten drops at a time
 and at most 100 drops in one run, oldest first, read-back's one more try

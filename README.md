@@ -61,6 +61,12 @@ server the plugins keep their stores in, and its own README says how to
 run one; the `claude mcp add` line points Claude Code at it on the
 loopback port it serves by default.
 
+Keep the name `ymer-node` that line registers the node under: the
+plugin's scorer, the agent mint dispatches to score drops, reaches the
+node's notebook tool by that name. Under another name mint still runs,
+and scores the drops itself in the session; `/ymer:setup` notes the
+name it found.
+
 **To use ymer as well**, add that connection too — before or after the
 lines above, it makes no difference:
 

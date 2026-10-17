@@ -255,7 +255,8 @@ EOF
 # hook/settings.json, and its hook is what makes the declared commands
 # binding. Reads of the plugins' own files are allowed by one rule over
 # the checkout's plugins/ — a skill reads the files beside its SKILL.md,
-# mint its scorer's prompt, and the runs' working directory is outside
+# mint's fallback reads the scorer's agent definition under
+# plugins/ymer/agents/, and the runs' working directory is outside
 # the checkout, where a read is otherwise asked (`//` roots the rule at
 # the filesystem: CLI 2.1.289, measured). Agent is allowed, so mint's
 # scorers can be dispatched. A tool call no rule and no mode admits is
@@ -1137,17 +1138,23 @@ link check before the edit would have caught it.'
 	else
 		fail scored "after /ymer:mint $unscored drop(s) that are not empty hold no pool_scores row (expected 0) — read $runs/6.jsonl"
 	fi
-	# which path wrote those rows: a subagent call pinned to haiku in run 6
-	# and a subagent transcript beside the run's own is the scorer path. A
-	# run that scored in-session instead took the fallback the skill allows
-	# where no subagent can be dispatched — reported, never passed and never
-	# failed: the rows are the same rows, but the scorer path went unexercised
-	agents=$(live_calls 6 | grep '^Agent ' | grep -c -F '"model":"haiku"' || true)
+	# which path wrote those rows: a call to the ymer:scorer agent in run 6
+	# and a subagent transcript beside the run's own is the scorer path. The
+	# agent definition fixes the scorer's model, and a model named on the
+	# call outranks it, so a scorer call naming one fails. A run that scored
+	# in-session instead took the fallback the skill allows where no scorer
+	# starts — reported, never passed and never failed: the rows are the
+	# same rows, but the scorer path went unexercised
+	scorer_calls=$(live_calls 6 | grep '^Agent ' | grep -F '"subagent_type":"ymer:scorer"' || true)
+	agents=$(printf '%s\n' "$scorer_calls" | grep -c . || true)
+	pinned=$(printf '%s\n' "$scorer_calls" | grep -c -F '"model":' || true)
 	subs=$(live_transcripts "$runs/6.jsonl" | grep -c '/subagents/' || true)
-	if [ "$agents" -ge 1 ] && [ "$subs" -ge 1 ]; then
-		pass dispatch "$agents haiku subagent call(s) in run 6, $subs subagent transcript(s)"
+	if [ "$pinned" -ge 1 ]; then
+		fail dispatch "$pinned of $agents ymer:scorer call(s) in run 6 name a model, which outranks the agent definition's — read $runs/6.jsonl"
+	elif [ "$agents" -ge 1 ] && [ "$subs" -ge 1 ]; then
+		pass dispatch "$agents ymer:scorer call(s) in run 6, $subs subagent transcript(s)"
 	else
-		notrun dispatch "run 6 scored in-session — $agents haiku subagent call(s), $subs subagent transcript(s); the fallback is allowed, so the scorer path is unverified — read $runs/6.jsonl"
+		notrun dispatch "run 6 scored in-session — $agents ymer:scorer call(s), $subs subagent transcript(s); the fallback is allowed, so the scorer path is unverified — read $runs/6.jsonl"
 	fi
 	# the mint's capture block ran at its close: capture writes at least one
 	# drop on every run, an empty one where it observed nothing, so a source

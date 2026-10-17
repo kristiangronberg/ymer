@@ -21,8 +21,12 @@ plugins/ymer/skills/setup/SKILL.md	https://ymer.ax/mcp
 .claude-plugin/marketplace.json	"name": "Kristian Grönberg"
 LICENSE	Copyright (c) 2026 Kristian Grönberg
 plugins/ymer/.claude-plugin/plugin.json	"name": "Kristian Grönberg"
+# The scorer's agent definition lists the node's notebook tool
+plugins/ymer/agents/scorer.md	mcp__ymer-node__notebook
 # An example value in setup's report
 plugins/ymer/skills/setup/SKILL.md	/Users/you/state
+# The setup mechanics name the notebook tool by its pattern
+plugins/ymer/skills/setup/mechanics.md	mcp__<server>__notebook
 # The eval cases assert on the child's tool names
 evals/capture-door/case.yaml	"name":"mcp__
 evals/code-review-not-run/case.yaml	"name":"mcp__
