@@ -752,7 +752,8 @@ Defined in the process contract — § Review effort.
 The operation that records one topic as blocked by another, with a reason,
 and reads the edge back. The only ordering primitive: order is partial by
 design, so most topics carry no edge and inserting work costs nothing.
-_Avoid_: prioritise, sequence, rank
+
+- _Avoid_: prioritise, sequence, rank
 
 ## P
 
@@ -761,7 +762,8 @@ One of a system's strata ordered by expected rate of change: fast layers
 (pushed by market, trends, technology) ride on slow layers whose
 durability keeps the whole safe and usable, decoupled so fast change
 never forces slow change.
-_Avoid_: shearing layer
+
+- _Avoid_: shearing layer
 
 ### payload
 The verbatim content a task's edit carries — the exact bytes a step
@@ -769,7 +771,8 @@ delivers to its target file, distinct from the addressing around it (Edit
 anchors) and the verification around it (commands, expected output). A
 payload homes in the topic folder's `payloads/` directory, whatever its
 extent; its extent is whole physical lines of the target's final state.
-_Avoid_: fragment (taken — brainstorm's mined sketch fragments), fence
+
+- _Avoid_: fragment (taken — brainstorm's mined sketch fragments), fence
 content, embedded content
 
 ### payload gate

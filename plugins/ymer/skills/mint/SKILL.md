@@ -29,6 +29,20 @@ first that fails: the node, the front, the state folder, the
 coordinator. The order is the point: each one is read only once the one
 before it holds.
 
+## Contents
+
+- First, the node
+- The front, the state folder and the coordinator
+- The way of working mint draws into
+- Nothing to draw
+- The run
+- Scoring
+- Clustering
+- The pick rule
+- Three exits, all artifact-depositing
+- `request.md`'s shape
+- The close
+
 ## First, the node
 
 The pool is the `pool` table in the notebook of the user's own Ymer
@@ -775,63 +789,39 @@ scoring showed:
 - each new defect in scoring that a `Hard to score:` entry or a
   `Check: no` names, as one drop however many entries name it.
 
-Of the notes and the check, only a defect is handed over, and the rest
-are read in the report alone: a note filed as it was written asks for
-nothing, and comes back every run. A note or a `Check: no` names a
-defect in scoring where it names a fault in what scoring runs on: the
-rubric, the scorer's prompt, or this skill's scoring steps. A note about
-what a scored drop says, about the pool's state (a near-duplicate, a
-cause already gone) or about a page with no next steps names none. Nor
-does a pass-over, or a `Check: no` whose wrong component this session
-cannot trace to such a fault, and a `yes` is never handed over. A defect
-is known where an open drop on this front, or a drop this run drew,
-carries it, and a known defect stays in the report. The neighbour search
-over the defect's own terms (`mechanics.md` § The run, step 1's
-neighbours) finds open drops alone, so read the drops this run drained
-as well. A defect that only a drop drained before this run, or another
-front's drop, carries is new: settle this before the report is written,
-so its entry can say so. The drop handed over is about the defect: its
-title names what fails in plain words, and its body carries the notes as
-evidence, with the scored drops' ids. It is never worded as a scorer's
-note or a scoring check, since capture's recurrence check matches it by
-its terms and sets its anchor as for any drop.
+Of the scorers' notes and this session's `Check:`, only a defect in
+scoring is handed over, and the rest are read in the report alone: a
+note filed as it was written asks for nothing, and comes back every run.
 
-## Remember
+- **A defect in scoring** is a fault in what scoring runs on: the rubric,
+  the scorer's prompt, or this skill's scoring steps. A note or a
+  `Check: no` that names one is handed over.
+- **Not a defect in scoring**, and never handed over:
+  - a note about what a scored drop says;
+  - a note about the pool's state, such as a near-duplicate or a cause
+    already gone;
+  - a note about a page with no next steps;
+  - a pass-over;
+  - a `Check: no` whose wrong component this session cannot trace to
+    such a fault;
+  - a `yes`.
 
-- The node first: where it is not reached, capture's door is the whole
-  answer and nothing else in this skill is read
-- Mint draws exactly one thing per run, and every exit deposits a
-  durable artifact: mint applies no diff itself and discards nothing
-- Every run scores what is new, then draws the highest-scored drop an
-  exit can take: bugs lead by their weight, and passing the top drop
-  over takes a written reason. The product's Forward direction forms
-  the pick, its neighbours and its shape, and never ranks it
-- A moot drop costs nothing until it reaches the head, and the head is
-  where mootness is handled: the walk re-verifies it, collects every
-  moot bug, idea and friction it meets before the first drop an exit
-  can take that is not one, and the friction-batch takes them as the run's one draw
-- A score's components are written once and the score is computed at
-  the draw: the weights in the ranking query's `VALUES` list
-  (`mechanics.md` § The run), the rubric in the scorer's agent
-  definition, `agents/scorer.md`, each its one home
-- The scorers' notes and this session's check are read in the close
-  report; a note reaches the pool only as a new defect in scoring
-- The coordinator is ymer where this session reaches it, else the
-  node's `tasks`, resolved once and asked never. The state folder is
-  required, and the operations contract's reading of its kind decides
-  whether the run commits or the files are the record
-- Every failure past the node names `/ymer:setup`, a front `fronts` does
-  not list included; a coordinator that is simply absent stops nothing
-- The task mint creates is the topic, created at `doing` where its work
-  starts: its description points at the artifact and never copies it
-- Cluster by root cause, never by symptom; vision drops cluster per
-  product and never ride the friction-batch
-- The area picks the Roadmap: `meta` to `Meta Roadmap`, anything else to
-  that product's, with `Meta Roadmap` excluded from the candidates. In
-  ymer a missing Roadmap halts the run and says what to create; in the
-  node the Roadmap is a derived label and nothing can be missing
-- Every run opens with a notebook backup, and the draw is *draw drops*,
-  keyed by the ids the pick chose, which the family form widens to their
-  families: drops are never deleted
-- The pool itself lives in no git tree; only the topic's folder is
-  recorded in the state folder's history
+Before the report is written, settle whether each defect is new, so its
+entry can say so:
+
+- If an open drop on this front, or a drop this run drew, carries it,
+  the defect is known: it stays in the report and is not handed over.
+- Otherwise it is new, even where a drop drained before this run, or
+  another front's drop, carries it.
+
+The neighbour search over the defect's own terms (`mechanics.md`
+§ The run, step 1's neighbours) finds open drops alone, so read the
+drops this run drained as well.
+
+The drop handed over is about the defect:
+
+- its title names what fails, in plain words;
+- its body carries the notes as evidence, with the scored drops' ids;
+- it is never worded as a scorer's note or a scoring check, since
+  capture's recurrence check matches it by its terms and sets its anchor
+  as for any drop.

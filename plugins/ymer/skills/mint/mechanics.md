@@ -6,21 +6,15 @@ calls it names, and how each harness reads the front and the state
 folder. The headings are `SKILL.md`'s own; read a section's entries at
 the moment that section runs.
 
-Contents:
+## Contents
 
-- The front, the state folder and the coordinator: Cowork's readings,
-  the home directory in a path, where the kind is read, a lapsed sign-in
-- Nothing to draw: the fronts check
-- The run: the census and the aggregates, the ranking, the candidate
-  reads, the vision cluster, the friction set, the unstarted listings,
-  the commit
-- Scoring: the unscored ids, the next-steps block, the dispatch, the
-  read-back, the fallback's bounds
-- The pick rule: the recurrence search
-- Three exits, all artifact-depositing: the task in ymer and in the
-  node, the node's Roadmap label, the learning task
-- `request.md`'s shape: the drop line and its query, the two templates,
-  writing the file
+- The front, the state folder and the coordinator
+- Nothing to draw
+- The run
+- Scoring
+- The pick rule
+- Three exits, all artifact-depositing
+- `request.md`'s shape
 
 ## The front, the state folder and the coordinator
 

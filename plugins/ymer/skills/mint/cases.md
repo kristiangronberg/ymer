@@ -5,20 +5,14 @@ wrong once, and the exact messages its halts print. The headings are
 `SKILL.md`'s own; read a section's entries at the moment that section
 runs.
 
-Contents:
+## Contents
 
-- The run: a cluster that spans fronts, an open pointer on a drained
-  anchor, a family read that finds more than the artifact quotes
-- Scoring: a page with no next steps, a block that could not be read, a
-  stray and why it is never undone, the ids left unscored, an empty
-  ranking
-- The pick rule: what the score cannot see
-- Three exits, all artifact-depositing: the two halts, the learning
-  append in the node
-- `request.md`'s shape: where Passed over lines go, an append through
-  the file, the heading count
-- The close: the `Scored:`, `Strays:`, `Unscored:`, `Hard to score:`
-  and `Check:` lines
+- The run
+- Scoring
+- The pick rule
+- Three exits, all artifact-depositing
+- `request.md`'s shape
+- The close
 
 ## The run
 
