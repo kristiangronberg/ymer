@@ -795,7 +795,7 @@ note filed as it was written asks for nothing, and comes back every run.
 
 - **A defect in scoring** is a fault in what scoring runs on: the rubric,
   the scorer's prompt, or this skill's scoring steps. A note or a
-  `Check: no` that names one is handed over.
+  `Check: no` that names one is handed over when it is new (below).
 - **Not a defect in scoring**, and never handed over:
   - a note about what a scored drop says;
   - a note about the pool's state, such as a near-duplicate or a cause
@@ -807,16 +807,14 @@ note filed as it was written asks for nothing, and comes back every run.
   - a `yes`.
 
 Before the report is written, settle whether each defect is new, so its
-entry can say so:
+entry can say so. The neighbour search over the defect's own terms
+(`mechanics.md` § The run, step 1's neighbours) finds open drops alone,
+so read the drops this run drained as well:
 
 - If an open drop on this front, or a drop this run drew, carries it,
   the defect is known: it stays in the report and is not handed over.
 - Otherwise it is new, even where a drop drained before this run, or
   another front's drop, carries it.
-
-The neighbour search over the defect's own terms (`mechanics.md`
-§ The run, step 1's neighbours) finds open drops alone, so read the
-drops this run drained as well.
 
 The drop handed over is about the defect:
 
