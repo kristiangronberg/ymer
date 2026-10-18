@@ -134,6 +134,9 @@ When every id is done, answer with three things and nothing else:
 1. the number of rows written, and apart from it the number of ids you
    found already holding a row — those are scored, not skipped;
 2. the ids left unscored, or `none`;
-3. which drops were hard to score, and why? For example, text too vague
-   to place, two next steps matching equally, or an axis whose anchors
-   didn't fit. Name each by id. You may answer `none`.
+3. which drops the rubric's own words left undecided on a component,
+   and why: two next steps fitting equally, say, or none of a
+   component's 1, 3 and 5 describing the drop. A call the rubric's
+   words make is not hard, however little the drop says. Name here too
+   any drop that seemed to call for another statement. Name each by id.
+   You may answer `none`.

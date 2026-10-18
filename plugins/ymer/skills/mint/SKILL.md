@@ -411,8 +411,10 @@ the invocation itself.
    out are named before the draw. Where the ranking holds no drop at all
    while open drops wait unscored, stop and draw nothing: a judgement
    pick over unscored drops is never the way around an empty ranking.
-   Keep each scorer's note on the drops that were hard to score: the
-   close hands it to capture.
+   Keep the last part of each scorer's answer, every drop it names with
+   its reason: the close's `Hard to score:` line carries them all as the
+   scorers gave them, and hands capture only a new defect in scoring
+   that one of them names (→ The close).
 
 **Fallback: score in this session.** Where no scorer starts, whatever
 the cause the harness gives (the Agent tool absent, a refusal at the
@@ -500,7 +502,7 @@ default, never a cage: draw something else when reading the top drop
 shows the ranking is wrong about it, weighing what the score cannot see
 (→ `cases.md` § The pick rule).
 Write the reason into the pick's `request.md`, one line per drop passed
-over (→ `request.md`'s shape), and hand it to capture at the close.
+over (→ `request.md`'s shape), and give it on the close's `Check:` line.
 
 **A drop anchored to a topic that already exists** follows one of two
 rules:
@@ -719,22 +721,32 @@ Moot:   <n> moot drops collected, under <c> causes
 Scored: <n> new drops (<n> scorers | in this session: <cause> | next steps unreadable | definition unreadable: <cause>; <cause>)
 Strays: <n> rows on ids no list held (ids <the first ten>), <d> rows deleted, <e> rows on drops captured during the run
 Unscored: <m> left out of the ranking (ids <the first ten>)
+Hard to score: <ids> — <why>; <ids> — <why> (new defect → capture)
+Check:  yes | no — #<id>: <component> was <n>, should be <m> | no — passed over #<id>: <reason>
 Next:   /brainstorm <name>
 
 Still unstarted from earlier mints:
   <other-name>   (<area>/YYYY/MM-DD-<other-name>/)
 ```
 
-Four of those lines are conditional. `Moot:` is written only where the
+Five of those lines are conditional. `Moot:` is written only where the
 walk collected moot drops. `Strays:` is written only where the
 read-back found a stray, a deletion or an excess row. `Unscored:` is
-written only where drops stayed unscored. `Scored:` also reads `0 new
-drops`, and takes a trailing `pages without next steps: <names>`
-wherever a page had no `## Next steps` heading, which is how a page
-that lost it is seen (the full values: `cases.md` § The close). A run
-that stopped on an empty ranking picks nothing and closes with
-`Scored:`, `Strays:` where it applies, `Unscored:` and the reason
-alone.
+written only where drops stayed unscored. `Hard to score:` is written
+wherever a scorer's answer named a drop, and it carries every drop a
+scorer named, whatever this session makes of the reason: this session
+sorts the entries for capture, never off the line. An entry naming a
+new defect in scoring says so (→ the capture block). `Scored:` also
+reads `0 new drops`, and takes a trailing `pages without next steps:
+<names>` wherever a page had no `## Next steps` heading, which is how a
+page that lost it is seen (the full values: `cases.md` § The close).
+`Check:` is always written: this session's own answer to "Did the
+scoring look reasonable, and would you have drawn the top drop
+yourself?" A top drop passed over is always a `no`, with its reason. A
+run that stopped on an empty ranking picks nothing and closes with
+`Scored:`, `Strays:` where it applies, `Unscored:`, `Hard to score:`
+where it applies, `Check:` and the reason alone; with no top drop
+there, its `Check:` judges the scoring alone.
 
 Naming the store on the `Topic:` and `Task:` lines is the whole report
 the reach rule owes: it tells you where to look, and makes a run
@@ -750,20 +762,39 @@ derives them, and the close is where they get read. If that list grows
 long, the length is the signal: a felt failure earns a reminder, not a
 guard.
 
-**Capture block:** invoke the `ymer:capture` skill, source `mint`. The
-battery, the drop grammar and the write live in that skill alone. Hand
-it, by name, what this run's scoring showed:
+**Capture block:** invoke the `ymer:capture` skill, source `mint`, on
+every run that reaches this close, whatever its scoring showed: the
+battery, the drop grammar and the write live in that skill alone, and
+its battery runs at every tail. Hand it, by name, what this run's
+scoring showed:
 
-- every scorer's note on the drops that were hard to score, as the
-  scorer wrote it;
 - every stray and every deletion the read-back named, with its ids,
   and the count of rows on drops captured during the run;
 - the ids left unscored, the first ten, as the `Unscored:` line names
   them;
-- this session's own answer to "Did the scoring look reasonable, and
-  would you have drawn the top drop yourself? If not, name the drop, the
-  component that looked wrong, and what it should have been." A top
-  drop passed over is always a "no", with its reason.
+- each new defect in scoring that a `Hard to score:` entry or a
+  `Check: no` names, as one drop however many entries name it.
+
+Of the notes and the check, only a defect is handed over, and the rest
+are read in the report alone: a note filed as it was written asks for
+nothing, and comes back every run. A note or a `Check: no` names a
+defect in scoring where it names a fault in what scoring runs on: the
+rubric, the scorer's prompt, or this skill's scoring steps. A note about
+what a scored drop says, about the pool's state (a near-duplicate, a
+cause already gone) or about a page with no next steps names none. Nor
+does a pass-over, or a `Check: no` whose wrong component this session
+cannot trace to such a fault, and a `yes` is never handed over. A defect
+is known where an open drop on this front, or a drop this run drew,
+carries it, and a known defect stays in the report. The neighbour search
+over the defect's own terms (`mechanics.md` § The run, step 1's
+neighbours) finds open drops alone, so read the drops this run drained
+as well. A defect that only a drop drained before this run, or another
+front's drop, carries is new: settle this before the report is written,
+so its entry can say so. The drop handed over is about the defect: its
+title names what fails in plain words, and its body carries the notes as
+evidence, with the scored drops' ids. It is never worded as a scorer's
+note or a scoring check, since capture's recurrence check matches it by
+its terms and sets its anchor as for any drop.
 
 ## Remember
 
@@ -783,6 +814,8 @@ it, by name, what this run's scoring showed:
   the draw: the weights in the ranking query's `VALUES` list
   (`mechanics.md` § The run), the rubric in the scorer's agent
   definition, `agents/scorer.md`, each its one home
+- The scorers' notes and this session's check are read in the close
+  report; a note reaches the pool only as a new defect in scoring
 - The coordinator is ymer where this session reaches it, else the
   node's `tasks`, resolved once and asked never. The state folder is
   required, and the operations contract's reading of its kind decides

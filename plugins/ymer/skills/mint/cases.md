@@ -17,7 +17,8 @@ Contents:
   append in the node
 - `request.md`'s shape: where Passed over lines go, an append through
   the file, the heading count
-- The close: the `Scored:`, `Strays:` and `Unscored:` lines
+- The close: the `Scored:`, `Strays:`, `Unscored:`, `Hard to score:`
+  and `Check:` lines
 
 ## The run
 
@@ -193,5 +194,17 @@ drops captured during the run.
 
 **`Unscored:`** is written only where drops stayed unscored: how many,
 and the first ten ids, so the reader knows this run's pick came from a
-ranking that leaves them out. A run that stopped on an empty ranking
-closes with these two lines and the reason, and picks nothing.
+ranking that leaves them out.
+
+**`Hard to score:`** carries one entry per reason the scorers gave,
+`<ids> — <why>`, the entries joined by `; ` and never capped, so the
+reader sees every note. A scorer's answer is cut into entries by its
+reasons, and scorers giving one reason share its entry. An entry whose
+defect was handed to capture as new ends `(new defect → capture)`, and
+capture's own report, printed next, gives the new drop's id.
+
+**`Check:`** is this session's answer in one of three forms: `yes`;
+`no — #<id>: <component> was <n>, should be <m>`, for a drop the
+ranking got wrong; or `no — passed over #<id>: <reason>`, for a top
+drop passed over, a pick the user named included. Several `no` entries
+are joined by `; `.
