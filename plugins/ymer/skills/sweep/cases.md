@@ -132,7 +132,7 @@ moment that section runs.
   sheets, and intake items, whose re-verifier is brainstorm (an item's
   own measurements are derived again before they size the topic). A
   claim in an evidence section that cannot be stamped moves out or is
-  dropped; write-plan's grounding is what resolves a plan's inherited
+  dropped; write-plan's grounding is what resolves a plan's upstream
   marks. Marks nobody relies on stay where they are and cost nothing. A
   consequence clause ("if wrong, X") is welcome and never required.
   The register binds new writing only: there is no sweep to mark

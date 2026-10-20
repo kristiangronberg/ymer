@@ -86,7 +86,7 @@ and is blocked exactly as a rule's paths are.
     "companionSkill": "<the coding-standards skill the plan header names, or null>",
     "glossaryPath": "docs/glossary.md"
   },
-  "decisionDigest": "<the copied spec.md sections, or omit when there is no spec>"
+  "decisionDigest": "<the copied spec.md sections, the topic's own and its parent topic's, or omit when there is no spec on either side>"
 }
 ```
 

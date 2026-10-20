@@ -35,7 +35,7 @@ topic*, *content-ownership map*, *assumptions block*,
 *discriminates-when line*, *amendment marker*, *payload*, *payload
 gate*, *payload verifier*, *gated step*, *step ID*, *plan complete*,
 *frame bar*, *workflow-internal reference*, *state store*,
-*pre-image*.
+*pre-image*, *parent topic*, *inherited records*.
 This file uses those terms and never defines them.
 
 Write the plan for an engineer who has no context for the codebase and
@@ -113,10 +113,11 @@ whether it holds `request*.md`; and, where the folder exists,
 - **Split child**, a `doing` task with no folder: create the folder
   under today's date and write `request.md` through the operations
   contract's template with `started:` today (the operations contract,
-  § The topic's artifacts), since the task already is the topic. Bind
-  the parent's direction doc, which the task's description names, in
-  the plan header (§ Plan Document Header). A split child holds no
-  `spec.md` and is owed none. On a code-repo topic its branch is born
+  § The topic's artifacts), since the task already is the topic, and
+  its `relations.md` with the `Parent:` line by the same section's
+  rule. Bind the parent topic in the plan header (§ Plan Document
+  Header). A split child that arrives here is owed no `spec.md` of its
+  own. On a code-repo topic its branch is born
   here, by the project-checkout pre-flight's own switch
   (`mechanics.md` § Input).
 - **Iteration**, a live marker naming write-plan: the marker is this
@@ -163,9 +164,10 @@ can check it.
    define phase, it is the spec this plan implements: read it first,
    its decisions and their rationale, the domain rules and edge cases,
    the out-of-scope list, and its "open questions for write-plan",
-   which the plan answers. A split child reads the parent's direction
-   doc, which the task's description names, in its place: that is the
-   brief the plan grounds in.
+   which the plan answers. Where the topic has a parent topic, read its
+   inherited records beside the spec, never in its place; where the
+   topic has no `spec.md`, they are the brief the plan grounds in (the
+   operations contract, § Inherited records).
 2. **The survey.** Where the topic directory holds a `survey.md` from
    the scout phase, read it next. It maps the relevant files, concepts,
    vocabulary and conventions, so grounding does not survey the codebase
@@ -196,7 +198,10 @@ same default, naming the phase that owns the change, a carve topic. A
 contradiction the user resolves in this session is no such stop: it is
 a plan amendment, recorded and swept as § Task Structure's amendment
 grammar says, with the spec's dated amendment line, and planning
-proceeds.
+proceeds. Where that line amends, supersedes or adds an entry of
+§ Decisions or § Out of scope, annotate each still-`doing` child this topic's `relations.md`
+lists in this session, after the sweep and before the phase's commit
+(the operations contract, § Inherited records).
 
 ## Scope Check
 
@@ -211,7 +216,10 @@ a mid-pipeline split, shed siblings), never separate plans: a topic has
 one `plan.md`. On the user's yes, shed the split children (*mint task*,
 binding: the operations contract, each read back, each sibling's task
 naming the ids of the drawn drops it takes, which this save returns),
-record the shed in the plan header, and plan the narrowed topic. Each
+record the shed in the plan header, each child's scope and fork
+among it, and each split child it sheds in
+the topic's `relations.md` (the operations contract, § The topic's
+artifacts), and plan the narrowed topic. Each
 part should produce working, testable software on its own.
 
 Before drafting a large plan, or when one balloons mid-draft, offer an
@@ -282,8 +290,8 @@ claim whose corpus the diff names is measured again first. Then
 re-verify the claims the plan relies on, since anchors and signatures
 drift between sessions. Grounding gathers only the plan-mechanical
 facts: only where no survey exists does it widen enough to find the
-files it needs to verify. The marks the inherited artifacts carry are
-resolved here too (`cases.md` § Grounding).
+files it needs to verify. The marks the upstream artifacts and the
+inherited records carry are resolved here too (`cases.md` § Grounding).
 
 **Read the process contract's § Review effort now**, unless already
 read this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`, for the
@@ -355,8 +363,9 @@ self-contained change that makes sense on its own.
 
 Every plan starts with this header. Plan-review, implement and
 code-review read some of its lines by their exact words: the companion
-line, the `**Assumptions (unverified):**` block, and the absence of any
-`Hardened —` line under the title. A bracketed line says when it is
+line, the `**Parent topic:**` line, the `**Assumptions (unverified):**`
+block, and the absence of any `Hardened —` line under the title. A
+bracketed line says when it is
 present; leave out a line whose condition does not hold.
 
 ```markdown
@@ -374,7 +383,7 @@ present; leave out a line whose condition does not hold.
 
 **Companion artifacts:** [where a companion was found: each artifact or checklist it requires, with the task that carries it or the embedded result]
 
-**Direction doc:** [a split child only: the parent's direction doc, which the task's description names]
+**Parent topic:** [a topic with a parent topic: the parent's folder as the `Parent:` line of this topic's `relations.md` names it, its inherited records read beside this plan's own (the operations contract, § Inherited records), and, where this plan is the topic's first artifact of its own, the inherited records it carries forward]
 
 **Scope:** [where Scope Check offered a worth-it assessment or a split: the recommendation, the alternative and its cost, a split recommended or the split children shed]
 

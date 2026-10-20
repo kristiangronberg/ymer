@@ -31,8 +31,8 @@ each entry by its heading: *pre-flight*, *catch-up*, *iteration*,
 *decide-forward*, *lens pass*, *change set*, *payload*, *payload gate*,
 *payload verifier*, *gated step*, *step ID*, *plan complete*, *machinery
 tree*, *shared tree*, *project checkout*, *traceability store*, *gated
-moment*, *hold*, *amendment marker*, *workflow-internal reference*. This
-file uses those terms and never defines them.
+moment*, *hold*, *amendment marker*, *workflow-internal reference*,
+*parent topic*. This file uses those terms and never defines them.
 
 The phase ends where the change is built: a commit per task on the topic
 branch, plus a machinery commit per tree wherever the session edited
@@ -264,7 +264,13 @@ The drift valve decides what happens when reality contradicts the plan.
     marker and the same-session sweep it carries. Write
     the dated amendment at the decision's home, sweep its footprint in
     this session, make the edit and go on implementing: the edit rides
-    this topic's normal review. A footprint that resists mechanical
+    this topic's normal review. For a decision inherited from a parent
+    topic, the home is this topic's own record; an amended entry of this
+    topic's own `spec.md` § Decisions or § Out of scope annotates each
+    still-`doing` child the topic's `relations.md` lists once the sweep
+    is done, since a decide-forward fires no close of its own (the
+    operations contract, § Inherited records). A footprint that resists
+    mechanical
     correction says the decision was not made: take the stop.
   - **The stop**, where the decision is open. The session ends, and the
     stop runs as a close, never an abandonment. It names the phase the

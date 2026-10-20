@@ -36,4 +36,4 @@
   discretion.
 - The literal marker `inferred:` surviving anywhere in the plan is an
   unresolved claim: flag each, and name its way out by the same
-  section's rule for inherited marks.
+  section's rule for upstream marks.

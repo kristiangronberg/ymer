@@ -16,8 +16,9 @@ otherwise create it. Scouting writes `survey.md`.
 ## Input
 
 1. Read `brainstorm.md` in the topic directory: the chosen direction and
-   its open questions are the search brief. At a split child, read the
-   parent's direction doc, which the task's description names. Do not
+   its open questions are the search brief. Where the topic has a
+   parent topic, read its inherited records beside them (the operations
+   contract, § Inherited records). Do not
    read `sketch.md` (reader contract: the operations contract, § The
    topic's artifacts).
 2. No brainstorm doc, and no direction doc named by the task's

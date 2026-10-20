@@ -17,7 +17,7 @@ export const meta = {
 //   verifierCommand : the payload verifier's command line, resolved by the host: `sh <plugin root>/scripts/payload-verify` plus one `--exempt <tree>` per machinery tree the front binds (required)
 //   promptDir       : absolute path to the directory holding this script's agent-prompt files, `<plugin root>/skills/plan-review` or a scratchpad copy of the plugin tree laid out the same way (required)
 //   facts           : the derived facts, below (required)
-//   decisionDigest  : the copied spec.md sections, or omitted when there is no spec (optional)
+//   decisionDigest  : the copied spec.md sections, the topic's own and its parent topic's, or omitted when there is no spec on either side (optional)
 //
 // `args` may arrive as a parsed object or as a JSON-encoded string; a string
 // is parsed here so that no field silently reads as `undefined`.

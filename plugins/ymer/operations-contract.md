@@ -136,8 +136,12 @@ defined in § The pool; they sit outside the failure rule below.
 **Rulings are written outward.** A phase whose close rules on another
 topic still in flight — brainstorm's and define's rulings duty —
 annotates that topic's task in the same close, through *annotate task*,
-so the work in flight never misses a ruling made about it. A ruling on
-anything else writes nothing outward.
+so the work in flight never misses a ruling made about it. A parent
+topic's change to a decision its children inherit is such a ruling,
+whichever phase makes it, and so is a child's override that touches a
+parent still in flight; each is written when its amendment is, a
+decide-forward that fires no close included (→ Inherited records). A
+ruling on anything else writes nothing outward.
 
 A *mint task*'s description opens with a plain-worded statement of the
 work, in words that survive without the session's jargon, and its
@@ -187,8 +191,9 @@ session whose only shell over it is a remote device's, is refused by
 setup's state-folder check, so no phase meets it.
 
 The names are fixed, one artifact per name:
-`request.md`, `sketch.md`, `brainstorm.md`, `survey.md`, `spec.md`,
-`plan.md` with its `payloads/`, `implemented.md`, `review.md`. Nothing
+`request.md`, `relations.md`, `sketch.md`, `brainstorm.md`, `survey.md`,
+`spec.md`, `plan.md` with its `payloads/`, `implemented.md`,
+`review.md`. Nothing
 ever moves between them and no phase creates a sibling file: an artifact
 is rewritten in place, and its **pre-image**, its state before the
 newest in-place rewrite (term: the plugin glossary), is the store's.
@@ -252,6 +257,34 @@ topic's first phase opens; a split child's by its first phase, from the
 task's description. A phase that finds one already written writes no
 other.
 
+**`relations.md`** records the topic's place among other topics: its
+parent topic, and the children it split off at whichever phase. Only
+this topic's own phases write it, and only by appending; a topic with
+no relation has none:
+
+```markdown
+# <topic name> — relations
+
+Parent: <repo>/YYYY/MM-DD-<parent topic>/
+
+- `<child slug>` · task <id> · fork: <fork> · <scope> · decided in <artifact> § <section>
+```
+
+- **The `Parent:` line**, at most one, names the parent topic's folder
+  relative to the state folder, the trailing slash kept (→ Topic ID ↔
+  folder mapping). A split child's first phase writes it, whichever
+  phase that is, from the parent topic's folder its task's description
+  names. Brainstorm writes a drawn topic's where it finds one (the
+  brainstorm skill, § Drawn-topic Intake).
+- **A child line** for each child the topic split off. The splitting
+  close writes it once the child's *mint task* reads back, naming the
+  section of the deciding artifact that made the split, which keeps the
+  why. An entry phase, where one is named, rides at the end of the
+  `<scope>` text, advisory only.
+
+Children of one parent are read from the parent's file, never listed in
+each other's.
+
 ## Split topics
 
 A topic that turns out to be several units of work splits into sibling
@@ -265,32 +298,110 @@ composes entirely from the operations above:
   day. No folders are created at the split; each child's first phase
   creates its folder lazily, as always. Children default to
   `<parent-slug>-<part>` names; a sharper standalone name is allowed. The
-  parent brainstorm's child list is authoritative — the name prefix is a
-  convenience, not the join mechanism — and children link back to the
-  parent's `brainstorm.md` as their direction doc.
-  The child's mint description names both that direction doc and the
-  parent's decision record — `spec.md`, where one exists, whose
-  D-numbers are what "the parent's decision N" quotes — and carries the
-  child's **fork**: the one decision its own brainstorm still makes, or
-  "none — narrow and go" (the brainstorm skill's child list is where the
-  fork is authored). An entry phase, where one is named, is advisory,
-  never state: the entry ladder is the invoker's read at pick-up.
+  parent's `relations.md` lists each child and is authoritative — the
+  name prefix is a convenience, not the join mechanism — and children
+  link back to the parent's `brainstorm.md` as their direction doc.
+  The child's mint description names the splitting topic's folder and,
+  where it has one, its own `brainstorm.md`, never a direction doc it
+  borrows, and carries the child's scope and **fork**: the one decision
+  its own brainstorm still makes, or "none — narrow and go", as the
+  deciding artifact states it; the child's line in the parent's
+  `relations.md` copies them once the mint reads back. An entry phase,
+  where the line's scope names one, is advisory, never state: the entry ladder is the invoker's read
+  at pick-up. What a child reads of its parent is § Inherited records'.
 - **Parent closure.** In the common case (split at brainstorm close) the
   parent's own task closes — *retire topic*, its result naming
   the children — and the parent folder closes with its consolidated
-  `brainstorm.md` naming them too. Splitting is a closure cause beside
-  shipping and "not pursuing": a split parent ends as a folder with a
-  retired task and without a `review.md` ship section — "shipped iff
-  `review.md` carries a ship section" reads on ordinary topics, never on
-  split parents.
+  `brainstorm.md` and its `relations.md` naming them too. Splitting is
+  a closure cause beside shipping and "not pursuing": a split parent
+  ends as a folder with a retired task and without a `review.md` ship
+  section — "shipped iff `review.md` carries a ship section" reads on
+  ordinary topics, never on split parents.
 - **Mid-pipeline split — shed siblings.** A topic that discovers at a
   later phase that it is too big keeps its task, folder, and branch,
   narrows its scope, and mints sibling tasks at `doing` for the shed
   parts (same mint move, split-day dates); the splitting phase's artifact
-  records the shed, and the siblings link back for direction context.
+  records why, the topic's `relations.md` lists each child it shed, and
+  each such child links back for direction context.
   Full dissolve — *retire topic* on the parent, mint all children, close
   the folder like a parent — stays for the rare case where the original
   name no longer names anything coherent.
+
+## Inherited records
+
+A topic's **parent topic** (term: the plugin glossary) is the one
+named by the `Parent:` line of its `relations.md` (→ The topic's
+artifacts). Every phase reads the parent from that line and never
+judges it again. A topic with no such line has no parent, and nothing
+in this section applies to it.
+
+**The inherited records** are the parent topic's `relations.md`, its
+own `brainstorm.md` where it has one, never a direction doc it borrows
+from its own parent, its `spec.md` § Decisions and § Out of scope
+where one exists, and the carry-forward list in its first artifact's
+opening (→ One level, carried forward, below). The parent's `survey.md`
+and `plan.md` stay out, a carry-forward list in its plan header
+excepted: they are its own measurements and mechanics as of the split,
+stale for the child.
+
+**The read.** Wherever a phase reads the topic's own direction doc or
+`spec.md`, it reads the inherited records beside them, as settled:
+beside the topic's own, never in their place. A decision of this
+topic's that contradicts an inherited one is an iteration on this
+topic, never a silent override.
+
+**One level, carried forward.** A topic reads its own parent topic's
+records, never its grandparent's. The first of `brainstorm.md`,
+`spec.md` and `plan.md` it writes lists the inherited records it
+carries forward, its overrides left out, in that artifact's opening,
+beside the parent it binds, so its own children inherit them through
+it. A re-plan rewrites the list with the plan, and an override
+strikes the decision it overrides from the list, the amendment marker
+beside it.
+
+**An override is this topic's record.** It binds the topic that made
+it, and lands in that topic's own artifacts:
+
+- An iteration that routes the topic to a phase whose artifact it does
+  not have yet makes it write its first one: `brainstorm.md` at
+  brainstorm, opened with a split child's doc's opening alone, or
+  `spec.md` at define. Only the first artifact carries the
+  carry-forward list; a later one points at it.
+- A decide-forward, or a plan-review ruling, on an inherited decision
+  is amended in the topic's `spec.md` where one exists, as a new
+  decision entry citing the decision it overrides and carrying the
+  amendment marker; otherwise in its `plan.md`, at the header line that
+  binds the parent, in the plan's marker grammar.
+
+An override cites the inherited decision by the parent's own handle:
+`D<n>` for a decision in its `spec.md`, the direction doc's `Q<n>`
+where the verdict carries one, or else the verdict's sentence quoted
+with its section heading.
+
+**The parent's records are never written** by a topic that inherits
+them, whether the parent is closed or in flight: a closed topic stays
+the record it closed as. Two writes reach past the topic instead:
+
+- A parent still in flight that an override touches is annotated
+  when the override is written (→ Rulings are written outward).
+- Where an override shows a parent decision wrong beyond this topic,
+  the session that writes the override hands it to its next capture
+  block as a drop, a decide-forward's included, so a later topic
+  naming the same parent meets it in the pool. No phase scans the
+  parent's other children for overrides.
+
+**A parent's change reaches its children.** An amendment,
+supersession or addition of an entry in a topic's `spec.md`
+§ Decisions or § Out of scope, an override's new entry among them,
+and a strike from its carry-forward list, annotates each child its
+`relations.md` lists whose task is still `doing`, the amendment as the
+evidence (*annotate task*): a write-plan amendment, a plan-review
+ruling, a decide-forward at implement or review, and a re-define
+alike. The annotation is written when the amendment is,
+after its footprint sweep and before the state-folder commit where the
+phase has one; a decide-forward, which fires no close, annotates at
+that point. A child reads its parent live, and would see the new text
+without seeing that it changed.
 
 ## Topic ID ↔ folder mapping
 

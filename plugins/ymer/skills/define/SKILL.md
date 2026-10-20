@@ -32,7 +32,8 @@ topic*, *split child*, *direction doc*, *iteration*, *pending
 interview*, *unattended*, *hold*, *referent gate*,
 *redefinition-in-flight marker*, *historical entry*, *amendment
 marker*, *glossary delta*, *decide-forward*, *meta topic*, *machinery
-tree*, *sweep artifact*, *as-of*, *inferred claim*.
+tree*, *sweep artifact*, *as-of*, *inferred claim*, *parent topic*,
+*inherited records*.
 This file uses those terms and never defines them.
 
 The topic run goes in order: resolve the topic and read its arrival,
@@ -109,12 +110,16 @@ whether it holds `request*.md`; and, where the folder exists,
 - **Split child**, a `doing` task with no folder: create the folder
   under today's date and write `request.md` through the operations
   contract's template with `started:` today (the operations contract,
-  § The topic's artifacts), since the task already is the topic. Bind
-  the parent's direction doc, which the task's description names, in
-  `spec.md`'s opening paragraph.
+  § The topic's artifacts), since the task already is the topic, and
+  its `relations.md` with the `Parent:` line by the same section's
+  rule. Bind the parent topic in `spec.md`'s opening paragraph, with
+  the inherited records it carries forward (the operations contract,
+  § Inherited records).
 - **Iteration**, a live marker naming define: step 1's read order
   applies, the pass is recorded under § The Spec's re-define header or
-  amendment marker, and the close, a pending close included, appends
+  amendment marker, or, on a topic with no `spec.md` yet, in its first,
+  never in its parent's (the operations contract, § Inherited records),
+  and the close, a pending close included, appends
   `Consumed — <YYYY-MM-DD> by define` to the marker's block as its last
   write before the phase's commit.
 - **A live marker naming another phase**: stop and name that phase.
@@ -133,8 +138,9 @@ whether it holds `request*.md`; and, where the folder exists,
 Then the material, in this order:
 
 1. Read `brainstorm.md` in the topic directory: the chosen direction
-   and its open questions. At a split child, read the parent's direction
-   doc, which the task's description names. On an iteration, read
+   and its open questions. Where the topic has a parent topic, read its
+   inherited records beside them (the operations contract, § Inherited
+   records). On an iteration, read
    `review.md` first: the marker's finding, and the entries below it,
    head the question list.
 2. Read `survey.md`: what exists, the vocabulary in use, flagged

@@ -367,7 +367,9 @@ the state store's: git's phase commits where git tracks the state
 folder, the `pre-image/` slot where it does not. Sibling files
 (`plan-2.md`) never come into existence. The `pre-image/` slot is no
 artifact, and no reader takes it for the live file: every phase writes
-one file named after itself, and no reader ever has to work out which
+one artifact named after itself, beside the files no phase is named
+for: `request.md` and `relations.md`, which no one phase owns, and
+brainstorm's verbatim `sketch.md`. No reader ever has to work out which
 one is live.
 
 **The subject is the delta since the last reviewed state.** The count of

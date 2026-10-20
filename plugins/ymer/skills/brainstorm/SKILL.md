@@ -31,8 +31,8 @@ each entry by its heading: *direction doc*, *topic resolution*,
 story*, *pending interview*, *unattended*, *settle signal*, *pre-image*,
 *convergence beat*, *reframe*, *product alignment*, *prerequisite
 check*, *operator bar*, *blocking gap*, *falling-behind gap*,
-*enrichment gap*, *sweep artifact*, *machinery tree*. This file uses
-those terms and never defines them.
+*enrichment gap*, *sweep artifact*, *machinery tree*, *parent topic*,
+*inherited records*. This file uses those terms and never defines them.
 
 The session runs in order: resolve the topic and read its arrival, take
 in whatever came with it (a drawn topic's `request.md`, a sketch branch,
@@ -169,8 +169,8 @@ else.
 | Arrival | Recognized by | First action | Announcement |
 |---|---|---|---|
 | Drawn topic | a `doing` task whose folder holds only mint's `request.md`, or no task and a matching topic directory with no live marker on top of `review.md` and no `Interview pending —` marker at the head of `brainstorm.md` or `spec.md` | Take the intake in with no extra question (→ Drawn-topic Intake). Reuse the directory; nothing moves, and the topic keeps mint's date. | drawn topic, its `request.md` from mint |
-| Split child | a `doing` task with no folder | Read the child's fork in the parent's child-list entry and say in one line which it is, naming, on a real fork, the deciding fact about to be probed. Then write the child's folder and doc (→ The split child's doc). No question, no *mint task*. | split child of `<parent>` |
-| Iteration | a live marker naming brainstorm on top of `review.md` | The marker is the brief: read `review.md` first, the finding and the entries below it, then rewrite `brainstorm.md` in place, never a second doc. The close, a pending close included, appends `Consumed — <YYYY-MM-DD> by brainstorm` to the marker's block. On a code-repo topic the branch carries the reviewed increment, not a sketch: run the record-names-it test over `git log main..HEAD` (the write-plan skill, § Input; the implement skill, § Readiness Gate). Where every commit is one the record names, neither branch intake nor the reset hand-off runs. Commits the record does not name are a sketch on top: branch intake records those alone, and the reset floor is the newest record-named commit, not main. | iteration, marker of `<date>` |
+| Split child | a `doing` task with no folder | Read the child's fork in its task's description, which its line in the parent's `relations.md` copies, and say in one line which it is, naming, on a real fork, the deciding fact about to be probed. Then write the child's folder and doc (→ The split child's doc). No question, no *mint task*. | split child of `<parent>` |
+| Iteration | a live marker naming brainstorm on top of `review.md` | The marker is the brief: read `review.md` first, the finding and the entries below it, then rewrite `brainstorm.md` in place, never a second doc. A topic with no `brainstorm.md` yet, a split child that entered past brainstorm, writes its first instead, opened with a split child's doc's opening items (→ The split child's doc: its opening alone, the folder and its files already standing), its carry-forward item pointing at the list its first artifact already holds rather than writing a second, runs the session as any iteration does, never as narrow-and-go, and never writes its parent's (the operations contract, § Inherited records). The close, a pending close included, appends `Consumed — <YYYY-MM-DD> by brainstorm` to the marker's block. On a code-repo topic the branch carries the reviewed increment, not a sketch: run the record-names-it test over `git log main..HEAD` (the write-plan skill, § Input; the implement skill, § Readiness Gate). Where every commit is one the record names, neither branch intake nor the reset hand-off runs. Commits the record does not name are a sketch on top: branch intake records those alone, and the reset floor is the newest record-named commit, not main. | iteration, marker of `<date>` |
 | Another phase's marker | a live marker naming another phase on top of `review.md`, or the `Interview pending —` marker at the head of `spec.md` | Stop and name that phase, its command written out: `/ymer:define <topic>` for the marker on `spec.md`. | none: the session stops |
 | Pending interview | the `Interview pending —` marker at the head of `brainstorm.md`, whatever the task's status (a close torn before its mint leaves it so, and `mechanics.md` § Commit the Artifacts, Then Reset, step 1 then mints the task as usual) | Resume the interview at the first unanswered prepared question, with no extend-or-abort question: the prepared questions are the agenda, and more may join them. The resume's rules are the interview procedure's (§ 4. Pending). Where `review.md` is topped by a marker naming brainstorm, live or consumed by this interview's own pending close (its block holds the `Consumed — … by brainstorm` line that close appended), the topic is an iteration and the iteration row's branch rule holds too. | pending interview of `<date>`, `<n>` questions |
 | In flight | a `doing` task whose folder holds more than mint's `request.md`, with no live marker and no `Interview pending —` marker at either head | Ask: extend the existing `brainstorm.md` in its directory, or abort, since the topic may want a different phase. Only the user knows whether the recorded direction is to be extended. | none: the question comes first |
@@ -186,12 +186,16 @@ and a sketch branch say, the drawn topic's announcement reads
 Create the folder under today's date and
 write `request.md` from the task's description through the operations
 contract's template (the operations contract, § The topic's artifacts),
-with `started:` today: the task already is the topic. Then write the
-child's own `brainstorm.md`, narrowing the parent's direction doc, which
-the task's description names. It opens with four things: the parent
-link as a relative path, worded "split child of"; the parent's
-child-list entry, which is this child's scope; the inherited verdicts
-it narrows (discarded options, the reframe verdict); and the task's id
+with `started:` today: the task already is the topic. Write the child's
+`relations.md` with its `Parent:` line, by the same section's rule.
+Then write the child's own `brainstorm.md`, narrowing the parent's
+direction doc. It opens with four things: the parent link as a relative
+path, worded "split child of"; the child's line in the parent's
+`relations.md`, which is this child's scope; the inherited records it
+narrows and carries forward (discarded options and the reframe verdict
+among them), leaving out each it overrides and citing that override by
+the parent's own handle (the operations contract, § Inherited
+records); and the task's id
 with its project and status. No sentence says why this phase runs: the
 file's existence says it. On "none — narrow and go" the doc is written
 straight in its consolidated shape, the shape the consolidated-sections
@@ -225,6 +229,21 @@ comes from.
    `request.md` stays in the topic directory, the direction doc records
    the decision, and the task closes as cancelled, the why in its result
    (*retire topic*, binding: the operations contract).
+4. Judge once whether the topic has a parent topic: it does where the
+   intake's scope is another topic's settled decisions, and not where
+   that topic is prior art, a neighbour, or only a drop's origin, which
+   a drawn intake cites routinely. Where it does, read the parent's
+   inherited records as settled from here on (the operations contract,
+   § Inherited records), and write this topic's `relations.md` with its
+   `Parent:` line (the operations contract, § The topic's artifacts) in
+   the same step that first writes `brainstorm.md`, the scratch doc's
+   start or a pending close's marker, so the folder never holds
+   `request.md` and `relations.md` alone; a session that stops before
+   then judges again from `request.md`. The consolidated `brainstorm.md`
+   opens with the parent link and the inherited records it carries
+   forward, overrides left out, each cited by the parent's own handle.
+   Later phases read the parent from the `Parent:` line and never judge
+   it again.
 
 ## Branch Intake
 
@@ -497,12 +516,14 @@ rewrite, their answered questions landing in the sections below:
 - What the direction makes unnecessary: removals, retired tokens,
   simplifications it unlocks downstream. A direction that removes
   nothing says so in one line
-- On a split: the child list, one line per child, each with its default
-  name `<parent-slug>-<part>`, the direction settled for it, its
-  **fork** (the one decision its own brainstorm still makes, or "none —
-  narrow and go") and its intended order. An entry phase may be named
-  (the list's standing, the mint move and what each child's mint
-  description names: the operations contract, § Split topics)
+- On a split: why the topic splits, and for each child the direction
+  settled for it, its fork and its intended order. The topic's `relations.md`
+  carries the list itself, one line per child written at the close:
+  its default name `<parent-slug>-<part>`, its scope and its **fork**
+  (the one decision its own brainstorm still makes, or "none — narrow
+  and go"). An entry phase may be named in its scope (the line's
+  grammar: the operations contract, § The topic's artifacts; the mint
+  move and what each child's mint description names: § Split topics)
 - Mined sketch fragments that carry the idea (the full verbatim record
   lives in `sketch.md`)
 - Optional: a verified-state section for measurements the session ran,
@@ -619,7 +640,8 @@ skill alone.
 
 Stop. Report the topic directory and its task. On a split, report each
 child's task with its literal next command, `/ymer:define <child-slug>`
-or the phase the child's entry names, its folder created at that phase.
+or the entry phase its line in the topic's `relations.md` names, its
+folder created at that phase.
 
 Then name the next phase, in a fresh session (the process contract,
 § The map): normally **define**, which runs scout itself when no survey

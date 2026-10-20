@@ -247,7 +247,11 @@ use). A topic still `doing` that the interview ruled on (scoping or
 narrowing it, falsifying a claim it carries, or affirming it with
 re-measured evidence) is annotated here, the ruling as the evidence
 (*annotate task*, binding: the operations contract); `spec.md` names
-the task and what the annotation carried. A ruling on anything else
+the task and what the annotation carried. Where this define amends,
+supersedes or adds an entry of its own `spec.md` § Decisions or § Out of
+scope, each still-`doing` child this topic's `relations.md` lists is
+annotated here too, and named in `spec.md` the same way (the
+operations contract, § Inherited records). A ruling on anything else
 writes nothing outward, and neither does a bare citation with no
 ruling; the topic's own task is never a case. An operation whose
 required outcome did not land stops the close (the failure rule: the

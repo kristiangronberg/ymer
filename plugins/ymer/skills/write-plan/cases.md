@@ -7,7 +7,7 @@ entries at the moment that section runs.
 ## Contents
 
 - Scope Check: an alternative rejected as unprobed
-- Grounding: the decomposition sketch, a deferred glossary term, the claim classes, inherited `inferred:` marks, measured, never typed, gates as sweeps, a corpus that reaches the plan's Creates
+- Grounding: the decomposition sketch, a deferred glossary term, the claim classes, upstream `inferred:` marks, measured, never typed, gates as sweeps, a corpus that reaches the plan's Creates
 - File Structure: every address locates by content
 - Task Structure: step IDs, a derived red, the counting unit, a stamped premise, the amendment's footprint recipe
 - Payloads: formatter-clean final state, disjoint payloads, closed files, the closer rule, re-running every gate
@@ -103,12 +103,18 @@ under the contract):
    absences stamped this way feed forward, into plan-review's
    "pre-verified facts — do not re-flag" list among other places.
 
-**Inherited `inferred:` marks.** Upstream artifacts arrive marked:
-sweep the inherited artifacts (`brainstorm.md`, `survey.md`, `spec.md`)
-for the literal marker (`grep -rn -F 'inferred:'` over the topic
-folder) and resolve every mark the plan relies on, probed to a fresh
-stamp where it can be checked, moved into the assumptions block with
-its impact-if-false where it cannot. A fan-out fact sheet is never on
+**Upstream `inferred:` marks.** Upstream artifacts arrive marked:
+sweep the topic's own (`brainstorm.md`, `survey.md`, `spec.md`) for
+the literal marker (`grep -rn -F 'inferred:'` over the topic folder),
+and, on a topic with a parent topic, the inherited records the plan
+relies on (the same grep over each of those files). Resolve every mark
+the plan relies on in the plan, probed to a fresh stamp where it can be
+checked, moved into the assumptions block with its impact-if-false
+where it cannot; the parent's files stay untouched. A probe that
+falsifies a premise an inherited decision rests on is an iteration on
+this topic, recorded in its own artifacts, with a drop where it reaches
+beyond this topic (the operations contract, § Inherited records). A
+fan-out fact sheet is never on
 disk, so this grep cannot see it: it is resolved at synthesis
 (`mechanics.md` § Grounding). Marks the plan does not rely on stay
 where they are. The plan is a terminal surface, so an `inferred:` left

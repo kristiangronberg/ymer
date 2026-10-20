@@ -125,8 +125,10 @@ and 2 still run.
      falling-behind gap is captured as a learning drop through the
      `ymer:capture` skill, source `brainstorm`.
    - **A split.** Where the settled direction splits the topic, run the
-     split's moves from the doc's child list (the operations contract,
-     § Split topics); no child folder is created now. Where the topic's
+     split's moves (the operations contract, § Split topics), and write
+     each child's line into the topic's `relations.md` once its task
+     reads back (the operations contract, § The topic's artifacts); no
+     child folder is created now. Where the topic's
      slug already names one of the children, shed siblings instead of
      retiring: the task and folder stay that child's, and the others are
      minted (the operations contract, § Split topics, the mid-pipeline

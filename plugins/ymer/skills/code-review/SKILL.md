@@ -33,7 +33,8 @@ now**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/glossary.md`, each entry by its heading: *lens*,
 *lens pass*, *lens applicability*, *change set*, *payload*, *effort
 ladder*, *tier*, *risk profile*, *iteration*, *machinery tree*, *shared
-tree*. This file uses those terms and never defines them.
+tree*, *parent topic*, *inherited records*. This file uses those terms
+and never defines them.
 
 The run goes in order: read the subject and the record, key the tier,
 call the built-in once per tree, run the lenses while it works, merge
@@ -77,9 +78,12 @@ skill's § The Close names. Neither is ever reported as a clean review.
 
 **The record.** Read the topic's `spec.md` and `plan.md` whole, and on
 an iteration `review.md`'s earlier dispositions: they are what the
-merge holds every finding against (→ The merge). A topic that entered
-at write-plan has no `spec.md`; a run with no topic has neither, and
-then nothing is held as settled. Run on its own, the topic is the one
+merge holds every finding against (→ The merge). Where the plan header
+carries a `**Parent topic:**` line, the parent's inherited records are
+held as settled beside them (the operations contract, § Inherited
+records). A topic that entered at write-plan may have no `spec.md` of
+its own, and only a run with no topic holds nothing as settled. Run
+on its own, the topic is the one
 the current branch names, found through its task (*look up topic*,
 binding: the operations contract); for that lookup, **read the
 operations contract whole now**, unless already read this session:
@@ -275,8 +279,10 @@ every lens has run, merge their findings:
   gave none, assign one from the finding's text (correctness, reuse,
   simplification, efficiency, altitude, conventions) before the sort.
 - **Held against the record.** Check every finding, the built-in's and
-  the lenses' alike, against `spec.md` and `plan.md` read whole and, on
-  an iteration, `review.md`'s earlier dispositions. A finding that
+  the lenses' alike, against `spec.md` and `plan.md` read whole, the
+  parent's inherited records where the plan header names a parent topic
+  (→ The record), and, on an iteration, `review.md`'s earlier
+  dispositions. A finding that
   contradicts what the record settles (a decision, an amendment, a
   design decision, an accepted gap) without arguing why the settlement
   is wrong is dropped as settled, naming where it is settled. One that

@@ -248,7 +248,8 @@ _Avoid_: push-forward
 
 ### decision digest
 The record of already-settled decisions that plan-review's agents receive
-inline, extracted mechanically from named sections of `spec.md`, copied whole
+inline, extracted mechanically from named sections of `spec.md`, the
+topic's own and, for a topic with a parent topic, the parent's, copied whole
 and verbatim, amendments in place. Its rule travels with it — contradicting a
 settled decision requires arguing why the decision is wrong, otherwise the
 contradiction is not reported.
@@ -266,8 +267,10 @@ never a terminal state.
 The artifact a topic's direction is read from: the topic's own
 `brainstorm.md` — deliberately neither a spec (define sharpens meaning)
 nor a plan (write-plan owns implementation shape) — or, for a split
-child before it writes one, the parent's (the operations contract
-§ Split topics).
+child before it writes one, the parent's own `brainstorm.md` where it
+has one (the operations contract § Split topics). What a child reads of its parent, a parent's borrowed
+direction doc never among it, is the operations contract's § Inherited
+records.
 _Avoid_: direction document, parent doc
 
 ### direction value
@@ -562,6 +565,12 @@ register under a fresh stamp. Home: the sweep skill's Claims section.
 _Avoid_: assumption (the genuinely-uncheckable state, write-plan's
 block), surmise
 
+### inherited records
+Defined in the operations contract — its "Inherited records" section is
+the home.
+_Avoid_: parent record, standing decisions, inherited artifacts (for a
+topic's own upstream artifacts: say upstream)
+
 ### instrumental
 A product stance: the artifact is a means — the user's goal lies beyond
 it, and the product succeeds by getting out of the way. The default
@@ -764,6 +773,12 @@ durability keeps the whole safe and usable, decoupled so fast change
 never forces slow change.
 
 - _Avoid_: shearing layer
+
+### parent topic
+The topic whose settled decisions another topic carries out a share of,
+named in that topic's `relations.md`: always a split child's, and a
+drawn topic's where brainstorm names one.
+_Avoid_: source topic
 
 ### payload
 The verbatim content a task's edit carries — the exact bytes a step

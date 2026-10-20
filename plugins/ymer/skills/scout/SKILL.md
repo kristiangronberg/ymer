@@ -26,8 +26,8 @@ first line, and those entries are read when the section runs.
 unless already read this session: `${CLAUDE_PLUGIN_ROOT}/glossary.md`,
 each entry by its heading: *topic resolution*, *arrival*, *drawn
 topic*, *split child*, *direction doc*, *pending interview*,
-*iteration*, *sweep artifact*, *machinery tree*. This file uses those
-terms and never defines them.
+*iteration*, *sweep artifact*, *machinery tree*, *parent topic*,
+*inherited records*. This file uses those terms and never defines them.
 
 **Announce at start:** "I'm using the scout skill to survey the
 codebase for this topic." Repo-specific preferences in a repo's
@@ -76,9 +76,11 @@ they land on decides the opening, in brainstorm's order:
 - **Split child**, a `doing` task with no folder: create the folder
   under today's date and write `request.md` through the operations
   contract's template with `started:` today (the operations contract,
-  § The topic's artifacts), since the task already is the topic. Bind
-  the parent's direction doc, which the task's description names, in
-  the map's first paragraph, and survey.
+  § The topic's artifacts), since the task already is the topic, and
+  its `relations.md` with the `Parent:` line by the same section's
+  rule. Bind the parent topic in the map's first paragraph, its
+  inherited records read beside the brief (the operations contract,
+  § Inherited records), and survey.
 - **Iteration**, a live marker on top of `review.md`: it names the phase
   the topic re-enters at, and no route names scout. Stop and name that
   phase.

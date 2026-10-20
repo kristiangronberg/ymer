@@ -27,8 +27,8 @@ unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/glossary.md`, each entry by its heading: *review*,
 *lens pass*, *walkthrough*, *stop*, *fitness question*, *head-scratch
 test*, *facilitator*, *iteration*, *decide-forward*, *ship*, *wait*,
-*re-green*, *change set*, *machinery tree*. This file uses those terms
-and never defines them.
+*re-green*, *change set*, *machinery tree*, *parent topic*. This file
+uses those terms and never defines them.
 
 Three movements, then a question and a close. The **lens pass**
 (code-review with `--fix` over the diff) normally ran at implement's
@@ -418,11 +418,16 @@ the code, never picks from a taxonomy. Five outcomes:
   at the code. The edit stands, and the facilitator writes the dated
   amendment into the artifact that owns the statement: the decision's
   entry in `spec.md` (define § The Spec) or its home site in `plan.md`
-  (write-plan § Task Structure). **Amendment first, sweep, line
+  (write-plan § Task Structure), this topic's own for a decision
+  inherited from a parent topic (the operations contract, § Inherited
+  records). **Amendment first, sweep, line
   after**: the amendment is written, its footprint is swept at once
   over `plan.md` and `spec.md` per the sweep skill, ahead of any
   machinery commit, and only then does the disposition line assert that
-  the amendment exists; it never promises one. The `payloads/` files
+  the amendment exists; it never promises one. An amended entry of this
+  topic's own `spec.md` § Decisions or § Out of scope annotates each
+  still-`doing` child this topic's `relations.md` lists once the sweep
+  is done (the operations contract, § Inherited records). The `payloads/` files
   are left as they are: they are the record of what implement applied,
   and their writers are write-plan, plan-review and implement's drift
   valve (the process contract, § The payload contract). This outcome

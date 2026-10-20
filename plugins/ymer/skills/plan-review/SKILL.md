@@ -36,8 +36,8 @@ now**, unless already read this session:
 *effort ladder*, *risk profile*, *orchestration floor*, *rewrite
 author*, *payload*, *payload verifier*, *amendment marker*,
 *iteration*, *gated moment*, *workflow-internal reference*,
-*content-ownership map*, *machinery tree*. This file uses those terms
-and never defines them.
+*content-ownership map*, *machinery tree*, *parent topic*, *inherited
+records*. This file uses those terms and never defines them.
 
 Plan-review is the default next step after write-plan saves a plan: run
 it on the freshly saved plan without being asked, unless the user said
@@ -201,7 +201,12 @@ prompts, so add neither here. Never the plan's own decisions:
 code-review reviews the diff against the plan, so the plan's decisions
 are settled for it, but this skill reviews the plan, and feeding its
 decisions back as settled would turn an adversarial pass into a
-consistency check. No `spec.md`, no digest.
+consistency check. Where the plan header carries a `**Parent topic:**`
+line, copy the parent's `spec.md` sections the same way, beside the
+topic's own, each under a citation naming the parent's file
+(`<parent folder>spec.md § <section>`): they are inherited records,
+settled for this plan (the operations contract, § Inherited records).
+No `spec.md` on either side, no digest.
 
 **The tier.** A lens survives when it declares no `requires`, or when
 the fact its `requires` names is true. Report the surviving roster and
@@ -464,7 +469,13 @@ the ruling changes a decision of the topic's `spec.md`, **read the
 define skill's § The Spec now**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/skills/define/SKILL.md`, for the spec's dated
 amendment line, and land it under that decision in this session, for
-the reason write-plan's recipe gives.
+the reason write-plan's recipe gives. A ruling that keeps the plan's
+departure from an inherited decision is an override, homed in this
+topic's own record (the operations contract, § Inherited records); one
+landing in `spec.md` takes the define read above as a changed decision
+does. Where the changed decision is an entry of § Decisions or § Out of
+scope, annotate each still-`doing` child the topic's `relations.md` lists in this session too, before the
+relay's commit (the operations contract, § Inherited records).
 
 **A *needs a define session* ruling closes the phase at define
 instead.** Before writing it, **read the review skill's § Iterate —
