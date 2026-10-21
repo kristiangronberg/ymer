@@ -750,6 +750,10 @@ subagent dispatch.
     vocabulary, so neither reading habit substitutes for the grep.
 12. **Companion artifacts.** Every artifact the header's companion
     list names has the task that carries it, or its embedded result.
+13. **Gated writes after their go-ahead.** Every step whose write a
+    hold or the front's instructions gate comes after the step that
+    obtains the go-ahead covering it. A write ordered ahead of its
+    go-ahead is a plan failure; reorder the steps.
 
 Fix what you find inline; there is no second review. A spec
 requirement with no task gets one.

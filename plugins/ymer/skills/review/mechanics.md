@@ -256,7 +256,9 @@ pre-executed fix commits stay on the fixes line, their one store.
    topic has no squash ref, and one that made no machinery diff carries
    no refs line at all.
 4. **Close the topic's task** (*ship topic*, binding: the operations
-   contract): closed as completed, its result naming the topic ID. The
+   contract): closed as completed, its result naming the topic ID,
+   copied from the topic folder's name (the operations contract, § Topic
+   ID ↔ folder mapping), never composed from the ship date. The
    call's return carries the task's status after it: read that. A
    required outcome that did not happen stops the boundary, never
    skipped silently.

@@ -83,7 +83,8 @@ they land on decides the opening, in brainstorm's order:
   § Inherited records), and survey.
 - **Iteration**, a live marker on top of `review.md`: it names the phase
   the topic re-enters at, and no route names scout. Stop and name that
-  phase.
+  phase, unless that phase invoked scout in this session: define's
+  fused call proceeds (→ `cases.md` § Input).
 - **Another phase's marker, or a pending interview**: the
   `Interview pending —` marker at the head of `brainstorm.md` or
   `spec.md` names its artifact's phase the same way. Stop and name it,

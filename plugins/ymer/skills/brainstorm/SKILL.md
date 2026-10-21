@@ -311,7 +311,9 @@ these two.
   verified evidence arrives behind the framing rather than as it. A win
   the user has to ask for is the scope cut or the placement question
   nobody saw (a doctrine that ends re-litigation, a cross-repo item
-  filed in a product roadmap).
+  filed in a product roadmap). A pending interview's resume speaks it
+  again before its first unanswered question: the pending close wrote
+  it, but nobody heard it.
 - Check project context before asking: existing docs, the glossary if
   the repo has one, recent commits. When a coding-standards companion
   skill defines the decision procedure for the topic's domain (guard
