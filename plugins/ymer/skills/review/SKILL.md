@@ -84,7 +84,8 @@ is read. This section carries only review's own reads beside them.
 **The pool.** The same read holds the pool's two operations, *draw
 drops* and *return drops* (the operations contract, § The pool): who
 draws, which closes draw, the `Drawn:` and `Returned:` lines and where
-they sit, the families a draw and a return take, the read and the
+they sit, the families a draw and a return take, the kind list a draw
+carries and the `Related, not drawn:` line beside it, the read and the
 read-back, the order at the close with a returning close's correction
 of its own `Returned:` line, a draw that cannot run and how its report
 names it, the pre-flight's finish,
@@ -537,7 +538,8 @@ Where-to-look:
 - when <X misbehaves>, check <Y>
 - never <X> — <consequence>
 Tails: Learning: none · Calibration: none
-Drawn: <YYYY-MM-DDTHH:MMZ> by review · #<id>, …     [where a decision of this close drew an open drop into the topic (→ Phase Close)]
+Drawn: <YYYY-MM-DDTHH:MMZ> by review · kinds <kind>, … · #<id>, …     [where a decision of this close drew an open drop into the topic (→ Phase Close); `exact` in place of `kinds <kind>, …` on a friction-batch]
+Related, not drawn: #<id> (<kind>), …     [under its `Drawn:` line, where that draw left drops of its families open]
 Returned: <YYYY-MM-DDTHH:MMZ> by review · #<id>, …  [where a decision of this close cut a drawn drop from scope]
 Reviewed: branch @ <sha> · <tree> <sha> <sha> · <tree> <sha>     [iterate and wait closes: what this entry's pass covered]
 Unreviewed: branch <sha> · <tree> <sha> <sha> · <tree> <sha>     [the same closes, always; `none` where the close committed nothing]
@@ -702,7 +704,8 @@ here.
 **Each of the three closes draws and returns** what its entry's `Drawn:`
 and `Returned:` lines name, right after the state-folder commit of step
 5, or the save where the files are the record (the operations contract,
-§ The pool: the read, the order at the close, a draw that cannot run).
+§ The pool: the read, the kind list and the related line, the order at
+the close, a draw that cannot run).
 The lightweight close-out's entry carries no such lines.
 
 **Ship**: Claude-run end to end except the push. Work no pass has seen

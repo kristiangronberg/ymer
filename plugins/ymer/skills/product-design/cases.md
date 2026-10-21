@@ -16,7 +16,7 @@ section runs.
   in the direction doc and, for material worth keeping that no settled
   section already holds, **vision** drops in the pool, several in one
   session if need be (grammar: the `capture` skill; drawing: the `mint`
-  skill). Mint drains a product's vision drops as a **carve topic**,
+  skill). A product's vision drops are drawn into a **carve topic**,
   and content reaches the page that way, never through this skill. A
   drop for a product with no page waits until that
   product's onboarding creates one.

@@ -77,7 +77,8 @@ folder. This section carries only brainstorm's own reads beside them.
 **The pool.** The same read holds the pool's two operations, *draw
 drops* and *return drops* (the operations contract, § The pool): who
 draws, which closes draw, the `Drawn:` and `Returned:` lines and where
-they sit, the families a draw and a return take, the read and the
+they sit, the families a draw and a return take, the kind list a draw
+carries and the `Related, not drawn:` line beside it, the read and the
 read-back, the order at the close with a returning close's correction
 of its own `Returned:` line, a draw that cannot run and how its report
 names it, the pre-flight's finish,
@@ -530,9 +531,9 @@ rewrite, their answered questions landing in the sections below:
   whose contract is `cases.md` § The Interview
 - Open questions handed to the next phase
 - `## Drops`, last, where a decision drew a pool drop into the topic or
-  cut one: the `Drawn:` and `Returned:` lines, every earlier one
-  carried verbatim and this close's own appended (the operations
-  contract, § The pool)
+  cut one: the `Drawn:` lines with their `Related, not drawn:` lines
+  and the `Returned:` lines, every earlier one carried verbatim and
+  this close's own appended (the operations contract, § The pool)
 
 ## Self-Review (inline)
 
@@ -629,7 +630,8 @@ section name, right after the commit's verify (`mechanics.md` § Commit
 the Artifacts, Then Reset, step 2), or the save where the files are the
 record, and before the reset hand-off, so the hold cannot close the
 phase around the draw (the operations contract, § The pool: the read,
-the order at the close, a draw that cannot run). A pending close draws
+the kind list and the related line, the order at the close, a draw that
+cannot run). A pending close draws
 nothing.
 
 **Capture block:** invoke the `ymer:capture` skill, source

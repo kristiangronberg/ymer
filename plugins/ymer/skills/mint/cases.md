@@ -26,13 +26,14 @@ artifact the pick writes.
 
 **An open pointer on a drained anchor** reads as the sharpest signal at
 the next run only when it was created after its anchor was drained
-(term: the plugin glossary). A draw takes the family (*draw drops*,
-binding: the operations contract), so after one, an open pointer on a
-drained anchor is one of three things: captured after the draw, the
-signal itself; another front's drop, left open for that front's own
-mint; or a face no draw took, created before its anchor was drained,
-which the signal leaves out. A moot drop's face that its evidence did
-not cover is one.
+(term: the plugin glossary). A draw sees the family and takes from it
+the kinds its list names (*draw drops*, binding: the operations
+contract), so after one, an open pointer on a drained anchor is one of
+three things: captured after the draw, the signal itself; another
+front's drop, left open for that front's own mint; or a face no draw
+took, created before its anchor was drained, which the signal leaves
+out. A face a friction-batch's exact draw did not name is one, and so
+is a face whose kind the draw's kind list left out.
 
 **The family read finds more than the artifact quotes** whenever a
 named drop's family reaches past what the candidate read showed: a

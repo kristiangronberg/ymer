@@ -366,10 +366,16 @@ Drops, verbatim from the pool:
 
 <drop as a line>
 <drop as a line>
+
+Related, not drawn: #<id> (<kind>), #<id> (<kind>)
 ```
 
 A **Passed over** line is written only where the pick passed the top
-drop over, one line per drop passed over.
+drop over, one line per drop passed over. A `Related, not drawn:` line
+is written only where the related read found drops (the operations
+contract, § The lines). An append that draws again writes its own line
+after the drops it appends, and a learning task's description takes
+the same line after its drops.
 
 **The friction-batch:**
 

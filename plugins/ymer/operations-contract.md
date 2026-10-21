@@ -420,30 +420,53 @@ through them. They extend the vocabulary of § Operations:
 
 | Operation    | Required outcome                                                                 |
 |--------------|----------------------------------------------------------------------------------|
-| draw drops   | each named open drop of this front is drained, with the open drops of this front in each family it sits in, to where the work lives: the topic's folder, `<area>/YYYY/MM-DD-<topic>/`, or a learning task's id at mint's learning exit; in the exact form, the named drops alone |
+| draw drops   | each named open drop of this front is drained, with the open drops of this front in each family it sits in that the draw's kind list names, to where the work lives: the topic's folder, `<area>/YYYY/MM-DD-<topic>/`, or a learning task's id at mint's learning exit; in the exact form, the named drops alone; a vision or a learning drop only by a draw whose kind list names its kind |
 | return drops | each named drop of this front that a draw drained is open again, with the drops of this front in each family it sits in that the same draw drained, each exactly as it was before the draw, whichever destination the draw named |
 
-**A draw takes the family.** *Draw drops* widens each named id the
-read finds waiting to every family it sits in (term: the plugin
-glossary): where it is a face, its anchor and that anchor's other faces;
-its own faces; and the drops sharing its named cause. The reach is one
-level from the named drop and never further, so a chain of anchors is
-never walked, and a drop that is both a face and an anchor brings both
-its families. Only this front's open drops that are not empty are
-drawn; another front's stay open for that front's own mint. An id that
-reads drained to this topic already widens nothing, so a face captured
-while the topic is in flight stays open until a close names it. The
-`Drawn:` line names only what the close chose, and the operation adds
-the rest. **The exact form** draws the named ids alone: mint is its one
-caller, for the moot drops its pick took with the members their evidence
-covers, and the other drops the pick chose in a moot drop's family,
-since a moot drop's evidence may not cover every face of its family.
+**A draw sees the family.** *Draw drops* in the family form widens each
+named id the read finds waiting to every family it sits in (term: the
+plugin glossary): where it is a face, its anchor and that anchor's other
+faces; its own faces; and the drops sharing its named cause. The reach
+is one level from the named drop and never further, so a chain of
+anchors is never walked, and a drop that is both a face and an anchor
+brings both its families. What the widening sees is not all it takes:
+only this front's open drops that are not empty are drawn, of the drops
+the widening adds only those of a kind the draw's kind list names, and a
+vision or a learning drop named by a draw whose list does not name its
+kind widens nothing (the next paragraph). Another front's drops stay
+open for that front's own mint. An id that reads drained to this topic
+already widens nothing, so a face captured while the topic is in flight
+stays open until a close names it. The `Drawn:` line names only what
+the close chose, and the operation adds the rest its kind list takes.
 *Return drops* takes, from each named id's families, the drops the same
 draw took with it, one level from the returned id: a drop further from
 it stays drained though the same draw took it, and a drop of the family
 that an earlier or a later draw took stays drained. So a cut reaches
 every drop of its families that one draw took together, and one of them
 cannot be cut alone; a face a later close drew by naming it can be.
+
+**The family decides what a draw sees, and the kind what it takes.**
+A draw in the family form carries a **kind list**, the kinds of drop
+its destination can act on, named by its caller. Only a drop the
+widening adds is tested against it: a named drop is drawn as named
+whatever its kind, and widens to its families even where its own kind
+is outside the list, so an anchor of an excluded kind is seen while its
+faces of a listed kind are drawn. A vision drop and a learning drop are
+the exception, named or added: each is drawn only by a draw whose list
+names its kind, since a vision drop reaches its product's page only
+through a carve topic, and a learning drop its engagement only through
+a learning task (terms: the plugin glossary). Named by any other draw,
+such a drop is cited, never drawn, and widens nothing. Every open drop
+of this front in a named drop's families that the draw leaves out is
+shown beside it, by id and kind, on a `Related, not drawn:` line (→ The
+lines), and stays open for a later draw whose list takes it.
+
+**The exact form** draws the named ids alone, with no list and no
+widening, so it never draws a vision or a learning drop. It is the
+friction-batch's form: mint draws every drop it takes into a
+friction-batch through it, and a deciding phase on a friction-batch
+draws through it too, since what a friction-batch takes is a judgement
+made drop by drop, which no kind list encodes.
 
 **Who draws.** Mint draws at its pick (the `mint` skill). A deciding
 phase draws too, brainstorm, define, write-plan or review, when a
@@ -458,29 +481,50 @@ judgement on the topic's drops.
 
 **The lines.** A deciding phase records what it drew and returned in
 its own artifact, at most one line of each kind per close, each at line
-start:
+start, and directly under its `Drawn:` line the drops that draw left
+open in the named drops' families:
 
 ```
-Drawn: <YYYY-MM-DDTHH:MMZ> by <phase> · #<id>, #<id>
+Drawn: <YYYY-MM-DDTHH:MMZ> by <phase> · kinds <kind>, <kind> · #<id>, #<id>
+Related, not drawn: #<id> (<kind>), #<id> (<kind>)
 Returned: <YYYY-MM-DDTHH:MMZ> by <phase> · #<id>
 ```
 
 The stamp is the UTC time the close writes the line, to the minute.
-`<phase>` is `brainstorm`, `define`, `write-plan` or `review`. Only
-these lines draw: the decisions go on citing ids in their own prose,
-and a cited id is no draw. In `brainstorm.md`, `spec.md` and `plan.md`
-the lines sit in a `## Drops` section, the artifact's last but for
-plan-review's record; in `review.md`, in the close's own `## Review`
-entry, after its `Tails:` line. A lightweight close-out's entry carries
-none: it makes no decisions of its own. The lines are append-only: each
-drawing or returning close appends its own, and every in-place rewrite
-of the artifact (a consolidation, a re-define, a re-plan, plan-review's
-rewrite) carries every earlier line verbatim, so the record survives
-where no git keeps it. An illustration of the grammar in a topic's
-artifact stays inline-backticked, never at line start, because the
-pre-flight's finish reads every line-start one. Where a `Drawn:` line
-names another front's drop, the section or the entry names the shared
-cause in a line of its own (→ The front).
+`<phase>` is `brainstorm`, `define`, `write-plan` or `review`. A
+`Drawn:` line's segments split on ` · `: the stamp and the phase, then
+the kind list, then the ids, so the pre-flight's finish reads the list
+and the ids off the line alone. The list is `kinds` and the kinds,
+comma-separated, or `exact` for a draw in the exact form. It follows
+the topic:
+
+- a carve topic: `kinds vision`;
+- a friction-batch: `exact`;
+- any other topic: `kinds bug, idea, friction`.
+
+The first close that draws on a topic sets its list, and every later
+close copies it from the earlier lines, so no later phase judges the
+topic again: a list that must change goes through an iteration (the
+process contract, § Iteration), never a silent switch. The `Related,
+not drawn:` line comes from the related read (→ The pool on the node),
+names each drop by its id and kind and copies no title; a draw that
+leaves nothing open, an exact one among them, writes none. It is a
+report, never a draw: only `Drawn:` and `Returned:` lines draw. The
+decisions go on citing ids in their own prose, and a cited id is no
+draw. In `brainstorm.md`, `spec.md` and `plan.md` the lines sit in a
+`## Drops` section, the artifact's last but for plan-review's record;
+in `review.md`, in the close's own `## Review` entry, after its
+`Tails:` line. A lightweight close-out's entry carries none: it makes
+no decisions of its own. The lines are append-only: each drawing or
+returning close appends its own, and every in-place rewrite of the
+artifact (a consolidation, a re-define, a re-plan, plan-review's
+rewrite) carries every earlier line verbatim, `Related, not drawn:`
+lines included, so the record survives where no git keeps it. An
+illustration of the grammar in a topic's artifact stays
+inline-backticked, never at line start, because the pre-flight's finish
+reads every line-start one. Where a `Drawn:` line names another front's
+drop, the section or the entry names the shared cause in a line of its
+own (→ The front).
 
 **Which closes draw.** Only a close that consolidates its artifact
 draws or returns: brainstorm's and define's finished closes, write-plan's
@@ -492,38 +536,50 @@ phase draws at its own finished close.
 **The read and the read-back.** Every caller, mint included, reads the
 rows of the ids it names before it writes, then, for the family form
 and the return, the family read: every drop the write will move,
-through the write's own `WHERE` (→ The pool on the node). An id the
-first read does not find waiting for the operation, open, this front's
-and not an empty drop for a draw, is wrong or was drawn elsewhere: find
-out which before closing, and correct the record that names it (a
-deciding close's own lines, or what mint wrote, its `request.md` or at
-the learning exit its learning task's description, which quotes every
-drop the family read moves). An id another topic already
-drew belongs to that topic, and this topic's artifact cites it, never
-draws it. An open drop of another front is no such error: it stays on
-the `Drawn:` line beside its shared cause and is never drawn here
-(→ The front). Each operation's `affected_rows` must equal the drops
-its read found: the family read for the family form and the return, the
-named ids the first read found waiting for the exact form. A difference,
-fewer or more, means a drop moved since the read (a face captured
-meanwhile joins a named family, for one), so find out which before
-closing, and name it in the report.
+through the write's own `WHERE` (→ The pool on the node). The family
+form adds the related read: every open drop of this front in the named
+ids' families that the write leaves out, a report with no read-back of
+its own, since it moves nothing. An id the first read does not find
+waiting for the operation, open, this front's and not an empty drop for
+a draw, is wrong or was drawn elsewhere: find out which before closing,
+and correct the record that names it (a deciding close's own lines, or
+what mint wrote, its `request.md` or at the learning exit its learning
+task's description, which quotes every drop the family read moves). An
+id another topic already drew belongs to that topic, and this topic's
+artifact cites it, never draws it. A vision or a learning drop the draw
+does not take is no error: it is not waiting for this draw, and the
+record leaves it off its `Drawn:` line. In the family form that is such
+a drop whose kind the list does not name, and the close lists it on its
+`Related, not drawn:` line; in the exact form it is every vision and
+learning drop, and the close cites it in its own prose, since an exact
+draw writes no related line. An open drop of another front is no such
+error either: it stays on the `Drawn:` line beside its shared cause and
+is never drawn here (→ The front). Each operation's `affected_rows` must
+equal the drops its read found: the family read for the family form and
+the return, the named ids the first read found waiting for the exact
+form, a vision or a learning drop never among them. A difference, fewer
+or more, means a drop moved since the read (a face captured meanwhile
+joins a named family, for one), so find out which before closing, and
+name it in the report.
 
 **At the close.** A deciding close reads its ids' rows before the
 artifact's commit, or its save where the files are the record, and
 corrects its own lines from the read. It reads the families as well,
-before any write: the draw's family read for its `Drawn:` ids and the
-return's for its `Returned:` ids. The return reaches only the drops the
-same draw took with a returned id, so it never reopens what this close
-draws. A family moves whole: where a drop the draw takes sits in a
-family the return reopens, the close corrects its own lines so that
-family stands on one side only. A returning close also extends its own
-`Returned:` line, from the return's family read, to every id the
-earlier lines drew that the return reopens, so the finish never draws
-one of them again. The other drops it reopens, those an operation added
-to a draw and those mint drew, carry no line before or after. After the
-commit, or the save where the files are the record, it runs *draw
-drops* over this front's ids on its `Drawn:` line that read open, then
+before any write: for a family-form `Drawn:` line, the draw's family
+read and related read, the second giving its `Related, not drawn:`
+line, while an `exact` line takes the first read alone; and the
+return's family read for its `Returned:` ids. The return reaches only
+the drops the same draw took with a returned id, so it never reopens
+what this close draws. A family moves whole: where a drop the draw
+takes sits in a family the return reopens, the close corrects its own
+lines so that family stands on one side only. A returning close also
+extends its own `Returned:` line, from the return's family read, to
+every id the earlier lines drew that the return reopens, so the finish
+never draws one of them again. The other drops it reopens, those an
+operation added to a draw and those mint drew, carry no line before or
+after. After the commit, or the save where the files are the record, it
+runs *draw drops* over this front's ids on its `Drawn:` line that read
+open, under the kind list or the exact form the line carries, then
 *return drops* over this front's ids on its `Returned:` line that read
 drained to this topic's folder. Both run before any hand-off or hold
 the phase closes with, so no hold closes the phase around them.
@@ -538,8 +594,13 @@ written out. That command is the next deciding phase's own on the topic,
 whose pre-flight finishes it, with `/ymer:setup` first where no front is
 named, since setup's front check names the fix. A close no deciding
 pre-flight follows (review's ship close) writes the operation out
-instead, with its front, its ids and its destination, for a session
-holding that front to run; left unrun, a draw's drops wait for mint's
+instead, with its front, its ids and its destination, and for a draw
+the kind list or the exact form its `Drawn:` line carries, for a session
+holding that front to run under that list, never one of its own. For a
+family-form line that session runs the related read before the draw and
+writes the `Related, not drawn:` line under the `Drawn:` line where none
+stands, as the pre-flight's finish does. Left unrun, a draw's drops wait
+for mint's
 moot walk, and a return's stay drained to the shipped folder until a
 session runs it. These operations sit outside the roadmap's failure rule
 (→ Operations): a bookkeeping write does not stop a phase.
@@ -554,8 +615,16 @@ pipeline's order, then by place in the artifact (lower in
 entries prepend). The stamp orders the lines as they were written, so a
 send-back's return outranks the draw a later phase made before it, the
 same day included. An id of this front whose latest line is `Drawn:` and
-that reads open is drawn; one whose latest line is `Returned:` and that
-reads drained to this topic's folder is returned. One whose latest line
+that reads open is drawn, under the kind list or the exact form that
+line carries, one draw per line. Where a family-form line has no
+`Related, not drawn:` line under it, the related read runs with the
+family read, before the draw, since it reads the named ids open, and
+this phase's close writes the line directly under that `Drawn:` line,
+in the artifact or the `review.md` entry that holds that line: the one
+line a close writes under an earlier close's, beside its correction of a line drawn
+elsewhere (below). An `exact` line gets none. One whose latest line is
+`Returned:` and that reads drained to this topic's folder is returned.
+One whose latest line
 is `Drawn:` and that reads drained elsewhere was drawn by another topic
 meanwhile: it belongs to that topic, so the finish reports it and this
 phase's close corrects the line (→ The read and the read-back). A drop
@@ -778,15 +847,49 @@ The read that comes before either write, one row per named id:
 SELECT id, front, kind, status, drained_to, drained_at FROM pool WHERE id IN (<ids>)
 ```
 
-*Draw drops*, the family form, every caller's but mint's exact draw. Its
+*Draw drops*, the family form, every draw's but the exact form's. Its
 `WHERE` is where the family lives: each named id that reads waiting,
 that drop's anchor, every drop anchored on it or on its anchor, and
-every drop sharing its named cause, this front's open drops alone:
+every drop sharing its named cause, this front's open drops alone.
+`<kinds>` is the draw's kind list, each kind quoted (`'bug', 'idea',
+'friction'`). It tests every drop the widening adds, and every named id
+that is a vision or a learning drop, inside the subqueries too, so such
+a drop the list does not name is neither drawn nor widened:
 
 ```sql
 UPDATE pool
 SET status = 'drained', drained_to = '<where>',
     drained_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
+  AND ((id IN (<ids>) AND (kind IN (<kinds>) OR kind NOT IN ('vision', 'learning')))
+       OR (kind IN (<kinds>)
+           AND (id IN (SELECT anchor_id FROM pool WHERE id IN (<ids>)
+                       AND status = 'open' AND front = '<front>' AND kind <> 'empty'
+                       AND (kind IN (<kinds>) OR kind NOT IN ('vision', 'learning')))
+                OR anchor_id IN (SELECT id FROM pool WHERE id IN (<ids>)
+                       AND status = 'open' AND front = '<front>' AND kind <> 'empty'
+                       AND (kind IN (<kinds>) OR kind NOT IN ('vision', 'learning')))
+                OR anchor_id IN (SELECT anchor_id FROM pool WHERE id IN (<ids>)
+                       AND status = 'open' AND front = '<front>' AND kind <> 'empty'
+                       AND (kind IN (<kinds>) OR kind NOT IN ('vision', 'learning')))
+                OR anchor_text IN (SELECT anchor_text FROM pool WHERE id IN (<ids>)
+                       AND status = 'open' AND front = '<front>' AND kind <> 'empty'
+                       AND (kind IN (<kinds>) OR kind NOT IN ('vision', 'learning'))))))
+```
+
+The family read is `SELECT id, front, kind, status, anchor_id,
+anchor_text FROM pool` followed by that `WHERE`, unchanged. The family
+is written as subqueries inside the `WHERE`, never as a `WITH` clause
+ahead of the `UPDATE`: the node answers a statement that opens with
+`WITH` with `affected_rows` 0, whatever it changed, and the read-back
+would read every draw as moved.
+
+The related read is the same family with no kind test, less
+`<drawn ids>`, every id the family read returned (`()` where it
+returned none):
+
+```sql
+SELECT id, kind FROM pool
 WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
   AND (id IN (<ids>)
        OR id IN (SELECT anchor_id FROM pool WHERE id IN (<ids>)
@@ -797,29 +900,23 @@ WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
                  AND status = 'open' AND front = '<front>' AND kind <> 'empty')
        OR anchor_text IN (SELECT anchor_text FROM pool WHERE id IN (<ids>)
                  AND status = 'open' AND front = '<front>' AND kind <> 'empty'))
+  AND id NOT IN (<drawn ids>)
 ```
 
-The family read is `SELECT id, front, kind, status, anchor_id,
-anchor_text FROM pool` followed by that `WHERE`, unchanged. The family
-is written as subqueries inside the `WHERE`, never as a `WITH` clause
-ahead of the `UPDATE`: the node answers a statement that opens with
-`WITH` with `affected_rows` 0, whatever it changed, and the read-back
-would read every draw as moved.
-
-*Draw drops*, the exact form, for mint's moot drops with the members
-their evidence covers, and the other drops its pick chose in a moot
-drop's family, alone:
+*Draw drops*, the exact form, for every draw into a friction-batch: the
+named ids alone, never a vision or a learning drop:
 
 ```sql
 UPDATE pool
 SET status = 'drained', drained_to = '<where>',
     drained_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 WHERE status = 'open' AND front = '<front>' AND kind <> 'empty'
+  AND kind NOT IN ('vision', 'learning')
   AND id IN (<ids>)
 ```
 
 Its read-back is the first read: `affected_rows` equals the named ids
-that read waiting.
+that read waiting, a vision or a learning drop never among them.
 
 *Return drops*, from each named id's families the drops the same draw
 took with it, among the drops drained to that destination. Its family

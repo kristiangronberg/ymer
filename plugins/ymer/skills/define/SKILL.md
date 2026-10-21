@@ -66,7 +66,8 @@ define's own reads beside them.
 **The pool.** The same read holds the pool's two operations, *draw
 drops* and *return drops* (the operations contract, § The pool): who
 draws, which closes draw, the `Drawn:` and `Returned:` lines and where
-they sit, the families a draw and a return take, the read and the
+they sit, the families a draw and a return take, the kind list a draw
+carries and the `Related, not drawn:` line beside it, the read and the
 read-back, the order at the close with a returning close's correction
 of its own `Returned:` line, a draw that cannot run and how its report
 names it, the pre-flight's finish,
@@ -480,10 +481,10 @@ of the topic that write-plan plans against. Its sections:
 - **Open questions for write-plan**: genuinely mechanical and
   deferrable only; a meaning question left open here is a defect.
 - **Drops**, last, where a decision drew a pool drop into the topic or
-  cut one: `## Drops`, the `Drawn:` and `Returned:` lines, every
-  earlier one carried verbatim through every rewrite, a re-define's
-  included, and this close's own appended (the operations contract,
-  § The pool).
+  cut one: `## Drops`, the `Drawn:` lines with their `Related, not
+  drawn:` lines and the `Returned:` lines, every earlier one carried
+  verbatim through every rewrite, a re-define's included, and this
+  close's own appended (the operations contract, § The pool).
 
 **A full re-define rewrites `spec.md` in place**, under a header block
 sitting between the title's metadata paragraph and `## What we mean`:
@@ -583,8 +584,9 @@ in reach; a session that meets none of its cases reads nothing there.
 **Draw and return.** A close that consolidated `spec.md` draws and
 returns what this close's lines in its `## Drops` section name, right
 after the state-folder commit lands, or the save where the files are
-the record (the operations contract, § The pool: the read, the order
-at the close, a draw that cannot run). A pending close, and a close
+the record (the operations contract, § The pool: the read, the kind
+list and the related line, the order at the close, a draw that cannot
+run). A pending close, and a close
 that names brainstorm instead of write-plan, draws nothing.
 
 **Capture block:** invoke the `ymer:capture` skill, source `define`.

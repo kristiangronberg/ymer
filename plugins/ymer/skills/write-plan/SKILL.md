@@ -76,7 +76,8 @@ only write-plan's own reads beside them.
 **The pool.** The same read holds the pool's two operations, *draw
 drops* and *return drops* (the operations contract, § The pool): who
 draws, which closes draw, the `Drawn:` and `Returned:` lines and where
-they sit, the families a draw and a return take, the read and the
+they sit, the families a draw and a return take, the kind list a draw
+carries and the `Related, not drawn:` line beside it, the read and the
 read-back, the order at the close with a returning close's correction
 of its own `Returned:` line, a draw that cannot run and how its report
 names it, the pre-flight's finish,
@@ -398,9 +399,9 @@ Then the plan's own sections: the answers to the spec's open questions,
 the Grounding fact sheet, the `## File Structure`, and the tasks.
 
 Where a planning decision drew a pool drop into the topic or cut one,
-a `## Drops` section follows the tasks with the `Drawn:` and
-`Returned:` lines, every earlier one carried verbatim (the operations
-contract, § The pool).
+a `## Drops` section follows the tasks with the `Drawn:` lines, each
+with its `Related, not drawn:` line, and the `Returned:` lines, every
+earlier one carried verbatim (the operations contract, § The pool).
 
 ## Task Structure
 
@@ -619,9 +620,9 @@ line over. There is no "delta plan" shape and never a second plan
 file: a reader must never have to work out which plan is the plan,
 which is the sibling-files confusion moved inside one file.
 
-The re-plan carries the plan's `## Drops` section with every `Drawn:`
-and `Returned:` line verbatim, and appends its own (the operations
-contract, § The pool).
+The re-plan carries the plan's `## Drops` section with every `Drawn:`,
+`Related, not drawn:` and `Returned:` line verbatim, and appends its
+own (the operations contract, § The pool).
 
 ## No Placeholders
 
@@ -774,7 +775,8 @@ repository with no machinery edit reads nothing there.
 close: it draws and returns what this close's lines in the plan's
 `## Drops` section name, right after the state-folder commit lands, or
 the save where the files are the record (the operations contract,
-§ The pool: the read, the order at the close, a draw that cannot run).
+§ The pool: the read, the kind list and the related line, the order at
+the close, a draw that cannot run).
 
 ## Next Phase
 

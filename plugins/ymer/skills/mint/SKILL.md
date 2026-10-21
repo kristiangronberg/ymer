@@ -295,28 +295,32 @@ draws.
    already read this session:
    `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`, for the operation,
    the read before it and the `affected_rows` read-back with what a
-   difference means, the families the operation adds and its exact form,
-   and its SQL on the node. Every moot drop the pick took, the top drop
-   included where it is moot, goes through the exact form with the
-   cluster members its evidence covers, and so does every other drop the
-   pick chose that sits in a moot drop's family; each is drawn as named,
-   and a face the moot evidence does not cover stays open. The rest of
-   the pick goes through the family form, naming the drops the pick
-   chose, this front's: a top drop that is not moot, the vision cluster
-   or friction-batch set step 1 gathered, and the neighbours step 3
-   folded in. The operation adds the families each one sits in, so the
-   draw takes the cluster, never the anchor's alone. The family form
-   never names a moot drop or a drop of a moot drop's family, so no
-   family it reaches, one level from a named drop, is a moot drop's. A
-   pick with both makes two draws, the exact draw first, so the family
-   draw finds the exact draw's drops already drained and leaves them
-   alone. The family read can find drops the artifact does not quote
-   yet: append a drop line for each before step 5, so the artifact
-   quotes every drop the draw moved. In `request.md` the append goes
-   through the file as every append goes (→ `request.md`'s shape), in a
-   friction-batch under the heading of the drop whose family brought it;
-   at the learning exit it goes to the learning task's description,
-   keeping what is there (the statement: `cases.md` § Three exits, all
+   difference means, the families the operation adds, the kind list and
+   what it lets a draw take, the related read, the exact form, and its
+   SQL on the node. A draw into a friction-batch, a fold into an
+   unstarted one included, goes through the exact form:
+   it names every drop the pick took, the moot drops with the cluster
+   members their evidence covers and the frictions below the bar, and
+   nothing widens, so a face the pick did not choose stays open. Every
+   other pick goes through the family form, naming the drops the pick
+   chose, this front's: the top drop, the vision cluster step 1
+   gathered, and the neighbours step 3 folded in. Its kind list is its
+   exit's:
+
+   - its own topic: `bug, idea, friction`;
+   - a carve topic: `vision`;
+   - a learning task, the fold into exit 1 where there is no `Learning`
+     project included: `learning`.
+
+   The operation adds the families each one sits in, of the listed
+   kinds, so the draw takes the cluster, never the anchor's alone. The
+   family read can find drops the artifact does not quote yet: append a
+   drop line for each before step 5, so the artifact quotes every drop
+   the draw moved, then one `Related, not drawn:` line for the drops the
+   related read found, where it found any. In `request.md` the appends
+   go through the file as every append goes (→ `request.md`'s shape); at
+   the learning exit they go to the learning task's description, keeping
+   what is there (the statement: `cases.md` § Three exits, all
    artifact-depositing).
    The draw names where the drops went: the topic's folder
    as `<area>/YYYY/MM-DD-<topic>/`, the friction-batch's included, or
@@ -586,9 +590,11 @@ derived from the area.
 
 **Before creating, one look**: step 1 already listed the unstarted
 topics in every store this session reaches. If one of them is this same
-thing, append the new drops to that topic's `request.md` instead of
-creating a second task for it, through the file and counting the
-heading first (→ `request.md`'s shape).
+thing and of the pick's own kind, a carve topic for a carve pick and an
+ordinary topic for any other, so its kind list stays one, append the new
+drops to that topic's `request.md` instead of creating a second task for
+it, through the file and counting the heading first (→ `request.md`'s
+shape).
 
 **2. The friction-batch** is the `meta` batch topic mint opens for
 small frictions to fix and moot bugs, ideas and frictions to confirm.
@@ -628,16 +634,17 @@ it worth doing after all, and otherwise it stays drained.
 
 **Only frictions go below the bar, and vision drops never ride the
 friction-batch.** A product's direction is not the friction-batch's
-edit surface. A product's vision drops are drawn as exit 1, as a **carve topic**: an
-ordinary topic in that product's area whose `request.md` names the
-product and carries the drops verbatim, and whose work writes them into
-the product's own description. That is the one door through which
-vision material reaches a product page. A vision drop whose content the
-page already carries goes there too, with its product's vision cluster,
-and a learning drop whose gap is closed goes to its learning task
-(exit 3), which its engagement, never mint, closes as moot (`closed` =
-demonstrated or moot: the operations contract, § Binding per
-coordinator).
+edit surface. A product's vision drops are drawn as exit 1, into a
+**carve topic** in that product's area, its `request.md` naming the
+product and carrying the drops verbatim. A carve topic is the topic
+that gathers a product's vision drops, however it was opened, and whose
+work writes them into the product's page; it is the one door through
+which vision material reaches a product page. A vision drop whose
+content the page already carries goes there too, with its product's
+vision cluster, and a learning drop whose gap is closed goes to its
+learning task (exit 3), which its engagement, never mint, closes as
+moot (`closed` = demonstrated or moot: the operations contract,
+§ Binding per coordinator).
 
 "The product has a Roadmap" reads per coordinator, like every other
 route. In ymer a `<Product> Roadmap` must exist, and a vision drop for a
@@ -700,7 +707,10 @@ with no code in view, while the verbatim drops below it stay unmarked
 observations. Then its direction, how the pick moves the product the way
 its Forward direction says; then a **Passed over** line for each drop
 the pick passed over, so the topic's brainstorm reads why this pick and
-not the top one; then the drops. A friction-batch sorts its drops under
+not the top one; then the drops, and after them one `Related, not
+drawn:` line where the draw left drops of their families open, by id
+and kind (the operations contract, § The lines). A friction-batch,
+drawn in the exact form, carries none, and sorts its drops under
 two headings, below the bar and moot, which carry mint's judgement into
 the topic as real input for whoever works it. Under the moot heading
 the drops are grouped by cause, one group for each thing that closed

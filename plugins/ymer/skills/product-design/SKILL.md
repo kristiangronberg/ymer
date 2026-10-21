@@ -25,7 +25,7 @@ this file's headings.
 
 ## The product page
 
-*Read with this section: `mechanics.md` § The product page (the mechanics: the fetch, why a session whose coordinator is the node has no page, and the listing that tells a broken lookup from a product with no page) and `cases.md` § The product page (the cases: when the store does not answer, why this skill writes nothing on the page and where its output goes instead (the verdict, and vision drops that mint drains as a carve topic, a drop for a product with no page waiting for one), and why the page takes no collection area).*
+*Read with this section: `mechanics.md` § The product page (the mechanics: the fetch, why a session whose coordinator is the node has no page, and the listing that tells a broken lookup from a product with no page) and `cases.md` § The product page (the cases: when the store does not answer, why this skill writes nothing on the page and where its output goes instead (the verdict, and vision drops a carve topic draws, a drop for a product with no page waiting for one), and why the page takes no collection area).*
 
 A known product keeps its answers on its **product page**. Before the
 gate, read the product's page where it has one; where it has none, run
