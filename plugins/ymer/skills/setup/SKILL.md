@@ -338,9 +338,7 @@ itself, so nothing is appended to capture the status. What this check
 does under each outcome:
 
 - **Its own git repository**, or **a folder in no git repository**: a
-  pass, and the report says which (→ The report). The check runs
-  no further command on the folder: git's answer already shows that it is
-  there.
+  pass, and the report says which (→ The report).
 - **Exit 127**: the shell found no `git` to run, so this session has no
   git, and the reading says nothing about whether the folder exists.
   List it with this session's own file tools, never another command.

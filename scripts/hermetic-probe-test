@@ -384,9 +384,10 @@ run_trace 'read' Bash '{"command":"git -C /Users/someone/state rev-parse --is-in
 # the mint set
 run_trace 'searched' Bash '{"command":"grep -r --exclude-dir=pre-image '"'"'x'"'"' /Users/someone/state"}' >"$canned/run-mint-grep.jsonl"
 run_trace 'listed' Bash "{\"command\":\"ls $pstate/../cfg\"}" >"$canned/run-mint-ls.jsonl"
-# mint's own listing of unstarted topics run by a capture run: the hook
-# lets it run, and bash-commands reads a run that is no mint's against
-# the base set alone
+# mint's own listing of unstarted topics in a capture run: the stricter
+# hook refuses it, so it never runs; the fixture holds it as a command
+# that ran anyway, which bash-commands reads against the base set alone
+# and fails
 run_trace 'searched' Bash "{\"command\":\"grep -rl --include='request.md' 'source: mint' $pstate\"}" >"$canned/run-capture-mint-search.jsonl"
 # mint's healthy trace with a recurrence term naming a commit: a search,
 # never a commit attempt
@@ -1271,17 +1272,22 @@ check "live resolves the project name before up and again before down" 2 "$(logg
 check "live: the copy is the named file byte for byte" 0 "$(cmp -s "$HERMETIC_PROBE_COMPOSE_FILE" "$tmp/probe/compose/docker-compose.yml"; echo $?)"
 check "live installs through the README's lines — the front alone, then the front and each later arm's folder as the options" '1 1 3 3 1 1' "$(printf '%s %s %s %s %s %s' "$(logged 'claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8112/mcp')" "$(logged "claude plugin marketplace add $fx")" "$(logged 'claude plugin install ymer@ymer')" "$(logged 'claude plugin install ymer@ymer --config front=probe_front')" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$pstate" "$SHIM_DIR/log")" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$penc" "$SHIM_DIR/log")")"
 check "live runs twelve headless prompts, prompt before flags" 12 "$(logged 'claude -p /')"
-run_flags="--output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash(claude mcp get *) Bash(git -C * rev-parse --is-inside-work-tree --show-prefix) Bash(grep -rl *) Bash(grep -r --exclude-dir=pre-image *) Bash(ls *) mcp__ymer-node__notebook Read(/$fx/plugins/**) Agent --add-dir $pstate --model claude-sonnet-5 --max-turns 60 --strict-mcp-config --mcp-config "'{"mcpServers":{"ymer-node":{"type":"http","url":"http://127.0.0.1:8112/mcp"}}}'" --settings $tmp/probe/hook/settings.json"
-check "live: every run but the third arm's is stream-json, verbose, pinned, the notebook, the two declared Bash commands and the mint reads allowed, state/ added, the scratch node the one server, the runs' hook loaded" 10 "$(logged "$run_flags")"
+run_flags="--output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash(claude mcp get *) Bash(git -C * rev-parse --is-inside-work-tree --show-prefix) Bash(grep -rl *) Bash(grep -r --exclude-dir=pre-image *) Bash(ls *) mcp__ymer-node__notebook Read(/$fx/plugins/**) Agent --add-dir $pstate --model claude-sonnet-5 --max-turns 60 --strict-mcp-config --mcp-config "'{"mcpServers":{"ymer-node":{"type":"http","url":"http://127.0.0.1:8112/mcp"}}}'" --settings $tmp/probe/hook/settings-base.json"
+check "live: every run before the third arm but a mint run is stream-json, verbose, pinned, the notebook, the two declared Bash commands and the mint reads allowed, state/ added, the scratch node the one server, the stricter hook loaded" 6 "$(logged "$run_flags")"
+check "live: of those six, three are setup's and two tutor's, so the one left is capture's" '3 2' "$(printf '%s %s' "$(logged "claude -p /ymer:setup $run_flags")" "$(logged "claude -p /ymer:tutor git $run_flags")")"
+mint_flags="${run_flags%settings-base.json}settings.json"
+check "live: the first two arms' mint runs carry the same flags under the mint hook" 4 "$(logged "$mint_flags")"
+check "live: those four are mint's own prompts, and no mint run loads the stricter hook" '4 0' "$(printf '%s %s' "$(logged "claude -p /ymer:mint $mint_flags")" "$(logged "claude -p /ymer:mint $run_flags")")"
 encl_flags="${run_flags%%--add-dir *}--add-dir $penc --model${run_flags#*--add-dir $pstate --model}"
-check "live: the third arm's two runs carry the same flags, handed encl/plans in place of state/" 2 "$(logged "$encl_flags")"
+check "live: the third arm's setup run carries the same flags, handed encl/plans in place of state/" 1 "$(logged "claude -p /ymer:setup $encl_flags")"
+check "live: the third arm's mint run carries them under the mint hook" 1 "$(logged "claude -p /ymer:mint ${encl_flags%settings-base.json}settings.json")"
 check "live: the key never reaches a child" 0 "$(logged 'ANTHROPIC_API_KEY is set')"
 check "live: teardown brings the node down" 1 "$(logged "$scratch_dc down")"
 check "live: data/ is gone after teardown" 0 "$(test -e "$tmp/probe/data" && echo 1 || echo 0)"
 check "live: state/ is gone after teardown" 0 "$(test -e "$pstate" && echo 1 || echo 0)"
 check "live: the runs are kept, the control call's and the login call's beside them" 14 "$(ls "$tmp/probe/runs"/*.jsonl | wc -l | tr -d ' ')"
 check "live: the instructions line" 1 "$(lines '✔ instructions no run loaded an instructions file — 12 transcript(s) read, each recording its environment, and the control run recorded its planted CLAUDE.md alone')"
-check "live: the control call, prompt before flags — one turn, no server, under the runs' hook" 1 "$(logged "claude -p Reply with the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}'" --settings $tmp/probe/hook/settings.json")"
+check "live: the control call, prompt before flags — one turn, no server, under the stricter hook" 1 "$(logged "claude -p Reply with the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}'" --settings $tmp/probe/hook/settings-base.json")"
 check "live: the login call, prompt before flags — one turn, no server, no hook" 1 "$(grep -c -x -F -- "claude -p Say the single word ok. --output-format stream-json --verbose --model claude-sonnet-5 --max-turns 1 --strict-mcp-config --mcp-config "'{"mcpServers":{}}' "$SHIM_DIR/log")"
 check "live: the login call runs before the scrub" 1 "$(awk '/^claude plugin uninstall/ { exit } /^claude -p Say the single word ok\./ { n++ } END { print n + 0 }' "$SHIM_DIR/log")"
 check "live: fourteen headless calls, every one from a working directory outside the probe dir and the home directory" '14 0' "$(printf '%s %s' "$(wc -l <"$SHIM_DIR/cwds" | tr -d ' ')" "$(grep -c -e "^$tmp/probe" -e "^$HOME" "$SHIM_DIR/cwds")")"
@@ -1290,17 +1296,25 @@ check "live: fourteen headless calls, every one from a working directory outside
 check "live: node.log is this invocation's alone" 2 "$(grep -c '^>> tables {}' "$tmp/probe/runs/node.log")"
 
 # ── 15b · live, the runs' hook over its own events ────────────────────
-# the files the happy path left in the probe dir: the settings file loads
-# the hook on Bash, and the hook, fed a PreToolUse event the way the CLI
-# writes one, lets a declared command run (exit 0) and refuses every other
-# (exit 2) — a habit, a compound, another redirect, another folder, and an
-# event whose input does not open with the command
-hook_event() { # hook_event <command as its JSON string spells it> — the hook's exit status for a Bash event carrying it
+# the files the happy path left in the probe dir: each settings file loads
+# its hook on Bash, and each hook, fed a PreToolUse event the way the CLI
+# writes one, lets a command of its own set run (exit 0) and refuses every
+# other (exit 2). The mint hook, a mint run's, first: a habit, a compound,
+# another redirect, another folder, and an event whose input does not open
+# with the command; then the stricter hook every other run loads, which
+# refuses mint's searches and listing as well
+hook_event() { # hook_event <command as its JSON string spells it> — the mint hook's exit status for a Bash event carrying it
 	printf '{"session_id":"s","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s","description":"d"},"tool_use_id":"t1"}' "$1" | sh "$tmp/probe/hook/bash" 2>/dev/null
+	echo $?
+}
+hook_base_event() { # hook_base_event <command as its JSON string spells it> — the stricter hook's exit status for a Bash event carrying it
+	printf '{"session_id":"s","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s","description":"d"},"tool_use_id":"t1"}' "$1" | sh "$tmp/probe/hook/bash-base" 2>/dev/null
 	echo $?
 }
 hook_settings="{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Bash\",\"hooks\":[{\"type\":\"command\",\"command\":\"sh '$tmp/probe/hook/bash'\"}]}]}}"
 check "live hook: the settings file loads it on Bash, and nothing else" "$hook_settings" "$(cat "$tmp/probe/hook/settings.json" 2>/dev/null)"
+hook_base_settings="{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Bash\",\"hooks\":[{\"type\":\"command\",\"command\":\"sh '$tmp/probe/hook/bash-base'\"}]}]}}"
+check "live hook: the stricter settings file loads the stricter hook on Bash, and nothing else" "$hook_base_settings" "$(cat "$tmp/probe/hook/settings-base.json" 2>/dev/null)"
 check "live hook: the declared commands run, the reading on either arm's folder" '0 0 0 0 0 0' "$(printf '%s %s %s %s %s %s' "$(hook_event 'claude mcp get ymer')" "$(hook_event 'claude mcp get ymer 2>&1')" "$(hook_event "git -C $pstate rev-parse --is-inside-work-tree --show-prefix")" "$(hook_event "git -C \\\"$pstate\\\" rev-parse --is-inside-work-tree --show-prefix")" "$(hook_event "git -C $penc rev-parse --is-inside-work-tree --show-prefix")" "$(hook_event "git -C \\\"$penc\\\" rev-parse --is-inside-work-tree --show-prefix")")"
 check "live hook: every other command is refused, the reading without --show-prefix among them" '2 2 2 2 2 2' "$(printf '%s %s %s %s %s %s' "$(hook_event 'true')" "$(hook_event 'claude mcp get ymer 2>&1; echo \"---\"')" "$(hook_event 'claude mcp get ymer 2>/dev/null')" "$(hook_event 'git -C /Users/someone/state rev-parse --is-inside-work-tree --show-prefix')" "$(hook_event "git -C $pstate rev-parse --is-inside-work-tree")" "$(printf '{"tool_name":"Bash","tool_input":{"description":"d","command":"claude mcp get ymer"}}' | sh "$tmp/probe/hook/bash" 2>/dev/null; echo $?)")"
 check "live hook: mint's two searches of state/ run, quoted either way, the folder bare, quoted or with a trailing slash" '0 0 0 0 0' "$(printf '%s %s %s %s %s' "$(hook_event "grep -rl --include='request.md' 'source: mint' $pstate")" "$(hook_event "grep -rl --include=request.md \\\"source: mint\\\" $pstate/")" "$(hook_event "grep -r --exclude-dir=pre-image 'probe gauge' $pstate")" "$(hook_event "grep -r --exclude-dir=pre-image \\\"probe gauge\\\" \\\"$pstate/\\\"")" "$(hook_event "grep -r --exclude-dir=pre-image 'probe-gauge.md' '$pstate'")")"
@@ -1313,6 +1327,11 @@ brace_dots='{.,.}.'
 check "live hook: every other listing is refused — a climb out of state/, a dot segment, another folder, another flag, a glob, a pipe after it, a second operand after a space, a tilde, a brace or a bracket, a space inside a quoted path" '2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2' "$(printf '%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s' "$(hook_event "ls $pstate/../cfg")" "$(hook_event "ls -A $pstate/.git")" "$(hook_event "ls /Users/someone/state")" "$(hook_event "ls -t $pstate")" "$(hook_event "ls $pstate/meta/*")" "$(hook_event "ls $pstate | head")" "$(hook_event "ls $pstate/meta /etc")" "$(hook_event "ls $pstate/ /etc")" "$(hook_event "ls -R $pstate/meta /")" "$(hook_event "ls $pstate/a -R /")" "$(hook_event "ls $pstate/meta ..")" "$(hook_event "ls -aR $pstate/a ../cfg")" "$(hook_event "ls $pstate/meta ~")" "$(hook_event "ls $pstate/meta ~/")" "$(hook_event "ls $pstate/~")" "$(hook_event "ls $pstate/$brace_climb")" "$(hook_event "ls $pstate/$brace_dots")" "$(hook_event "ls $pstate/[a]")" "$(hook_event "ls \\\"$pstate/a b\\\"")")"
 check "live hook: a refusal names mint's searches to the model" 1 "$(printf '{"tool_input":{"command":"true"}}' | sh "$tmp/probe/hook/bash" 2>&1 >/dev/null | grep -c -F "\`grep -r --exclude-dir=pre-image '<term>' <the state folder>\`")"
 check "live hook: a refusal names the declared commands to the model" 1 "$(printf '{"tool_input":{"command":"true"}}' | sh "$tmp/probe/hook/bash" 2>&1 >/dev/null | grep -c -F '`claude mcp get <name>`')"
+check "live stricter hook: claude mcp get and the reading on either arm's folder run" '0 0 0 0' "$(printf '%s %s %s %s' "$(hook_base_event 'claude mcp get ymer')" "$(hook_base_event 'claude mcp get ymer 2>&1')" "$(hook_base_event "git -C $pstate rev-parse --is-inside-work-tree --show-prefix")" "$(hook_base_event "git -C \\\"$penc\\\" rev-parse --is-inside-work-tree --show-prefix")")"
+check "live stricter hook: mint's listings and searches of state/ are refused, a listing bare, with flags or quoted, and every other command" '2 2 2 2 2 2 2' "$(printf '%s %s %s %s %s %s %s' "$(hook_base_event "ls $pstate")" "$(hook_base_event "ls -la $pstate")" "$(hook_base_event "ls -a \\\"$pstate/\\\"")" "$(hook_base_event "grep -rl --include='request.md' 'source: mint' $pstate")" "$(hook_base_event "grep -r --exclude-dir=pre-image 'probe gauge' $pstate")" "$(hook_base_event 'true')" "$(hook_base_event "git -C $pstate rev-parse --show-toplevel")")"
+check "live stricter hook: a refusal names its two commands to the model" 1 "$(printf '{"tool_input":{"command":"true"}}' | sh "$tmp/probe/hook/bash-base" 2>&1 >/dev/null | grep -c -F 'only two shell commands run here')"
+check "live stricter hook: a refusal names neither mint's searches nor its listing" 0 "$(printf '{"tool_input":{"command":"true"}}' | sh "$tmp/probe/hook/bash-base" 2>&1 >/dev/null | grep -c -e 'grep -r' -e '`ls`')"
+check "live hook: a copy under any other name holds the stricter set" 2 "$(cp "$tmp/probe/hook/bash" "$tmp/probe/hook/bash-other" && printf '{"tool_input":{"command":"ls %s"}}' "$pstate" | sh "$tmp/probe/hook/bash-other" 2>/dev/null; echo $?)"
 
 # ── 15c · live, a drop the mint left unscored ─────────────────────────
 live_case

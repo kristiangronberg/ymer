@@ -36,9 +36,10 @@
 # marketplace by working-tree path and the node on the probe's port),
 # the instructions check's control call, then twelve headless runs — eight
 # in the first two arms, tutor's two, then the third arm's two — each from
-# a working directory outside the home tree and under the probe's own hook,
-# written into hook/, which refuses every Bash command but the declared
-# ones, and the install line re-run before the second and third arms with
+# a working directory outside the home tree and under one of the probe's
+# two hooks, written into hook/, a mint run's or every other run's, which
+# refuses every Bash command but the declared ones of that run's own set,
+# and the install line re-run before the second and third arms with
 # the front and that arm's state folder as the plugin's options — then
 # teardown — at the
 # end of the stage, or by the EXIT trap on any earlier exit — and the
@@ -199,20 +200,20 @@ topic_files() { # topic_files <drained_to> — every request.md in that topic's 
 # on this CLI has no file search but its shell (no Glob or Grep tool in
 # the init line's tools: CLI 2.1.295, measured), so a run refused these
 # finds no topic to fold a recurrence into. The
-# file is the one home of the patterns: the runs' hook
-# refuses every other command against it, and bash-commands reads every
-# command that ran against it — a mint run's against the whole file, any
-# other run's against hook/declared-base, its first three lines, since
-# the hook cannot tell which skill runs and the check can. The hook's
-# refusal message and
-# bash-commands' pass and fail lines spell the set in words, so a change to
-# the set moves those three texts with it. The hook is sh, reading the PreToolUse event on
+# file is the one home of the patterns, and it holds two sets: a mint
+# run's, the whole file, and every other run's, hook/declared-base, its
+# first three lines. Each run loads the hook of its own set, and
+# bash-commands reads every command that ran against that same set, so
+# what a run's hook admits is exactly what the check accepts of that run;
+# mint_runs names the mint runs for both. Each hook's refusal message and
+# bash-commands' pass and fail lines spell the sets in words, so a change
+# to a set moves those four texts with it. The hook is sh, reading the PreToolUse event on
 # stdin — one JSON line, tool_input's command its first key (CLI 2.1.283,
 # measured); an event it cannot read that way is refused, as bash-commands
 # fails closed on such an input that ran. Its exit 2 is the refusal, which lands in
 # the result's permission_denials like the permission layer's own, and its
-# message is what the model reads, so it names the declared commands and
-# that each runs alone. hook/ is written fresh each run.
+# message is what the model reads, so it names its own set's commands and
+# that each runs alone. hook/ is written fresh each stage.
 live_hook() {
 	rm -rf "$hook"
 	mkdir -p "$hook"
@@ -225,18 +226,32 @@ live_hook() {
 	printf '%s\n' '^claude mcp get [A-Za-z0-9_.-]+( 2>&1)?$' "^git -C (\\\\\"|')?$state_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" "^git -C (\\\\\"|')?$encl_re(\\\\\"|')? rev-parse --is-inside-work-tree --show-prefix\$" >"$hook/declared-base"
 	cp "$hook/declared-base" "$hook/declared"
 	printf '%s\n' "^grep -rl --include=(${q}request\\.md$q|request\\.md|\\\\\"request\\.md\\\\\") (${q}source: mint$q|\\\\\"source: mint\\\\\") $path" "^grep -r --exclude-dir=pre-image ($q$term$q|\\\\\"$term\\\\\") $path" "^ls( -[aAlR1]+)? (\\\\\"|$q)?$state_re$seg/?(\\\\\"|$q)?\$" >>"$hook/declared"
+	# one body for both hooks, which reads its set from its own name: bash
+	# holds a mint run to hook/declared, and bash-base, the copy, holds every
+	# other run to hook/declared-base
 	cat >"$hook/bash" <<'EOF'
 #!/bin/sh
 # The hermetic probe's PreToolUse hook on Bash: a command matching a line
-# of the declared file beside this one runs, and every other is refused.
+# of its declared file beside it runs, and every other is refused. Named
+# bash, it reads declared, a mint run's set; under any other name it
+# reads declared-base, every other run's.
+case $(basename "$0") in
+bash) file=declared ;;
+*) file=declared-base ;;
+esac
 cmd=$(sed -E -n 's/.*"tool_input":\{"command":"(([^"\\]|\\.)*)".*/\1/p')
-if [ -n "$cmd" ] && printf '%s\n' "$cmd" | grep -q -E -f "$(dirname "$0")/declared"; then
+if [ -n "$cmd" ] && printf '%s\n' "$cmd" | grep -q -E -f "$(dirname "$0")/$file"; then
 	exit 0
 fi
-echo 'Refused: only five shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`; `git -C <the state folder> rev-parse --is-inside-work-tree --show-prefix`; and two searches of the state folder, `grep -rl --include='\''request.md'\'' '\''source: mint'\'' <the state folder>` and `grep -r --exclude-dir=pre-image '\''<term>'\'' <the state folder>`, the term in quotes, not starting with a dash, with no quote, backslash, `$`, backtick, `;`, `|`, `&`, `<` or `>` inside; and `ls` of the state folder or a folder at any depth inside it, a single path whose names are letters, digits, `_`, `-` and `.`, none starting with a dot, with flags from `-aAlR1` at most.' >&2
+case $file in
+declared) echo 'Refused: only five shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`; `git -C <the state folder> rev-parse --is-inside-work-tree --show-prefix`; and two searches of the state folder, `grep -rl --include='\''request.md'\'' '\''source: mint'\'' <the state folder>` and `grep -r --exclude-dir=pre-image '\''<term>'\'' <the state folder>`, the term in quotes, not starting with a dash, with no quote, backslash, `$`, backtick, `;`, `|`, `&`, `<` or `>` inside; and `ls` of the state folder or a folder at any depth inside it, a single path whose names are letters, digits, `_`, `-` and `.`, none starting with a dot, with flags from `-aAlR1` at most.' >&2 ;;
+*) echo 'Refused: only two shell commands run here, each on its own with nothing before or after it — `claude mcp get <name>`, optionally ending in `2>&1`; and `git -C <the state folder> rev-parse --is-inside-work-tree --show-prefix`.' >&2 ;;
+esac
 exit 2
 EOF
+	cp "$hook/bash" "$hook/bash-base"
 	printf '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"sh %s"}]}]}}\n' "'$hook/bash'" >"$hook/settings.json"
+	printf '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"sh %s"}]}]}}\n' "'$hook/bash-base'" >"$hook/settings-base.json"
 }
 
 # One headless run in an empty working directory outside the home tree, its
@@ -252,8 +267,9 @@ EOF
 # folder and its listing, each by its leading words. The allow rules do not bound the shell:
 # under acceptEdits a read-only command such as `true` or `echo` runs with
 # no rule matching it (CLI 2.1.283, measured), so every run also loads
-# hook/settings.json, and its hook is what makes the declared commands
-# binding. Reads of the plugins' own files are allowed by one rule over
+# the settings of its own set's hook, hook/settings.json in a mint run and
+# hook/settings-base.json in any other, and that hook is what makes its
+# set binding. Reads of the plugins' own files are allowed by one rule over
 # the checkout's plugins/ — a skill reads the files beside its SKILL.md,
 # mint's fallback reads the scorer's agent definition under
 # plugins/ymer/agents/, and the runs' working directory is outside
@@ -278,11 +294,15 @@ nl='
 live_run() { # live_run <n> <prompt>
 	rm -rf "$cwd"
 	mkdir -p "$cwd"
+	case $mint_runs in
+	*" $1 "*) settings=$hook/settings.json ;;
+	*) settings=$hook/settings-base.json ;;
+	esac
 	(cd "$cwd" && claude -p "$2" --output-format stream-json --verbose \
 		--permission-mode acceptEdits \
 		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree --show-prefix)' 'Bash(grep -rl *)' 'Bash(grep -r --exclude-dir=pre-image *)' 'Bash(ls *)' mcp__ymer-node__notebook "Read(/$root/plugins/**)" Agent \
 		--add-dir "$run_dir" --model "$probe_model" --max-turns 60 \
-		--strict-mcp-config --mcp-config "$mcp" --settings "$hook/settings.json") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
+		--strict-mcp-config --mcp-config "$mcp" --settings "$settings") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
 	ran="$ran $1"
 	if ! call_err=$(live_error "$1"); then
 		fail "run-$1" "run $1 (${2%%"$nl"*}) $call_err — read $runs/$1.jsonl and $runs/$1.err"
@@ -705,14 +725,15 @@ live_instructions() { # live_instructions <trace>
 # writes today. An instrument, not a scenario run: it is not in $ran, and
 # only the instructions check reads it. One short prompt and one turn,
 # since the load is recorded before the model answers (CLI 2.1.286,
-# measured at about $0.06), no server, and the runs' hook in force.
+# measured at about $0.06), no server, and the stricter hook in force, the
+# one every run but a mint run loads.
 live_control() {
 	rm -rf "$control"
 	mkdir -p "$control"
 	printf '%s\n' '# Planted by the hermetic probe' '' 'The instructions check expects this file, and only this one, in the control run'"'"'s transcript.' >"$control/CLAUDE.md"
 	(cd "$control" && claude -p 'Reply with the single word ok.' --output-format stream-json --verbose \
 		--model "$probe_model" --max-turns 1 \
-		--strict-mcp-config --mcp-config '{"mcpServers":{}}' --settings "$hook/settings.json") </dev/null >"$runs/control.jsonl" 2>"$runs/control.err" || true
+		--strict-mcp-config --mcp-config '{"mcpServers":{}}' --settings "$hook/settings-base.json") </dev/null >"$runs/control.jsonl" 2>"$runs/control.err" || true
 	return 0
 }
 
@@ -941,9 +962,12 @@ stage_live() {
 
 	# 5. the runs — state from the node and from state/, behaviour from the
 	# trace. The first arm names no state folder: the install above set the
-	# front alone, so every skill reads the state folder's placeholder. The hook every
-	# run loads is written first, from state/'s own path; the instructions
-	# check's control call runs next, under the same hook.
+	# front alone, so every skill reads the state folder's placeholder. The
+	# hooks the runs load are written first, from state/'s own path, and
+	# mint_runs names the runs that load the mint hook, each other run the
+	# stricter one; the instructions check's control call runs next, under
+	# the stricter hook.
+	mint_runs=' 3 6 7 8 12 '
 	live_hook
 	live_control
 	live_run 1 '/ymer:setup'
@@ -1375,7 +1399,6 @@ link check before the edit would have caught it.'
 	refused=''
 	commits=''
 	write_runs=' 6 7 8 '
-	mint_runs=' 3 6 7 8 12 '
 	setup_runs=' 1 4 5 11 '
 	addressed=''
 	loaded=''
@@ -1441,9 +1464,9 @@ link check before the edit would have caught it.'
 		# every command that ran is a declared one, read as the runs'
 		# hook reads it: the command is the whole JSON string, escaped
 		# quotes included. A mint run's are read against hook/declared,
-		# every other run's against hook/declared-base, so a capture or
-		# setup run that searches or lists the state folder is named
-		# here although the hook let it run. A refused call never
+		# every other run's against hook/declared-base, each the set its own
+		# hook held the run to, so a command a hook let through outside its
+		# set is named here. A refused call never
 		# ran, whatever its input's shape: live_bash leaves it out by its
 		# id, and the run is named on the pass line. An input that ran
 		# whose first key is not the command is not unwrapped, and fails

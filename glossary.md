@@ -57,10 +57,9 @@ domain plugin.
 ### declared command
 One of the Bash commands a live-stage run may run: `claude mcp get
 <name>` and the state folder's `rev-parse` in every run, and mint's
-searches and listing of the state folder in a mint run alone. The runs'
-hook refuses every command outside the whole set, since it cannot tell
-which skill runs, and `bash-commands` reds on any command that ran
-outside its own run's set.
+searches and listing of the state folder in a mint run alone. Each run
+loads the hook of its own run's set, which refuses every command outside
+it, and `bash-commands` reds on any command that ran outside that set.
 
 - _Used in_: marketplace
 - _Avoid_: allowed command
@@ -124,9 +123,9 @@ each run; `state/`, the scratch state folder — a plain folder, not a git
 work tree — recreated each run too; `compose/`, the stage's own copy
 of the compose file it is given, recreated each run, which every
 `docker-compose` call runs from so that a project name pinned beside the
-original is never in reach; and `hook/`, the runs' Bash hook with the
-declared commands it refuses every other command against, rewritten each
-run.
+original is never in reach; and `hook/`, the runs' two Bash hooks, a
+mint run's and every other run's, each with the declared commands of its
+own set and refusing every other command, rewritten each stage.
 
 - _Used in_: marketplace
 - _Avoid_: gate dir, gate config dir, scratch config
