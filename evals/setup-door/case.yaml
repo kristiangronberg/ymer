@@ -40,7 +40,7 @@ graders:
     type: regex
     target: trace
     flags: i
-    pattern: '"type":"text","text":"([^"\\]|\\.)*claude mcp add --transport http --scope user ymer-node'
+    pattern: '"type":"text","text":"([^"\\]|\\.)*claude mcp add --transport http --scope user ymer-desktop'
   - name: never-write
     type: tool_used
     tool: Write

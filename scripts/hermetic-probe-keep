@@ -22,7 +22,7 @@ plugins/ymer/skills/setup/SKILL.md	https://ymer.ax/mcp
 LICENSE	Copyright (c) 2026 Kristian Grönberg
 plugins/ymer/.claude-plugin/plugin.json	"name": "Kristian Grönberg"
 # The scorer's agent definition lists the node's notebook tool
-plugins/ymer/agents/scorer.md	mcp__ymer-node__notebook
+plugins/ymer/agents/scorer.md	mcp__ymer-desktop__notebook
 # An example value in setup's report
 plugins/ymer/skills/setup/SKILL.md	/Users/you/state
 # The setup mechanics name the notebook tool by its pattern
@@ -41,13 +41,13 @@ scripts/hermetic-probe-static	$HOME/.hermetic-probe-tokens
 scripts/hermetic-probe-live	$HOME/.hermetic-probe
 scripts/hermetic-probe-live	http://127.0.0.1:$port/mcp
 scripts/hermetic-probe-live	127.0.0.1:$port
-scripts/hermetic-probe-live	mcp__ymer-node__notebook
-scripts/hermetic-probe-live	mcp__ymer-node__
+scripts/hermetic-probe-live	mcp__ymer-desktop__notebook
+scripts/hermetic-probe-live	mcp__ymer-desktop__
 scripts/hermetic-probe-live	mcp__
 scripts/hermetic-probe-live	~/
 scripts/hermetic-probe-live	$HOME/
-scripts/hermetic-probe-test	mcp__ymer-node__notebook
-scripts/hermetic-probe-test	mcp__ymer-node
+scripts/hermetic-probe-test	mcp__ymer-desktop__notebook
+scripts/hermetic-probe-test	mcp__ymer-desktop
 scripts/hermetic-probe-test	127.0.0.1:8012->8012/tcp
 scripts/hermetic-probe-test	http://127.0.0.1:8112/mcp
 scripts/hermetic-probe-test	http://127.0.0.1:8012/mcp

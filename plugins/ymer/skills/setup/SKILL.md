@@ -80,17 +80,17 @@ answer, fails this check and stops the rest of the battery: everything
 below either writes to the node or reports against it.
 
 ```
-claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
+claude mcp add --transport http --scope user ymer-desktop http://127.0.0.1:8012/mcp
 ```
 
 Name that command only on Claude Code. On a harness with no such door,
 say that the node is unreachable from this session and leave it there.
 
-**The node's name.** Register the node as `ymer-node`, the name that
+**The node's name.** Register the node as `ymer-desktop`, the name that
 line gives it: mint's scorer lists the node's `notebook` tool under that
 server name. A node reached under another name passes this check, and
 on Claude Code its line notes the name it was reached under, with the
-commands that register it again as `ymer-node` (`mechanics.md` § 1).
+commands that register it again as `ymer-desktop` (`mechanics.md` § 1).
 
 *With the node reached, read with this section: `mechanics.md` § 1. The Ymer Node and its store skeletons (the mechanics) and `cases.md` § 1. The Ymer Node and its store skeletons (the cases).*
 
@@ -486,11 +486,11 @@ Ready. Re-run /ymer:setup whenever you like — it changes nothing that is
 already right.
 ```
 
-A node reached under a name other than `ymer-node` passes, and on Claude
+A node reached under a name other than `ymer-desktop` passes, and on Claude
 Code its line says so, with the fix:
 
 ```
-  ✔ node          reachable — 8 tables; reached as `my-node`, not `ymer-node`, so mint's scorer cannot start and mint scores in-session — claude mcp remove my-node -s user, then claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
+  ✔ node          reachable — 8 tables; reached as `my-node`, not `ymer-desktop`, so mint's scorer cannot start and mint scores in-session — claude mcp remove my-node -s user, then claude mcp add --transport http --scope user ymer-desktop http://127.0.0.1:8012/mcp
 ```
 
 A folder in no git repository passes the same way, and a machine

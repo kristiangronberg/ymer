@@ -373,7 +373,7 @@ nothing is narrowed: `execute` runs any statement, and `restore` rolls
 the whole notebook back. A scorer's writes are bounded by its prompt, by
 step 4's read-back of the rows and by the backup step 1 of the run took,
 and by nothing more. The list names the node by the server name
-`ymer-node`, the name the node's `claude mcp add` line gives it (the
+`ymer-desktop`, the name the node's `claude mcp add` line gives it (the
 README, § Installing, and `/ymer:setup` check 1): under another name
 the list resolves to no tool, the harness refuses to start the scorer,
 and the fallback below scores instead.

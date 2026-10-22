@@ -51,7 +51,7 @@ Run a Ymer Node, add the marketplace, install `ymer` naming this
 installation's front (below), then run `/ymer:setup` in a fresh session:
 
 ```
-claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8012/mcp
+claude mcp add --transport http --scope user ymer-desktop http://127.0.0.1:8012/mcp
 claude plugin marketplace add kristiangronberg/ymer
 claude plugin install ymer@ymer --config front=<your front>
 ```
@@ -61,7 +61,7 @@ server the plugins keep their stores in, and its own README says how to
 run one; the `claude mcp add` line points Claude Code at it on the
 loopback port it serves by default.
 
-Keep the name `ymer-node` that line registers the node under: the
+Keep the name `ymer-desktop` that line registers the node under: the
 plugin's scorer, the agent mint dispatches to score drops, reaches the
 node's notebook tool by that name. Under another name mint still runs,
 and scores the drops itself in the session; `/ymer:setup` notes the

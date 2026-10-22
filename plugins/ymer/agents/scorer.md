@@ -1,7 +1,7 @@
 ---
 name: scorer
 description: Scores drops in the Ymer Node's pool for mint's ranking. Dispatched by /ymer:mint only, with a next-steps block and a list of drop ids; without both it writes nothing.
-tools: mcp__ymer-node__notebook
+tools: mcp__ymer-desktop__notebook
 model: haiku
 ---
 

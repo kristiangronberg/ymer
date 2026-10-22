@@ -251,7 +251,7 @@ EOF
 # tool_use block per <tool> <input> pair, the tool_result lines a case
 # sets, an optional narration line, and the result line last — the shape
 # the live stage reads
-trace_init_default='{"type":"system","subtype":"init","session_id":"s-run","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"}]}'
+trace_init_default='{"type":"system","subtype":"init","session_id":"s-run","mcp_servers":[{"name":"ymer-desktop","status":"connected","source":"dynamic"}]}'
 trace_init=$trace_init_default
 trace_narration=''
 run_trace() { # run_trace <result text> [<tool> <input json>]...
@@ -273,7 +273,7 @@ trace_results='' # tool_result lines, one per answered call: a call a case leave
 tool_result() { # tool_result <id> <content> <is_error> — a user line answering tool_use <id>, as the CLI writes one
 	printf '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","content":"%s","is_error":%s,"tool_use_id":"%s"}]}}' "$2" "$3" "$1"
 }
-notebook=mcp__ymer-node__notebook
+notebook=mcp__ymer-desktop__notebook
 live=$tmp/live # the live cases' fixture, named here so a canned trace can read under it
 pstate=$tmp/probe/state # the live stage's state/, under the probe dir every live case uses
 penc=$pstate/encl/plans # the third arm's state folder: inside encl/, a repository of its own under state/
@@ -324,7 +324,7 @@ run_trace "  ✔ node          reachable — 8 tables created\n  ✔ front      
 # pass them; the re-run's Details line says created and added, off the
 # node's line, and does not decide the node's line
 run_trace "Now compiling the full report.\n\n**Setup — ymer environment**\n\n\`\`\`\n✔ **node** — reachable — 8 tables created\n✔ **front** — \`probe_front\` added\n✘ **state_folder** — not **set** — set it with /plugin configure ymer@ymer\n✔ **ymer** — no  connection in this session (no \`ymer\` MCP server configured) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked\n\`\`\`\n\nDetails:\n- **state_folder**: the option is unset." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-decorated.jsonl"
-run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 8 tables present (fronts, kinds, pool, pool_scores, tasks, tasks_log, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed\n✔ **front** — \`probe_front\` — already registered\n✔ **state_folder** — \`$pstate\` — in no git repository, the files are the record\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-node\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
+run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 8 tables present (fronts, kinds, pool, pool_scores, tasks, tasks_log, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed\n✔ **front** — \`probe_front\` — already registered\n✔ **state_folder** — \`$pstate\` — in no git repository, the files are the record\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-desktop\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
 # no coordinator line, and the Meta Roadmap line naming ymer's missing
 # connection and tasks in its place: the coordinator is not reported
 run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 8 tables created\n  ✔ front         \`probe_front\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  – Meta Roadmap  not checked — no connection to ymer; process work routes to \`Meta Roadmap\` in \`tasks\`" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-ymer.jsonl"
@@ -444,16 +444,16 @@ run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach.j
 # left unanswered — reaches nothing; a foreign tool that answered, that was
 # refused, or whose no-such-tool answer names another tool reached its
 # server; and the call above, with no result at all, is a reach too
-trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-node</tool_use_error>' true)
-run_trace 'recorded' mcp__ymer-node '{}' $notebook '{"action":"execute","data":{"sql":"INSERT INTO pool VALUES (1)"}}' >"$canned/run-capture-no-such-tool.jsonl"
+trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-desktop</tool_use_error>' true)
+run_trace 'recorded' mcp__ymer-desktop '{}' $notebook '{"action":"execute","data":{"sql":"INSERT INTO pool VALUES (1)"}}' >"$canned/run-capture-no-such-tool.jsonl"
 trace_results=$(tool_result t1 'found' false)
 run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-answered.jsonl"
 trace_results=$(tool_result t1 'Claude requested permissions to use mcp__foo__bar, but you have not granted it yet.' true)
 run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-refused.jsonl"
-trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-node</tool_use_error>' true)
+trace_results=$(tool_result t1 '<tool_use_error>Error: No such tool available: mcp__ymer-desktop</tool_use_error>' true)
 run_trace 'searched' mcp__foo__bar '{"query":"x"}' >"$canned/run-capture-reach-misnamed.jsonl"
 trace_results=''
-trace_init='{"type":"system","subtype":"init","session_id":"s-run","mcp_servers":[{"name":"ymer-node","status":"connected","source":"dynamic"},{"name":"other","status":"connected","source":"claudeai"}]}'
+trace_init='{"type":"system","subtype":"init","session_id":"s-run","mcp_servers":[{"name":"ymer-desktop","status":"connected","source":"dynamic"},{"name":"other","status":"connected","source":"claudeai"}]}'
 run_trace 'recorded' $notebook '{"action":"execute","data":{"sql":"INSERT INTO pool VALUES (1)"}}' >"$canned/run-capture-connector.jsonl"
 trace_init=$trace_init_default
 # a compound behind an escaped quote: the stage reads the command as the
@@ -472,7 +472,7 @@ run_trace "Tutor skill — stopped: no ymer docs tool in this session. The knowl
 run_trace "Tutor skill — stopped: the notebook has no tutor_subjects or tutor_engagements table. Run /ymer:setup, which creates both." $notebook '{"action":"query","data":{"sql":"SELECT name FROM sqlite_master"}}' >"$canned/run-tutor-stop.jsonl"
 # tutor's stop naming only the node, by its name and its server name:
 # neither names ymer, the docs' home
-run_trace "Tutor skill — stopped: no docs tool on the Ymer Node, and ymer-node has none." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-node-only.jsonl"
+run_trace "Tutor skill — stopped: no docs tool on the Ymer Node, and ymer-desktop has none." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-node-only.jsonl"
 # tutor's stop opening its line on a word it names, and one naming ymer
 # only behind a colon, which is no word of its own
 run_trace "Docs live in ymer, which this session cannot reach, so tutor stopped before opening anything." $notebook '{"action":"query","data":{"sql":"SELECT subject FROM tutor_subjects"}}' >"$canned/run-tutor-line-start.jsonl"
@@ -654,7 +654,7 @@ live_queue() {
 	answer '"method":"tools/list"' '{"result":{}}'
 	queue '"action":"tables"' "$(node_tables 0)"
 	queue 'claude plugin list --json' '[ { "id": "ymer@ymer" } ]'
-	queue 'claude mcp list' 'ymer-node: http://127.0.0.1:8112/mcp (HTTP) - ✔ Connected'
+	queue 'claude mcp list' 'ymer-desktop: http://127.0.0.1:8112/mcp (HTTP) - ✔ Connected'
 	effect 'claude plugin install ymer@ymer --config front=probe_front' "printf '{\n  \"pluginConfigs\": {\n    \"ymer@ymer\": {\n      \"options\": {\n        \"front\": \"probe_front\"\n      }\n    }\n  }\n}\n' >'$tmp/probe/cfg/settings.json'"
 	queue 'claude -p Reply with' "@$canned/run-control.jsonl"
 	effect 'claude -p Reply with' "sh '$canned/plant-control' planted"
@@ -1265,14 +1265,14 @@ check "live: the mint-enclosed line reads the counts around the stop" 1 "$(lines
 check "live: the teardown's install line" 1 "$(lines '✔ install      untouched')"
 check "live: servers, isolation, writes, bash-commands, mint-git and setup-address pass — the node alone, reads inside, writes under state/, the declared commands allowed, no commit, no wrong node address" 6 "$(printf '%s\n' "$out" | grep -c -E '^  ✔ (servers|isolation|writes|bash-commands|mint-git|setup-address) ')"
 check "live: the isolation line names the roots a run is handed — state/, the checkout, the runs' working directory" 1 "$(lines "✔ isolation    every Read, Glob and Grep stayed under $pstate, $fx or the runs' working directory ")"
-check "live scrubs through the CLI" 3 "$(printf '%s\n' "$(logged 'claude plugin uninstall ymer@ymer')" "$(logged 'claude plugin marketplace remove ymer')" "$(logged 'claude mcp remove ymer-node')" | grep -c '^1$')"
+check "live scrubs through the CLI" 3 "$(printf '%s\n' "$(logged 'claude plugin uninstall ymer@ymer')" "$(logged 'claude plugin marketplace remove ymer')" "$(logged 'claude mcp remove ymer-desktop')" | grep -c '^1$')"
 check "live brings the node up under its own project and port, from its own copy of the compose file" 1 "$(logged "$scratch_dc up -d")"
 check "live never runs compose against the named file itself" 0 "$(logged "-f $HERMETIC_PROBE_COMPOSE_FILE")"
 check "live resolves the project name before up and again before down" 2 "$(logged "$scratch_dc config")"
 check "live: the copy is the named file byte for byte" 0 "$(cmp -s "$HERMETIC_PROBE_COMPOSE_FILE" "$tmp/probe/compose/docker-compose.yml"; echo $?)"
-check "live installs through the README's lines — the front alone, then the front and each later arm's folder as the options" '1 1 3 3 1 1' "$(printf '%s %s %s %s %s %s' "$(logged 'claude mcp add --transport http --scope user ymer-node http://127.0.0.1:8112/mcp')" "$(logged "claude plugin marketplace add $fx")" "$(logged 'claude plugin install ymer@ymer')" "$(logged 'claude plugin install ymer@ymer --config front=probe_front')" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$pstate" "$SHIM_DIR/log")" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$penc" "$SHIM_DIR/log")")"
+check "live installs through the README's lines — the front alone, then the front and each later arm's folder as the options" '1 1 3 3 1 1' "$(printf '%s %s %s %s %s %s' "$(logged 'claude mcp add --transport http --scope user ymer-desktop http://127.0.0.1:8112/mcp')" "$(logged "claude plugin marketplace add $fx")" "$(logged 'claude plugin install ymer@ymer')" "$(logged 'claude plugin install ymer@ymer --config front=probe_front')" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$pstate" "$SHIM_DIR/log")" "$(grep -c -x -F -- "claude plugin install ymer@ymer --config front=probe_front --config state_folder=$penc" "$SHIM_DIR/log")")"
 check "live runs twelve headless prompts, prompt before flags" 12 "$(logged 'claude -p /')"
-run_flags="--output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash(claude mcp get *) Bash(git -C * rev-parse --is-inside-work-tree --show-prefix) Bash(grep -rl *) Bash(grep -r --exclude-dir=pre-image *) Bash(ls *) mcp__ymer-node__notebook Read(/$fx/plugins/**) Agent --add-dir $pstate --model claude-sonnet-5 --max-turns 60 --strict-mcp-config --mcp-config "'{"mcpServers":{"ymer-node":{"type":"http","url":"http://127.0.0.1:8112/mcp"}}}'" --settings $tmp/probe/hook/settings-base.json"
+run_flags="--output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash(claude mcp get *) Bash(git -C * rev-parse --is-inside-work-tree --show-prefix) Bash(grep -rl *) Bash(grep -r --exclude-dir=pre-image *) Bash(ls *) mcp__ymer-desktop__notebook Read(/$fx/plugins/**) Agent --add-dir $pstate --model claude-sonnet-5 --max-turns 60 --strict-mcp-config --mcp-config "'{"mcpServers":{"ymer-desktop":{"type":"http","url":"http://127.0.0.1:8112/mcp"}}}'" --settings $tmp/probe/hook/settings-base.json"
 check "live: every run before the third arm but a mint run is stream-json, verbose, pinned, the notebook, the two declared Bash commands and the mint reads allowed, state/ added, the scratch node the one server, the stricter hook loaded" 6 "$(logged "$run_flags")"
 check "live: of those six, three are setup's and two tutor's, so the one left is capture's" '3 2' "$(printf '%s %s' "$(logged "claude -p /ymer:setup $run_flags")" "$(logged "claude -p /ymer:tutor git $run_flags")")"
 mint_flags="${run_flags%settings-base.json}settings.json"
@@ -1394,7 +1394,7 @@ check "live stopped mint that wrote scores: the mint-stop line names the rows" 1
 # ── 16 · live, the scrub: the login's connectors allowed, a leftover not ─
 live_case
 live_queue
-requeue 'claude mcp list' "@$canned/mcp-list-connectors.txt" 'ymer-node: http://127.0.0.1:8112/mcp (HTTP) - ✔ Connected'
+requeue 'claude mcp list' "@$canned/mcp-list-connectors.txt" 'ymer-desktop: http://127.0.0.1:8112/mcp (HTTP) - ✔ Connected'
 probe "$fx" live
 check "live scrub with the login's connectors listed exits 0" 0 "$rc"
 check "live scrub with the login's connectors listed passes" 1 "$(lines '✔ scrub')"
@@ -1496,7 +1496,7 @@ requeue 'FROM tutor_subjects"' "$(node_rows 1)"
 probe "$fx" live
 check "live tutor writing with no ymer exits 1" 1 "$rc"
 check "live tutor writing with no ymer: the tutor-ymer line names the rows" 1 "$(lines '✘ tutor-ymer   after /ymer:tutor with no ymer: 1 tutor_subjects rows, 0 tutor_engagements rows')"
-# a stop naming the node alone, as the Ymer Node and as ymer-node: tutor
+# a stop naming the node alone, as the Ymer Node and as ymer-desktop: tutor
 # never named ymer
 live_case
 live_queue
@@ -1905,7 +1905,7 @@ check "live mint search for a commit term: bash-commands passes" 1 "$(lines "$ba
 live_seeded /ymer:capture run-capture-reach.jsonl
 probe "$fx" live
 check "live foreign tool exits 1" 1 "$rc"
-check "live foreign tool: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+check "live foreign tool: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-desktop')"
 
 # ── 22b · live, a server call read by its result ──────────────────────
 # a call the CLI answered with no such tool reached nothing: servers
@@ -1914,25 +1914,25 @@ check "live foreign tool: the servers line names the run" 1 "$(lines '✘ server
 live_seeded /ymer:capture run-capture-no-such-tool.jsonl
 probe "$fx" live
 check "live call to no such tool exits 0" 0 "$rc"
-check "live call to no such tool: servers passes, naming the run and the tool" 1 "$(lines '✔ servers      every run'"'"'s init line names ymer-node alone, and no other server'"'"'s tool was called — a call to no such tool, reaching nothing, in run(s) 2 (mcp__ymer-node)')"
+check "live call to no such tool: servers passes, naming the run and the tool" 1 "$(lines '✔ servers      every run'"'"'s init line names ymer-desktop alone, and no other server'"'"'s tool was called — a call to no such tool, reaching nothing, in run(s) 2 (mcp__ymer-desktop)')"
 live_seeded /ymer:capture run-capture-reach-answered.jsonl
 probe "$fx" live
 check "live foreign tool answered exits 1" 1 "$rc"
-check "live foreign tool answered: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+check "live foreign tool answered: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-desktop')"
 live_seeded /ymer:capture run-capture-reach-refused.jsonl
 probe "$fx" live
 check "live foreign tool refused exits 1" 1 "$rc"
-check "live foreign tool refused: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+check "live foreign tool refused: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-desktop')"
 live_seeded /ymer:capture run-capture-reach-misnamed.jsonl
 probe "$fx" live
 check "live foreign tool answered no such tool under another name exits 1" 1 "$rc"
-check "live foreign tool answered no such tool under another name: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+check "live foreign tool answered no such tool under another name: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-desktop')"
 
 # ── 23 · live, a second server in a run's init line ───────────────────
 live_seeded /ymer:capture run-capture-connector.jsonl
 probe "$fx" live
 check "live second server exits 1" 1 "$rc"
-check "live second server: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-node')"
+check "live second server: the servers line names the run" 1 "$(lines '✘ servers      run(s) 2 reached a server beyond ymer-desktop')"
 check "live second server: capture itself still passes" 1 "$(lines '✔ capture')"
 
 # ── 24 · live, a read outside state/, under the probe dir or beyond ───

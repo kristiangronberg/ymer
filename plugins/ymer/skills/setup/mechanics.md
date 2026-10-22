@@ -38,10 +38,10 @@ SELECT target FROM _meta WHERE target = 'table:topics'
 
 **The node's server name**, on Claude Code, is the one this session's
 notebook tool carries, `mcp__<server>__notebook`. Where `<server>` is
-not `ymer-node`, read the registration with `claude mcp get <server>`:
+not `ymer-desktop`, read the registration with `claude mcp get <server>`:
 it prints the scope and URL the node is registered with, and the remove
 command for that scope. The node's line notes the name with the commands
-that register the node again as `ymer-node`: that remove command, then
+that register the node again as `ymer-desktop`: that remove command, then
 the `claude mcp add` line `SKILL.md` § 1 names, carrying the URL `get`
 printed in place of the default. Where `get` finds no server by that
 name, the tool name carrying an altered form of it, the line names

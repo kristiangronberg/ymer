@@ -300,7 +300,7 @@ live_run() { # live_run <n> <prompt>
 	esac
 	(cd "$cwd" && claude -p "$2" --output-format stream-json --verbose \
 		--permission-mode acceptEdits \
-		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree --show-prefix)' 'Bash(grep -rl *)' 'Bash(grep -r --exclude-dir=pre-image *)' 'Bash(ls *)' mcp__ymer-node__notebook "Read(/$root/plugins/**)" Agent \
+		--allowedTools 'Bash(claude mcp get *)' 'Bash(git -C * rev-parse --is-inside-work-tree --show-prefix)' 'Bash(grep -rl *)' 'Bash(grep -r --exclude-dir=pre-image *)' 'Bash(ls *)' mcp__ymer-desktop__notebook "Read(/$root/plugins/**)" Agent \
 		--add-dir "$run_dir" --model "$probe_model" --max-turns 60 \
 		--strict-mcp-config --mcp-config "$mcp" --settings "$settings") </dev/null >"$runs/$1.jsonl" 2>"$runs/$1.err" || true
 	ran="$ran $1"
@@ -411,7 +411,7 @@ report_lines() { # report_lines <n> — run <n>'s report, one line per role line
 # character touches either end: letters, digits, `_`, `-` and `/` on
 # either side, and `:` before the word only — so `8 tables` is not read
 # in `18 tables`, `reachable` not in `unreachable`, `ymer` not in
-# `ymer-node` or a skill's `/ymer:<skill>`, while a dressed `node:` still
+# `ymer-desktop` or a skill's `/ymer:<skill>`, while a dressed `node:` still
 # reads as `node`. A word may hold a space; the report's blanks are
 # collapsed to one.
 report_words() { # report_words <word>... — stdin's lines carrying every word on its own
@@ -515,7 +515,7 @@ denied_bash() { # denied_bash <n> — the tool_use_id of each Bash call refused 
 
 # Whether run <n> made an execute call through the node's notebook tool.
 live_executed() { # live_executed <n>
-	live_calls "$1" | grep '^mcp__ymer-node__notebook' | grep -q '"action":"execute"'
+	live_calls "$1" | grep '^mcp__ymer-desktop__notebook' | grep -q '"action":"execute"'
 }
 
 # The mcp__ calls a run made, one per line as `reached <tool>` or
@@ -793,7 +793,7 @@ stage_live() {
 	port=${HERMETIC_PROBE_PORT:-8112}
 	compose=${HERMETIC_PROBE_COMPOSE_FILE:-}
 	url=http://127.0.0.1:$port/mcp
-	mcp="{\"mcpServers\":{\"ymer-node\":{\"type\":\"http\",\"url\":\"$url\"}}}"
+	mcp="{\"mcpServers\":{\"ymer-desktop\":{\"type\":\"http\",\"url\":\"$url\"}}}"
 	ran=''
 	run_dir=$state # the folder a run is handed: state/, until the third arm names its own
 	# The runs' working directories sit outside the home tree: for any
@@ -886,7 +886,7 @@ stage_live() {
 	# lagging copy and does not count; an unmarked one does
 	claude plugin uninstall ymer@ymer >/dev/null 2>&1 || true
 	claude plugin marketplace remove ymer >/dev/null 2>&1 || true
-	claude mcp remove ymer-node >/dev/null 2>&1 || true
+	claude mcp remove ymer-desktop >/dev/null 2>&1 || true
 	left=''
 	claude plugin list --json 2>/dev/null | grep -q '"id": ".*@ymer"' && left="$left plugins"
 	claude plugin marketplace list --json 2>/dev/null | grep -q '"name": "ymer"' && left="$left marketplace"
@@ -941,14 +941,14 @@ stage_live() {
 	# the plugin with the front alone; each tolerant, so a failed line is
 	# reported by the list reads below rather than ending the script with
 	# the CLI's own exit status
-	claude mcp add --transport http --scope user ymer-node "$url" >"$runs/install.log" 2>&1 || true
+	claude mcp add --transport http --scope user ymer-desktop "$url" >"$runs/install.log" 2>&1 || true
 	claude plugin marketplace add "$root" >>"$runs/install.log" 2>&1 || true
 	claude plugin install ymer@ymer --config "front=$probe_front" >>"$runs/install.log" 2>&1 || true
 	missing=''
 	claude plugin list --json 2>/dev/null | grep -q '"id": "ymer@ymer"' || missing="$missing ymer@ymer"
-	claude mcp list 2>/dev/null | grep -q "^ymer-node: $url" || missing="$missing ymer-node"
+	claude mcp list 2>/dev/null | grep -q "^ymer-desktop: $url" || missing="$missing ymer-desktop"
 	if [ -z "$missing" ]; then
-		pass install "marketplace from $root, ymer@ymer, ymer-node on $url"
+		pass install "marketplace from $root, ymer@ymer, ymer-desktop on $url"
 	else
 		abort install "not installed:$missing — read $runs/install.log"
 	fi
@@ -979,7 +979,7 @@ stage_live() {
 	else
 		fail setup "after /ymer:setup the node holds $tables tables and $fronts front rows, $named of them $probe_front (expected 8, 1 and 1) — read $runs/1.jsonl"
 	fi
-	if live_calls 1 | grep -q '^mcp__ymer-node__notebook'; then
+	if live_calls 1 | grep -q '^mcp__ymer-desktop__notebook'; then
 		pass setup-node "setup wrote through the node's notebook tool"
 	else
 		fail setup-node "no notebook call in $runs/1.jsonl — the run never reached the node"
@@ -1298,7 +1298,7 @@ link check before the edit would have caught it.'
 	subjects=$(node_count 'SELECT count(*) FROM tutor_subjects')
 	engagements=$(node_count 'SELECT count(*) FROM tutor_engagements')
 	if live_executed 9; then wrote=wrote; else wrote='no write'; fi
-	# ymer as a word of its own: report_words leaves out ymer-node and
+	# ymer as a word of its own: report_words leaves out ymer-desktop and
 	# /ymer:<skill>, and the Ymer Node, two words, is taken out first
 	if report_lines 9 | sed 's/[Yy][Mm][Ee][Rr] [Nn][Oo][Dd][Ee]//g' | report_words ymer docs | grep -q .; then named=names; else named='does not name'; fi
 	if [ "$subjects" = 0 ] && [ "$engagements" = 0 ] && [ "$wrote" = 'no write' ] && [ "$named" = names ]; then
@@ -1408,14 +1408,14 @@ link check before the edit would have caught it.'
 	transcripts=0
 	for n in $ran; do
 		# the init line is the trace's first; every server it names must
-		# be ymer-node, and no other server's tool may have been reached
+		# be ymer-desktop, and no other server's tool may have been reached
 		# past it — ToolSearch finds a connector's tools whether or not
 		# the init line listed the connector. A call the CLI answered
 		# with no such tool reached nothing: it is left out here and named
 		# on the pass line with its tool, as a refused command is
 		named=$(head -n 1 "$runs/$n.jsonl" | grep -o '"mcp_servers":\[[^]]*\]' | grep -o '"name":"[^"]*"' | sort -u | tr '\n' ' ')
 		live_mcp "$n" >"$tmp/mcp"
-		if [ "$named" != '"name":"ymer-node" ' ] || grep '^reached ' "$tmp/mcp" | grep -v -q '^reached mcp__ymer-node__'; then
+		if [ "$named" != '"name":"ymer-desktop" ' ] || grep '^reached ' "$tmp/mcp" | grep -v -q '^reached mcp__ymer-desktop__'; then
 			servers="$servers $n"
 		fi
 		tools=$(sed -n 's/^unreached //p' "$tmp/mcp" | sort -u | tr '\n' ' ' | sed 's/ $//')
@@ -1510,9 +1510,9 @@ link check before the edit would have caught it.'
 		transcripts=$((transcripts + $(grep -c '^read' "$tmp/instructions" || true)))
 	done
 	if [ -z "$servers" ]; then
-		pass servers "every run's init line names ymer-node alone, and no other server's tool was called${unreached:+ — a call to no such tool, reaching nothing, in run(s)$unreached}"
+		pass servers "every run's init line names ymer-desktop alone, and no other server's tool was called${unreached:+ — a call to no such tool, reaching nothing, in run(s)$unreached}"
 	else
-		fail servers "run(s)$servers reached a server beyond ymer-node — read the init line's mcp_servers and the mcp__ calls in $runs/<n>.jsonl"
+		fail servers "run(s)$servers reached a server beyond ymer-desktop — read the init line's mcp_servers and the mcp__ calls in $runs/<n>.jsonl"
 	fi
 	if [ -z "$outside" ]; then
 		pass isolation "every Read, Glob and Grep stayed under $state, $root or the runs' working directory $cwd"
