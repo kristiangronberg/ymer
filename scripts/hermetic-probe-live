@@ -1299,8 +1299,9 @@ link check before the edit would have caught it.'
 	engagements=$(node_count 'SELECT count(*) FROM tutor_engagements')
 	if live_executed 9; then wrote=wrote; else wrote='no write'; fi
 	# ymer as a word of its own: report_words leaves out ymer-desktop and
-	# /ymer:<skill>, and the Ymer Node, two words, is taken out first
-	if report_lines 9 | sed 's/[Yy][Mm][Ee][Rr] [Nn][Oo][Dd][Ee]//g' | report_words ymer docs | grep -q .; then named=names; else named='does not name'; fi
+	# /ymer:<skill>, and the Ymer Node and Ymer Desktop, two words each, are
+	# taken out first
+	if report_lines 9 | sed -e 's/[Yy][Mm][Ee][Rr] [Nn][Oo][Dd][Ee]//g' -e 's/[Yy][Mm][Ee][Rr] [Dd][Ee][Ss][Kk][Tt][Oo][Pp]//g' | report_words ymer docs | grep -q .; then named=names; else named='does not name'; fi
 	if [ "$subjects" = 0 ] && [ "$engagements" = 0 ] && [ "$wrote" = 'no write' ] && [ "$named" = names ]; then
 		pass tutor-ymer "stopped naming ymer as its docs' home — no execute call, both tutor tables empty"
 	else
