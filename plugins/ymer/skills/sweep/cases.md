@@ -22,10 +22,11 @@ moment that section runs.
   `runner_filter`. Alternation syntax varies by tool **and by mode**:
   the same pattern can alternate under one mode flag and be a literal
   under another. A machine's own grep (a wrapper around it, the mode
-  it forces, its traversal filter, the shell layer in front of it) is
-  described in the front's initial instructions, which are where a
-  machine's own facts bind. Facts specific to one repository live in
-  that repository's own instructions or memories.
+  it forces, its traversal filter, the shell layer in front of it) binds
+  where that machine's facts bind, in its front's push channel or
+  call-time channel (the process contract, § Knowledge placement).
+  Facts specific to one repository live in that repository's own
+  instructions or memories.
 
 ## 2. Corpus: everything, minus exclusions you name
 

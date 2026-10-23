@@ -257,15 +257,16 @@ branch to the topic, records the sketch in `sketch.md`, and asks one
 light question. On an iteration only the commits the record does not
 name are input (→ Read the arrival, the iteration row).
 
-**Read the substrate contract whole now, and the process contract's
-§ Topic kinds**, unless already read this session:
+**Read the substrate contract whole now, and the process contract's §
+Topic kinds**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md`. They hold the network
-boundary, commit ownership, git is never guessed, the two tree options,
-the branch workflow, staging by explicit path, concurrent edits on a
-shared tree, committing by hunk and the two commit registers; and the
-two topic kinds with the duty to commit machinery edits. A session that
-reads them here does not read them again at the close.
+boundary, commit ownership, git is never guessed, what crosses a close,
+the two tree options, the branch workflow, staging by explicit path,
+concurrent edits on a shared tree, committing by hunk and the two commit
+registers; and the two topic kinds with the duty to commit machinery
+edits. A session that reads them here does not read them again at the
+close.
 
 ## Sketch Intake
 

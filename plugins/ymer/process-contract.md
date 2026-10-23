@@ -28,11 +28,11 @@ to be read on its own.
   dimensions, the orchestration floor
 - Iteration: the route, the executor, decide-forward, the marker's
   block, the delta
-- Knowledge placement: the chartered stores, the routing test, the
-  glossaries
+- Knowledge placement: the chartered stores, the routing test, the two
+  channels and the sorting rule, the glossaries
 - Defaults and holds: gate defaults and holds, git is never guessed,
-  delegation, pre-flight, close binding, the fallback rule, the report
-  rule, the interview as a hold
+  delegation, the release-version write, pre-flight, close binding, the
+  fallback rule, the report rule, the interview as a hold
 - Rule ownership: machinery or reminders, decided or asked
 - The payload contract: payload files, the manifest, the verifier
 - The traceability stores: where commit refs are recorded
@@ -404,16 +404,26 @@ anything else (→ Review effort). Two reads:
 ## Knowledge placement
 
 Process and project knowledge lives in **chartered stores** only, with
-no side stores: a front's own automatic memory is off on purpose, and
-the front's initial instructions carry the rules that are always
-loaded. The routing test is one question: **must the knowledge bind in
-a session where no skill is ever invoked?** If it must, it needs a push
-channel, an instruction file that is always loaded. If not, it belongs
-in a pull store, reached by a trigger description or by a pointer.
+no side stores: a front's own automatic memory is off on purpose. The
+routing test is one question: **must the knowledge bind in a session
+where no skill is ever invoked?** If it must, it needs a **push
+channel**, an instruction file that is always loaded, or a **call-time
+channel**, a mechanism of the harness that runs at a tool call, such as
+a hook. If not, it belongs in a pull store, reached by a trigger
+description or by a pointer.
+
+**Between the two channels, a rule sorts by what it binds.** A MUST or
+MUST NOT that a tool call shows is enforced on that call where the
+front has a call-time channel, never only stated in its push channel:
+this is where § Rule ownership's machinery lives for the session's own
+calls. A SHOULD lives in the skill, or the process, of the work it
+serves. The push channel keeps only what neither can carry, and a front
+with no call-time channel keeps its MUSTs there.
 
 | Store | Owns |
 |---|---|
-| the front's initial instructions (global push) | what must bind everywhere before the first tool call: git ownership, machine traps, rules for working with the user |
+| the front's initial instructions (global push) | what must bind everywhere before the first tool call and no call-time channel on that front carries, such as the rules for working with the user |
+| the front's call-time channel (call-time) | what a tool call shows: a deny before the call, or a note after it |
 | repo `CLAUDE.md` (push, scoped to the working directory) | that repo's repo-safe operational facts, conventions and gotchas |
 | repo `CLAUDE.local.md` (push, scoped to the working directory, gitignored) | private facts about one repo, kept out of a shared or employer-visible checkout |
 | the plugin's skills and contract files (pull) | process knowledge: each rule lives in the skill that owns the moment it fires, and a rule several skills share lives once, in a contract file the skills read at the moment they name |
@@ -491,6 +501,16 @@ validate nothing, so where the file has a format that parses, the parse
 check is its own step, after the edit and still before the delegation:
 never something the tool is credited with, and never left for a session
 the delegation may end.
+
+**A release-version write** is any write of a version number: a
+manifest's version field, and prose naming one, such as a "Since x.y.z"
+note or an install snippet's pinned version. A version names what was
+released or built, never what a topic implemented, so no phase writes
+one, the ship commit included: the write is the user's, handed over as
+a hold (→ What a delegation carries). Where a change owes such an
+announcement, its text is drafted in the artifact that records the
+change, `implemented.md`, or `review.md` where the lightweight
+close-out writes none, and listed as a pending step.
 
 **Pre-flight.** Whichever session next touches the topic derives the
 predecessor's close state and every pending step from durable state:

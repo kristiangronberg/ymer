@@ -124,11 +124,11 @@ Topic kinds and § The traceability stores**, unless already read this
 session: `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md`. They hold the two tree
 options, the project checkout's pre-flight steps with the catch-up's
-outcomes and how its conflicts are classed, git is never guessed,
-staging by explicit path, concurrent edits on a shared tree, committing
-by hunk and the commit registers; the topic kinds and the duty to commit
-machinery edits; and the list of traceability stores the record names
-its refs in.
+outcomes and how its conflicts are classed, git is never guessed, what
+crosses a close, staging by explicit path, concurrent edits on a shared
+tree, committing by hunk and the commit registers; the topic kinds and
+the duty to commit machinery edits; and the list of traceability stores
+the record names its refs in.
 
 - **The trees the plan targets are ready.** Which trees are read is
   keyed on the plan's targets, never on the topic kind: the paths

@@ -683,14 +683,13 @@ Fix issues inline and move on: there is no re-review loop.
 *Read with this section: `mechanics.md` § Phase Close — three closes (the mechanics).*
 
 **Read the substrate contract whole now**, unless already read this
-session:
-`${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`, for the network boundary,
-commit ownership, git is never guessed, the two tree options, the branch
-workflow, staging by explicit path, concurrent edits on a shared tree,
-committing by hunk, and the two commit registers. This section and its
-mechanics carry only review's own steps: each command, the tree it runs
-in and the outcomes it expects. The pre-flight and close-binding rules
-read at Input bind here too.
+session: `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`, for the network
+boundary, commit ownership, git is never guessed, what crosses a close,
+the two tree options, the branch workflow, staging by explicit path,
+concurrent edits on a shared tree, committing by hunk, and the two
+commit registers. This section and its mechanics carry only review's own
+steps: each command, the tree it runs in and the outcomes it expects.
+The pre-flight and close-binding rules read at Input bind here too.
 
 **Which close runs** is read off the dispositions and the fitness
 answer: a blocking lift-out → wait; a substantive in-scope iteration

@@ -211,13 +211,13 @@ An unattended interview is closed around, not torn. Define writes
 `spec.md` with the `Interview pending —` marker at its head, a draft
 "What we mean" that holds no decision, and the prepared `## Interview`
 section; it makes no glossary write and no outward ruling, and its
-commit carries the pending suffix. The review gate is never reached.
-The commit is the state-folder commit of `mechanics.md` § User Review
-Gate, under the pending message (the interview procedure, § 4.
-Pending); **read the substrate contract whole now** before it, unless
-already read this session: `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`,
-for staging by explicit path, the commit registers, concurrent edits
-on a shared tree and git is never guessed.
+commit carries the pending suffix. The review gate is never reached. The
+commit is the state-folder commit of `mechanics.md` § User Review Gate,
+under the pending message (the interview procedure, § 4. Pending);
+**read the substrate contract whole now** before it, unless already read
+this session: `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`, for staging
+by explicit path, the commit registers, concurrent edits on a shared
+tree, git is never guessed and what crosses a close.
 
 ## The Glossary
 
@@ -574,12 +574,13 @@ commit. **Read the substrate contract whole now, and the process
 contract's § Topic kinds**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md`. They hold the network
-boundary, commit ownership, git is never guessed, the two tree options
-with the project checkout's pre-flight, the branch workflow, staging by
-explicit path, concurrent edits on a shared tree, committing by hunk and
-the two commit registers; and the two topic kinds with the duty to
-commit machinery edits. The substrate contract's head says where git is
-in reach; a session that meets none of its cases reads nothing there.
+boundary, commit ownership, git is never guessed, what crosses a close,
+the two tree options with the project checkout's pre-flight, the branch
+workflow, staging by explicit path, concurrent edits on a shared tree,
+committing by hunk and the two commit registers; and the two topic kinds
+with the duty to commit machinery edits. The substrate contract's head
+says where git is in reach; a session that meets none of its cases reads
+nothing there.
 
 **Draw and return.** A close that consolidated `spec.md` draws and
 returns what this close's lines in its `## Drops` section name, right

@@ -60,6 +60,13 @@
 # of the probe dir: cfg/ holds the login, its account record and those
 # transcripts, and a read there fails `isolation`.
 #
+# A fresh config dir holds no login, and any claude call writes into it:
+# `claude auth status` leaves .claude.json, its lock and backups/ behind,
+# so a test that the dir is fresh holds only before the first call.
+# --bare reads no claude.ai login and no keychain: its Anthropic auth is
+# ANTHROPIC_API_KEY, or an apiKeyHelper given through --settings.
+# Observed on Claude Code 2.1.309.
+#
 # Exit 2 on any precondition, 1 on a failed step.
 
 live_project=hermetic-probe

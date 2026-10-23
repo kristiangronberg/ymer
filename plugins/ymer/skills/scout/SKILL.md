@@ -211,12 +211,12 @@ The close then commits what this phase wrote. **Read the substrate
 contract whole now, and the process contract's § Topic kinds**, unless
 already read this session: `${CLAUDE_PLUGIN_ROOT}/substrate-contract.md`
 and `${CLAUDE_PLUGIN_ROOT}/process-contract.md`. They hold the network
-boundary, commit ownership, git is never guessed, the two tree options,
-staging by explicit path, concurrent edits on a shared tree, committing
-by hunk and the two commit registers; and the two topic kinds with the
-duty to commit machinery edits. The substrate contract's head says where
-git is in reach; a session that meets none of its cases reads nothing
-there.
+boundary, commit ownership, git is never guessed, what crosses a close,
+the two tree options, staging by explicit path, concurrent edits on a
+shared tree, committing by hunk and the two commit registers; and the
+two topic kinds with the duty to commit machinery edits. The substrate
+contract's head says where git is in reach; a session that meets none of
+its cases reads nothing there.
 
 **No project-repo writes:** this phase reads the project repo only, and
 the state folder is committed by the phase at its close.

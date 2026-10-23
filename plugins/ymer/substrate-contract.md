@@ -49,6 +49,15 @@ merge aborted, never left half-done, and a tree never carries conflict
 markers past the session that met them. The report names what was
 undone.
 
+## What crosses a close
+
+A session closes with every tree it wrote committed and no git step it
+began left half-done. What may cross the close is only what someone
+else owns: a hold of the user's, an unpushed commit or a stash among
+them (→ The network boundary, → Commit ownership); another session's
+work in a shared tree (→ Concurrent edits on a shared tree); and what
+the next phase's pre-flight is written to take up (→ Project checkout).
+
 ## Tree options
 
 Every git operation keys on the tree it runs in, and a tree takes one of

@@ -137,6 +137,10 @@ states intent, postcondition and read-back, never the shape.
 _Avoid_: grammar (for this concept — grammar stays the syntax of the
 suite's own artifact lines), recipe, schema, shape (bare)
 
+### call-time channel
+Defined in the process contract — § Knowledge placement.
+_Avoid_: call-time enforcement, the front's hooks, guard (a skill's guard)
+
 ### candidate
 A pre-verify review result: one defect a lens proposes, before any verifier
 has returned a verdict on it. The unit a verify lane routes, a batch verifier
@@ -940,6 +944,10 @@ at the ship. Derived from the branch — the current branch is the
 topic's — never from the tree's address. Contrast: shared tree; the
 tree itself: → checkout.
 _Avoid_: repo checkout, code checkout, owned tree
+
+### push channel
+Defined in the process contract — § Knowledge placement.
+_Avoid_: push text, always-loaded file
 
 ## Q
 
