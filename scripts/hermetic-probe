@@ -1,9 +1,10 @@
 #!/bin/sh
-# hermetic-probe — the marketplace's maintainer-run gate proving the
-# personal-layer principle: the plugins run from nothing personal to the
-# maintainer. Three stages, chosen by subcommand, ordered by cost:
+# hermetic-probe — the marketplace's maintainer-run check of the plugins'
+# shipped files and skill stops, kept available and gating no change: a
+# stage or case a change breaks is retired rather than reworked (CLAUDE.md
+# § Conventions). Three stages, chosen by subcommand, ordered by cost:
 #
-#   scripts/hermetic-probe          static, then eval — a skill lift's beat 5
+#   scripts/hermetic-probe          static, then eval
 #   scripts/hermetic-probe static   the shipped files alone, no model
 #   scripts/hermetic-probe eval     every skill fired in `claude plugin eval`
 #                                   with no Ymer Node — fires, stops, gives

@@ -8,6 +8,8 @@ specializes that practice for one kind of work, naming itself
 `ymer-<domain>` and calling the core's skills the way `/ymer:brainstorm`
 names one.
 
+This marketplace is its author's private practice: unlisted and unsupported. The repository stays public only as the install source for the author's own installations, and may leave the internet without notice.
+
 Using any plugin requires **three** things, and they are stated in the
 marketplace description because they are real requirements:
 

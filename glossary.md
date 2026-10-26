@@ -97,11 +97,11 @@ door and repairs nothing (→ setup boundary).
 ## H
 
 ### hermetic probe
-The marketplace's maintainer-run gate proving the personal-layer
-principle — that the plugins run from nothing personal to the maintainer:
-`scripts/hermetic-probe`, its three stages (static, eval, live) chosen by
-subcommand, its assertions structural. Run bare it is a skill lift's
-beat 5.
+The marketplace's maintainer-run check of the plugins' shipped files and
+skill stops: `scripts/hermetic-probe`, its three stages (static, eval,
+live) chosen by subcommand, its assertions structural. Kept available and
+gating no change; a stage or case a change breaks is retired rather than
+reworked (`CLAUDE.md` § Conventions).
 
 - _Used in_: marketplace
 - _Avoid_: hermetic gate, personal-layer probe, standing check (the role
@@ -110,7 +110,11 @@ beat 5.
 ## P
 
 ### personal-layer principle
-Defined in the repo `CLAUDE.md` — the Conventions bullet stating it.
+Historical (retired 2026-10-26): the rule that nothing personal to the
+maintainer may be necessary to run the plugins, once the marketplace's
+gate for strangers. Replaced by the plugins being their owner's private
+practice. Survives in the marketplace's earlier topic records and the
+hermetic probe's history.
 
 - _Used in_: marketplace
 
