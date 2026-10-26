@@ -76,7 +76,12 @@ suffix (the interview procedure, § 4. Pending).
 
 - Fan out 2–4 read-only Explore agents over README, module docs, module
   names, type names, struct/schema fields; collect the domain terms in
-  use. **Fallback:** where the fan-out cannot run, the fallback rule
+  use. Each brief carries the confinement contract's path, as `SKILL.md`
+  § Bootstrap Mode's read line resolves it, the instruction to read it
+  whole before the first command, and a scratch root of the agent's own;
+  take the host's inventory around the fan-out (the confinement
+  contract, § The scratch root and § The host's inventory).
+  **Fallback:** where the fan-out cannot run, the fallback rule
   decides (the process contract, § Defaults and holds, read in
   `SKILL.md` § Bootstrap Mode); bootstrap's own fallback is the same
   sweep run single-context, and the summary says so.

@@ -1,0 +1,17 @@
+{
+  "description": "The confinement hook: inside a subagent, denies before the call the confinement contract's harms a command visibly shows",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/confinement-hook\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

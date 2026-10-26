@@ -136,6 +136,18 @@ apply decision this skill's (→ Applying fixes (--fix)). The built-in
 runs in the background and reports when it finishes: run the lenses
 meanwhile.
 
+**Before the first call, read the confinement contract whole now**,
+unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it. Take the
+inventory around the calls, and keep the lenses' own scratch under the
+host's own scratch root (`mechanics.md` § The built-in). The pass's
+report names what the inventory removed and each item it left, with its
+command.
+
 The built-in is used through what it documents: its levels, its flags
 and the findings it reports, never its internal prompts. Its own steps
 after the review, a `/verify` run among them, are its business: this

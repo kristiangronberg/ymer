@@ -54,8 +54,10 @@ roster would read "no companion" where a `CLAUDE.md` went unchecked.
 
 **Mutating to measure.** A lens that must break a clause and run the
 suite to prove a finding does it in a scratch replica of the checkout,
-never in the session's own checkout, which implement's close may be in
-the middle of. A restore is verified with `git status`, never assumed.
+a copy made inside the host's own scratch root (the confinement
+contract, § The scratch root), never in the session's own checkout, which
+implement's close may be in the middle of. A restore is verified with
+`git status`, never assumed.
 
 ## The merge
 

@@ -207,6 +207,24 @@ Defined in the process contract, § Topic kinds.
 A station's close: the learner explains one chain of the station's material
 as they would to a colleague — teach-it-back, scoped to ONE chain.
 
+### confinement contract
+The reference file this plugin ships for what the host and the agents
+it dispatches may touch on the live machine: each owns only what it
+started, leaves nothing it started behind, and reports what it could not
+remove — its cases for processes, ports, live targets, sibling trees,
+secrets and residue, the host's inventory around a dispatch, and the gap
+it names. Skills cite it by its role phrase and never restate it; its
+one resolvable address is `${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`.
+_Avoid_: live-state contract, probe contract
+
+### confinement hook
+The PreToolUse hook the plugin ships that, inside every subagent of a
+session where the plugin is enabled and never in the user's own session,
+denies before the call the confinement contract's harms a command
+visibly shows, naming the contract's case and the owned alternative;
+defence in depth beneath the contract, never its substitute.
+_Avoid_: guard, confinement guard, call-time guard
+
 ### content-ownership map
 The totality audit a content-moving plan carries: one explicit disposition per
 content unit of the files it relocates or deletes — a destination, or dropped
@@ -1097,6 +1115,10 @@ scores drops for mint, dispatched as `ymer:scorer` from its agent
 definition, `agents/scorer.md`, its whole world the rubric, the next
 steps and a batch of drops.
 _Avoid_: triager, triage run
+
+### scratch root
+Defined in the confinement contract, § The scratch root.
+_Avoid_: dispatch dir, agent scratchpad, scratch dir
 
 ### settled section
 One of a product page's sections below the header — Forward direction;

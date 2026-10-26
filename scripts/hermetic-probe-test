@@ -36,6 +36,7 @@
 # another beside it — the runs' hook over its own events, the one model
 # pin, the static
 # stage's verifier check — its test passing, failing and missing — its
+# confinement check, the same three — its
 # descriptions check — a description at the limit and one past it, one
 # under it by characters and over it by bytes, one missing, one empty and
 # ones written across lines — and the exit codes.
@@ -617,9 +618,11 @@ fixture() {
 	printf 'A readme.\n\n## Installing\n\nRun /ymer:setup; the node is [Ymer Node](%s).\n' 'http://example.invalid:9999/mcp' >"$1/README.md"
 	printf 'evals/results/\n' >"$1/.gitignore"
 	cp "$here/hermetic-probe" "$here/hermetic-probe-static" "$here/hermetic-probe-eval" "$here/hermetic-probe-live" "$here/hermetic-probe-keep" "$1/scripts/"
-	# the static stage runs the marketplace's verifier test: a stub stands in,
-	# since what it tests is not this probe's business
+	# the static stage runs the marketplace's verifier and confinement
+	# tests: stubs stand in, since what they test is not this probe's
+	# business
 	printf '#!/bin/sh\necho "payload-verify-test: 1 passed, 0 failed"\n' >"$1/scripts/payload-verify-test"
+	printf '#!/bin/sh\necho "confinement-hook-test: 1 passed, 0 failed"\n' >"$1/scripts/confinement-hook-test"
 	printf 'README.md\t%s\n' 'http://example.invalid:9999/mcp' >>"$1/scripts/hermetic-probe-keep"
 	printf 'someone-token\n' >"$1.tokens"
 	git -C "$1" init -q
@@ -850,6 +853,10 @@ fx=$tmp/f6
 fixture "$fx"
 # reference-shaped text is assembled at run time, so this file carries none
 printf 'See /ymer:%s, [gone](%s), [gone2](%s) and `${CLAUDE_PLUGIN_ROOT}%s`.\n' nope ../gone.md gone2.md /scripts/gone.sh >"$fx/plugins/ymer/skills/setup/refs.md"
+# a hook command quotes its path in JSON: the escaped quote ends the path
+mkdir -p "$fx/plugins/ymer/hooks"
+printf '#!/bin/sh\n' >"$fx/plugins/ymer/hooks/h"
+printf '{ "command": "sh \\"${CLAUDE_PLUGIN_ROOT}%s\\"" }\n' /hooks/h >"$fx/plugins/ymer/hooks/hooks.json"
 mkdir -p "$fx/plugins/ymer/evals/x"
 printf 'name: x\n' >"$fx/plugins/ymer/evals/x/case.yaml"
 shim_reset
@@ -860,6 +867,7 @@ check "broken references: the slash reference is named" 1 "$(lines 'nope names n
 check "broken references: the link is named" 1 "$(lines 'refs.md:1: ../gone.md does not resolve')"
 check "broken references: the bare-form link is named" 1 "$(lines 'refs.md:1: gone2.md does not resolve')"
 check "broken references: the plugin-root path is named" 1 "$(lines 'gone.sh does not exist under plugins/ymer')"
+check "broken references: a JSON-escaped plugin-root path resolves" 0 "$(lines 'hooks.json:1:')"
 check "broken references: the plugin-level evals/ is named" 1 "$(lines 'plugins/ymer/evals: a plugin')"
 
 # ── 7 · static, a manifest that fails --strict ────────────────────────
@@ -905,6 +913,27 @@ shim_reset
 probe "$fx" static
 check "a missing verifier test exits 1" 1 "$rc"
 check "a missing verifier test: the check names it" 1 "$(lines '✘ verifier     no scripts/payload-verify-test')"
+
+# ── 7b2 · static, the confinement check ───────────────────────────────
+# the fixture's stub hook test passes, then fails naming a case, then is
+# gone: a failing or missing test is a failed check, never a skipped one
+fx=$tmp/f7b2
+fixture "$fx"
+shim_reset
+probe "$fx" static
+check "a passing confinement test exits 0" 0 "$rc"
+check "a passing confinement test: the check shows its summary" 1 "$(lines '✔ confinement  confinement-hook-test: 1 passed, 0 failed')"
+printf '#!/bin/sh\necho "FAIL — a stub case"\necho "confinement-hook-test: 0 passed, 1 failed"\nexit 1\n' >"$fx/scripts/confinement-hook-test"
+shim_reset
+probe "$fx" static
+check "a failing confinement test exits 1" 1 "$rc"
+check "a failing confinement test: the check names the command" 1 "$(lines '✘ confinement  scripts/confinement-hook-test failed')"
+check "a failing confinement test: its FAIL line is shown" 1 "$(lines 'FAIL — a stub case')"
+rm "$fx/scripts/confinement-hook-test"
+shim_reset
+probe "$fx" static
+check "a missing confinement test exits 1" 1 "$rc"
+check "a missing confinement test: the check names it" 1 "$(lines '✘ confinement  no scripts/confinement-hook-test')"
 
 # ── 7c · static, the descriptions check ───────────────────────────────
 # the harness cuts a skill description past 1024 characters without a

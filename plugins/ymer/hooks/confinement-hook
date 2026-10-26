@@ -1,0 +1,661 @@
+#!/bin/sh
+# confinement-hook — the ymer plugin's confinement hook: a PreToolUse hook
+# on Bash and Read, registered in hooks/hooks.json. Inside a subagent, and
+# nowhere else, it denies before the call the harms of the confinement
+# contract (confinement-contract.md at the plugin root) that a command
+# visibly shows:
+#
+#   processes      a signal aimed by name, by lookup or at everything:
+#                  pkill, killall, fuser -k; a kill whose target the same
+#                  command computes from pgrep, pidof, lsof or ps (through
+#                  $(…), backticks, a variable, a loop word or a read set
+#                  from one, or any later stage of a pipeline that runs
+#                  one); and kill -1 or kill 0
+#   secrets        a whole-environment dump (bare env, printenv naming no
+#                  variable, bare set, export or export -p, declare or
+#                  typeset naming no variable), redirected or not; a read
+#                  of a named secret store (an SSH private key, the Erlang
+#                  cookie, .netrc, a cloud credential file) by a command
+#                  that prints or copies it (cat, head, cp, source, a <
+#                  redirect, a search given the store as its file …); the
+#                  cookie through get_cookie in code an app evaluates; or
+#                  a keychain password print (security find-*-password
+#                  with -w or -g, security dump-keychain)
+#
+# A literal PID, $! or a variable holding one, kill -- -<pgid>, kill %<job>
+# and kill -0 pass; so does a single named variable (printenv NAME), a
+# public key, and a command that names a store without printing it: a
+# search for its name, ls, test, git, ssh -i, curl --netrc-file, a commit
+# message. The contract carries what a command cannot show: whether a PID
+# is the agent's own, and whether a variable holds a secret.
+#
+# It reads the command as a shell does, in one pass: quotes, comments,
+# redirections, heredocs (a body is text, unless a shell reads it), and
+# command and process substitutions, inside double quotes too. Each
+# simple command drops its leading assignments and its wrappers (sudo,
+# env, timeout, xargs, nice, nohup and the like, with their flags), and
+# its command word is judged by name, path stripped. The string a shell
+# runs (sh -c, eval, a heredoc or here-string fed to a shell, echo piped
+# into one) and find -exec's command are judged too. It reads a command's
+# visible text only: a command built at run time, run from a script file
+# or run off this machine (ssh, docker exec) is the contract's alone.
+#
+# It reads the hook input as JSON on stdin with a structural parser in
+# POSIX awk, aware of strings and nesting depth: agent_id counts only as a
+# top-level key with a non-empty string value, so a command in the user's
+# own session that merely quotes "agent_id" is never touched. Input it
+# cannot read lets the call through: unreadable input cannot be known to
+# come from a subagent, and the contract, not this hook, is the primary
+# layer.
+#
+#   exit 0   the call goes ahead
+#   exit 2   the call is denied; stderr carries the reason Claude receives,
+#            naming the contract's case and the owned alternative
+#
+# Its self-test is scripts/confinement-hook-test in the marketplace
+# repository, run by the hermetic probe's static stage.
+
+LC_ALL=C
+export LC_ALL
+
+verdict=$(awk '
+{ s = s $0 "\n" }
+
+function fail() { err = 1 }
+
+# ── the JSON reader ────────────────────────────────────────────────────
+# s is read through C, its characters, so each step costs the same on
+# every awk however long the input is
+
+function ws(   c) {
+	while (p <= n) {
+		c = C[p]
+		if (c != " " && c != "\t" && c != "\n" && c != "\r") return
+		p++
+	}
+}
+
+function hexval(h,   i, v, d) {
+	v = 0
+	for (i = 1; i <= 4; i++) {
+		d = index("0123456789abcdef", tolower(substr(h, i, 1)))
+		if (d == 0) { fail(); return 0 }
+		v = v * 16 + d - 1
+	}
+	return v
+}
+
+function ishex(q,   i, c) {
+	for (i = 0; i < 4; i++) {
+		c = C[q + i]
+		if (c == "" || !index("0123456789abcdefABCDEF", c)) return 0
+	}
+	return 1
+}
+
+# decode(r) — a JSON string body decoded; a code point past ASCII decodes
+# to "?"
+function decode(r,   out, i, np, P, v) {
+	if (!index(r, "\\")) return r
+	gsub(/\\\\/, "\001", r)
+	gsub(/\\"/, "\"", r)
+	gsub(/\\\//, "/", r)
+	gsub(/\\n/, "\n", r)
+	gsub(/\\t/, "\t", r)
+	gsub(/\\r/, "\r", r)
+	gsub(/\\[bf]/, " ", r)
+	while (match(r, /\\u[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/)) {
+		v = hexval(substr(r, RSTART + 2, 4))
+		r = substr(r, 1, RSTART - 1) (v == 92 ? "\001" : (v > 0 && v < 128 ? sprintf("%c", v) : "?")) substr(r, RSTART + 6)
+	}
+	if (!index(r, "\001")) return r
+	np = split(r, P, "\001")
+	out = P[1]
+	for (i = 2; i <= np; i++) out = out "\\" P[i]
+	return out
+}
+
+# str(keep) — at an opening quote: consume the string, and return it
+# decoded where keep is set
+function str(keep,   start, c, e) {
+	p++
+	start = p
+	while (p <= n) {
+		c = C[p]
+		if (c == "\"") {
+			p++
+			return keep ? decode(substr(s, start, p - 1 - start)) : ""
+		}
+		if (c == "\\") {
+			e = C[p + 1]
+			if (e == "u") {
+				if (!ishex(p + 2)) { fail(); return "" }
+				p += 6
+				continue
+			}
+			if (e != "\"" && e != "\\" && e != "/" && e != "n" && e != "t" && e != "r" && e != "b" && e != "f") { fail(); return "" }
+			p += 2
+			continue
+		}
+		p++
+	}
+	fail()
+	return ""
+}
+
+function value(path,   c, start) {
+	ws()
+	c = C[p]
+	if (c == "{") obj(path)
+	else if (c == "[") arr(path)
+	else if (c == "\"") str(0)
+	else {
+		start = p
+		while (p <= n && index("-+0123456789.eEtrufalsn", C[p])) p++
+		if (p == start) fail()
+	}
+}
+
+function obj(path,   key, child, c) {
+	p++
+	ws()
+	if (C[p] == "}") { p++; return }
+	while (!err) {
+		ws()
+		if (C[p] != "\"") { fail(); return }
+		key = str(1)
+		if (err) return
+		ws()
+		if (C[p] != ":") { fail(); return }
+		p++
+		ws()
+		child = path "/" key
+		if (C[p] == "\"" && (child in want)) {
+			got[child] = str(1)
+		} else value(child)
+		if (err) return
+		ws()
+		c = C[p]
+		if (c == ",") { p++; continue }
+		if (c == "}") { p++; return }
+		fail()
+		return
+	}
+}
+
+function arr(path,   c) {
+	p++
+	ws()
+	if (C[p] == "]") { p++; return }
+	while (!err) {
+		value(path "/[]")
+		if (err) return
+		ws()
+		c = C[p]
+		if (c == ",") { p++; continue }
+		if (c == "]") { p++; return }
+		fail()
+		return
+	}
+}
+
+# ── the command reader ─────────────────────────────────────────────────
+# A text is read once, through K, its characters. Each nesting level d (a
+# command or process substitution, backticks, an array) keeps its own
+# simple command: its words CW[d,k] (quotes removed, content kept), each
+# word flagged in CL[d,k] when a substitution inside it ran a process
+# lookup, and its redirections. A string a shell will run is queued, read
+# the same way, to depth 3.
+
+function enqueue(t, dep) { if (dep <= 3 && t != "") { QT[++qn] = t; QD[qn] = dep } }
+
+function addc(c) {
+	SB[d] = SB[d] c
+	WA[d] = 1
+	if (length(SB[d]) >= 200) { WB[d] = WB[d] SB[d]; SB[d] = "" }
+}
+
+function wclear() { WB[d] = ""; SB[d] = ""; WA[d] = 0; WLF[d] = 0 }
+
+function ctx(mode) {
+	MD[d] = mode; CN[d] = 0; RN[d] = 0; RP[d] = ""; PL[d] = 0; PS[d] = ""
+	PDP[d] = 0; LKD[d] = 0; ECHO[d] = ""
+	wclear()
+}
+
+function push(mode) { INDQ[d + 1] = indq; d++; ctx(mode); indq = 0 }
+
+function pop(   lk) {
+	sep(")")
+	lk = LKD[d]
+	d--
+	indq = INDQ[d + 1]
+	if (lk) WLF[d] = 1
+	addc("\002")
+}
+
+function base(w) { sub(/.*\//, "", w); return w }
+
+function isshell(b) { return b == "sh" || b == "bash" || b == "zsh" || b == "dash" || b == "ksh" || b == "mksh" || b == "ash" }
+
+function islookup(b) { return b == "pgrep" || b == "pidof" || b == "lsof" || b == "ps" }
+
+function inlist(b, list) { return b !~ /[ \t\n]/ && index(list, " " b " ") > 0 }
+
+function isreader(b) {
+	return inlist(b, " cat bat batcat less more most head tail view nl tac rev strings xxd od hexdump hd base64 base32 cp mv install scp rsync tar zip gzip bzip2 xz zstd openssl gpg dd sed awk gawk mawk nawk perl source . vi vim nvim nano emacs pbcopy sort uniq cut paste diff comm jq yq ")
+}
+
+function issearcher(b) { return inlist(b, " grep egrep fgrep rg ag ack ") }
+
+# owner() — whether the command being read so far is a shell, so a
+# heredoc or here-string it takes is run as commands
+function owner(   k, w) {
+	for (k = 1; k <= CN[d]; k++) {
+		w = base(CW[d, k])
+		if (CW[d, k] ~ /^[A-Za-z_][A-Za-z0-9_]*=/ || w ~ /^-/ || inlist(w, " sudo env nohup exec command time nice ")) continue
+		return isshell(w)
+	}
+	return 0
+}
+
+function endword(   t, j) {
+	if (!WA[d]) return
+	t = WB[d] SB[d]
+	if (RP[d] != "") {
+		j = ++RN[d]
+		RTO[d, j] = RP[d]; RTT[d, j] = t; RTL[d, j] = WLF[d]
+		if (RP[d] == "<<" || RP[d] == "<<-") {
+			HDD[++HDN] = t; HDS[HDN] = (RP[d] == "<<-"); HDF[HDN] = owner()
+		} else if (RP[d] == "<<<" && owner()) enqueue(t, DEP + 1)
+		RP[d] = ""
+	} else {
+		j = ++CN[d]
+		CW[d, j] = t; CL[d, j] = WLF[d]
+	}
+	wclear()
+}
+
+function sep(t) { endword(); finish(t) }
+
+function finish(t,   v) {
+	RP[d] = ""
+	CMDLK = 0; CMDECHO = ""
+	if (CN[d] > 0 || RN[d] > 0) {
+		v = judgecmd()
+		if (v != "" && !STOP) { VERDICT = v; STOP = 1 }
+	}
+	if (t == "|") { PL[d] = PL[d] || CMDLK; ECHO[d] = CMDECHO }
+	else { PL[d] = 0; ECHO[d] = "" }
+	PS[d] = t
+	CN[d] = 0
+	RN[d] = 0
+}
+
+# brace(i, m) — at ${: the parameter expansion, kept whole in the word
+function brace(i, m,   depth, c) {
+	depth = 0
+	while (i <= m) {
+		c = K[i]
+		addc(c)
+		if (c == "{") depth++
+		else if (c == "}" && --depth == 0) return i + 1
+		i++
+	}
+	return i
+}
+
+# heredocs(text, i, m) — at the line after a heredoc operator: skip each
+# pending body, queueing it where a shell reads it; with no terminator
+# line, the text is read on as commands
+function heredocs(text, i, m,   h, j, ls, le, s0, L, ok, k, dl, i0) {
+	i0 = i
+	for (h = 1; h <= HDN; h++) {
+		dl = HDD[h]
+		L = length(dl)
+		j = i
+		for (;;) {
+			if (j > m) { HDN = 0; return i0 }
+			ls = j
+			s0 = ls
+			if (HDS[h]) while (s0 <= m && K[s0] == "\t") s0++
+			for (le = ls; le <= m && K[le] != "\n"; le++) ;
+			ok = 0
+			if (le - s0 == L) {
+				ok = 1
+				for (k = 1; k <= L; k++) if (K[s0 + k - 1] != substr(dl, k, 1)) { ok = 0; break }
+			}
+			if (ok) {
+				if (HDF[h] && ls > i) enqueue(substr(text, i, ls - i), DEP + 1)
+				i = le + 1
+				break
+			}
+			j = le + 1
+		}
+	}
+	HDN = 0
+	return i
+}
+
+function lex(text, dep,   i, c, c2, m, j) {
+	DEP = dep
+	m = split(text, K, "")
+	d = 1
+	indq = 0
+	HDN = 0
+	ctx("top")
+	i = 1
+	while (i <= m && !STOP) {
+		c = K[i]
+		if (indq) {
+			if (c == "\"") { indq = 0; i++; continue }
+			if (c == "\\") {
+				c2 = K[i + 1]
+				if (c2 == "\n") { i += 2; continue }
+				if (c2 == "$" || c2 == "`" || c2 == "\"" || c2 == "\\") { addc(c2); i += 2; continue }
+				addc(c); i++; continue
+			}
+			if (c == "$" && K[i + 1] == "(") { push("sub"); i += 2; continue }
+			if (c == "$" && K[i + 1] == "{") { i = brace(i, m); continue }
+			if (c == "`") { push("bq"); i++; continue }
+			addc(c); i++; continue
+		}
+		if (c == " " || c == "\t" || c == "\r") { endword(); i++; continue }
+		if (c == "\\") {
+			if (K[i + 1] == "\n") { i += 2; continue }
+			if (i < m) addc(K[i + 1])
+			i += 2
+			continue
+		}
+		if (c == "\047") {
+			for (j = i + 1; j <= m && K[j] != "\047"; j++) ;
+			if (j > m) { addc(c); i++; continue }
+			WA[d] = 1
+			for (i++; i < j; i++) addc(K[i])
+			i = j + 1
+			continue
+		}
+		if (c == "\"") { indq = 1; DQS[d] = i; WA[d] = 1; i++; continue }
+		if (c == "#" && !WA[d]) { while (i <= m && K[i] != "\n") i++; continue }
+		if (c == "$" && K[i + 1] == "(") { push("sub"); i += 2; continue }
+		if (c == "$" && K[i + 1] == "{") { i = brace(i, m); continue }
+		if (c == "`") { if (MD[d] == "bq") pop(); else push("bq"); i++; continue }
+		if ((c == "<" || c == ">") && K[i + 1] == "(") { endword(); push("sub"); i += 2; continue }
+		if (c == "(") {
+			if (WA[d] && (WB[d] SB[d]) ~ /^[A-Za-z_][A-Za-z0-9_]*\+?=$/) { push("arr"); i++; continue }
+			PDP[d]++
+			sep("(")
+			i++
+			continue
+		}
+		if (c == ")") {
+			if (MD[d] != "top" && MD[d] != "bq" && PDP[d] == 0) { pop(); i++; continue }
+			if (PDP[d] > 0) PDP[d]--
+			sep(")")
+			i++
+			continue
+		}
+		if (c == "\n") { sep("\n"); i++; if (HDN) i = heredocs(text, i, m); continue }
+		if (c == ";") { sep(";"); i += (K[i + 1] == ";") ? 2 : 1; continue }
+		if (c == "&") {
+			if (K[i + 1] == "&") { sep("&&"); i += 2; continue }
+			if (K[i + 1] == ">") { endword(); RP[d] = ">"; i += (K[i + 2] == ">") ? 3 : 2; continue }
+			sep("&"); i++; continue
+		}
+		if (c == "|") {
+			if (K[i + 1] == "|") { sep("||"); i += 2; continue }
+			sep("|"); i += (K[i + 1] == "&") ? 2 : 1; continue
+		}
+		if (c == "<" || c == ">") {
+			if (WA[d] && (WB[d] SB[d]) ~ /^[0-9]+$/) wclear(); else endword()
+			if (c == "<" && K[i + 1] == "<" && K[i + 2] == "<") { RP[d] = "<<<"; i += 3; continue }
+			if (c == "<" && K[i + 1] == "<") {
+				if (K[i + 2] == "-") { RP[d] = "<<-"; i += 3 } else { RP[d] = "<<"; i += 2 }
+				continue
+			}
+			RP[d] = c
+			i += (K[i + 1] == "&" || K[i + 1] == ">" || K[i + 1] == "|") ? 2 : 1
+			continue
+		}
+		addc(c)
+		i++
+	}
+	if (STOP) return
+	if (indq) enqueue(substr(text, DQS[d] + 1), dep + 1)
+	indq = 0
+	while (d > 1) pop()
+	sep("\n")
+}
+
+# flags(k, nw, vals) — past the options at W[k]: a one-letter option in
+# vals takes the next word as its value
+function flags(k, nw, vals,   w) {
+	while (k <= nw && W[k] ~ /^-/) {
+		w = W[k]
+		if (w == "--") return k + 1
+		if (length(w) == 2 && vals != "" && index(vals, substr(w, 2, 1))) k += 2
+		else if (w ~ /^--(signal|kill-after|user|group|adjustment|max-args|max-lines|max-procs|replace|delimiter|eof|arg-file|interval)$/) k += 2
+		else k++
+	}
+	return k
+}
+
+function names(k, nw,   j) { for (j = k + 1; j <= nw; j++) if (W[j] !~ /^-/) return 1; return 0 }
+
+function flagged(k, nw, set,   j) {
+	for (j = k + 1; j <= nw; j++) if (W[j] ~ /^-/ && W[j] ~ ("[" set "]")) return 1
+	return 0
+}
+
+function join(a, b,   j, t) { t = ""; for (j = a; j <= b; j++) t = t (j > a ? " " : "") W[j]; return t }
+
+function usesLV(w,   v) {
+	if (!index(w, "$")) return 0
+	for (v in LV) if (w ~ ("\\$\\{?" v "([^A-Za-z0-9_]|$)")) return 1
+	return 0
+}
+
+# store(t) — the secret store t names, or ""
+function store(t,   rest) {
+	if (t ~ /\.erlang\.cookie/) return "the Erlang cookie"
+	if (t ~ /(^|[^A-Za-z0-9_.-])\.netrc([^A-Za-z0-9_.-]|$)/) return ".netrc"
+	if (t ~ /\.aws\/credentials/ || t ~ /application_default_credentials\.json/ || t ~ /\.config\/gcloud\/(credentials\.db|access_tokens\.db|legacy_credentials)/ || t ~ /\.azure\/(accessTokens\.json|msal_token_cache)/) return "a cloud credential file"
+	rest = t
+	while (match(rest, /\.ssh\/(id_[A-Za-z0-9_*?-]*|\*)/)) {
+		if (substr(rest, RSTART + RLENGTH, 4) != ".pub") return "an SSH private key"
+		rest = substr(rest, RSTART + RLENGTH)
+	}
+	return ""
+}
+
+function judgecmd(   k, nw, j, v, nm) {
+	nw = CN[d]
+	for (k = 1; k <= nw; k++) {
+		W[k] = CW[d, k]; WL[k] = CL[d, k]
+		if (WL[k]) LKD[d] = 1
+		if (WL[k] && W[k] ~ /^[A-Za-z_][A-Za-z0-9_]*\+?=/) { nm = W[k]; sub(/\+?=.*/, "", nm); LV[nm] = 1 }
+	}
+	RIN = 0
+	for (j = 1; j <= RN[d]; j++) {
+		if (RTO[d, j] != "<") continue
+		v = store(RTT[d, j])
+		if (v != "") return "secrets:" v
+		if (RTL[d, j]) RIN = 1
+	}
+	return judge(1, nw)
+}
+
+function judge(k, nw,   w, b, j, t, sig, any, pat, v) {
+	while (k <= nw) {
+		w = W[k]
+		b = base(w)
+		if (w ~ /^[A-Za-z_][A-Za-z0-9_]*\+?=/) { k++; continue }
+		if (inlist(b, " ! { } if then else elif do while until fi done esac ")) { k++; continue }
+		if (inlist(b, " time nohup builtin setsid ")) { k = flags(k + 1, nw, ""); continue }
+		if (b == "exec") { k = flags(k + 1, nw, "a"); continue }
+		if (b == "command") {
+			for (j = k + 1; j <= nw && W[j] ~ /^-/; j++) if (W[j] ~ /[vV]/) return ""
+			k = j
+			continue
+		}
+		if (b == "sudo" || b == "doas") { k = flags(k + 1, nw, "ughpCDRTUrt"); continue }
+		if (b == "nice") { k = flags(k + 1, nw, "n"); continue }
+		if (b == "ionice") { k = flags(k + 1, nw, "cnp"); continue }
+		if (b == "stdbuf") { k = flags(k + 1, nw, "ioe"); continue }
+		if (b == "caffeinate") { k = flags(k + 1, nw, "tw"); continue }
+		if (b == "watch") { k = flags(k + 1, nw, "n"); continue }
+		if (b == "chrt") { k = flags(k + 1, nw, ""); if (k <= nw && W[k] ~ /^[0-9]+$/) k++; continue }
+		if (b == "xargs") { k = flags(k + 1, nw, "nILPdEsa"); if (k > nw) return ""; continue }
+		if (b == "timeout") { k = flags(k + 1, nw, "sk"); if (k <= nw) k++; continue }
+		if (b == "env") {
+			k++
+			while (k <= nw && (W[k] ~ /^-/ || W[k] ~ /^[A-Za-z_][A-Za-z0-9_]*=/)) {
+				if (W[k] == "-u" || W[k] == "-C" || W[k] == "-S" || W[k] == "-P") k++
+				k++
+			}
+			if (k > nw) return "secrets:the whole environment"
+			continue
+		}
+		break
+	}
+	if (k > nw) return ""
+	b = base(W[k])
+	if (islookup(b)) { CMDLK = 1; LKD[d] = 1 }
+	if (b == "echo" || b == "printf") CMDECHO = join(k + 1, nw)
+	if (isshell(b)) {
+		for (j = k + 1; j <= nw && W[j] ~ /^[-+]/; j++) {
+			if (W[j] ~ /^[-+][oO]$/) { j++; continue }
+			if (W[j] ~ /^-[A-Za-z]*c[A-Za-z]*$/) { if (j < nw) enqueue(W[j + 1], DEP + 1); return "" }
+		}
+		if (j > nw && PS[d] == "|") {
+			for (t = 1; t <= HDN; t++) HDF[t] = 1
+			if (ECHO[d] != "") enqueue(ECHO[d], DEP + 1)
+		}
+		return ""
+	}
+	if (b == "eval") { enqueue(join(k + 1, nw), DEP + 1); return "" }
+	if (b == "find") {
+		for (j = k + 1; j <= nw; j++) {
+			if (W[j] !~ /^-(exec|execdir|ok|okdir)$/) continue
+			for (t = j + 1; t <= nw && W[t] != ";" && W[t] != "+"; t++) ;
+			v = judge(j + 1, t - 1)
+			if (v != "") return v
+			j = t
+		}
+		return ""
+	}
+	if (b == "pkill" || b == "killall") return "processes"
+	if (b == "fuser") {
+		for (j = k + 1; j <= nw; j++) if (W[j] ~ /^-[A-Za-z]*k[A-Za-z]*$/) return "processes"
+		return ""
+	}
+	if (b == "kill") {
+		j = k + 1
+		sig = ""
+		if (j <= nw && W[j] ~ /^-/ && W[j] != "--") {
+			if (W[j] == "-l" || W[j] == "-L") return ""
+			if (W[j] == "-s" || W[j] == "-n") { sig = W[j + 1]; j += 2 } else { sig = substr(W[j], 2); j++ }
+		}
+		if (j <= nw && W[j] == "--") j++
+		if (sig == "0") return ""
+		if (PL[d] || RIN) return "processes"
+		for (; j <= nw; j++) {
+			if (W[j] == "-1" || W[j] == "0" || W[j] == "-0") return "processes"
+			if (WL[j] || usesLV(W[j])) return "processes"
+		}
+		return ""
+	}
+	if (b == "read") {
+		if (PL[d] || RIN) for (j = k + 1; j <= nw; j++) if (W[j] ~ /^[A-Za-z_][A-Za-z0-9_]*$/) LV[W[j]] = 1
+		return ""
+	}
+	if (b == "for") {
+		any = 0
+		for (j = k + 3; j <= nw; j++) if (WL[j]) any = 1
+		if (any && k < nw && W[k + 1] ~ /^[A-Za-z_][A-Za-z0-9_]*$/) LV[W[k + 1]] = 1
+		return ""
+	}
+	if (b == "printenv") return names(k, nw) ? "" : "secrets:the whole environment"
+	if (b == "set" && k == nw) return "secrets:the whole environment"
+	if (b == "export" && (k == nw || (k + 1 == nw && W[nw] == "-p"))) return "secrets:the whole environment"
+	if ((b == "declare" || b == "typeset") && !names(k, nw) && !flagged(k, nw, "fF")) return "secrets:the whole environment"
+	if (b == "security") {
+		for (j = k + 1; j <= nw; j++) {
+			if (W[j] == "dump-keychain") return "secrets:a keychain password"
+			if (W[j] ~ /^find-.*-password$/ && flagged(k, nw, "wg")) return "secrets:a keychain password"
+		}
+		return ""
+	}
+	if (isreader(b)) {
+		for (j = k + 1; j <= nw; j++) {
+			if (b == "dd" && W[j] !~ /^if=/) continue
+			v = store(W[j])
+			if (v != "") return "secrets:" v
+		}
+		return ""
+	}
+	if (issearcher(b)) {
+		pat = 1
+		for (j = k + 1; j <= nw; j++) if (W[j] == "-e" || W[j] == "-f" || W[j] ~ /^--(regexp|file)(=|$)/) pat = 0
+		for (j = k + 1; j <= nw; j++) {
+			if (W[j] ~ /^-/) {
+				if (W[j] ~ /^-[efmABCgtTjMdD]$/ || W[j] ~ /^--(regexp|file|max-count|type|glob|type-not|context|after-context|before-context)$/) j++
+				continue
+			}
+			if (pat) { pat = 0; continue }
+			v = store(W[j])
+			if (v != "") return "secrets:" v
+		}
+		return ""
+	}
+	if (b == "git") return ""
+	any = 0
+	for (j = k; j <= nw; j++) if (W[j] ~ /get_cookie/) any = 1
+	if (any) {
+		if (inlist(b, " iex elixir erl mix escript ")) return "secrets:the Erlang cookie"
+		for (j = k + 1; j <= nw; j++) if (inlist(W[j], " eval rpc remote -e --eval -eval ")) return "secrets:the Erlang cookie"
+	}
+	return ""
+}
+
+END {
+	want["/agent_id"]
+	want["/tool_name"]
+	want["/tool_input/command"]
+	want["/tool_input/file_path"]
+	n = split(s, C, "")
+	p = 1
+	ws()
+	if (C[p] != "{") { print "unreadable"; exit }
+	obj("")
+	ws()
+	if (err || p <= n) { print "unreadable"; exit }
+	if (!("/agent_id" in got) || got["/agent_id"] == "") { print "pass"; exit }
+	tool = got["/tool_name"]
+	if (tool == "Read") {
+		v = store(got["/tool_input/file_path"])
+		print (v == "" ? "pass" : "secrets:" v)
+		exit
+	}
+	if (tool != "Bash") { print "pass"; exit }
+	enqueue(got["/tool_input/command"], 0)
+	while (qi < qn && !STOP) { qi++; lex(QT[qi], QD[qi]) }
+	print (STOP ? VERDICT : "pass")
+}
+') || exit 0
+
+case $verdict in
+processes)
+	printf '%s\n' "The confinement hook denied this command: it signals processes chosen by name, by a process lookup or a port, or every process at once (kill -1, kill 0), which can stop processes this agent did not start (the confinement contract, § Processes). Stop only what you started: record its PID with \$! when you start it and run kill \"\$pid\", or start it in a process group of its own and run kill -- -<pgid>. A process you did not start is reported with its command, never stopped." >&2
+	exit 2
+	;;
+"secrets:the whole environment")
+	printf '%s\n' "The confinement hook denied this command: it prints the whole environment, which carries the user's credentials into the transcript or a file (the confinement contract, § Secrets). Print only a variable you need, by name (printenv NAME), and never one that holds a credential." >&2
+	exit 2
+	;;
+secrets:*)
+	printf '%s\n' "The confinement hook denied this call: it prints or copies ${verdict#secrets:}, a secret store, which carries the user's credentials into the transcript (the confinement contract, § Secrets). Leave secret stores alone: a tool that needs a credential reads it itself, and naming a store without printing it passes (a search for its name, ls or test on it, ssh -i, curl --netrc-file)." >&2
+	exit 2
+	;;
+esac
+exit 0

@@ -31,11 +31,12 @@ own goal and requirements sections.
    read them.
 3. Apply your lens.
 
-Any probe you run to ground a finding writes only under the session
-scratchpad, never a file in the project checkout, and you run no git
-that changes state (no checkout, stash, reset or commit). Read-only git,
-such as `log` or `blame`, is fine for grounding. The checkout is a live
-tree another session may be closing.
+Any probe you run to ground a finding follows the confinement contract,
+the first file you read, and writes only in a directory of your own
+inside the scratch root the run data names, never a file in the project
+checkout; you run no git that changes state (no checkout, stash, reset
+or commit). Read-only git, such as `log` or `blame`, is fine for
+grounding. The checkout is a live tree another session may be closing.
 
 ## Settled decisions
 

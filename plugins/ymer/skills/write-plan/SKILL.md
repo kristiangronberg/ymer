@@ -310,6 +310,14 @@ able to fail, and the control rules a gate's control runs by. Every
 rename gate, verification grep and ripple sweep, grounding's own and
 the plan's, is built by them.
 
+**At the first probe or the fan-out, read the confinement contract
+whole now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it.
+
 ## File Structure
 
 *Read with this section: `cases.md` § File Structure (the cases).*

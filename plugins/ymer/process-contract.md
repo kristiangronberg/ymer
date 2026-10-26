@@ -6,8 +6,9 @@ topic iterates, where knowledge is kept, what a phase does when the
 user's input has not arrived, and the few contracts several phases
 share. It holds only what no other file owns. The roadmap and the
 topic's artifacts are the operations contract's, git is the substrate
-contract's, the interview is the interview procedure's, and each
-phase's own steps are its skill's.
+contract's, the interview is the interview procedure's, what a session
+and its agents may touch on the user's machine is the confinement
+contract's, and each phase's own steps are its skill's.
 
 Skills name this file by its role phrase, *the process contract*, and
 cite a section by its name (`the process contract, § Iteration`); they

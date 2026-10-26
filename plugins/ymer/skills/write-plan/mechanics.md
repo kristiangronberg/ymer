@@ -124,6 +124,13 @@ companion coding-standards skill; they gather facts and nothing else.
 You, the author, stay single-context with the whole skill and
 synthesize: authoring does not parallelize, fact-gathering does.
 
+**Each brief carries confinement.** Beside its question list, each
+agent gets the confinement contract's path, as `SKILL.md` § Grounding's
+read line resolves it, the instruction to read it whole before its
+first command, and a scratch root of its own (the confinement contract,
+§ The scratch root). Take the host's inventory around the fan-out (the
+confinement contract, § The host's inventory).
+
 A returned fact sheet is never written to disk, so no later grep can
 sweep it: resolve every `inferred:` it carries at synthesis, probed to
 a fresh stamp where it can be checked and moved into the assumptions
@@ -135,9 +142,10 @@ to quote a file destined for a whole-file payload: the author reads it
 whole regardless, so the quote doubles the cost. And a question with
 an **executable oracle** (reachability, breakage, "which sites does X
 affect" over a corpus with a green suite) runs the temporary change
-first, in a scratch replica of the checkout, and reads what breaks,
-fanning out only what survives it: the suite prints the table a reading
-pass infers.
+first, in a scratch replica of the checkout made inside the host's own
+scratch root (the confinement contract, § The scratch root), and reads
+what breaks, fanning out only what survives it: the suite prints the
+table a reading pass infers.
 
 **The orchestration floor.** Grounding fans out only where it holds at
 least two independent question lists: one list gains no concurrency,

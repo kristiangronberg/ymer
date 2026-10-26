@@ -274,6 +274,14 @@ opening a second one.
 
 Two passes, both before the walkthrough's first sentence.
 
+**Before the first probe, read the confinement contract whole now**,
+unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it.
+
 **Stops pass: read the increment.** Read the diff, then the code it
 touches in place, and choose the stops in the walkthrough's story
 order. A lens finding that landed somewhere, or a deviation

@@ -138,11 +138,12 @@ rather than reopening it.
 ## Prep — building the walkthrough
 
 **A facilitator probe with a side effect** (an install, an init, a
-config write) runs in a scratch replica, never a live tree: one `git lfs
-install --local` in a real checkout wrote five lines into its
-`.git/config` and closed the review on a config hand-off. And a lens
-finding that states a measurement names the tree it ran in, so nobody
-re-measures it live to find out.
+config write) runs in a scratch replica made inside the host's own
+scratch root (the confinement contract, § The scratch root), never a
+live tree: one `git lfs install --local` in a real checkout wrote five
+lines into its `.git/config` and closed the review on a config
+hand-off. And a lens finding that states a measurement names the tree
+it ran in, so nobody re-measures it live to find out.
 
 ## The Open
 

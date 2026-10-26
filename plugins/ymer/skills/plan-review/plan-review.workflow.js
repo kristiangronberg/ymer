@@ -16,6 +16,7 @@ export const meta = {
 //   focus           : free-text emphasis for this run, on one line (optional)
 //   verifierCommand : the payload verifier's command line, resolved by the host: `sh <plugin root>/scripts/payload-verify` plus one `--exempt <tree>` per machinery tree the front binds (required)
 //   promptDir       : absolute path to the directory holding this script's agent-prompt files, `<plugin root>/skills/plan-review` or a scratchpad copy of the plugin tree laid out the same way (required)
+//   scratchRoot     : absolute path to the run's scratch root, a fresh directory the host made under the session scratchpad before launch; every agent writes only inside it (required)
 //   facts           : the derived facts, below (required)
 //   decisionDigest  : the copied spec.md sections, the topic's own and its parent topic's, or omitted when there is no spec on either side (optional)
 //
@@ -36,6 +37,7 @@ const specPath = (input && input.specPath) || null
 const focus = (input && input.focus) || null
 const verifierCommand = (input && input.verifierCommand) || null
 const promptDir = ((input && input.promptDir) || '').replace(/\/+$/, '')
+const scratchRoot = ((input && input.scratchRoot) || '').replace(/\/+$/, '')
 
 // Derived facts about the plan, supplied by the host (the plan-review skill).
 // Workflow scripts have no filesystem access, so the script cannot read the
@@ -108,6 +110,9 @@ if (!promptDir || !promptDir.endsWith(PROMPT_SUFFIX)) {
   throw new Error(`plan-review workflow requires args.promptDir: the absolute path of the directory holding its prompt files, ending in ${PROMPT_SUFFIX} (the plugin tree's own layout, or a scratchpad copy of it) — the plan-review skill, § Input.`)
 }
 const pluginRoot = promptDir.slice(0, -PROMPT_SUFFIX.length)
+if (!scratchRoot) {
+  throw new Error('plan-review workflow requires args.scratchRoot: the absolute path of the run\'s scratch root, a fresh directory the host makes under the session scratchpad before launch — the plan-review skill, § Input.')
+}
 
 // Every agent gets the same shape of dispatch: the prompt files to Read, which
 // carry its whole instruction, then the run data as a block appended after
@@ -122,6 +127,7 @@ const runData = (extra, review = true) =>
     review && `Spec: ${specPath || 'none'}`,
     `Payloads: the payloads/ directory beside the plan; gates in payloads/manifest`,
     `Plugin root: ${pluginRoot}`,
+    `Scratch root: ${scratchRoot}`,
     `Companion skill: ${facts.companionSkill || 'none'}`,
     review && `Glossary: ${glossaryPath}`,
     `Focus: ${focus || 'none'}`,
@@ -132,6 +138,7 @@ const runData = (extra, review = true) =>
     .join('\n')
 
 const dispatch = (files, extra, review = true) => `Read each file below in full, then follow it: together they are your whole instruction, and the run data after them is what this run gives you.
+- ${pluginRoot}/confinement-contract.md
 ${files.map((f) => `- ${promptDir}/${f}`).join('\n')}
 
 If any of these files will not Read, do nothing else: return promptUnreadable set to the path that failed, with every other required field at its empty value (findings an empty list; real false and reasoning empty; the summary's three lists empty), and never leave promptUnreadable out, because work done without your instructions would read as a clean pass.

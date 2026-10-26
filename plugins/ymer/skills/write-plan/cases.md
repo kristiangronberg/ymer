@@ -78,7 +78,8 @@ under the contract):
    about a gate runs the gate's exact invocation and configuration:
    probing the underlying tool with default flags grounds nothing. A
    dependency the project has not fetched yet is fetched at its target
-   version into the scratchpad with its ecosystem's own fetch command
+   version into the host's own scratch root (the confinement contract,
+   § The scratch root) with its ecosystem's own fetch command
    (`mix hex.package fetch <dep> <version> --unpack`, say), and its
    source is the ground for every claim about it; web docs and a
    research agent's summary are neither.
@@ -245,8 +246,9 @@ authoring.** Payloads for a formatted language are written
 formatter-clean at the target's indentation: a payload gate turning red
 after the formatter runs is an authoring defect, not a false positive. A
 payload that is part of a file does not parse alone, so compose the
-target's planned final state in a scratch copy, every planned payload
-applied at its Edit anchor, run the project's formatter over it in check
+target's planned final state in a scratch copy inside the host's own
+scratch root, every planned payload applied at its Edit anchor, run
+the project's formatter over it in check
 mode (or through stdin and a diff), and stamp the result in the
 Grounding fact sheet. A target several tasks touch is checked once,
 whole, every payload applied.

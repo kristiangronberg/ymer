@@ -302,8 +302,16 @@ already read this session:
 § Claims: stamps, controls and the sweep artifact, for stamps, controls,
 the `inferred:` register and the committed sweep artifact a family count
 comes from. Every measured claim the session writes into the doc
-follows it. This section carries only brainstorm's own rules beside
-these two.
+follows it.
+
+**At the first probe, read the confinement contract whole now** as
+well, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it. This section
+carries only brainstorm's own rules beside these three.
 
 - **Open with the problem and the win, in plain words**: the problem in
   one paragraph, what the work buys beyond the itch that filed it, and

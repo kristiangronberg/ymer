@@ -26,7 +26,8 @@ git -C <state folder> diff <commit>^ <commit> -- <repo>/YYYY/MM-DD-<topic>/plan.
 
 Every path the run passes on is absolute: the spine's paths come
 resolved as the skill loads, and the agents that read
-`verifierCommand` and `promptDir` receive them as plain text.
+`verifierCommand`, `promptDir` and `scratchRoot` receive them as plain
+text.
 
 ## Facts and Tier
 
@@ -52,8 +53,9 @@ plugin tree is none of those by default. Refused with "scriptPath must
 be a script path this tool returned, or a file you can already read"?
 Reading the file first changes nothing, since the gate is the
 permission decision, not a prior read. Copy the plugin tree whole into
-the session scratchpad, replacing any copy an earlier launch left
-(`rm -rf <scratchpad>/plugin && cp -R <plugin root> <scratchpad>/plugin`:
+the run's scratch root, under the session scratchpad, replacing any copy
+an earlier launch left
+(`rm -rf <scratch root>/plugin && cp -R <plugin root> <scratch root>/plugin`:
 a `cp -R` onto a directory that exists nests the new copy inside the
 old one, and the launch would run the old files), launch from the
 copy's `skills/plan-review/plan-review.workflow.js`, and pass the
@@ -76,6 +78,7 @@ and is blocked exactly as a rule's paths are.
   "focus": "<one line, or omit>",
   "verifierCommand": "sh <plugin root>/scripts/payload-verify --exempt <tree>",
   "promptDir": "<plugin root>/skills/plan-review",
+  "scratchRoot": "<the run's scratch root, an abs path under the session scratchpad>",
   "facts": {
     "hasCode": true,
     "touchesConcurrency": false,
@@ -107,8 +110,9 @@ wrong on a meta topic: pass it there. Any other omitted key would
 otherwise read as `false` and drop its lens exactly as a genuinely
 false precondition does, leaving the two indistinguishable in the report. The throw costs
 no tokens, since nothing has spawned yet: fix the call and invoke it
-again. A missing `planPath`, `verifierCommand` or `promptDir` throws the
-same way. The dropped-lens report is still the postcondition to read
+again. A missing `planPath`, `verifierCommand`, `promptDir` or
+`scratchRoot` throws the same way. The dropped-lens report is still the
+postcondition to read
 before trusting the run; with the omission case removed, every line in
 it means what it says.
 
@@ -120,6 +124,7 @@ itself, it composes the same text:
 
 ```
 Read each file below in full, then follow it: together they are your whole instruction, and the run data after them is what this run gives you.
+- <the plugin root>/confinement-contract.md
 - <promptDir>/<file>
 - …
 
@@ -130,6 +135,7 @@ Plan: <planPath>
 Spec: <specPath, or: none>
 Payloads: the payloads/ directory beside the plan; gates in payloads/manifest
 Plugin root: <promptDir without its trailing /skills/plan-review>
+Scratch root: <scratchRoot>
 Companion skill: <facts.companionSkill, or none>
 Glossary: <facts.glossaryPath, or the project's docs/glossary.md unless its CLAUDE.md says otherwise>
 Focus: <focus, or none>
@@ -141,6 +147,11 @@ The workflow's rewrite author gets no `Spec:` line, no `Glossary:` line
 and no SETTLED block: it applies findings a verifier already confirmed,
 and its prompt names the lines it gets. Every other dispatch, the
 lightweight pass's included, carries all of them.
+
+Every dispatch, the rewrite author's included, lists the confinement
+contract first, from the plugin root, and carries the `Scratch root:`
+line: the run's one scratch root, inside which each agent makes a
+directory of its own.
 
 The files and the agent's own lines, by role:
 
@@ -182,7 +193,11 @@ after any `promptUnreadable` result, run fresh. Where resume is not
 possible, harvest the completed agents from the run's `journal.jsonl`
 (its `{"type":"result",…}` lines, deduplicated by `.key`, since a
 resume records cached results again) and apply the findings by hand,
-vetting each against verified facts before editing.
+vetting each against verified facts before editing. A resume passes
+the same `args` the run was launched with, its `scratchRoot` and
+`promptDir` included: the run's scratch root is made once per run,
+never per launch, and the relay removes it only after the run's last
+resume. A fresh run may take a new root.
 On a session-limit kill, stop the workflow at once with TaskStop:
 running agents keep spending, and resume works in the same session
 only.

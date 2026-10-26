@@ -1,6 +1,6 @@
 #!/bin/sh
 # hermetic-probe-static — the static stage, sourced by hermetic-probe:
-# six checks over every tracked file, no model.
+# seven checks over every tracked file, no model.
 #
 #   manifests    `claude plugin validate --strict` on the root and each plugin
 #   values       no personal value in any file — the five value classes
@@ -19,6 +19,9 @@
 #   verifier    scripts/payload-verify-test passes — the plugin's payload
 #                verifier against its fixtures, and its placeholder list
 #                against the plugin glossary
+#   confinement  scripts/confinement-hook-test passes — the plugin's
+#                confinement hook against its case table, and the cases
+#                its deny reasons cite against the confinement contract
 #   descriptions every skill's description is one line of at most 1024
 #                characters — past that the harness cuts it without a
 #                word, and `claude plugin validate` passes it
@@ -258,9 +261,11 @@ stage_static() {
 		[ -e "$root/$(dirname "$f")/$link" ] || broken="$broken
                  $f:$l: $link does not resolve"
 	done <"$tmp/links"
-	# a ${CLAUDE_PLUGIN_ROOT} path — resolved against the naming file's plugin
+	# a ${CLAUDE_PLUGIN_ROOT} path — resolved against the naming file's
+	# plugin; a backslash ends it, as a quote does, since a hooks.json
+	# command quotes its path with an escaped quote
 	: >"$tmp/roots"
-	static_grep references "$tmp/files" "$tmp/roots" -n -o -E '\$\{CLAUDE_PLUGIN_ROOT\}/[^ "'"'"'`)]+'
+	static_grep references "$tmp/files" "$tmp/roots" -n -o -E '\$\{CLAUDE_PLUGIN_ROOT\}/[^ "'"'"'`)\\]+'
 	while IFS=: read -r f l path; do
 		roots=$((roots + 1))
 		plugin=$(printf '%s\n' "$f" | sed -n 's|^plugins/\([^/]*\)/.*|\1|p')
@@ -299,7 +304,17 @@ stage_static() {
 		grep -A 2 '^FAIL' "$tmp/pvt" | sed 's/^/                 /'
 	fi
 
-	# 6. descriptions — the description is the frontmatter's one
+	# 6. confinement
+	if [ ! -f "$root/scripts/confinement-hook-test" ]; then
+		fail confinement "no scripts/confinement-hook-test — restore it; without it the plugin's confinement hook ships untested"
+	elif sh "$root/scripts/confinement-hook-test" >"$tmp/cht" 2>&1; then
+		pass confinement "$(tail -n 1 "$tmp/cht")"
+	else
+		fail confinement "scripts/confinement-hook-test failed — run \`sh scripts/confinement-hook-test\` and fix each FAIL it names:"
+		grep -A 2 '^FAIL' "$tmp/cht" | sed 's/^/                 /'
+	fi
+
+	# 7. descriptions — the description is the frontmatter's one
 	# `description:` line; none, or one written across lines (a `>` or `|`
 	# block, an empty value, or a plain value continued on an indented
 	# line, empty lines between included, which reads back as `>`),

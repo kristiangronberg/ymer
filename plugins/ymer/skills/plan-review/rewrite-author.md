@@ -72,22 +72,24 @@ against the current tree.
   (`<plugin root>/skills/sweep/SKILL.md`, § Claims: stamps, controls
   and the sweep artifact) before you write a claim. A hardened plan is
   a terminal surface, so every claim you write or touch is derived,
-  probed under the session scratchpad, or moved into the plan's
+  probed in your directory under the scratch root, or moved into the plan's
   `**Assumptions (unverified):**` block with its impact if false.
 - **Re-stamp what you invalidate.** For each payload you change whose
   target the plan's Grounding fact sheet carries a formatter stamp over,
-  compose that target's final state again in a scratch copy under the
-  session scratchpad, run the check as write-plan states it
+  compose that target's final state again in a scratch copy in your
+  directory under the scratch root, run the check as write-plan states it
   (`<plugin root>/skills/write-plan/cases.md`, § Payloads), and stamp
   the fact sheet afresh. Where you cannot run
   the check, the stale stamp becomes an `unresolved` entry with its
   `> Needs confirmation:` marker.
 - **Keep what is right.** Preserve everything the plan already gets
   right, and regress no working section.
-- **Write only in the topic folder and the scratchpad.** Your edits go
-  to the plan, its payload files and its manifest. Every probe and every
-  scratch copy, the formatter check's included, lives under the session
-  scratchpad: never write a file under the project checkout, a live
+- **Write only in the topic folder and under the scratch root.** Your
+  edits go to the plan, its payload files and its manifest. Every probe
+  and every scratch copy, the formatter check's included, lives in a
+  directory of your own inside the scratch root the run data names, and
+  follows the confinement contract, the first file you read: never write
+  a file under the project checkout, a live
   tree another session may be closing. A finding's fix is an edit to
   the plan or its payloads, never a command to run or a file to write
   anywhere else.

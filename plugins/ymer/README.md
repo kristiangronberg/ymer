@@ -177,8 +177,21 @@ demand: `glossary.md`, the one home for the words these skills use;
 achieve and how it binds per coordinator, and states the product page's
 skeleton; `substrate-contract.md`, the git rules the skills follow
 wherever git is there; `process-contract.md`, the rules the phases of
-the development process share; and `interview.md`, the procedure
-brainstorm and define follow when they put questions to you.
+the development process share; `confinement-contract.md`, what a phase
+and the agents it starts may touch on your machine; and `interview.md`,
+the procedure brainstorm and define follow when they put questions to
+you.
+
+The plugin also ships one hook, `hooks/confinement-hook`. Inside any
+subagent of a session where the plugin is enabled, whether a skill
+started it or you did, it stops a command before it runs when the
+command's text shows that it stops processes by name or by lookup
+(`pkill`, `killall`, a `kill` fed by `pgrep`), prints the whole
+environment, or prints a secret store such as an SSH private key or
+`.netrc`, and tells the agent why and what to do instead. It reads that
+text only: a command built at run time, run from a script file or run
+on another machine goes unseen, and the contract alone covers it. Your
+own session is never touched.
 
 ## Where it stops
 

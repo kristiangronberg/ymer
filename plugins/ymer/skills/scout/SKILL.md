@@ -110,13 +110,17 @@ The survey gathers the facts the map reports, sized to the topic:
   may exceed the agent-result cap runs as a **general-purpose** agent
   instead, writes its sheet to the topic folder, and returns a pointer:
   an Explore agent has no tool to write it. Compose every agent's input
-  from the same four slots, so the do-not-re-derive clause cannot be
-  dropped by ad-hoc prompt authoring: (1) that lens's concrete search
-  vectors; (2) the path to the brief, `brainstorm.md`; (3) the brief's
-  **Verified state** items, quoted inline or pointed at by heading, or,
-  where the brief carries none (the section is optional), the
-  statement that it has none; (4) the instruction to cite those items
-  rather than re-measure them. The four lenses:
+  from the same five slots, so neither the do-not-re-derive clause nor
+  confinement can be dropped by ad-hoc prompt authoring: (1) that lens's
+  concrete search vectors; (2) the path to the brief, `brainstorm.md`;
+  (3) the brief's **Verified state** items, quoted inline or pointed at
+  by heading, or, where the brief carries none (the section is
+  optional), the statement that it has none; (4) the instruction to cite
+  those items rather than re-measure them; (5) the confinement
+  contract's path, as the read line below resolves it, with a scratch
+  root of the agent's own and the instruction to read the contract whole
+  before its first command. Take the host's inventory around the fan-out
+  (the confinement contract, § The host's inventory). The four lenses:
   1. **Code**: modules and files implementing or adjacent to the topic;
      entry points; the data structures involved.
   2. **Vocabulary**: what the codebase calls these concepts today
@@ -130,11 +134,13 @@ The survey gathers the facts the map reports, sized to the topic:
      patterns in this area (error-return style, test layout, boundaries
      the code respects).
 
-**A probe leaves live machine state as it found it**: Docker image
-tags, containers, published ports, a kept install. It reports whatever
-it could not restore. Two idioms make that cheap: run a smoke under its
-own `-p` project name and its own port, and settle tag semantics with a
-throwaway tag rather than a rebuild that moves a real one.
+**Before the first probe or the fan-out, read the confinement contract
+whole now**, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it.
 
 ## The Survey Map
 
@@ -243,6 +249,3 @@ the state folder is committed by the phase at its close.
 - Search, don't interview: one scope question at most, one review gate.
 - No project-repo writes: the survey only reads, and the phase commits
   the state folder at its close.
-- A probe leaves live machine state as it found it: a smoke under its
-  own `-p` project and port, a throwaway tag for tag semantics, and a
-  report of whatever it could not restore.

@@ -130,6 +130,14 @@ tree, committing by hunk and the commit registers; the topic kinds and
 the duty to commit machinery edits; and the list of traceability stores
 the record names its refs in.
 
+**Before the baseline runs, read the confinement contract whole now**,
+unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it.
+
 - **The trees the plan targets are ready.** Which trees are read is
   keyed on the plan's targets, never on the topic kind: the paths
   `payloads/manifest` names, plus any target a step names. How each is

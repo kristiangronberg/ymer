@@ -53,6 +53,16 @@ high --max-findings all the branch's own commits main..<topic>, in the git tree 
 The tool answers that the review runs in the background; its findings
 arrive as a task notification. Launch every call before the lenses run.
 
+**The inventory around the calls.** Make the host's own scratch root,
+where it has none yet, and take the before-read just before the first
+call, so a scratch replica a lens makes never reads as the built-in's.
+Take the after-read once every call has reported. A call that read as
+not run may still be working, and while one may be, the after-read is
+not taken: the pass's report says `inventory not taken: <why>` and lists
+the before-read (the confinement contract, § The host's inventory). The
+built-in takes no scratch root: what it leaves under the session
+scratchpad is found by that comparison.
+
 **When a call reads as not run.** While a call is outstanding once the
 lenses finish, end the turn to wait: its notification resumes the
 session, and another call's from this pass is read, then the wait goes
@@ -74,6 +84,9 @@ change left alone, a caller the change breaks, is still the subject's.
 and the harness enables it, the built-in may run in this session's own
 context instead, reporting through a ReportFindings call of its own,
 which is read as its report. Which route runs is the built-in's choice.
+On this route the confinement hook stays silent, so only the
+confinement contract and the inventory hold (the confinement contract,
+§ The layers and the gap).
 
 ## The lenses
 

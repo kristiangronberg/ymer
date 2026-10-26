@@ -51,10 +51,11 @@ post-hoc at the surface the relay hands over, and one question for
 each `> Needs confirmation:` marker the rewrite author left standing, put at
 the close before implement builds on the guess (§ The Relay). That
 question is this skill's one gated moment; the workflow itself stops
-for nothing and changes no git state. Lens agents probe only under the
-session scratchpad, never writing a file in the project checkout, and
-run no git that changes state; read-only git such as `log` or `blame`
-grounds a finding. The relay's tree assertion is the net for a file an
+for nothing and changes no git state. Every agent reads the confinement
+contract first and probes only under the run's scratch root, never
+writing a file in the project checkout, and runs no git that changes
+state; read-only git such as `log` or `blame` grounds a finding. The
+relay's tree assertion and the host's inventory are the net for what an
 agent left behind.
 
 The run goes in order: resolve the inputs and keep the plan's
@@ -108,6 +109,11 @@ Resolve the run's inputs:
   (`mechanics.md` § The Run). Required: every agent Reads its prompt
   files there, and its shared homes under the plugin root that path
   sits in.
+- `scratchRoot`: the run's scratch root, a fresh directory made under
+  the session scratchpad just before launch (the confinement contract,
+  § The scratch root). Required: no agent writes anywhere else, and the
+  workflow cannot make a directory itself. One root serves the whole
+  run, and each agent makes a directory of its own inside it.
 
 **Keep the plan's pre-image** (term: the plugin glossary). Tell the
 user briefly that the run rewrites the plan in place. Where git tracks
@@ -255,6 +261,16 @@ controls and the sweep artifact), for what a stamp carries and what an
 absence's control is. Only stamped facts ride the list (`cases.md`
 § The Run).
 
+**Before launch, read the confinement contract whole now**, unless
+already read this session: `${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`,
+for what this session and the agents it dispatches may touch on the
+user's machine: the principle, the scratch root each dispatch gets, the
+cases (processes, ports, live targets, sibling trees, secrets, residue),
+the host's inventory around a dispatch, and the layers beneath it.
+Whichever tier runs, make the run's scratch root and take the
+inventory's before-read once, before the run's first launch; every
+dispatch names the contract and the root (`mechanics.md` § The Run).
+
 - **The workflow**: call the Workflow tool with the script
   `${CLAUDE_PLUGIN_ROOT}/skills/plan-review/plan-review.workflow.js`
   and the run's `args` (`mechanics.md` § The Run). It fans out one
@@ -372,6 +388,11 @@ empty, or every entry is named and justified in the relay
 (`mechanics.md` § The Relay). A file an agent left behind is neither:
 remove it, and say so. A meta topic has no project checkout,
 so the assertion is skipped, not failed.
+
+**Then take the inventory's after-read**, on every topic, and remove
+the run's scratch root with whatever else it attributes (the
+confinement contract, § The host's inventory). The relay names what it
+removed and each item it left, with its command.
 
 Then report the summary's fields:
 

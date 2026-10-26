@@ -21,11 +21,13 @@ Where the run data carries a decision digest under `SETTLED`, those
 decisions are settled: a claim that contradicts one stands only if it
 argues why the decision is wrong.
 
-Any probe you run writes only under the session scratchpad: never a
-file under the project checkout, never a file in its test tree, and no
-git that changes state (no checkout, stash, reset or commit). Read-only
-git, such as `log` or `blame`, is fine for grounding. The checkout is a
-live tree another session may be closing.
+Any probe you run follows the confinement contract, the first file you
+read, and writes only in a directory of your own inside the scratch root
+the run data names: never a file under the project checkout, never a
+file in its test tree, and no git that changes state (no checkout,
+stash, reset or commit). Read-only git, such as `log` or `blame`, is
+fine for grounding. The checkout is a live tree another session may be
+closing.
 
 Read the plan section the claim names and the real files before you
 decide. Set `real` to true only if the problem still stands after you

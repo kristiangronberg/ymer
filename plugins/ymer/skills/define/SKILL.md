@@ -186,8 +186,16 @@ already read this session: `${CLAUDE_PLUGIN_ROOT}/skills/sweep/SKILL.md`,
 § Claims: stamps, controls and the sweep artifact, for stamps, controls,
 the `inferred:` register and the committed sweep artifact a family
 count comes from. Every measured claim the session writes into
-`spec.md` follows it. This section carries only define's own rules
-beside these two.
+`spec.md` follows it.
+
+**At the first probe, read the confinement contract whole now** as
+well, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it. This section
+carries only define's own rules beside these three.
 
 - **The agenda maps every input.** Every item of every source the
   question list is built from (`cases.md` § The Interview) maps to a
@@ -618,7 +626,13 @@ for where the glossary it creates lives. The glossary takes the format
 in § The Glossary. Before the fan-out (`mechanics.md` § Bootstrap
 Mode), **read the process contract's § Defaults and holds now**, unless
 already read this session: `${CLAUDE_PLUGIN_ROOT}/process-contract.md`,
-for the fallback rule.
+for the fallback rule. Before the fan-out, **read the confinement
+contract whole now** as well, unless already read this session:
+`${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this session
+and the agents it dispatches may touch on the user's machine: the
+principle, the scratch root each dispatch gets, the cases (processes,
+ports, live targets, sibling trees, secrets, residue), the host's
+inventory around a dispatch, and the layers beneath it.
 
 - No renames, no interview, no refactoring: one user review gate on the
   collected list. **Default: commit the collected register at the close
@@ -654,7 +668,18 @@ discipline and the interview as a hold.
   not only code-backed (→ The referent gate).
 - Verify how the code actually uses the term before proposing anything:
   a mini-scout scoped to the term (inline search; an Explore agent only
-  when usage is spread wide).
+  when usage is spread wide). Before its first probe or that agent,
+  **read the confinement contract whole now**, unless already read this
+  session: `${CLAUDE_PLUGIN_ROOT}/confinement-contract.md`, for what this
+  session and the agents it dispatches may touch on the user's machine:
+  the principle, the scratch root each dispatch gets, the cases
+  (processes, ports, live targets, sibling trees, secrets, residue), the
+  host's inventory around a dispatch, and the layers beneath it.
+  Where that agent runs, its brief carries the contract's path as this
+  read line resolves it, the instruction to read it whole before its
+  first command, and a scratch root of its own; take the host's
+  inventory around it (the confinement contract, § The scratch root and
+  § The host's inventory).
 - Allowed outcomes: add a new blessed entry, or promote a grandfathered
   entry whose name and meaning survive the interview, recording the
   `_Avoid_` synonyms found on the way.

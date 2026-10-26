@@ -33,8 +33,6 @@ marker and closes around the interview as a pending step (the interview
 procedure, § 4. Pending; brainstorm's own close: `SKILL.md` § Unattended:
 closing around the interview).
 
-- A probe follows scout's rule for live machine state (the scout skill,
-  § The Survey).
 - Focus on purpose, constraints, and success criteria: what problem this
   solves and how we would know it worked.
 

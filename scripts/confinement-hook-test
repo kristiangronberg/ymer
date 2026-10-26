@@ -1,0 +1,319 @@
+#!/bin/sh
+# confinement-hook-test — self-test for the ymer plugin's confinement hook,
+# plugins/ymer/hooks/confinement-hook. The hermetic probe's static stage
+# runs it; run it by hand after any edit to the hook. It feeds the hook
+# hook-input JSON on stdin and reads its exit and its reason; it runs no
+# command it judges.
+#
+#   sh scripts/confinement-hook-test
+#
+# Covers, inside a subagent: every deny of the processes class — pkill,
+# killall and fuser -k, by path, behind a wrapper and its flags, in a
+# string a shell runs (sh -c, eval, a heredoc, a here-string, echo piped
+# into one), through find -exec and inside a double-quoted $(…); a kill
+# fed by pgrep, lsof or ps through $(…), backticks, a variable, an array,
+# a loop word, a read loop, a process substitution or any later stage of
+# the pipeline; and kill -1 and kill 0. Every deny of the secrets class —
+# each whole-environment dump, bare or redirected or captured, and each
+# named secret store printed or copied, through Bash and through Read.
+# Every allowed idiom — a literal PID, $! and a variable holding a PID, a
+# process group, a job, kill -0, a liveness check by ps -p, a single named
+# variable, a public key, set and env and export used as commands, and a
+# store or a denied word that is only named: searched for, quoted as
+# text, written into a heredoc a file takes, tested, or handed to a tool
+# that reads it itself. The reader's edges: an apostrophe in a comment, a
+# heredoc body or an unmatched quote hides nothing after it. Outside a
+# subagent: the same commands pass, the user's own session quoting
+# "agent_id" in its command among them, and so does an agent_id that is
+# null, empty or nested below the top level. Input the hook cannot read
+# passes: not JSON, cut short, empty, an array, trailing bytes, a bad
+# escape. The JSON reader decodes \u escapes, escaped quotes and \n,
+# skips nested objects before tool_input, and judges a long command and a
+# 500 KB heredoc in under 5 seconds. Last, every case a deny reason cites
+# is a heading of the confinement contract.
+#
+# Exit 0 = every case passed.
+
+set -u
+
+here=$(cd "$(dirname "$0")" && pwd)
+hook=$here/../plugins/ymer/hooks/confinement-hook
+contract=$here/../plugins/ymer/confinement-contract.md
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+pass=0
+fail=0
+
+check() { # check <name> <expected> <actual>
+	if [ "$2" = "$3" ]; then
+		pass=$((pass + 1))
+		echo "ok   — $1"
+	else
+		fail=$((fail + 1))
+		echo "FAIL — $1"
+		echo "       expected: $2"
+		echo "       actual:   $3"
+	fi
+}
+
+# json <text> — text as the body of a JSON string
+json() {
+	printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g' | awk '{ printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }'
+}
+
+# feed <input> — run the hook on input; rc and err hold its exit and stderr
+feed() {
+	printf '%s' "$1" | sh "$hook" >"$tmp/out" 2>"$tmp/err"
+	rc=$?
+	err=$(cat "$tmp/err")
+}
+
+sub_bash() { # sub_bash <command> — a subagent's Bash call
+	printf '{"session_id":"s1","cwd":"/x/w","permission_mode":"auto","agent_id":"a7412a44cf3fa01e5","agent_type":"general-purpose","effort":{"level":"medium"},"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s","description":"d"},"tool_use_id":"t1"}' "$(json "$1")"
+}
+main_bash() { # main_bash <command> — the user's own session's Bash call
+	printf '{"session_id":"s1","cwd":"/x/w","permission_mode":"auto","effort":{"level":"medium"},"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s","description":"d"},"tool_use_id":"t1"}' "$(json "$1")"
+}
+sub_read() { # sub_read <path> — a subagent's Read call
+	printf '{"session_id":"s1","agent_id":"a7412a44cf3fa01e5","agent_type":"Explore","hook_event_name":"PreToolUse","tool_name":"Read","tool_input":{"file_path":"%s"},"tool_use_id":"t1"}' "$(json "$1")"
+}
+main_read() { # main_read <path>
+	printf '{"session_id":"s1","hook_event_name":"PreToolUse","tool_name":"Read","tool_input":{"file_path":"%s"},"tool_use_id":"t1"}' "$(json "$1")"
+}
+
+denies() { # denies <case> <input> — exit 2, the reason citing § <case>
+	feed "$2"
+	check "denies: $3" "2 1" "$rc $(printf '%s\n' "$err" | grep -c -F "the confinement contract, § $1")"
+}
+passes() { # passes <input> <name> — exit 0, nothing on stderr
+	feed "$1"
+	check "passes: $2" "0 " "$rc $err"
+}
+
+# ── processes ──────────────────────────────────────────────────────────
+denies Processes "$(sub_bash 'pkill -f server')" 'pkill'
+denies Processes "$(sub_bash 'killall node')" 'killall'
+denies Processes "$(sub_bash '/x/bin/pkill foo')" 'pkill by its path'
+denies Processes "$(sub_bash 'sudo pkill x')" 'pkill behind sudo'
+denies Processes "$(sub_bash 'sudo -u root pkill x')" 'pkill behind sudo -u'
+denies Processes "$(sub_bash 'sudo -n pkill foo')" 'pkill behind sudo -n'
+denies Processes "$(sub_bash '/x/bin/sudo pkill x')" 'pkill behind sudo by its path'
+denies Processes "$(sub_bash 'nice -n 5 killall foo')" 'killall behind nice -n'
+denies Processes "$(sub_bash 'timeout -s KILL 5 pkill x')" 'pkill behind timeout -s'
+denies Processes "$(sub_bash 'echo hi && pkill x')" 'pkill after &&'
+denies Processes "$(sub_bash '(pkill x)')" 'pkill in a subshell'
+denies Processes "$(sub_bash '{ pkill x; }')" 'pkill in a group'
+denies Processes "$(sub_bash 'FOO=1 timeout 5 killall x')" 'killall behind an assignment and timeout'
+denies Processes "$(sub_bash 'bash -c "pkill -f x"')" 'pkill in bash -c'
+denies Processes "$(sub_bash "sh -c 'killall node'")" 'killall in sh -c, single-quoted'
+denies Processes "$(sub_bash "timeout 5 sh -c 'killall x'")" 'killall in sh -c behind timeout'
+denies Processes "$(sub_bash 'eval "pkill foo"')" 'pkill through eval'
+denies Processes "$(sub_bash 'find . -name x -exec pkill {} \;')" 'pkill through find -exec'
+denies Processes "$(sub_bash 'echo "$(pkill foo)"')" 'pkill in a double-quoted $(…)'
+denies Processes "$(sub_bash 'echo "`pkill foo`"')" 'pkill in double-quoted backticks'
+denies Processes "$(sub_bash 'bash <<EOF
+pkill x
+EOF')" 'pkill in a heredoc a shell reads'
+denies Processes "$(sub_bash 'cat <<EOF | sh
+pkill x
+EOF')" 'pkill in a heredoc piped into a shell'
+denies Processes "$(sub_bash 'echo "pkill x" | sh')" 'pkill echoed into a shell'
+denies Processes "$(sub_bash 'sh <<< "pkill x"')" 'pkill in a here-string a shell reads'
+denies Processes "$(sub_bash "# don't leave it
+killall node")" 'killall after a comment holding an apostrophe'
+denies Processes "$(sub_bash "cat <<EOF
+don't
+EOF
+pkill foo")" 'pkill after a heredoc holding an apostrophe'
+denies Processes "$(sub_bash "echo it's; pkill x")" 'pkill after an unmatched apostrophe'
+denies Processes "$(sub_bash 'echo ${#arr[@]}; pkill x')" 'pkill after a parameter expansion'
+denies Processes "$(sub_bash 'fuser -k 3000/tcp')" 'fuser -k'
+denies Processes "$(sub_bash 'kill -9 -1')" 'kill -1, every process'
+denies Processes "$(sub_bash 'kill -- -1')" 'kill -- -1'
+denies Processes "$(sub_bash 'kill -s TERM -1')" 'kill -s TERM -1'
+denies Processes "$(sub_bash 'kill 0')" 'kill 0, the own process group'
+denies Processes "$(sub_bash 'kill $(pgrep -f server)')" 'kill fed by $(pgrep)'
+denies Processes "$(sub_bash 'kill -9 `pgrep node`')" 'kill fed by backticks'
+denies Processes "$(sub_bash 'kill "$(lsof -t -i tcp)"')" 'kill fed by a quoted $(lsof)'
+denies Processes "$(sub_bash 'kill -9 $(ps aux | grep x | awk "{print \$2}")')" 'kill fed by $(ps …)'
+denies Processes "$(sub_bash 'kill $(/x/sbin/lsof -t -i :80)')" 'kill fed by lsof by its path'
+denies Processes "$(sub_bash 'kill $(sudo lsof -ti :80)')" 'kill fed by lsof behind sudo'
+denies Processes "$(sub_bash 'pgrep -f server | xargs kill')" 'pgrep piped into xargs kill'
+denies Processes "$(sub_bash 'lsof -t -i tcp | xargs -r kill -9')" 'lsof piped into xargs kill'
+denies Processes "$(sub_bash 'ps -o pid= -p 1 | xargs kill')" 'ps piped into xargs kill'
+denies Processes "$(sub_bash "ps aux | grep foo | grep -v grep | awk '{print \$2}' | xargs kill -9")" 'ps through grep and awk into xargs kill'
+denies Processes "$(sub_bash 'pgrep -f x | head -1 | xargs kill')" 'pgrep through head into xargs kill'
+denies Processes "$(sub_bash 'pgrep -f x | sort -u | xargs kill')" 'pgrep through sort into xargs kill'
+denies Processes "$(sub_bash 'lsof -ti:80 2>&1 | xargs kill -9')" 'lsof with 2>&1 into xargs kill'
+denies Processes "$(sub_bash 'lsof -ti :81 | xargs -I {} kill {}')" 'lsof into xargs -I {} kill'
+denies Processes "$(sub_bash 'pgrep foo | xargs -n 1 kill')" 'pgrep into xargs -n 1 kill'
+denies Processes "$(sub_bash 'pgrep -f x | while read p; do kill $p; done')" 'pgrep into a read loop that kills'
+denies Processes "$(sub_bash 'pgrep x | while read -p "ok (y/n)? " p; do kill $p; done')" 'pgrep into a read loop with a prompt'
+denies Processes "$(sub_bash 'xargs kill < <(pgrep foo)')" 'xargs kill reading a process substitution of pgrep'
+denies Processes "$(sub_bash 'pid=$(pgrep -f server); kill "$pid"')" 'kill of a variable set from pgrep'
+denies Processes "$(sub_bash 'pids=($(pgrep foo)); kill ${pids[@]}')" 'kill of an array set from pgrep'
+denies Processes "$(sub_bash 'for p in $(pgrep node); do kill $p; done')" 'kill of a loop word from pgrep'
+
+passes "$(sub_bash 'kill 12345')" 'kill of a literal PID'
+passes "$(sub_bash 'kill -1 12345')" 'kill -1 as a signal to a literal PID'
+passes "$(sub_bash 'kill "$pid"')" 'kill of a variable'
+passes "$(sub_bash 'sleep 60 & pid=$!; kill $pid')" 'kill of $! recorded'
+passes "$(sub_bash 'kill -- -4242')" 'kill of a process group'
+passes "$(sub_bash 'kill %1')" 'kill of a job'
+passes "$(sub_bash 'ps -p "$pid" >/dev/null && kill "$pid"')" 'kill after a liveness check by ps -p'
+passes "$(sub_bash 'kill -0 "$pid"')" 'kill -0 of a variable'
+passes "$(sub_bash 'kill -0 $(pgrep -f server)')" 'kill -0 fed by pgrep, a liveness check'
+passes "$(sub_bash 'ps aux | grep foo')" 'a process listing with no kill'
+passes "$(sub_bash 'pgrep foo | wc -l; kill $pid')" 'a lookup, then a kill of a recorded PID'
+passes "$(sub_bash 'echo $pid | xargs kill')" 'a recorded PID piped into xargs kill'
+passes "$(sub_bash "rg 'pkill' plugins")" 'a single-quoted pkill searched for'
+passes "$(sub_bash 'grep -n -e killall -e pkill notes.md')" 'pkill as a grep argument'
+passes "$(sub_bash 'echo "pkill foo"')" 'pkill as text in a double-quoted argument'
+passes "$(sub_bash "bash -c 'echo hi'")" 'bash -c running an ordinary command'
+passes "$(sub_bash "sh -c 'grep pkill file'")" 'sh -c searching for pkill'
+passes "$(sub_bash "cat > run.sh <<'EOF'
+#!/bin/sh
+pkill -f server
+EOF")" 'pkill as a line of a heredoc a file takes'
+passes "$(sub_bash 'git status --short')" 'an ordinary command'
+
+# ── secrets: the whole environment ─────────────────────────────────────
+denies Secrets "$(sub_bash 'env')" 'bare env'
+denies Secrets "$(sub_bash 'env | sort')" 'env piped'
+denies Secrets "$(sub_bash '/x/bin/env')" 'bare env by its path'
+denies Secrets "$(sub_bash '/x/bin/env | sort')" 'env by its path, piped'
+denies Secrets "$(sub_bash 'env > out.txt')" 'env redirected to a file'
+denies Secrets "$(sub_bash 'env>out')" 'env redirected with no space'
+denies Secrets "$(sub_bash 'env 2>&1 | head')" 'env with 2>&1, piped'
+denies Secrets "$(sub_bash 'printenv')" 'bare printenv'
+denies Secrets "$(sub_bash 'printenv -0')" 'printenv with a flag alone'
+denies Secrets "$(sub_bash 'printenv > /x/e')" 'printenv redirected'
+denies Secrets "$(sub_bash 'set')" 'bare set'
+denies Secrets "$(sub_bash 'set > /x/e')" 'set redirected'
+denies Secrets "$(sub_bash 'export -p')" 'export -p'
+denies Secrets "$(sub_bash 'export -p > f')" 'export -p redirected'
+denies Secrets "$(sub_bash 'export')" 'bare export'
+denies Secrets "$(sub_bash 'declare -p')" 'declare -p'
+denies Secrets "$(sub_bash 'declare -p > f')" 'declare -p redirected'
+denies Secrets "$(sub_bash 'declare -x')" 'declare -x'
+denies Secrets "$(sub_bash 'typeset')" 'bare typeset'
+denies Secrets "$(sub_bash 'x="$(printenv)"')" 'printenv in a double-quoted $(…)'
+denies Secrets "$(sub_bash 'echo "$(env)"')" 'env in a double-quoted $(…)'
+
+passes "$(sub_bash 'set -eu')" 'set with options'
+passes "$(sub_bash 'set -eu 2>&1')" 'set with options, redirected'
+passes "$(sub_bash 'env VAR=x make test')" 'env running a command'
+passes "$(sub_bash 'env VAR=x make test > out')" 'env running a command, redirected'
+passes "$(sub_bash 'env -u FOO sh -c true')" 'env -u running a command'
+passes "$(sub_bash 'env python3 foo.py')" 'env running an interpreter'
+passes "$(sub_bash '/x/bin/env python3 foo.py')" 'env by its path running an interpreter'
+passes "$(sub_bash "cat > run.sh <<'EOF'
+#!/x/bin/env bash
+set
+env
+export
+EOF")" 'a heredoc a file takes: a shebang and bare set, env, export lines'
+passes "$(sub_bash 'printenv PATH')" 'printenv naming a variable'
+passes "$(sub_bash 'printenv HOME 2>&1')" 'printenv naming a variable, redirected'
+passes "$(sub_bash 'printenv PATH > o')" 'printenv naming a variable, to a file'
+passes "$(sub_bash 'echo "$API_TOKEN"')" 'a single named variable (the contract'\''s case)'
+passes "$(sub_bash 'echo "env is set"')" 'env as text in a double-quoted argument'
+passes "$(sub_bash 'git commit -m "fix env; set up"')" 'env and set in a commit message'
+passes "$(sub_bash 'echo "$(date)"')" 'an ordinary command in a double-quoted $(…)'
+passes "$(sub_bash 'echo "$(printenv HOME)"')" 'printenv naming a variable in a double-quoted $(…)'
+passes "$(sub_bash 'echo ${env}')" 'a variable named env'
+passes "$(sub_bash 'export FOO=1')" 'export of an assignment'
+passes "$(sub_bash 'declare -a arr')" 'declare naming a variable'
+passes "$(sub_bash 'declare -f')" 'declare -f, functions alone'
+
+# ── secrets: named secret stores ───────────────────────────────────────
+denies Secrets "$(sub_bash 'cat $H/.ssh/id_ed25519')" 'an SSH private key'
+denies Secrets "$(sub_bash 'cat $H/.ssh/id_*')" 'SSH private keys by a glob'
+denies Secrets "$(sub_bash 'cat $H/.ssh/*')" 'every file of .ssh by a glob'
+denies Secrets "$(sub_bash 'cp $H/.ssh/id_rsa /x/k')" 'an SSH private key copied'
+denies Secrets "$(sub_bash 'cat "$H/.erlang.cookie"')" 'the Erlang cookie file'
+denies Secrets "$(sub_bash "cat '/x/me/.erlang.cookie'")" 'the Erlang cookie file, single-quoted'
+denies Secrets "$(sub_bash "bin/app eval 'IO.puts Node.get_cookie()'")" 'get_cookie in code the app evaluates'
+denies Secrets "$(sub_bash "mix run -e 'IO.puts Node.get_cookie()'")" 'get_cookie in code mix runs'
+denies Secrets "$(sub_bash 'cat $H/.netrc')" '.netrc'
+denies Secrets "$(sub_bash "cat '/x/me/.netrc'")" '.netrc, single-quoted'
+denies Secrets "$(sub_bash 'cat < $H/.netrc')" '.netrc through a < redirect'
+denies Secrets "$(sub_bash 'x=$(cat $H/.netrc)')" '.netrc read in a $(…)'
+denies Secrets "$(sub_bash 'grep token $H/.netrc')" 'a search inside .netrc'
+denies Secrets "$(sub_bash 'head $H/.aws/credentials')" 'AWS credentials'
+denies Secrets "$(sub_bash 'cat $H/.config/gcloud/application_default_credentials.json')" 'gcloud credentials'
+denies Secrets "$(sub_bash 'security find-generic-password -s svc -w')" 'a keychain password print with -w'
+denies Secrets "$(sub_bash 'security find-internet-password -gs host')" 'a keychain password print with -g in a cluster'
+denies Secrets "$(sub_bash 'security dump-keychain')" 'security dump-keychain'
+denies Secrets "$(sub_read '/x/.ssh/id_rsa')" 'Read of an SSH private key'
+denies Secrets "$(sub_read '/x/.erlang.cookie')" 'Read of the Erlang cookie'
+denies Secrets "$(sub_read '/x/.netrc')" 'Read of .netrc'
+
+passes "$(sub_bash 'cat $H/.ssh/id_ed25519.pub')" 'a public key'
+passes "$(sub_bash 'cat $H/.ssh/id_*.pub')" 'public keys by a glob'
+passes "$(sub_bash "grep -F '.netrc' notes.md")" 'a single-quoted .netrc searched for'
+passes "$(sub_bash 'grep ".netrc" README.md')" 'a double-quoted .netrc searched for'
+passes "$(sub_bash 'rg ".netrc" docs')" 'rg for .netrc'
+passes "$(sub_bash 'git ls-files | grep .netrc')" 'a listing searched for .netrc'
+passes "$(sub_bash 'rg get_cookie lib')" 'a search for get_cookie'
+passes "$(sub_bash "rg 'get_cookie' lib")" 'a single-quoted search for get_cookie'
+passes "$(sub_bash 'grep -rn "Node.get_cookie" lib')" 'a double-quoted search for Node.get_cookie'
+passes "$(sub_bash 'git commit -m "Handle .netrc in fetch"')" 'a commit message naming .netrc'
+passes "$(sub_bash 'echo ".netrc" >> .gitignore')" '.netrc written into .gitignore'
+passes "$(sub_bash 'ssh -i $H/.ssh/id_ed25519 host true')" 'ssh -i reading its own key'
+passes "$(sub_bash 'ssh-add $H/.ssh/id_ed25519')" 'ssh-add reading its own key'
+passes "$(sub_bash 'chmod 600 $H/.ssh/id_rsa')" 'chmod on a private key'
+passes "$(sub_bash 'ls -l $H/.aws/credentials')" 'ls on a credential file'
+passes "$(sub_bash 'test -f $H/.netrc && echo yes')" 'test -f on .netrc'
+passes "$(sub_bash 'curl --netrc-file $H/.netrc example.invalid')" 'curl reading its own .netrc'
+passes "$(sub_bash "cat > notes.md <<'EOF'
+Keep the .netrc and .ssh/id_rsa files out of the repo.
+EOF")" 'a heredoc a file takes naming stores'
+passes "$(sub_bash 'security find-generic-password -s svc')" 'a keychain lookup printing no password'
+passes "$(sub_read '/x/.ssh/config')" 'Read of an SSH config'
+passes "$(sub_read '/x/.ssh/id_rsa.pub')" 'Read of a public key'
+passes "$(sub_read '/x/w/note.txt')" 'Read of an ordinary file'
+
+# ── the user's own session ─────────────────────────────────────────────
+passes "$(main_bash 'pkill -f foo')" 'pkill outside a subagent'
+passes "$(main_bash 'env')" 'env outside a subagent'
+passes "$(main_read '/x/.netrc')" 'Read of .netrc outside a subagent'
+passes "$(main_bash "grep '\"agent_id\"' log.json; pkill -f foo")" 'the user'\''s command quoting "agent_id"'
+passes '{"agent_id":null,"tool_name":"Bash","tool_input":{"command":"pkill x"}}' 'agent_id null'
+passes '{"agent_id":"","tool_name":"Bash","tool_input":{"command":"pkill x"}}' 'agent_id empty'
+passes '{"tool_name":"Bash","tool_input":{"agent_id":"a1","command":"pkill x"}}' 'agent_id below the top level'
+passes '{"agent_id":"a1","tool_name":"Write","tool_input":{"file_path":"/x/.netrc","content":"x"}}' 'a tool the hook does not watch'
+
+# ── input the hook cannot read ─────────────────────────────────────────
+passes 'pkill -f server' 'not JSON'
+passes '{"agent_id":"a1","tool_name":"Bash","tool_input":{"command":"pkill x"' 'JSON cut short'
+passes '' 'empty input'
+passes '[{"agent_id":"a1","tool_name":"Bash","tool_input":{"command":"pkill x"}}]' 'an array'
+passes '{"agent_id":"a1","tool_name":"Bash","tool_input":{"command":"pkill x"}} trailing' 'trailing bytes'
+passes '{"agent_id":"a1","tool_name":"Bash","tool_input":{"command":"pkill \q"}}' 'a bad escape'
+
+# ── the JSON reader ────────────────────────────────────────────────────
+denies Processes '{"agent_id":"a1","tool_name":"Bash","tool_input":{"command":"pkil\u006c x"}}' 'a \u escape decoded'
+denies Processes '{"agent_id":"a1","tool_name":"Bash","tool_input":{"command":"echo \"a\\\\\"; pkill x"}}' 'an escaped quote and backslash decoded'
+denies Processes "$(sub_bash 'echo a
+pkill x')" 'a command across lines'
+denies Processes '{ "agent_id" : "a1" , "meta" : { "x" : [ 1 , { "y" : "z" } ] } , "tool_name" : "Bash" , "tool_input" : { "command" : "pkill x" } }' 'whitespace and nesting before tool_input'
+long=$(awk 'BEGIN { for (i = 0; i < 4000; i++) printf "echo line %d; ", i; printf "pkill x" }')
+denies Processes "$(sub_bash "$long")" 'a long command'
+big=$(awk 'BEGIN { printf "cat > big.txt <<EOF\n"; for (i = 0; i < 12000; i++) printf "line %d of a file written through a heredoc\n", i; printf "EOF\npkill x" }')
+t0=$(date +%s)
+denies Processes "$(sub_bash "$big")" 'a heredoc of about 500 KB, then pkill'
+t1=$(date +%s)
+check "a heredoc of about 500 KB is judged in under 5 seconds" 1 "$([ "$rc" = 2 ] && [ $((t1 - t0)) -lt 5 ] && echo 1 || echo 0)"
+
+# ── the reasons cite the contract's cases ──────────────────────────────
+grep -o '§ [A-Z][a-z]*' "$hook" | sort -u >"$tmp/cited"
+check "the hook cites two cases" 2 "$(wc -l <"$tmp/cited" | tr -d ' ')"
+while IFS= read -r c; do
+	check "the contract has a heading for $c" 1 "$(grep -c -E "^#+ ${c#§ }\$" "$contract")"
+done <"$tmp/cited"
+
+echo
+echo "confinement-hook-test: $pass passed, $fail failed"
+[ "$fail" -eq 0 ]
