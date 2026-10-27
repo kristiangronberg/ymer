@@ -136,6 +136,9 @@ and 2 still run.
      slug-neutrally ("three topics", never "retire + mint"): the slug
      was fixed at topic resolution, before the interview knew whether
      the topic is a parent.
+   - **Retire.** Where the settled outcome is not pursuing or settled
+     below the bar and the topic has a task, *retire topic* (binding:
+     the operations contract), the why in its result.
    - **Rulings on another topic in flight.** A topic still `doing` that
      this session ruled on, by scoping or narrowing it, falsifying a
      claim it carries, or affirming it with re-measured evidence, is

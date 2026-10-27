@@ -226,10 +226,16 @@ comes from.
    re-verify.
 2. The task already is the topic: no rename, no move, and no second
    task. The topic keeps mint's name and date.
-3. Every outcome closes the same way, "not pursuing this" included:
-   `request.md` stays in the topic directory, the direction doc records
-   the decision, and the task closes as cancelled, the why in its result
-   (*retire topic*, binding: the operations contract).
+3. Every outcome keeps `request.md` in the topic directory and records
+   the decision in the direction doc; the task follows the outcome:
+   - **Pursued**: the task stays `doing`. A friction-batch that fixes
+     anything is pursued, and ships through the lightweight close-out.
+   - **Not pursuing**, or a **friction-batch with nothing left to
+     fix**: the task closes as cancelled at this close, the why in its
+     result, "not pursuing" or "settled below the bar" (*retire topic*,
+     binding: the operations contract). A topic with no task retires
+     nothing; the direction doc is the record.
+   - **Split**: as the split's moves say.
 4. Judge once whether the topic has a parent topic: it does where the
    intake's scope is another topic's settled decisions, and not where
    that topic is prior art, a neighbour, or only a drop's origin, which
