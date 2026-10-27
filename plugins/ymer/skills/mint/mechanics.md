@@ -165,26 +165,31 @@ LIMIT 25 OFFSET <n>
 
 **Step 1, the unstarted topics in the state folder**, whatever its
 kind, with whatever reaches the folder. First find the `request.md`
-files under it that carry `source: mint`. Where a shell reaches the
-folder, this session's own or a remote device's:
+files under it that carry `source: mint`, then list each hit's folder.
+Where a shell reaches the folder, this session's own or a remote
+device's, run the search and the listing as this one command, as
+written:
 
 ```
-grep -rl --include='request.md' 'source: mint' <state folder>
+hits=$(grep -rl --include='request.md' 'source: mint' <state folder>); echo "grep exit=$?"
+printf '%s\n' "$hits" | while IFS= read -r f; do [ -n "$f" ] || continue; d=${f%/request.md}; printf '%s :: %s\n' "$d" "$(ls -A "$d" | tr '\n' ' ')"; done
 ```
 
-Exit 1 with no output is no hit. Exit 2 or above means the search may be
-incomplete: use the hits printed so far and say the search was partial,
-or search again with the file tools; never read it as none unstarted. Where no shell reaches the folder, ask the same
-question with this session's own list and search tools. Keep the search
-to the `request.md` files: other artifacts may quote the marker.
+It prints grep's exit, then one `<folder> :: <listing>` line for every
+hit, never a filtered subset, so "none unstarted" is read off the
+listings and never off an empty print. It reads the hits line by line,
+so it runs the same under zsh and bash: a `for f in $(…)` loop gets no
+word splitting in zsh, and its silence reads exactly like none
+unstarted.
 
-Then, for each hit, list that `request.md`'s folder:
+`grep exit=1` with no lines is no hit. Exit 2 or above means the search
+may be incomplete: use the hits printed so far and say the search was
+partial, or search again with the file tools; never read it as none
+unstarted. Where no shell reaches the folder, ask the same question
+with this session's own list and search tools, and list each hit's
+folder with the file tools. Keep the search to the `request.md` files:
+other artifacts may quote the marker.
 
-```
-ls -A <folder>
-```
-
-or the file tools' own listing of it where no shell reaches the folder.
 The folder is unstarted when the listing shows exactly `request.md`. The
 listing must show `request.md` itself, since the search just found it
 there: a listing that does not (a refused shell, a wrong path) is a
