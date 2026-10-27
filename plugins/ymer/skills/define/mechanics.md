@@ -38,14 +38,17 @@ git -C <checkout> switch <topic>           # or `switch -c <topic> main` when no
                                            # branch exists yet
 git -C <checkout> branch --show-current    # assert: <topic>; anything else → stop, ask
 git -C <checkout> add <glossary home> <code-home files> <prose-home files>
-git -C <checkout> commit -m "<imperative summary of the glossary delta>"
+git -C <checkout> commit -m "<imperative summary of the glossary delta>" -- <glossary home> <code-home files> <prose-home files>
 git -C <checkout> log --oneline -1         # ref → spec.md glossary delta
 ```
 
 Define runs no project-checkout pre-flight at its opening, so the
 branch is born here when no earlier phase made one: an idea-first topic
 reaches define before write-plan, and the fence's `switch -c` line is
-that birth (the substrate contract, § Branch workflow). Where
+that birth (the substrate contract, § Branch workflow). Nor has a
+pre-flight cleared the tree, and the `switch` carries whatever was
+staged on `main` onto the branch, so the commit names its paths as on a
+shared tree (the substrate contract, § Stage by explicit path only). Where
 brainstorm's reset is still pending, the branch is the sketch: the
 close stops before any git runs and re-reports the reset with its
 commands (the substrate contract, § Tree options, Project checkout,
