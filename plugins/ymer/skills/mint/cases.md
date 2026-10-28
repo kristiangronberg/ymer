@@ -44,9 +44,9 @@ description.
 
 ## Scoring
 
-**A page with no `## Next steps` heading** adds no block: it names no
-next step for a drop to match. The close names it, so a product page
-that lost its heading is seen.
+**A product area with no `## Next steps` heading** in its `vision` adds
+no block: it names no next step for a drop to match. The close names
+it, so a product area that lost its heading is seen.
 
 **A list call that fails or comes back cut short** is a block that could
 not be read. Score nothing this run and go to the read-back, so the run
@@ -96,22 +96,22 @@ over:
 
 ## Three exits, all artifact-depositing
 
-**The halt for a product with no Roadmap:**
+**The halt for a repo no product area names:**
 
-> Mint draws into a project named `<Product> Roadmap` — one per
-> product, its tasks the work in flight. Ymer is this session's
-> coordinator, and a product's Roadmap is a project there. Create one for
-> the product this work belongs to, then run `/ymer:mint` again. The
-> drops are still open in the pool; nothing was lost.
+> Mint draws a topic into the product area whose description names the
+> topic's repo on its `Repos:` line, and no area in the ymer this
+> session reaches names `<repo>`. Add `<repo>` to that product's
+> `Repos:` line, or create an area for the product carrying the line,
+> then run `/ymer:mint` again. The drops are still open in the pool;
+> nothing was lost.
 
-**The halt for no `Meta Roadmap`**, which is a floor rather than one of
-your products:
+**The halt for no Meta area**, which is a floor rather than one of your
+products:
 
-> Mint draws work about your own process into a project named
-> `Meta Roadmap`, and the ymer this session reaches has none. Run
-> `/ymer:setup`, which creates it, or create it in ymer yourself — then
-> run `/ymer:mint` again. The drops are still open in the pool; nothing
-> was lost.
+> Mint draws work about your own process into an area named `Meta`,
+> and the ymer this session reaches has none. Run `/ymer:setup`, which
+> creates it, or create it in ymer yourself — then run `/ymer:mint`
+> again. The drops are still open in the pool; nothing was lost.
 
 Both halts are deliberate, and both belong to ymer alone: the
 coordinator this session reaches is the one it deposits into, and
@@ -179,8 +179,8 @@ were none, `next steps unreadable` where the next-steps block could not
 be read and nothing was scored for that reason, and `definition
 unreadable` where no scorer started and this session could not read the
 agent definition either, quoting both causes;
-`pages without next steps: <names>` follows wherever a page had no
-`## Next steps` heading.
+`areas without next steps: <names>` follows wherever a product area's
+`vision` had no `## Next steps` heading.
 
 **`Strays:`** is written only where the read-back found a stray, a
 deletion or an excess row: how many rows sat on ids no list held, the

@@ -46,7 +46,7 @@ operations contract whole**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the
 pre-flight, close binding, gate defaults and holds, the fallback rule
-and the report rule; and the roadmap operation this phase calls (*look
+and the report rule; and the topic operation this phase calls (*look
 up topic*) with its postcondition and the failure rule, the topic's
 artifacts (the `request.md` template, the `sketch.md` reader contract,
 how the state folder's kind is read and what a state folder in no git
@@ -126,7 +126,7 @@ The survey gathers the facts the map reports, sized to the topic:
   2. **Vocabulary**: what the codebase calls these concepts today
      (module, function and field names); where each term is defined;
      the project glossary if one exists; overloads and near-synonyms.
-  3. **Docs & history**: docs, roadmap entries, completion records,
+  3. **Docs & history**: docs, the product area's settled sections, completion records,
      READMEs and module docs touching the topic; the closest prior
      implementation of something similar and the pattern it
      established.
@@ -170,7 +170,7 @@ sections:
   as a ban check.
 - **Prior similar implementations**: the closest existing features and
   the pattern they establish.
-- **Related docs & roadmap entries.**
+- **Related docs & product direction.**
 - **Constraints & conventions**: libraries, established patterns, where
   this area's tests live.
 - **Absences**: what does not exist that the brief assumes or the work

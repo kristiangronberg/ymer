@@ -50,7 +50,7 @@ small on purpose.
   session. It scores every drop not yet scored, ranks the pool, takes
   the top drop, reads that product's Forward direction to fold in the
   drops that belong with it, and starts **exactly one thing**: a topic
-  plus its task in the product's roadmap, a batch of small fixes, or a
+  plus its task in the product's area, a batch of small fixes, or a
   learning task.
 
 Everything else follows from one claim: **a task belongs where work
@@ -100,12 +100,12 @@ registered in the node, your state folder is named and there
 none where it is in no git repository or the session has no git, its
 files being the record; a folder inside another git repository fails,
 and so does a git repository this session reaches only through a remote
-device's shell), ymer answers, and a `Meta Roadmap`
-project exists. It creates the skeletons, the front's registration and
-the `Meta Roadmap` project where they are missing; the state folder and
+device's shell), ymer answers, and a Meta area
+exists. It creates the skeletons, the front's registration and
+the Meta area where they are missing; the state folder and
 the ymer connection are yours, so it only reports on them. Each failure
 comes with a fix you can follow. The node, the front and the state folder are
-required; ymer and its `Meta Roadmap` are optional, and those checks
+required; ymer and its Meta area are optional, and those checks
 report which store is in use instead. These are the floors every
 plugin shares; a plugin that needs more carries a setup skill of its own
 for it.
@@ -121,7 +121,7 @@ re-running `/ymer:setup` brings an old install up to it for everything
 setup owns, with no migration to write and no version to track. Three
 texts it writes once and then leaves alone, because from then on they
 are yours: each table's description in your node, the rule of each kind
-of drop, and your `Meta Roadmap` project's description. A release
+of drop, and your Meta area's description. A release
 describes how things work now; after upgrading, run `/ymer:setup`. Setup
 holds no state of its own, so once it passes it is safe to ignore. Your
 ymer.ax connection is the exception to what it writes, because it is not
@@ -133,26 +133,26 @@ two commands that bring it.
 The plugin is opinionated, because routing without configuration needs
 conventions to route by:
 
-- **One product = one Roadmap.** With ymer that is a project named
-  `<Product> Roadmap`; the skills find it by that name, and if no such
-  project exists they stop and tell you to create one rather than
-  inventing somewhere to put your work — `Meta Roadmap` matches that
-  name shape too, and is never a candidate for a product's pick. Without
-  ymer it is the `project` value a row in the node's `tasks` table
-  carries, derived from the area, so there is nothing to find and nothing
-  to create.
-- **Work about how you work goes to `Meta Roadmap`** — one home for
-  the process itself, which belongs to no product. `/ymer:setup` creates
-  the project where there is ymer, so it is a floor rather than a naming
+- **One product = one product area.** With ymer that is an area whose
+  description carries a `Repos:` line naming the subtrees of your state
+  folder the product owns, and whose vision, rules and guidelines hold
+  its direction. The skills find it by that line, and if no area names a
+  topic's repo they stop and tell you to add the repo to a line or create
+  the area, rather than inventing somewhere to put your work. Without
+  ymer nothing names a product: a row in the node's `tasks` table
+  carries its repo, so there is nothing to find and nothing to create.
+- **Work about how you work goes to the Meta area** — one home for the
+  process itself, which belongs to no product. `/ymer:setup` creates the
+  area where there is ymer, so it is a floor rather than a naming
   decision, and a process-level pick never has to hunt for a home.
-- **A topic is laid out `<area>/YYYY/MM-DD-<topic>/`** — one topic per
-  folder in your state folder. `<area>` is the repo or product it
-  belongs to, and **`meta` is reserved** for work about how you work — it
-  is the area that routes to `Meta Roadmap`.
+- **A topic is laid out `<repo>/YYYY/MM-DD-<topic>/`** — one topic per
+  folder in your state folder. `<repo>` is the repo it belongs to, and
+  **`meta` is reserved** for work about how you work — it is the
+  subtree that routes to the Meta area.
 - **`Learning`** is optional practice: learning drops are drawn there as
   their own tasks, one per subject gap. With ymer that is a project of that
   name, and without one they become ordinary tasks in the product's
-  Roadmap; in the node it is simply the `project` value `Learning`.
+  area; in the node it is simply the `project` value `Learning`.
 
 If you already work some other way, the conventions are the part to read
 first — they are what the skills assume.
@@ -168,14 +168,14 @@ their history is git where the folder is its own git repository; where
 it is in no git repository, or the session has no git, the files are
 the record.
 A **ymer.ax account** is optional, and the default where a
-session reaches it: with ymer, work is tracked in Roadmap projects;
+session reaches it: with ymer, work is tracked in product areas;
 without it, in the node's `tasks` table.
 
 Reference files at the plugin's root travel with it and are read on
 demand: `glossary.md`, the one home for the words these skills use;
-`operations-contract.md`, which fixes what each roadmap operation must
-achieve and how it binds per coordinator, and states the product page's
-skeleton; `substrate-contract.md`, the git rules the skills follow
+`operations-contract.md`, which fixes what each topic operation must
+achieve and how it binds per coordinator, and where a product area keeps
+its direction; `substrate-contract.md`, the git rules the skills follow
 wherever git is there; `process-contract.md`, the rules the phases of
 the development process share; `confinement-contract.md`, what a phase
 and the agents it starts may touch on your machine; and `interview.md`,

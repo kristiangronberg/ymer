@@ -46,7 +46,7 @@ anchors (the file references grounding a plan) and from a recurrence's
 anchor (the drop it recurs).
 
 ### annotate task
-The roadmap operation that appends new evidence — a ruling made about
+The topic operation that appends new evidence — a ruling made about
 it — to the task of a topic in flight, status untouched; nothing that
 is not `doing` is annotated. Home: the operations contract's operations
 table.
@@ -89,7 +89,7 @@ _Avoid_: games/art exception
 
 ### binding
 The mapping from the contract's names to one environment's facts: each
-roadmap operation (look up topic, mint task, annotate task, order
+topic operation (look up topic, mint task, annotate task, order
 topics, ship topic, retire topic) to the backend's tool and outcome —
 the transition or group as a word, the postcondition and the read-back,
 never a call
@@ -241,8 +241,8 @@ instead of closing it.
 _Avoid_: convergence step, evaluation pass, review beat
 
 ### coordinator
-What tracks a front's work and how topics are named there: ymer's
-`<Product> Roadmap` tasks where the session reaches ymer, the node's
+What tracks a front's work and how topics are named there: ymer's topic
+tasks in each product area where the session reaches ymer, the node's
 `tasks` table otherwise (→ reach rule). An environment-contract role of
 the reach kind. Each skill states which one a run is using in its own
 prose and in its report: operative use of this term, never a second
@@ -297,8 +297,8 @@ _Avoid_: direction document, parent doc
 
 ### direction value
 Defined in the `mint` skill, its one home — how strongly a drop advances
-any product's next steps: the best match across every product page, 1, 3
-or 5.
+any product's next steps: the best match across every product area's
+next steps, 1, 3 or 5.
 
 ### discovered set
 Everything topic resolution's lookup found for one name — a drawn
@@ -421,14 +421,15 @@ the whole increment, never per stop.
 _Avoid_: acceptance check, sign-off
 
 ### Forward direction
-A product page's first settled section: where the product is heading,
-written as constraints on future implementations — the shape a feature
-must take when it arrives, the destination the product moves toward.
-Never a schedulable unit: anything that could carry a date or a checkbox
-belongs in the task list, and cross-product priority is triage, not
-direction. Pushes back like every settled section.
-_Avoid_: target shape, heading, roadmap (that is the task list),
-now/next/later, milestones
+A product area's first settled section, the opening of its `vision`:
+where the product is heading, written as constraints on future
+implementations — the shape a feature must take when it arrives, the
+destination the product moves toward. Never a schedulable unit:
+anything that could carry a date or a checkbox belongs in the task
+list, and cross-product priority is triage, not direction. Pushes back
+like every settled section.
+_Avoid_: target shape, heading, roadmap, now/next/later,
+milestones
 
 ### frame bar
 Defined in the write-plan skill — § Payloads states the bar a payload's
@@ -719,7 +720,7 @@ _Avoid_: machinery-editing meta topic (a session fact, not a kind),
 prose-only meta topic, meta/plans topic
 
 ### mint task
-The roadmap operation that creates a task where work starts now —
+The topic operation that creates a task where work starts now —
 never for future work, which is captured as a drop instead — carrying
 its evidence; the `mint` skill, drawing from the pool, is its main
 caller. Home: the operations contract, which names the moments that
@@ -740,11 +741,10 @@ the anchor.
 _Avoid_: cause slug, text anchor
 
 ### next step
-One bullet of a product page's `Next steps` section, the settled section
-directly under Forward direction: a likely next destination the product
-owner names — a guess, never a task; several may stand, or none. Home:
-the operations contract's skeleton and the product-design skill § The
-product page.
+One bullet of the `Next steps` section in a product area's `vision`,
+the settled section directly under Forward direction: a likely next
+destination the product owner names — a guess, never a task; several
+may stand, or none. Home: the product-design skill § The product area.
 _Avoid_: likely next step, current focus, milestone, now/next/later
 
 ### nudge template
@@ -755,9 +755,9 @@ it — they follow the public register's grammar instead.
 
 ## O
 ### operations contract
-The reference file this plugin ships for the roadmap, the state store
-and the pool's draw and return: the roadmap model and its views, the
-operations with their
+The reference file this plugin ships for the topics in flight, the state
+store and the pool's draw and return: the topic model and its views,
+the operations with their
 required outcomes and postconditions, the status ladder, the topic's
 artifacts with the `request.md` template, split topics, and each
 operation's binding per coordinator. Skills cite it by its role phrase
@@ -849,7 +849,7 @@ _Avoid_: pending record
 
 ### phase close
 The sequence of durable writes that ends a phase — artifact writes,
-roadmap operations, state-folder and machinery commits, the capture block — run as one
+topic operations, state-folder and machinery commits, the capture block — run as one
 continuous execution, ordered so every step leaves a readable outcome and
 state changes land before announcements.
 _Avoid_: terminal sequence, close sequence
@@ -869,8 +869,8 @@ The one store of everything waiting to be drawn — drops in the node's
 brainstorm, define, write-plan or review; nothing in it is work anyone
 has committed to. A draw drains a drop. Home: the `capture` skill.
 _Avoid_: backlog, inbox, staging, improvements pool, task pool, search
-pool; pool for a Roadmap project's tasks — say "a Roadmap project's
-tasks", or "the roadmap" for the ones in flight
+pool; pool for a product area's tasks — say "a product area's tasks",
+or "its topics in flight" for the ones in flight
 
 ### positive control
 A known hit the matcher must print before its zero is trusted — the proof
@@ -923,7 +923,7 @@ development-process (as its name), router
 
 ### product alignment
 Brainstorm's convergence beat: a formed candidate direction is
-checked against the product-design principles — the product page's
+checked against the product-design principles — the product area's
 settled sections supply cached answers and push back on contradiction —
 yielding the gate's answers (user type; instrumental or autotelic) plus
 the reframe's three-outcome verdict, recorded in the direction doc;
@@ -931,18 +931,17 @@ vision-worthy material is captured as vision drops. Fires when
 the topic shapes a surface a user operates.
 _Avoid_: alignment phase (a beat inside brainstorm, not a phase)
 
-### product page
-The one page a product has — its Roadmap project's description: the
-fixed header (the task/status contract for every surface that reads
-the page, which sends new work to the pool, plus the governance line),
-then the settled sections. Product-keyed, so several repos may share
-one; found by name convention (`<Product> Roadmap`); the skeleton, its
-fixed header and the binding are the operations contract's. Phases read it; only
-governed sessions — carve topics, onboarding — write it, and never prune
-what they did not write.
-_Avoid_: Product Vision, vision doc (the retired doc class),
-governed page, roadmap page, project description (the coordinator's
-field, not the artifact)
+### product area
+An area whose description carries a `Repos:` line naming the
+state-folder subtrees it owns; its task context fields hold the
+product's settled sections. The line makes the area a product, so
+several repos may share one, and the area named Meta holds the reserved
+`meta` subtree. Its binding is the operations contract's, and how it is
+read the product-design skill's. Phases read it; only governed
+sessions (carve topics) write its settled sections, never pruning what
+they did not write, and no skill creates a product area or edits its
+`Repos:` line.
+_Avoid_: product page, Roadmap project, roadmap page, product vision
 
 ### proficiency-for-use
 The tutor's target level: able to use the topic for real work without help —
@@ -1085,14 +1084,6 @@ it — enumerated at their home, the process contract's § Review effort. Keys t
 tier; file count and artifact kind are never the key alone.
 _Avoid_: risk concentration, risk class
 
-### roadmap
-A repo's in-flight pipeline topics — the topics between brainstorm and ship.
-Not a separate store: it is the `doing` view of its Roadmap project's
-tasks, a task existing only where a topic's work has started. A pointer,
-not a record — all detail lives in the topic folder, and the pipeline
-rung is derived from it, never stored.
-_Avoid_: router table, roadmap.md (the retired file binding), backlog
-
 ## S
 
 ### sanctioned wandering
@@ -1121,13 +1112,13 @@ Defined in the confinement contract, § The scratch root.
 _Avoid_: dispatch dir, agent scratchpad, scratch dir
 
 ### settled section
-One of a product page's sections below the header — Forward direction;
-Next steps; Users; Stance; Slow layers / what churns; What it refuses to
-be — holding cached product-design answers or direction with pushback
-force: a candidate direction that contradicts one raises "is the vision
+One of the headed sections in a product area's task context fields —
+Forward direction and Next steps in `vision`, What it refuses to be in
+`rules`, Users, Stance and Slow layers / what churns in `guidelines` —
+holding cached product-design answers or direction with pushback force:
+a candidate direction that contradicts one raises "is the vision
 changing, or the direction?", and a change is a conscious act through a
-governed session, never silent drift. A section may sit empty; a stub is
-a valid page.
+governed session, never silent drift. A section may sit empty.
 _Avoid_: landing zone (the retired collection container — collected
 material rides the pool as vision drops), cached answers (what a
 section holds, not what it is)
@@ -1229,7 +1220,8 @@ _Avoid_: standing reference doc, standing prose document
 
 ### state folder
 The one folder a front keeps its topics' artifacts in, laid out
-`<area>/YYYY/MM-DD-<topic>/` and required by the core plugin: an
+`<repo>/YYYY/MM-DD-<topic>/`, `meta` the one reserved subtree that is no
+repo, and required by the core plugin: an
 environment-contract role of the configuration kind, and this suite's
 internal register. Its path is named by the `state_folder` option where
 the harness passes plugin options, and by the front's initial
@@ -1265,7 +1257,7 @@ specced → planned → hardened → implemented`. Vocabulary, not state:
 nothing stores a rung, and shipped is not a rung — it reads from
 `review.md`'s ship section. Each rung is derived from the topic folder's
 artifacts alone; the mapping, and the exact predicate for each rung,
-live in the operations contract's Roadmap section.
+live in the operations contract's Topics section.
 _Avoid_: status column, phase status
 
 ### step ID
@@ -1349,6 +1341,14 @@ _Avoid_: triage lead, summary line, TL;DR, headline
 Defined in the `mint` skill, its one home — the highest-scored open drop
 on a front that an exit can take; mint draws it unless a written reason
 passes it over.
+
+### topic
+One unit of work through the pipeline: exactly one task in its product
+area and one folder of artifacts in the state folder; a product area's
+`doing` topic tasks are its topics in flight. Its operations (look up
+topic, mint task and the rest) are the topic operations, the operations
+contract's.
+_Avoid_: roadmap, roadmap item
 
 ### topic branch
 The single git branch a code-repo topic lives on, named with the bare topic
@@ -1436,8 +1436,8 @@ line that breaks it. Derived, never chosen.
 ### vision
 Defined in the `capture` skill, its one home — one kind of drop: where
 a product is heading, rather than how the work went or a piece of work;
-material for that product's direction, reaching its page only through a
-carve topic.
+material for that product's direction, reaching its product area only
+through a carve topic.
 _Avoid_: vision row, vision candidate, landing-zone entry, vision
 friction
 

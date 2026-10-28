@@ -1,6 +1,6 @@
 ---
 name: mint
-description: Draws the next piece of work from the Ymer Node's pool: scores the new drops, ranks the pool, takes the top drop with the drops that belong with it, and turns them into exactly one thing, a topic and its task in the product's Roadmap, the friction-batch, or a learning task. Use when it is time to pick what to work on next from what earlier work captured.
+description: Draws the next piece of work from the Ymer Node's pool: scores the new drops, ranks the pool, takes the top drop with the drops that belong with it, and turns them into exactly one thing, a topic and its task in the product's area, the friction-batch, or a learning task. Use when it is time to pick what to work on next from what earlier work captured.
 ---
 
 # Mint
@@ -112,8 +112,8 @@ commits nothing. Where it refuses the folder, the run stops naming
 `/ymer:setup`.
 
 **The coordinator** tracks the work and names the topics. Ymer's tool
-surface among this session's tools means ymer: its Roadmap projects
-take the pick, and every task this run creates is a ymer task. Without
+surface among this session's tools means ymer: its product areas take
+the pick, and every task this run creates is a ymer task. Without
 it, the node's `tasks` table takes them, one row per task. The tool surface
 counts as reached whether or not it has been loaded yet, the same test
 setup's ymer check uses, so a deferred tool is never read as an absent
@@ -149,21 +149,21 @@ and its drops stay open for the run after setup passes.
 Mint deposits into the directed way of working, and routes by its name
 conventions rather than by configuration:
 
-- **One product, one Roadmap.** In ymer it is a project named
-  `<Product> Roadmap`, found by a `projects list` name search for
-  `Roadmap`: its tasks are the work in flight and its description is the
-  product's page. In the node's `tasks` table it is the `project` value
-  a row carries, derived from the area, so there is nothing to find and
+- **One product, one product area.** In ymer it is an area whose
+  description carries a `Repos:` line naming the state-folder subtrees
+  the product owns: its `doing` topic tasks are the work in flight, and
+  its task context fields hold the product's direction (term: the
+  plugin glossary). In the node's `tasks` table nothing names a product:
+  a row carries its subtree in `area`, so there is nothing to find and
   nothing to create.
-- **Work about how you work belongs to no product**, so it goes to
-  `Meta Roadmap`, the one Roadmap every machine has: created by
-  `/ymer:setup` where there is ymer, and the `project` value
-  `Meta Roadmap` in the node otherwise.
+- **Work about how you work belongs to no product**, so it goes to the
+  **Meta** area, the one area every machine with ymer has: created by
+  `/ymer:setup`. In the node it is the `area` value `meta`.
 - **One place for a topic's artifacts**: one folder per topic in the
-  state folder, laid out `<area>/YYYY/MM-DD-<topic>/`. `<area>` is the
-  repo or product the topic belongs to, named by the drawn drops' own
-  context. **`meta` is the reserved area for process work**, and it is
-  the area that routes to `Meta Roadmap`.
+  state folder, laid out `<repo>/YYYY/MM-DD-<topic>/`. `<repo>` is the
+  repo the topic belongs to, named by the drawn drops' own context.
+  **`meta` is the one reserved subtree that is no repo**, for process
+  work, and it routes to the Meta area.
 - **`Learning`** holds learning tasks, one per subject gap: an optional
   project in ymer, the `project` value `Learning` in the node.
 
@@ -185,7 +185,7 @@ tool and the action are the node's, and the SQL is this plugin's own,
 over its own tables. The node runs one statement per `execute` call and
 drops the rest of a multi-statement call without a word, so each
 statement is a call of its own. A result too large to come back whole, a
-notebook read or a `projects list`, is read whole from wherever the
+notebook read or an `areas get`, is read whole from wherever the
 harness kept it, never from a preview of it.
 
 ## Nothing to draw
@@ -272,19 +272,23 @@ draws.
 
 3. **Form the pick, then create or append its artifact.** Read the
    product's **Forward direction** once: the first settled section of
-   its page, the `<Product> Roadmap` project's description, and
-   `Meta Roadmap`'s for a `meta` pick (fetch recipe and miss rule: the
-   product-design skill § The product page). It decides two things and
-   nothing else: which neighbouring open drops belong with the top one,
-   and the shape the topic takes, the scope that moves the product the
-   way its direction says. Ranking is not its job, and a product with no
-   page, or a page with an empty Forward direction, forms the pick from
-   the drops alone. Then create or append the artifact: a topic, the
-   friction-batch, or a learning task (→ Three exits).
+   its product area's `vision`, and the Meta area's for a `meta` pick,
+   from the reads § Scoring's step 2 already made (the reads and the
+   miss rule: the product-design skill § The product area). Where those
+   reads failed or came back cut short, the run stops here, naming the
+   failed read and creating nothing: an unread product area is never
+   read as one with no direction or no `Repos:` line. It decides
+   two things and nothing else: which neighbouring open drops belong
+   with the top one, and the shape the topic takes, the scope that moves
+   the product the way its direction says. Ranking is not its job, and a
+   product with no product area, or an area with an empty Forward
+   direction, forms the pick from the drops alone. Then create or append
+   the artifact: a topic, the friction-batch, or a learning task
+   (→ Three exits).
 
    A topic's artifact, the friction-batch's included, is its
    `request.md`, which this run writes or appends at
-   `<state folder>/<area>/YYYY/MM-DD-<topic>/request.md` with this
+   `<state folder>/<repo>/YYYY/MM-DD-<topic>/request.md` with this
    session's own file tools, whichever history keeps the folder
    (→ `request.md`'s shape). Where git keeps it, step 5 commits that
    file; otherwise the file is the save.
@@ -323,7 +327,7 @@ draws.
    what is there (the statement: `cases.md` § Three exits, all
    artifact-depositing).
    The draw names where the drops went: the topic's folder
-   as `<area>/YYYY/MM-DD-<topic>/`, the friction-batch's included, or
+   as `<repo>/YYYY/MM-DD-<topic>/`, the friction-batch's included, or
    the learning task's id. Drops are never deleted, and every other drop
    stays open: a friction left to accumulate produces a *better* root
    cause when its turn comes.
@@ -388,17 +392,20 @@ the invocation itself.
    against both, and taking them before this front's list is what puts
    every drop of this front they hold in some list. Then list this
    front's unscored drops, their ids only, so that this session reads
-   none of their text. None listed, and scoring is done for this run.
+   none of their text. None listed, and nothing is dispatched this run,
+   but step 2 still runs: the pick's Forward direction and its routing
+   read the product areas from it.
 2. **The next steps.** Where the node is the coordinator there are no
-   pages (the product-design skill § The product page): the block says
-   there are no next steps, it has been read, and scoring goes on. Where
-   ymer is, every product page's `## Next steps` section, one block per
-   product, from one `projects list`. Only that call can leave the block
-   unread: where it fails or comes back cut short, nothing is scored
-   this run, because scores are written once and an unread block must
-   never be read as an empty one. In that case go straight to the
-   read-back, which ranks the rows already written, and no id gets the
-   in-session try
+   product areas (the product-design skill § The product area): the
+   block says there are no next steps, it has been read, and scoring
+   goes on. Where ymer is, every product area's `## Next steps` section
+   of its `vision`, one block per product, from the coordinator's
+   listing of areas and a read of every area it lists. Only those calls
+   can leave the block unread: where the listing or any read fails or
+   comes back cut short, nothing is scored this run, because scores are
+   written once and an unread product must never be read as one with no
+   next steps. In that case go straight to the read-back, which ranks
+   the rows already written, and no id gets the in-session try
    (→ `cases.md` § Scoring).
 3. **Dispatch.** Split this front's list from step 1 into lists and
    dispatch `ymer:scorer` once per list, handing it the next-steps block
@@ -551,42 +558,41 @@ recurring from a topic that shipped long ago, and a window blinds it.
 
 **1. Its own topic.** The pick becomes a topic `YYYY-MM-DD-<name>` whose
 `request.md` lands in this run's state folder, plus **the topic's task**,
-created at `doing` in the Roadmap its area routes to: a task exists only
-where work starts, and this one starts now, with its brainstorm as the
-next session on it.
+created at `doing` in the product area its `<repo>` routes to: a task
+exists only where work starts, and this one starts now, with its
+brainstorm as the next session on it.
 
 The order is route (below), then create the task, then write
 `request.md`: the artifact carries the task's id, and a halt at routing
 then leaves nothing behind. In ymer the task is created, claimed into
 the `doing` group, and read back; in the node it is one row and its
 read-back. The read-back must show exactly one task, in the `doing`
-group, in the target Roadmap (`mechanics.md` § Three exits, all
+group, in the target product area (`mechanics.md` § Three exits, all
 artifact-depositing). The task's description **points at the artifact, never
 copies it**: `request.md` already carries the root cause and the drops
 verbatim, and a copy would be the second store this whole arrangement
 exists to remove.
 
-**Routing: which Roadmap.** The topic's area decides. Where ymer is the
-coordinator, read it off the projects a `projects list` name search for
-`Roadmap` returns, the same list step 3's Forward direction was read
-from, so no second call:
+**Routing: which product area.** The topic's `<repo>` decides. Where
+ymer is the coordinator, read it off the product areas § Scoring's
+step 2 read, the same reads step 3's Forward direction came from, so no
+second call:
 
-- **`meta` routes to `Meta Roadmap`**: the friction-batch always, and
-  any process-level pick. Work about how you work belongs to no product,
-  and this is the project that holds it.
-- **Every other area routes to that product's `<Product> Roadmap`**,
-  and **`Meta Roadmap` is never a candidate there**: it sits among those
-  matches by name, so exclude it before resolving. One remaining match
-  is the target only when it is that product's Roadmap; another
-  product's is no match at all, and leaves you at the halt below rather
-  than at a default. Several are resolved by the pick's own content,
+- **`meta` routes to the Meta area**: the friction-batch always, and any
+  process-level pick, by the area's reserved name, whether or not its
+  `Repos:` line names `meta`. Work about how you work belongs to no
+  product, and this is the area that holds it.
+- **Every other `<repo>` routes to the product area whose `Repos:` line
+  names it**, and **the Meta area is never a candidate there**. One such
+  area is the target. Several are resolved by the pick's own content,
   which names the product it is about. Ask only on genuine ambiguity,
   and never route a product pick to `meta` by default.
 
-**No match halts the run** in ymer, saying what to create: a product's
-Roadmap, or `Meta Roadmap`, which `/ymer:setup` creates. Where the node
-is the coordinator there is nothing to halt on: `project` is a label
-derived from the area.
+**No match halts the run** in ymer, saying what to do: add the `<repo>`
+to a product area's `Repos:` line or create the product area, or run
+`/ymer:setup`, which creates the Meta area. Where the node is the
+coordinator there is nothing to halt on: a row's `area` is the `<repo>`
+itself.
 
 **Before creating, one look**: step 1 already listed the unstarted
 topics in every store this session reaches. If one of them is this same
@@ -601,7 +607,7 @@ small frictions to fix and moot bugs, ideas and frictions to confirm.
 Mint chooses it when the pick is several small frictions rather than
 one cause worth a topic, or when the walk has collected moot drops
 (→ The pick rule): the topic `YYYY-MM-DD-friction-batch`, always under
-the area `meta`, so it always routes to `Meta Roadmap`. That holds
+the subtree `meta`, so it always routes to the Meta area. That holds
 whatever product a moot drop is about: the friction-batch's fixes edit
 your own process prose or config, and confirming a moot drop reads a
 product's code without editing it. It takes exactly two kinds of drop:
@@ -638,20 +644,21 @@ edit surface. A product's vision drops are drawn as exit 1, into a
 **carve topic** in that product's area, its `request.md` naming the
 product and carrying the drops verbatim. A carve topic is the topic
 that gathers a product's vision drops, however it was opened, and whose
-work writes them into the product's page; it is the one door through
-which vision material reaches a product page. A vision drop whose
-content the page already carries goes there too, with its product's
-vision cluster, and a learning drop whose gap is closed goes to its
-learning task (exit 3), which its engagement, never mint, closes as
-moot (`closed` = demonstrated or moot: the operations contract,
+work writes them into its product area's settled sections; it is the
+one door through which vision material reaches a product area. A vision
+drop whose content the area already carries goes there too, with its
+product's vision cluster, and a learning drop whose gap is closed goes
+to its learning task (exit 3), which its engagement, never mint, closes
+as moot (`closed` = demonstrated or moot: the operations contract,
 § Binding per coordinator).
 
-"The product has a Roadmap" reads per coordinator, like every other
-route. In ymer a `<Product> Roadmap` must exist, and a vision drop for a
-product with none waits, as capture says. In the node it always holds,
-since `project` is the derived label, so a vision cluster there is drawn
-like any other pick, and writing the page itself happens wherever that
-page lives once the topic is promoted.
+"The product has a product area" reads per coordinator, like every
+other route. In ymer an area must match the vision drop's `product` by
+name, whatever its case, and a vision drop for a product with none
+waits, as capture says. In the node it always holds, since nothing
+routes on a product there, so a vision cluster there is drawn like any
+other pick, and writing the settled sections themselves happens in the
+product area once the topic is promoted.
 
 **Every other drop stays open, accumulating.** If the friction-batch
 swallowed everything, the pool would empty at every run and the
@@ -684,7 +691,7 @@ artifact-depositing).
 Where ymer is the coordinator the task goes in a project named
 `Learning`, the one step 1 already listed, created and read back as in
 exit 1 but never claimed. **No `Learning` project?** Fold the pick into
-exit 1: create it in the Roadmap project its area routes to, as an
+exit 1: create it in the product area its `<repo>` routes to, as an
 ordinary task, its name and verbatim drops unchanged. Degrade, never
 halt: that project is optional practice, and its absence means
 something. Where the node is the coordinator the task is a `tasks` row
@@ -739,8 +746,8 @@ show no file at that path (`mechanics.md` § `request.md`'s shape).
 
 ```
 Picked: <name> — <one line: what doing it removes or builds>
-Topic:  <area>/YYYY/MM-DD-<name>/ (state folder, history in <git | the files alone>)
-Task:   <task name> (doing, <Product> Roadmap in <ymer | node `tasks`>)
+Topic:  <repo>/YYYY/MM-DD-<name>/ (state folder, history in <git | the files alone>)
+Task:   <task name> (doing, <product area> in <ymer | node `tasks`>)
 Moot:   <n> moot drops collected, under <c> causes
 Scored: <n> new drops (<n> scorers | in this session: <cause> | next steps unreadable | definition unreadable: <cause>; <cause>)
 Strays: <n> rows on ids no list held (ids <the first ten>), <d> rows deleted, <e> rows on drops captured during the run
@@ -750,7 +757,7 @@ Check:  yes | no — #<id>: <component> was <n>, should be <m> | no — passed o
 Next:   /brainstorm <name>
 
 Still unstarted from earlier mints:
-  <other-name>   (<area>/YYYY/MM-DD-<other-name>/)
+  <other-name>   (<repo>/YYYY/MM-DD-<other-name>/)
 ```
 
 Five of those lines are conditional. `Moot:` is written only where the
@@ -761,9 +768,10 @@ wherever a scorer's answer named a drop, and it carries every drop a
 scorer named, whatever this session makes of the reason: this session
 sorts the entries for capture, never off the line. An entry naming a
 new defect in scoring says so (→ the capture block). `Scored:` also
-reads `0 new drops`, and takes a trailing `pages without next steps:
-<names>` wherever a page had no `## Next steps` heading, which is how a
-page that lost it is seen (the full values: `cases.md` § The close).
+reads `0 new drops`, and takes a trailing `areas without next steps:
+<names>` wherever a product area's `vision` had no `## Next steps`
+heading, which is how an area that lost it is seen (the full values:
+`cases.md` § The close).
 `Check:` is always written: this session's own answer to "Did the
 scoring look reasonable, and would you have drawn the top drop
 yourself?" A top drop passed over is always a `no`, with its reason. A
@@ -810,7 +818,7 @@ note filed as it was written asks for nothing, and comes back every run.
   - a note about what a scored drop says;
   - a note about the pool's state, such as a near-duplicate or a cause
     already gone;
-  - a note about a page with no next steps;
+  - a note about a product area with no next steps;
   - a pass-over;
   - a `Check: no` whose wrong component this session cannot trace to
     such a fault;

@@ -11,7 +11,7 @@ the moment that section runs.
 - Grounding: the fan-out, its precondition and floor, the fallback, and single-context grounding
 - Task Structure: fences and inline spans that carry backticks
 - Payloads: the frame bar's gate, and the manifest's final-state counts
-- Saving the Plan: no roadmap write, no `Hardened —` line, machinery edits, the state-folder commit
+- Saving the Plan: no task write, no `Hardened —` line, machinery edits, the state-folder commit
 
 ## Overview
 
@@ -22,8 +22,8 @@ of its own (the topic ID's folder: the operations contract, § Topic ID
 ↔ folder mapping). The path is absolute, so it never depends on the
 session's cwd. One folder per topic, shared by every phase. Reuse the
 topic's folder where an earlier phase created one, found through the
-topic's task in the repo's Roadmap project (*look up topic*, binding:
-the operations contract); its date prefix is the first phase's date,
+topic's task in its product area (*look up topic*, binding: the
+operations contract); its date prefix is the first phase's date,
 not today's. Create a folder only for the arrival that has none, the
 split child (`SKILL.md` § Input).
 
@@ -209,16 +209,13 @@ none: it is present at every run, so it never leaves a count short.
 
 ## Saving the Plan
 
-Save the plan to the topic folder (§ Overview). There is no roadmap
-write: `plan.md` is what the `planned` rung is read from (the
-operations contract, § Roadmap). Onboard the repo per the binding (the
-Roadmap project and the `<repo>/` subtree) where the project is not in
-the state folder yet (the operations contract, § Binding per
-coordinator).
+Save the plan to the topic folder (§ Overview). No task is written:
+`plan.md` is what the `planned` rung is read from (the operations
+contract, § Topics).
 
 Any `plan.md` this phase saves carries no `Hardened —` line: remove one
 an earlier plan-review left, on every arm, so a plan written after its
-review reads unhardened (the operations contract, § Roadmap).
+review reads unhardened (the operations contract, § Topics).
 
 **Machinery edits present** (the process contract, § Topic kinds):
 where this session edited a machinery tree, commit each tree's edits

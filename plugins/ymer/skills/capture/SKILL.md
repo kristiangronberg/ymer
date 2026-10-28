@@ -90,7 +90,7 @@ Every drop carries four values; the table fills in `id`, `captured_on`
   never from any text.
 - `source` — the skill that invoked capture, in snake_case as its
   capture block passes it (`plan_review`), or `standalone`.
-- `context` — what the work belonged to, as `<area>/<subject>`: on
+- `context` — what the work belonged to, as `<repo>/<subject>`: on
   Claude Code, `<repo>/<topic>` for a session working one topic, and
   `meta/<subject>` for process work or a study session with no repo.
 - `body` — what was observed. One line for a friction or a learning
@@ -130,7 +130,7 @@ What each kind adds:
   out and survives without the session's jargon. It is the line every
   later reader scans; anything inferred goes in the body, marked.
 - **vision** also names the `product` the material is about, not the
-  repo the session ran in. A product with no Roadmap project yet is not
+  repo the session ran in. A product with no product area yet is not
   a mistake: the drop waits until it has one.
 - **empty** has the body `∅ no friction`. A tail that found no friction
   still writes one, so that "found nothing" and "never ran" never look

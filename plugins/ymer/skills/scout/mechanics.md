@@ -9,8 +9,8 @@ where `<repo>` is the checkout's directory name, or `meta` for a
 cross-repo process topic (the operations contract, § Topic ID ↔ folder
 mapping). The path is absolute and does not depend on the session's
 cwd. Reuse the directory an earlier phase created, found through the
-topic's task in the repo's Roadmap project (*look up topic*, binding:
-the operations contract), whose date prefix is the first phase's date;
+topic's task in its product area (*look up topic*, binding: the
+operations contract), whose date prefix is the first phase's date;
 otherwise create it. Scouting writes `survey.md`.
 
 ## Input
@@ -45,10 +45,9 @@ Where this session edited a machinery tree, commit each one first, as
 the process contract's § Topic kinds says, and record the ref in
 `survey.md`.
 
-Then commit the phase's writes in the state folder. There is no roadmap
-write: the topic's task is already in the pipeline, and `survey.md` is
-what the `surveyed` rung is read from (the operations contract,
-§ Roadmap):
+Then commit the phase's writes in the state folder. No task is written:
+the topic's task is already in flight, and `survey.md` is what the
+`surveyed` rung is read from (the operations contract, § Topics):
 
 ```
 git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/

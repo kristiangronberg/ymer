@@ -1015,7 +1015,7 @@ stage_live() {
 	# the front named passes its own line, its row added; no state folder
 	# named fails its line; and the coordinator is reported by reach — each
 	# read as the facts its line carries. The coordinator's line is the one
-	# that passed: the Meta Roadmap line, marked not checked, may name ymer,
+	# that passed: the Meta area line, marked not checked, may name ymer,
 	# its missing connection and tasks too
 	if report_match 1 '✔' front "$probe_front" added | grep -q . &&
 		report_match 1 '✘' state_folder 'not set' | grep -q . &&
@@ -1140,22 +1140,22 @@ link check before the edit would have caught it.'
 	fi
 
 	# the drain into state/, read as the artefacts it deposits: a task at
-	# claimed in the project the area derives, the one friction drained to
-	# a topic — its drained_to the topic's folder, <area>/YYYY/MM-DD-<topic>/
+	# claimed, the one friction drained to a topic — its drained_to the
+	# topic's folder, <repo>/YYYY/MM-DD-<topic>/
 	# — and the file itself at state/<drained_to>request.md, mint's own
 	# save, carrying `source: mint`. The file is the whole of the save: the
 	# folder alone finds the topic
 	live_run 6 '/ymer:mint'
-	tasks=$(node_count "SELECT count(*) FROM tasks WHERE status = 'claimed' AND project LIKE '% Roadmap'")
+	tasks=$(node_count "SELECT count(*) FROM tasks WHERE status = 'claimed'")
 	drained=$(node_count "SELECT count(*) FROM pool WHERE status = 'drained' AND kind = 'friction'")
 	to=$(node_text "SELECT drained_to FROM pool WHERE status = 'drained' AND kind = 'friction'")
 	if [ -f "$state/${to}request.md" ]; then file=present; else file=absent; fi
 	sourced=$(file_occurrences "$state/${to}request.md" 'source: mint')
 	if [ "$tasks" != UNPARSEABLE ] && [ "$tasks" -ge 1 ] && [ "$drained" = 1 ] && [ "$file" = present ] &&
 		[ "$sourced" != UNPARSEABLE ] && [ "$sourced" -ge 1 ]; then
-		pass mint "$tasks tasks row(s) at claimed in a Roadmap project, the friction drained to $to, its request.md in state/ carrying source: mint"
+		pass mint "$tasks tasks row(s) at claimed, the friction drained to $to, its request.md in state/ carrying source: mint"
 	else
-		fail mint "after /ymer:mint: $tasks tasks at claimed in a Roadmap project, $drained friction drops drained, request.md at state/$to $file, \`source: mint\` $sourced time(s) in it (expected ≥1, 1, present, ≥1) — read $runs/6.jsonl"
+		fail mint "after /ymer:mint: $tasks tasks at claimed, $drained friction drops drained, request.md at state/$to $file, \`source: mint\` $sourced time(s) in it (expected ≥1, 1, present, ≥1) — read $runs/6.jsonl"
 	fi
 
 	# scoring runs first: after the mint, every drop that is not empty holds

@@ -75,7 +75,7 @@ session:
 `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the
 pre-flight, close binding, gate defaults and holds, the fallback rule
 and the report rule; the two topic kinds and the duty to commit
-machinery edits; and every roadmap operation this phase calls (*look up
+machinery edits; and every topic operation this phase calls (*look up
 topic*, *mint task*, *order topics*, *ship topic*) with its
 postcondition, the failure rule, how a call's shape is read from the
 coordinator at the moment of the call, and how the state folder's kind
@@ -339,9 +339,10 @@ Each stop, in order, carries three things:
 
 **Skips.** `skip` is the developer's per-stop way out: short,
 unguarded, their judgement and not the phase's. "No more stops about
-<area>" is a **category skip**: it removes every remaining stop in that
-area for this session only, and no durable "I know this area" record
-exists, deliberately. Both are named in the record (→ The Close).
+<category>" is a **category skip**: it removes every remaining stop in
+that category for this session only, and no durable "I know this
+category" record exists, deliberately. Both are named in the record
+(→ The Close).
 Ending the whole session early is neither: that is the early close
 (→ Dispositions), the user's call too. A rulings-only sitting is
 neither as well; it carries its own form in the same record.
@@ -540,7 +541,7 @@ Findings & dispositions:
 - F5 <file:line> — <finding> — declined: <why it stands>
 Walkthrough — stops in story order, skips named:
 - S1 <where>: <what this stop showed> — covered
-- S2 <where>: — skipped (developer's call) / — skipped (category: <area>) / — skipped (lane: rulings-only)
+- S2 <where>: — skipped (developer's call) / — skipped (category: <category>) / — skipped (lane: rulings-only)
 Fitness: <the closing does-it-do-the-job question, and the answer>
 Where-to-look:
 - when <X misbehaves>, check <Y>
@@ -603,10 +604,10 @@ tail lines, since none ran. Recognizers read it as shipped through its
 ship section, like any other.
 
 **The record is never a staging area.** Next-iteration work rides the
-roadmap or the pool (a mint, an edge, an iteration marker, a captured
-drop), never a list in `review.md` waiting for a drain nobody owns
-(the operations contract, § Roadmap; the process contract, § Knowledge
-placement).
+topics in flight or the pool (a mint, an edge, an iteration marker, a
+captured drop), never a list in `review.md` waiting for a drain nobody
+owns (the operations contract, § Topics; the process contract,
+§ Knowledge placement).
 
 ## Iterate — the re-entry close
 
@@ -630,7 +631,7 @@ This line's grammar has its one home here, whoever writes it. The
 block it opens, its `Consumed —` lines and how they are read live
 elsewhere (the process contract, § Iteration). The topic re-enters the
 pipeline at the named phase, and its task stays `doing`: nothing stores
-a rung (the operations contract, § Roadmap). The branch and
+a rung (the operations contract, § Topics). The branch and
 `implemented.md` stand. The file always keeps its `# <topic> — review`
 title line, so a fresh topic's iterate close writes the title plus the
 marker above the lens-pass entry. The next iteration's implement close

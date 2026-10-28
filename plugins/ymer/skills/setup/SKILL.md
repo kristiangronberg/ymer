@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Sets up and checks the environment every ymer-marketplace plugin works from: the Ymer Node and its store skeletons, this installation's front, the state folder, the ymer connection, and the Meta Roadmap project. Use it after installing, and whenever another skill's guard sends you here.
+description: Sets up and checks the environment every ymer-marketplace plugin works from: the Ymer Node and its store skeletons, this installation's front, the state folder, the ymer connection, and the Meta area. Use it after installing, and whenever another skill's guard sends you here.
 ---
 
 # Setup
@@ -24,10 +24,9 @@ outside that promise. The ymer connection is yours, it lives outside
 any plugin, and re-running can only report on it. The state folder is
 yours too: setup verifies it and never creates it (→ check 3). And what
 this skill writes once, each table's `_meta` grammar row, the `kinds`
-rows and the `Meta Roadmap` project's description, is its owner's from
-then on and never rewritten: a release that words one of them
-differently changes what a new install gets, and nothing an existing
-one holds.
+rows and the Meta area's description, is its owner's from then on and
+never rewritten: a release that words one of them differently changes
+what a new install gets, and nothing an existing one holds.
 
 This file is the spine: what each check is for and what passes and
 fails it, in the order the battery runs them. The exact statements,
@@ -45,8 +44,8 @@ default where this session reaches it; the state folder is required,
 and which history tracks it is read from the folder itself**:
 
 - **The coordinator**: what tracks work and how topics are named there.
-  Ymer's tool surface among this session's tools → ymer's Roadmap
-  projects. Absent → the node's `tasks` table.
+  Ymer's tool surface among this session's tools → ymer's product
+  areas. Absent → the node's `tasks` table.
 - **The state store**: where a topic's artifacts live, the state folder
   (→ check 3) together with the history that tracks it. The folder's
   kind decides that history; the reading and what each outcome means
@@ -278,7 +277,7 @@ slug.
 *Read with this section: `mechanics.md` § 3. The state folder (the mechanics) and `cases.md` § 3. The state folder (the cases).*
 
 The state folder is required. It is the one folder this front keeps its
-topics' artifacts in, laid out `<area>/YYYY/MM-DD-<topic>/`, and it can
+topics' artifacts in, laid out `<repo>/YYYY/MM-DD-<topic>/`, and it can
 be any folder you choose that does not sit inside another git
 repository: nothing assumes it is next to your repositories, and it
 need not be under version control. It is always named, never inferred,
@@ -389,7 +388,7 @@ rather than inside every later run.
 Ymer is optional, and where this session does not reach it the node's
 `tasks` table is the coordinator. One call proves the account, the
 connection and the sign-in together, and its result is what check 5
-reads: a `projects list` name search for `Roadmap`.
+reads: the coordinator's listing of areas.
 
 Any result passes, an empty one included. A failure (an outage, a
 sign-in that has lapsed) fails the check and says so plainly: setup can
@@ -421,29 +420,29 @@ Name those two lines only on Claude Code. Adding one that already exists
 changes nothing, so a reader who wants ymer runs both either way, then
 starts a fresh session.
 
-### 5. The `Meta Roadmap` project
+### 5. The Meta area
 
-*Read with this section: `mechanics.md` § 5. The `Meta Roadmap` project (the mechanics).*
+*Read with this section: `mechanics.md` § 5. The Meta area (the mechanics).*
 
 **This check runs only when check 4 reached ymer and passed.** Check 4's
-result is the project list this check reads, so a failed connection
-leaves nothing to read in; report this check as not checked, naming
-check 4. Do not call back into a connection that just refused. Where
-check 4 found no ymer at all, this check has nothing to do either: work
-about how you work routes to `project = 'Meta Roadmap'` in the node's
-`tasks` table, which is a value rather than an object to create. Report
-it as not checked, naming the `tasks` table.
+result is the area list this check reads, so a failed connection leaves
+nothing to read in; report this check as not checked, naming check 4.
+Do not call back into a connection that just refused. Where check 4
+found no ymer at all, this check has nothing to do either: work about
+how you work carries `area = 'meta'` in the node's `tasks` table, which
+is a value rather than an object to create. Report it as not checked,
+naming the `tasks` table.
 
-Work about how you work belongs to no product, so it gets a project of
-its own, named exactly `Meta Roadmap`. Every machine with ymer has one:
-a floor, not a naming decision, which is why setup creates it instead
-of asking.
+Work about how you work belongs to no product, so it gets an area of its
+own, named exactly `Meta`. Every machine with ymer has one: a floor, not
+a naming decision, which is why setup creates it instead of asking.
 
-Check 4's result already lists it. Absent: create it, named exactly
-`Meta Roadmap`, with the description `mechanics.md` § 5 carries.
-Present: leave it untouched, description included. Per-product Roadmap
-projects are *not* setup's to create: they are born from your products,
-and the skill that needs one says so when it is missing.
+Check 4's result already lists it, by its name whatever its case.
+Absent: create it, named exactly `Meta`, with the description
+`mechanics.md` § 5 carries. Present: leave it untouched, its description
+and task context fields included. Product areas are *not* setup's to
+create: they are born from your products, and the skill that needs one
+says so when it is missing.
 
 ## The report
 
@@ -480,7 +479,7 @@ Setup — ymer environment
   ✔ front         `work_laptop`
   ✔ state_folder  /Users/you/state — its own git repository, history in git
   ✔ ymer          reachable
-  ✔ Meta Roadmap  exists
+  ✔ Meta area     exists
 
 Ready. Re-run /ymer:setup whenever you like — it changes nothing that is
 already right.
@@ -504,7 +503,7 @@ Setup — ymer environment
   ✔ front         `home_desktop` added
   ✔ state_folder  /Users/you/state — in no git repository, the files are the record
   ✔ ymer          no connection in this session — work tracked in the node's `tasks` table
-  – Meta Roadmap  not checked — no ymer; process work routes to `Meta Roadmap` in `tasks`
+  – Meta area     not checked — no ymer; process work carries area `meta` in `tasks`
 ```
 
 With no front and no state folder named, those two lines fail, each
@@ -550,8 +549,8 @@ else.
   description is its owner's, and it lives nowhere else
 - An existing table is checked by column name and type, never rebuilt;
   what differs is reported with the statement that would change it
-- Setup writes floors, never content: per-product Roadmap projects
-  belong to the skills and to you
+- Setup writes floors, never content: product areas belong to the skills
+  and to you
 - Name a fix command only where the harness can run it; say the store in
   use otherwise
 - A check whose input never resolved reports `not checked` and writes

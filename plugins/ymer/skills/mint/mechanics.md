@@ -211,8 +211,8 @@ ORDER BY id
 **Step 5, the commit**, where git keeps the state folder:
 
 ```
-git -C <state folder> add <area>/YYYY/MM-DD-<topic>/
-git -C <state folder> commit -m "<YYYY-MM-DD-topic>: mint" -- <area>/YYYY/MM-DD-<topic>/
+git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/
+git -C <state folder> commit -m "<YYYY-MM-DD-topic>: mint" -- <repo>/YYYY/MM-DD-<topic>/
 ```
 
 The pathspec scopes both halves. Verify it scoped:
@@ -246,12 +246,14 @@ WHERE p.status = 'open' AND p.front = '<front>' AND p.kind <> 'empty'
 ORDER BY p.id
 ```
 
-**Step 2, the next-steps block.** Where ymer is the coordinator, take
-every product page's `## Next steps` section from a `projects list` name
-search for `Roadmap`, asking for each project's name and description:
-the same list step 3 of the run and the routing read too. Write one
-block per product: its name, then its bullets as they stand, or `none`
-where the heading is there with no bullet under it.
+**Step 2, the next-steps block.** Where ymer is the coordinator, `areas
+list`, every page of it, then `areas get` on every area it lists, each
+answer read whole: a product area is one whose description carries a
+`Repos:` line, and the area named Meta. Take each product area's `## Next
+steps` section from its `vision`: the same reads step 3 of the run and
+the routing read too. Write one block per product: its name, then its
+bullets as they stand, or `none` where the heading is there with no
+bullet under it.
 
 **Step 3, the dispatch.** Split this front's unscored ids from step 1 into lists of at most 100, oldest first, one
 list per scorer, and dispatch each through the Agent tool with the
@@ -287,36 +289,35 @@ text.
 show the postcondition:
 
 1. `tasks create`: the task's name; a description that is one line,
-   what this is plus where its `request.md` is; its membership in the
-   Roadmap project the area routes to; and an effort estimate wherever
-   you can size the pick. Membership is the task's own property, written
-   on the create the way the server's `help` says.
+   what this is plus where its `request.md` is; its membership directly
+   in the product area the `<repo>` routes to, in no project; and an
+   effort estimate wherever you can size the pick. Membership is the
+   task's own property, written on the create the way the server's
+   `help` says.
 2. `tasks update`: **claim** it, the coordinator's transition into the
    `doing` group.
-3. `tasks list` on that same project, narrowed by a name search for the
+3. `tasks list` on that same area, narrowed by a name search for the
    task's name: the read-back.
 
-Expect exactly one task, in the `doing` group, and the projects it names
-to include the target.
+Expect exactly one task, in the `doing` group, sitting in the target
+area.
 
 **The topic's task in the node** is one statement and one read-back,
-and the routing is the `project` value itself:
+and the routing is the `area` value itself:
 
 ```sql
 INSERT INTO tasks (name, description, status, project, area, estimated_effort_minutes)
-VALUES ('<name>', '<one line>', 'claimed', '<the derived project label>', '<area>', <minutes or NULL>)
+VALUES ('<name>', '<one line>', 'claimed', NULL, '<repo>', <minutes or NULL>)
 ```
 
 ```sql
 SELECT id, name, status, project, area FROM tasks WHERE name = '<name>' ORDER BY id DESC LIMIT 1
 ```
 
-**The node's Roadmap label** is derived from the area with no lookup:
-area `meta` gives `Meta Roadmap`, and any other area gives the area with
-its first letter upper-cased plus ` Roadmap`, so `ymer-node` gives
-`Ymer-node Roadmap`. It is a routing label in ymer's words: where one
-product spans several areas, whoever promotes the row into ymer
-corrects it there.
+**The node's `area`** holds the topic's `<repo>`, `meta` for process
+work, with no lookup. The column predates ymer's areas and names the
+subtree, never a product area: whoever promotes the row into ymer
+resolves its product there, from the `Repos:` lines.
 
 **The learning task.** In ymer it is exit 1's create and read-back in
 the `Learning` project, without the claim. In the node it is a `tasks`
@@ -427,7 +428,7 @@ a friction-batch with nothing below the bar still carries its heading
 for a later append to count.
 
 **Writing the file.** It is a file,
-`<area>/YYYY/MM-DD-<topic>/request.md` under the state folder, written
+`<repo>/YYYY/MM-DD-<topic>/request.md` under the state folder, written
 and appended as any file is: on a harness that edits a connected folder
 by copying it out and writing it back, through those tools. Before
 writing a fresh `request.md`, check with this session's own file tools,

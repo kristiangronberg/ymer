@@ -9,8 +9,8 @@ where `<repo>` is the checkout's directory name, or `meta` for a
 cross-repo process topic (the operations contract, § Topic ID ↔ folder
 mapping). The path is absolute and does not depend on the session's
 cwd. Reuse the directory an earlier phase created, found through the
-topic's task in the repo's Roadmap project (*look up topic*, binding:
-the operations contract), whose date prefix is the first phase's date.
+topic's task in its product area (*look up topic*, binding: the
+operations contract), whose date prefix is the first phase's date.
 A split child has none yet, and creates it under today's date
 (→ `SKILL.md` § Input). Defining writes `spec.md`.
 
@@ -59,8 +59,8 @@ topic's plugin glossary among them, commit each one, as the process
 contract's § Topic kinds says, and record the ref in `spec.md`'s
 glossary delta (the process contract, § The traceability stores).
 
-**The state folder.** There is no roadmap write: `spec.md` is what the
-`specced` rung is read from (the operations contract, § Roadmap).
+**The state folder.** No task is written: `spec.md` is what the
+`specced` rung is read from (the operations contract, § Topics).
 
 ```
 git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/

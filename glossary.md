@@ -66,17 +66,18 @@ it, and `bash-commands` reds on any command that ran outside that set.
 
 ### directed way of working
 The opinionated ymer practice the plugins direct: one product = one
-Roadmap, product vision in its description, tasks as what-to-do-next,
-work about the process itself under `Meta Roadmap`, and a topic's
-artifacts laid out `<area>/YYYY/MM-DD-<topic>/` with `meta` reserved for
-process work — the area that routes to `Meta Roadmap`. It is what makes
-routing by convention possible, and it holds whichever stores a session
-reaches (→ reach rule, the core glossary): the Roadmaps are ymer projects or `project`
-values in the node's `tasks` table, and the topics are folders in the
-state folder. The core plugin's setup skill puts what this
-practice assumes in place — the notebook's store skeletons always, and
-`Meta Roadmap` where the session reaches ymer; the practices themselves
-stay the plugins'.
+product area, its direction in the area's task context fields and its
+subtrees on its `Repos:` line; topic tasks in the area, tasks as
+what-to-do-next; work about the process itself in the Meta area; and a
+topic's artifacts laid out `<repo>/YYYY/MM-DD-<topic>/` with `meta`
+reserved for process work. It is what makes routing by convention
+possible, and it holds whichever stores a session reaches (→ reach rule,
+the core glossary): the product areas are ymer areas, a row in the
+node's `tasks` table carries its subtree, and the topics are folders in
+the state folder. The core plugin's setup skill puts what this practice
+assumes in place — the notebook's store skeletons always, and the Meta
+area where the session reaches ymer; the practices themselves stay the
+plugins'.
 Each plugin states the conventions it routes by in its own shipped prose
 (an installed plugin stands alone) — operative use of this term, never a
 second definition.

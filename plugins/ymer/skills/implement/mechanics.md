@@ -22,7 +22,7 @@ cross-repo process topic, which has no project checkout of its own (the
 folder's shape: the operations contract, § Topic ID ↔ folder mapping).
 The path is absolute, so it never depends on the session's cwd. Reuse
 the folder the earlier phases wrote, found through the topic's task in
-the repo's Roadmap project; its date prefix is the first phase's date.
+its product area; its date prefix is the first phase's date.
 The phase reads `plan.md` there and ticks its boxes in place.
 
 ## Readiness Gate

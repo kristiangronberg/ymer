@@ -54,7 +54,7 @@ operations contract whole**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the
 pre-flight, close binding, gate defaults and holds, the fallback rule,
-the report rule and the interview as a hold; and every roadmap
+the report rule and the interview as a hold; and every topic
 operation this phase calls (*look up topic*, *annotate task*, *mint
 task*) with its postcondition and the failure rule, the outward-write
 rule for rulings, the topic's artifacts (the `request.md` template, the

@@ -316,7 +316,7 @@ dimension not reviewed, never one that came back clean (`cases.md`
 *Read with this section: `mechanics.md` § The Hardened Line (the mechanics).*
 
 The Hardened Line records the run in the plan and marks the plan
-reviewed. No roadmap write. When the run returns, and only then, in
+reviewed. No task is written. When the run returns, and only then, in
 this order:
 
 1. Where `review.md` topped with a consumed `Iteration —` marker when
@@ -352,7 +352,7 @@ this order:
 3. Write `Hardened — <YYYY-MM-DD>`, dated today, directly under
    `plan.md`'s title, with a blank line on either side, as the run's
    last write to the plan. Why it comes last, and what removes it
-   later, is the line's lifecycle (the operations contract, § Roadmap,
+   later, is the line's lifecycle (the operations contract, § Topics,
    read at § Input).
 
    A run that reviewed nothing, every surviving lens skipped, or

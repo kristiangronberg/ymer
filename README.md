@@ -29,7 +29,7 @@ marketplace description because they are real requirements:
 
 One more thing is **optional**, and the default where a session reaches
 it: a **ymer.ax** account, connected as your own MCP server — with it,
-work is tracked in ymer's Roadmap projects; without it, in the node's
+work is tracked in ymer's product areas; without it, in the node's
 `tasks` table.
 
 Each is yours to bring or to name — no plugin ships a connection,
@@ -41,7 +41,7 @@ so.
 
 `/ymer:setup` is the skill that checks all of this and creates the
 floors the way of working needs — the store skeletons always, and a
-`Meta Roadmap` project where there is ymer. It verifies the environment
+Meta area where there is ymer. It verifies the environment
 every plugin works from and reports it, naming the coordinator in use and
 the history that tracks your state folder; every other skill stops at an
 environment failure and names the door that fixes it rather than

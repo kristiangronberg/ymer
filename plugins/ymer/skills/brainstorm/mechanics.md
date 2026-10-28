@@ -15,8 +15,8 @@ The mechanics of the brainstorm skill: the Claude Code way of doing what `SKILL.
 where `<repo>` is the checkout's directory name, or `meta` for a
 cross-repo process topic (the operations contract, § Topic ID ↔ folder
 mapping). The path is absolute and does not depend on the session's
-cwd. Find it through the topic's task in the repo's Roadmap project
-(*look up topic*, binding: the operations contract). Brainstorm writes
+cwd. Find it through the topic's task in its product area (*look up
+topic*, binding: the operations contract). Brainstorm writes
 `brainstorm.md`, the direction doc, and, when a sketch exists,
 `sketch.md`, the sketch record.
 
@@ -147,10 +147,7 @@ and 2 still run.
      rule (the operations contract, § Operations — the whole vocabulary
      the skills may use), and a bare citation with no ruling writes
      nothing. The topic's own task is not among them (the operations
-     contract, § Roadmap).
-   - **Onboarding.** Onboard the repo per the binding (its Roadmap
-     project and its `<repo>/` subtree) where this project is not in the
-     state folder yet.
+     contract, § Topics).
 
    Read back each operation whose call does not show its outcome (which
    ones: the operations contract, § Binding per coordinator). An

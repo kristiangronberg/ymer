@@ -887,7 +887,7 @@ Recorded on 2026-08-16; the backup id is "2026-01-01-00-00-00".
 See docs/deployment-plan.md and docs/bugs/2026-05-04-hints-bug-report.md.
 floor_state/ymer/ is a fixture dir and xT4S2x is not a step id.
 Clone into <checkout>, or pick any <tree>; <repo> and <topic> are yours.
-The layout is <area>/YYYY/MM-DD-<topic>/, and a <name> is a <name>.
+The layout is <repo>/YYYY/MM-DD-<topic>/, an <area> is ymer's, and a <name> is a <name>.
 my-plan.md and plan.mdx are file names; ../statex is a sibling.
 T4S2_ is an identifier, as are -2026-01-01-foo and _2026-01-01-foo.
 CLEAN

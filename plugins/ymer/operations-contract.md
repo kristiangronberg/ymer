@@ -1,41 +1,43 @@
 # The operations contract
 
-The core plugin's skills reach the roadmap — every product's Roadmap
-project — and the state store **only** through the operations named
-here, and a drop's draw from the pool and its return to it likewise.
-Each operation is defined by its **required outcome**,
+The core plugin's skills reach the topics in flight — every product
+area's topic tasks — and the state store **only** through the operations
+named here, and a drop's draw from the pool and its return to it
+likewise. Each operation is defined by its **required outcome**,
 backend-neutrally, so moving to another coordinator edits the binding at
 the foot of this file and nothing else. Skills name this file by its
 role phrase, *the operations contract*, and never by a path, except in
 the line of a skill's spine that says when to read it.
 
-Read it whole once per session that operates the roadmap; the phase
+Read it whole once per session that operates on topics; the phase
 skills point here rather than restating any of it.
 
-## Roadmap
+## Topics
 
-Every area has a **roadmap** — its in-flight pipeline topics. It is not
-a store of its own: **every topic is exactly one task in that area's
-Roadmap project, and the task's status is the view it appears in.**
+Every product area has its **topics in flight**, its pipeline topics
+between brainstorm and ship (terms: the plugin glossary). They are not
+a store of their own: **every topic is exactly one task in its product
+area, and the task's status is the view it appears in.**
 
 ```
-doing   → the roadmap  — in the pipeline, brainstorm through ship
-closed  → gone         — shipped, or retired
+doing   → in flight — in the pipeline, brainstorm through ship
+closed  → gone      — shipped, or retired
 ```
 
 The task is created where the topic's work starts — never ahead of it —
 and carries it through every phase.
 
-**Roadmap.** The area's `doing` tasks. The task's name is the topic slug;
-the canonical topic ID is the full dated slug `YYYY-MM-DD-<topic>` (its
-folder: → Topic ID ↔ folder mapping). There is no row, no number, and no
-stored status. A *pointer, not a record*: the task points, it never
-recounts — all detail lives in the topic's artifacts. A `doing` task's
-description is the intake as minted, frozen like `request.md`: no phase
-annotates a topic's own task mid-flight, and the ship's completed result
-is the task's next write. A topic leaves the roadmap when its task
-closes: completed on ship (`review.md`'s ship section is the completion
-record; shipped iff it carries one), cancelled on every other exit.
+**Topics in flight.** The product area's `doing` topic tasks. The
+task's name is the topic slug; the canonical topic ID is the full dated
+slug `YYYY-MM-DD-<topic>` (its folder: → Topic ID ↔ folder mapping).
+There is no row, no number, and no stored status. A *pointer, not a
+record*: the task points, it never recounts — all detail lives in the
+topic's artifacts. A `doing` task's description is the intake as
+minted, frozen like `request.md`: no phase annotates a topic's own task
+mid-flight, and the ship's completed result is the task's next write. A
+topic is no longer in flight once its task closes: completed on ship
+(`review.md`'s ship section is the completion record; shipped iff it
+carries one), cancelled on every other exit.
 
 **Order is partial.** One topic is recorded as blocked by another only
 when it genuinely is, with the reason attached (*order topics*). Most
@@ -92,8 +94,8 @@ date or an external event with no task, which is a **deferral** the
 coordinator already excludes from the unblocked field.
 
 **Intake is the pool.** New work — a feature, a bug, a learning gap, a
-follow-up nobody is starting — never enters a Roadmap project as a
-task. It is captured as a drop in the pool, the node's store of what is
+follow-up nobody is starting — never enters a product area as a task.
+It is captured as a drop in the pool, the node's store of what is
 waiting to be drawn (the `capture` skill), from any surface that reaches
 a Ymer Node, and becomes work only when it is drawn. A task is created
 — *mint task* — only where work starts now, at seven moments:
@@ -120,7 +122,7 @@ which is evidence, not scheduling.
 | Operation        | Required outcome                                                                 |
 |------------------|----------------------------------------------------------------------------------|
 | look up topic    | find a topic's task — its status, its edges — or its absence                      |
-| mint task        | a task appears in the target area's Roadmap project, in the view matching where its work stands, carrying its evidence |
+| mint task        | a task appears in the target product area, directly and in no project, in the view matching where its work stands, carrying its evidence |
 | annotate task    | an in-flight topic's task carries the new evidence; its status is untouched       |
 | order topics     | one topic is recorded as blocked by another, with the reason, and the edge reads back |
 | ship topic       | the topic has shipped; `review.md`'s ship section is the completion record        |
@@ -153,7 +155,7 @@ caller reads it back before the boundary closes. Which operations need a
 read-back against a given coordinator is a binding fact, not a contract
 one.
 
-**Failure rule.** A roadmap operation whose required outcome did not
+**Failure rule.** A topic operation whose required outcome did not
 happen — the coordinator was unreachable, *or* the call succeeded and
 the outcome still did not land — is **surfaced, and the boundary stops**;
 never skipped silently. These writes are pipeline-critical.
@@ -407,7 +409,7 @@ without seeing that it changed.
 
 The canonical topic ID is the full dated slug `YYYY-MM-DD-<topic>`. It is
 what remediation markers, citations, and the state folder's phase commits
-use; a topic's task carries the bare slug (→ Roadmap). Its folder is
+use; a topic's task carries the bare slug (→ Topics). Its folder is
 `<repo>/YYYY/MM-DD-<topic>/` — split the ID after the year; nothing else
 changes.
 
@@ -420,7 +422,7 @@ through them. They extend the vocabulary of § Operations:
 
 | Operation    | Required outcome                                                                 |
 |--------------|----------------------------------------------------------------------------------|
-| draw drops   | each named open drop of this front is drained, with the open drops of this front in each family it sits in that the draw's kind list names, to where the work lives: the topic's folder, `<area>/YYYY/MM-DD-<topic>/`, or a learning task's id at mint's learning exit; in the exact form, the named drops alone; a vision or a learning drop only by a draw whose kind list names its kind |
+| draw drops   | each named open drop of this front is drained, with the open drops of this front in each family it sits in that the draw's kind list names, to where the work lives: the topic's folder, `<repo>/YYYY/MM-DD-<topic>/`, or a learning task's id at mint's learning exit; in the exact form, the named drops alone; a vision or a learning drop only by a draw whose kind list names its kind |
 | return drops | each named drop of this front that a draw drained is open again, with the drops of this front in each family it sits in that the same draw drained, each exactly as it was before the draw, whichever destination the draw named |
 
 **A draw sees the family.** *Draw drops* in the family form widens each
@@ -453,7 +455,7 @@ whatever its kind, and widens to its families even where its own kind
 is outside the list, so an anchor of an excluded kind is seen while its
 faces of a listed kind are drawn. A vision drop and a learning drop are
 the exception, named or added: each is drawn only by a draw whose list
-names its kind, since a vision drop reaches its product's page only
+names its kind, since a vision drop reaches its product area only
 through a carve topic, and a learning drop its engagement only through
 a learning task (terms: the plugin glossary). Named by any other draw,
 such a drop is cited, never drawn, and widens nothing. Every open drop
@@ -602,8 +604,9 @@ writes the `Related, not drawn:` line under the `Drawn:` line where none
 stands, as the pre-flight's finish does. Left unrun, a draw's drops wait
 for mint's
 moot walk, and a return's stay drained to the shipped folder until a
-session runs it. These operations sit outside the roadmap's failure rule
-(→ Operations): a bookkeeping write does not stop a phase.
+session runs it. These operations sit outside the failure rule of the
+topic operations (→ Operations): a bookkeeping write does not stop a
+phase.
 
 **The pre-flight's finish.** The next deciding phase's pre-flight on the
 topic finishes a pending or torn draw from the lines, over every
@@ -687,52 +690,28 @@ This contract's own words (`doing`, `closed`, and the **open** group a
 learning task waits in) name its views; which tokens realise them is a
 help fact, not a contract fact.
 
-One project per **product**, named `<Product> Roadmap` — usually one
-area, but a product that spans several has one project and one page —
-plus one standing cross-area **Learning** project, the learning track's
-tracker. Where a product has no Roadmap project yet, onboarding creates
-it and writes its **product page** from the skeleton below: the header
-plus the settled sections, all empty; a stub is a valid page.
+One **product area** per product: an area whose description carries a
+line of its own, `Repos: <subtree>, <subtree>`, naming the state-folder
+subtrees the product owns (term: the plugin glossary). The line both
+makes the area a product and routes a topic's `<repo>` to it; an area
+without one is no product. No skill creates a product area or edits a
+`Repos:` line: a product area is born from its owner. The one floor is
+the area named **Meta**, which holds the reserved `meta` subtree, routes
+by its name whether or not its line names `meta`, and is created by
+setup. Beside them stands one cross-area **Learning** project, the
+learning track's tracker.
 
-**The product page** is the project's description, and nothing else:
-the fixed header — the task/status contract for every surface that
-reads the page, plus the governance line — then the **settled
-sections**, in this order. The header is one text across every page:
-a change to it is a governed write over every product's page, never a
-per-page edit. The skeleton:
-
-```markdown
-# <Product> Roadmap
-
-Every <area> topic in flight is one task here: `doing` = in the pipeline,
-`closed` = shipped or retired. Order is partial — real blocking edges
-only; the coordinator's unblocked filter is the field to pick from. A
-topic's pipeline rung is derived from its folder in the state folder,
-never stored. New work never enters here as a task: from any surface
-that reaches a Ymer Node, capture it as a drop in the pool, and a task is
-created when it is drawn.
-
-The sections below are this product's **product page** — cached
-product-design answers, plus where the product is heading. Phases read
-them; only governed sessions write them, never casually. A section may
-sit empty.
-
-## Forward direction
-
-## Next steps
-
-## Users
-
-## Stance
-
-## Slow layers / what churns
-
-## What it refuses to be
-```
-
-`<area>` in the header is the product's area, or its area list where a
-product spans several. The settled sections' meaning, and who reads and
-writes them, are the product-design skill's (§ The product page).
+A product area's **settled sections** live in its task context fields,
+each under its own `## ` heading, in this order: `vision` holds Forward
+direction, then Next steps; `rules` holds What it refuses to be; and
+`guidelines` holds Users, Stance, then Slow layers / what churns. The
+description says what the product is and carries the `Repos:` line. A
+section may sit empty. A task in the area carries only the start of
+each task context field, cut at the coordinator's carried length, so
+every phase that reads a product's direction reads the area itself,
+each task context field whole. The settled sections' meaning, how a product area is read, and
+who reads and writes them are the product-design skill's (§ The product
+area).
 
 The Learning project's description carries a header of its own, and no
 settled sections:
@@ -743,18 +722,33 @@ settled sections:
 Every learning task is one task here — the learning track's single
 tracker view, across every area. Open = tracked, `doing` = a tutor
 engagement is open, `closed` = demonstrated or moot. A task's name is
-its bar; only demonstration closes it. Blocking edges to roadmap topics
+its bar; only demonstration closes it. Blocking edges to other topics
 carry their reason; every other edge and all priority is the user's
 triage. A learning gap noticed anywhere else is captured as a learning
 drop in the pool, and a task is created when it is drawn.
 ```
 
-**Look up topic** — the coordinator's own listing of one project's tasks,
-matched by name, the name sent to the coordinator with the call — never
-matched over a returned page: a listing is capped, and a miss over a
-capped page cannot be told from truncation. Each task comes back with
-its status and the projects it sits in. A read, so no read-back: a
-by-name miss is visible in the returned count.
+**Look up topic** — the coordinator's own listing of one container's
+tasks, matched by name, the name sent to the coordinator with the call
+— never matched over a returned page: a listing is capped, and a miss
+over a capped page cannot be told from truncation. A topic's container
+is its product area, the area's direct members and the tasks of its
+projects alike; a learning task's is the Learning project, which is no
+product area, so nothing below about areas applies to it. The product
+area is the one whose `Repos:` line names the topic's `<repo>`, and for
+`meta` the area named Meta, whatever its `Repos:` line says. Where
+several product areas' lines name the topic's `<repo>`, each is listed
+by the same name, and a name found in more than one is a question to
+the user, never a pick. Where no product area's `Repos:` line names the
+topic's `<repo>` (other than `meta`), there is no area to look in: the
+phase halts before its first question, naming the fix, add `<repo>` to
+a product area's `Repos:` line or create the product area; for `meta`,
+an absent Meta area halts the same way, naming `/ymer:setup`. No area
+is concluded absent until the listing and every read have answered: a
+failed read is retried, never taken as a miss (the listing control: the
+product-design skill's `mechanics.md`, § The product area). Each task
+comes back with its status and where it sits. A read, so no read-back:
+a by-name miss is visible in the returned count.
 
 **Ship topic** — closing the task as **completed**, its result naming the
 topic ID and saying it shipped. **Retire topic** — closing it as
@@ -768,32 +762,34 @@ user's, through the coordinator's own reopen; the closing result stays
 in the journal. A topic invented directly in brainstorm has no task yet,
 so brainstorm *mints* one at `doing`.
 
-**Mint task** — create the task with its name, its description and its
-project membership naming the target area's Roadmap project, then
-**claim** it — the coordinator's transition into the `doing` group —
-because a task exists only where its work starts. **This is one of the
-operations whose postcondition the calls do not show** — a create
-answers with an id and a status, nothing that proves membership — so
-read it back with *look up topic* against the target project: exactly
-one task, in the `doing` group, and the projects it names include the
-target. Only the seven moments under Intake mint (→ Roadmap). An effort
-estimate when the producer can size it; no due date, no deferral and no
-ordering. A **learning task** always targets the Learning project,
-whatever area its topic lives in, and is left in the **open** group
-rather than claimed — an engagement, not a mint, moves it to `doing`.
-A task for an area with no Roadmap project waits for that project:
-onboarding creates it where the producer onboards (above),
-and any other producer halts, saying what to create — never a fallback
-to `Meta Roadmap`, which holds the `meta` area alone.
+**Mint task** — create a topic's task with its name, its description
+and its membership directly in the target product area, in no project,
+then **claim** it — the coordinator's transition into the `doing` group
+— because a task exists only where its work starts. A **learning task**
+is the exception: it always targets the Learning project, whatever
+product its topic belongs to, and is left in the **open** group rather
+than claimed — an engagement, not a mint, moves it to `doing`. **This
+is one of the operations whose postcondition the calls do not show** —
+a create answers with an id and a status, nothing that proves
+membership — so read it back with *look up topic* against its
+container: a topic's task is exactly one task, in the `doing` group,
+sitting in the target area; a learning task is exactly one task, in the
+open group, in the Learning project. Only the seven moments under
+Intake mint (→ Topics). An effort estimate when the producer can size
+it; no due date, no deferral and no ordering. Where no product area's
+`Repos:` line names the topic's `<repo>` (other than `meta`), every
+producer of a topic's task halts before the create, naming the fix as
+*look up topic* does — never a fallback to Meta, which holds `meta`
+alone.
 
 **Order topics** — record that one task is blocked by another, with the
 reason. The write's return does not show the graph, so read it back on
 the blocked task's dependency listing: the edge must appear among what
 blocks it, **with its reason**. A plain task listing can also return
 edges, in a compact form without the reason — right for a census of a
-whole Roadmap, wrong for this postcondition. Undoing an edge is the same
-write without it; there is no reorder or move, because a partial order
-has nothing to reorder.
+whole product area, wrong for this postcondition. Undoing an edge is the
+same write without it; there is no reorder or move, because a partial
+order has nothing to reorder.
 
 **Annotate task** = read the task, append the evidence block to its
 description, write it back — status untouched. The write answers with a
@@ -806,12 +802,16 @@ annotated.
 
 ### The node as coordinator
 
-Where the session reaches no coordinator of its own, the roadmap is the
-node's notebook: the `tasks` table its setup skill creates, with
-`tasks_log` beside it for the journal. The same operations hold, read
-through SQL rather than through a tool surface — `project` carries the
-`<Product> Roadmap` name, `area` the topic's area, and `result` the
-closing text *ship topic* and *retire topic* write. `status` carries a
+Where the session reaches no coordinator of its own, the topics in
+flight live in the node's notebook: the `tasks` table its setup skill
+creates, with `tasks_log` beside it for the journal. The same operations
+hold, read through SQL rather than through a tool surface — `area`
+carries the topic's `<repo>` subtree, `meta` for process work;
+`project` is `NULL` on a topic's task and `Learning` on a learning
+task; and `result` carries the closing text *ship topic* and *retire
+topic* write. The column `area` predates ymer's areas and names the
+subtree, never a product area: the product resolves when a row is
+promoted into ymer, where the `Repos:` lines are. `status` carries a
 token the table's `CHECK` admits, never one of this contract's view
 words: SQLite has no help surface to read the realisation off, so the
 binding states it — `new` and `reopened` are the open group, `claimed`
@@ -821,10 +821,12 @@ a learning task at `new` — a *ship topic* writes `completed`, a *retire
 topic* `cancelled`. A mint task is the insert the `mint` skill makes
 (`INSERT INTO tasks (name, description, status, project, area,
 estimated_effort_minutes)`); its read-back is the `SELECT` that must
-return exactly one row under that name in that project. A node-only
-session has no projects table and so no product page: every product is
-page-less there, and a phase that would read one runs its checks fresh
-instead.
+return exactly one row under that name. *Look up topic* matches a row by
+its name and status, never by `project`, whatever a row's `project`
+holds. A node-only session has no areas and so no product area: every
+product's direction is unread there, and nothing routes on a `Repos:`
+line, so no producer halts on one; a phase that would read a product's
+direction runs its checks fresh instead.
 
 ### The pool on the node
 

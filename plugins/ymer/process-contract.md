@@ -4,8 +4,8 @@ The rules the development process runs on: the seven phases and where
 to enter them, the two kinds of topic, how a review is priced, how a
 topic iterates, where knowledge is kept, what a phase does when the
 user's input has not arrived, and the few contracts several phases
-share. It holds only what no other file owns. The roadmap and the
-topic's artifacts are the operations contract's, git is the substrate
+share. It holds only what no other file owns. The topics in flight and
+the topic's artifacts are the operations contract's, git is the substrate
 contract's, the interview is the interview procedure's, what a session
 and its agents may touch on the user's machine is the confinement
 contract's, and each phase's own steps are its skill's.
@@ -83,7 +83,7 @@ have, and skip the phases whose output you already hold:
 - A sharp spec in hand: `/ymer:write-plan`.
 - A chosen direction whose meaning is still fuzzy: `/ymer:define`.
 - Only an idea or an itch: `/ymer:brainstorm <topic>`. The name is
-  resolved against the repo's roadmap first; `/ymer:brainstorm new
+  resolved against the topics in flight first; `/ymer:brainstorm new
   <topic>` declares it new up front.
 - Work waiting in the pool, a feature, a bug or a learning gap captured
   as a drop: `/ymer:mint` draws the top one and starts it as a topic
@@ -343,7 +343,7 @@ holds one, and implement's close appends its line whatever the marker
 names, since implement ends the route. A phase writes its line as its
 close's last write before the phase's commit, with two exceptions:
 plan-review writes its `Hardened —` line after it (the operations
-contract, § Roadmap), and implement writes its line just before its
+contract, § Topics), and implement writes its line just before its
 `## Review` entry, which then takes the top. The line is the same on
 every kind of state folder. It is no recognizer, so the marker stays the
 first one top-down, and a session that stops at topic resolution writes
@@ -428,7 +428,7 @@ with no call-time channel keeps its MUSTs there.
 | repo `CLAUDE.md` (push, scoped to the working directory) | that repo's repo-safe operational facts, conventions and gotchas |
 | repo `CLAUDE.local.md` (push, scoped to the working directory, gitignored) | private facts about one repo, kept out of a shared or employer-visible checkout |
 | the plugin's skills and contract files (pull) | process knowledge: each rule lives in the skill that owns the moment it fires, and a rule several skills share lives once, in a contract file the skills read at the moment they name |
-| the coordinator's tasks and projects | work state, the roadmap of work in flight, plus each product's **product page**, the governed prose in its Roadmap project's description (binding: the operations contract) |
+| the coordinator's tasks, projects and areas | work state, the topics in flight, plus each product's **settled sections**, the governed prose in its product area's task context fields (binding: the operations contract) |
 | the coordinator's docs | reference knowledge reusable across projects: notes on tools and languages, and the knowledge docs, the learning track's substrate (the tutor skill). The dividing line: useful independent of one repo's current code, a coordinator doc; about specific files or decisions of a repo, that repo's docs |
 | the pool (the `pool` table in the node's notebook) | work nobody has started: drops of every kind, written by the `capture` skill and drawn by the `mint` skill or by brainstorm, define, write-plan or review (the operations contract, § The pool) |
 

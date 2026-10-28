@@ -1,23 +1,25 @@
 # Product design principles: mechanics
 
-The mechanics of the product-design skill: how the product page is
-fetched from the coordinator, and how a miss is told apart from a
-product with no page. The headings are `SKILL.md`'s own; read a
-section's entries at the moment that section runs.
+The mechanics of the product-design skill: how a product area is read
+from the coordinator, and how a miss is told apart from a product with
+no area. The headings are `SKILL.md`'s own; read a section's entries at
+the moment that section runs.
 
-## The product page
+## The product area
 
-- Fetch the page by a `projects list` name search for
-  `<Product> Roadmap` asking for the description, and take the row
-  whose name is exactly `<Product> Roadmap`. Never fetch it by the
-  semantic project search, whose top hit can be another project, nor
-  by the read that echoes the project's whole linked task list. Where
-  the page lives, its skeleton and its fixed header are the operations
-  contract's binding.
-- A session whose coordinator is the node has no page for any product,
-  because the node keeps no projects.
-- A `projects list` name search can miss, so a miss is ambiguous, and
-  the coordinator's own listing of projects is the control. A product whose
-  `<Product> Roadmap` project is listed **has** a page, so a miss
-  against it is a broken lookup: retry it, and never read it as "no
-  page". A product with no such project has no page.
+- Read the areas by the coordinator's listing of areas, every page of
+  it, then a read of each area, whose answer carries its description
+  and its task context fields whole; the listing carries names only. A
+  product area is one whose description carries a `Repos:` line, and
+  the area named Meta; the others are no products. A product's area is
+  the one matching its name, whatever the case, or the one whose
+  `Repos:` line names the topic's `<repo>`. Never take a product's
+  direction from a task's own task context, which carries each task
+  context field cut short. Where the settled sections sit in the task
+  context fields is the operations contract's binding.
+- A session whose coordinator is the node has no product area for any
+  product, because the node keeps no areas.
+- A read can fail, so a miss is ambiguous, and the listing is the
+  control. A product whose area is listed **has** one, so a failed read
+  of it is a broken lookup: retry it, and never read it as "no area". A
+  product with no listed area has none.

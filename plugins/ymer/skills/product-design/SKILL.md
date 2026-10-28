@@ -16,34 +16,35 @@ moment point here and record the gate's answers and a verdict, and
 never restate the principles.
 
 The plugin glossary (`${CLAUDE_PLUGIN_ROOT}/glossary.md`) defines
-product page, settled sections, pace layers, instrumental and
+product area, settled sections, pace layers, instrumental and
 autotelic: this file uses them and says what the skill does with them.
-Next steps are defined here, below. How the product page is fetched is
-in `mechanics.md`, and what to do when the fetch never lands, and why
-this skill writes nothing on the page, is in `cases.md`, both under
-this file's headings.
+Next steps are defined here, below. How a product area is read is in
+`mechanics.md`, and what to do when the read never lands, and why this
+skill writes nothing in the area, is in `cases.md`, both under this
+file's headings.
 
-## The product page
+## The product area
 
-*Read with this section: `mechanics.md` § The product page (the mechanics: the fetch, why a session whose coordinator is the node has no page, and the listing that tells a broken lookup from a product with no page) and `cases.md` § The product page (the cases: when the store does not answer, why this skill writes nothing on the page and where its output goes instead (the verdict, and vision drops a carve topic draws, a drop for a product with no page waiting for one), and why the page takes no collection area).*
+*Read with this section: `mechanics.md` § The product area (the mechanics: the reads, which areas are products, why a session whose coordinator is the node has no product area, and the listing that tells a broken read from a product with no area) and `cases.md` § The product area (the cases: when the store does not answer, why this skill writes nothing in the area and where its output goes instead (the verdict, and vision drops a carve topic draws, a drop for a product with no area waiting for one), and why the area takes no collection section).*
 
-A known product keeps its answers on its **product page**. Before the
-gate, read the product's page where it has one; where it has none, run
-the gate and the checks fresh and say so in the verdict.
+A known product keeps its answers in its **product area**'s task
+context fields. Before the gate, read the product's area where it has
+one; where it has none, run the gate and the checks fresh and say so in
+the verdict.
 
-The page's **settled sections** hold answers already given: use them
+The area's **settled sections** hold answers already given: use them
 instead of deriving them again, and push back on a candidate direction
 that contradicts one, Forward direction included, by asking whether
 the vision is changing or the direction is.
 
-**Next steps** sit directly under Forward direction, one bullet for
-each likely next destination the product's owner names, a line or two
-each. Each is a guess, never a task, so several may stand, or none.
-Forward direction changes slowly, and the next steps change as fast as
-the guess does. The `mint` skill scores how strongly a drop advances
-them, so a bullet is worth writing as a destination a drop can be
-matched against. An empty section is valid, and that product's drops
-then take the lowest direction value.
+**Next steps** sit directly under Forward direction in the area's
+`vision`, one bullet for each likely next destination the product's
+owner names, a line or two each. Each is a guess, never a task, so
+several may stand, or none. Forward direction changes slowly, and the
+next steps change as fast as the guess does. The `mint` skill scores
+how strongly a drop advances them, so a bullet is worth writing as a
+destination a drop can be matched against. An empty section is valid,
+and that product's drops then take the lowest direction value.
 
 ## The gate, always first
 

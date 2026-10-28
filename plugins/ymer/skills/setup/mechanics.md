@@ -17,7 +17,7 @@ Contents:
   Cowork
 - 3. The state folder: the state folder on Cowork
 - 4. The ymer connection: the call, a lapsed sign-in on Claude Code
-- 5. The `Meta Roadmap` project: the call and its description
+- 5. The Meta area: the call and its description
 
 ## The battery
 
@@ -218,7 +218,7 @@ The eight texts, each the grammar of its table:
 > fronts slug — NOT NULL and a foreign key, so a forgotten front is
 > refused rather than filed as someone else's. source = the snake_case
 > name of the step that wrote the drop, or 'standalone' when nothing
-> invoked it. context = what the work belonged to, <area>/<subject>:
+> invoked it. context = what the work belonged to, <repo>/<subject>:
 > <repo>/<topic> for a session working one topic, meta/<subject> for
 > process work or a study session with no repo. kind = a kinds row,
 > friction by default, picked by trying the kinds in test_order and
@@ -232,7 +232,7 @@ The eight texts, each the grammar of its table:
 > slug), the body then one short clause saying where it bit this time.
 > status: open | drained — drawing a drop drains it, setting
 > status='drained', drained_to = where it went (a topic as
-> <area>/YYYY/MM-DD-<topic>/, or a task id), and drained_at. An empty
+> <repo>/YYYY/MM-DD-<topic>/, or a task id), and drained_at. An empty
 > drop is never drained. Rows are never deleted: pointers must keep
 > resolving and drained rows stay as evidence. Frequency = rows sharing
 > an anchor (COALESCE(anchor_id, anchor_text)); a recurrence after its
@@ -246,7 +246,7 @@ The eight texts, each the grammar of its table:
 > drop_id = the pool row scored, the key and a foreign key into pool(id).
 > Four components, each 1, 3 or 5 under a CHECK: direction_value — how
 > strongly the drop advances a product's next steps, the best match
-> across every product page; time_criticality — the cost of waiting;
+> across every product area; time_criticality — the cost of waiting;
 > risk_reduction — the risk its work removes, or the work it enables;
 > size — its scope and uncertainty, 1 small and 5 large or unclear. why
 > = the scorer's one line: what the drop matched, and anything that made
@@ -263,14 +263,12 @@ The eight texts, each the grammar of its table:
 > claimed | asking | completed | cancelled — with the groups open = new +
 > reopened, doing = claimed + asking, closed = completed + cancelled; a
 > topic's task is created at claimed, because a task exists only where
-> work starts, and a learning task at new. project is the Roadmap the
-> row would be minted into in ymer, derived from area with no lookup:
-> area meta → 'Meta
-> Roadmap', any other area → the area with its first letter upper-cased
-> plus ' Roadmap'; a learning-gap task carries 'Learning'. It is a
-> routing label, so where one product spans several areas it is corrected
-> by hand at promotion. area is the repo or product the work belongs to,
-> with meta reserved for work about how you work.
+> work starts, and a learning task at new. project is NULL on a topic's
+> task and 'Learning' on a learning-gap task. area is the topic's
+> state-folder subtree, the repo the work belongs to, with meta reserved
+> for work about how you work: it names the subtree, not a ymer area,
+> and the product a row belongs to resolves when the row is promoted
+> into ymer, where each product area's Repos: line names its subtrees.
 > estimated_effort_minutes is ymer's stored form of an effort estimate.
 > external_ref points at whatever other system also carries this work —
 > an issue key, a URL. result is the closing text. The journal is
@@ -373,7 +371,7 @@ SELECT count(*) FROM topics
 - **No rows**: one statement per `execute` call, `DROP TABLE topics`,
   then `DELETE FROM _meta WHERE target = 'table:topics'`.
 - **Rows**: write each row's `body` to
-  `<state folder>/<area>/YYYY/MM-DD-<slug>/<artifact>`, where the `topic`
+  `<state folder>/<repo>/YYYY/MM-DD-<slug>/<artifact>`, where the `topic`
   column `YYYY-MM-DD-<slug>` splits after the year. The table does not
   record which front wrote a row, so which front's state folder a row
   belongs in is yours to tell: move each from a session on the front it
@@ -381,8 +379,8 @@ SELECT count(*) FROM topics
   own git repository, then commit the topic folders you wrote,
   pathspec-scoped on both halves, since a bare commit sweeps in whatever
   concurrent sessions have staged:
-  `git -C <state folder> add <area>/YYYY/MM-DD-<slug>/`, then
-  `git -C <state folder> commit -m "topics: move retired rows into the state folder" -- <area>/YYYY/MM-DD-<slug>/`,
+  `git -C <state folder> add <repo>/YYYY/MM-DD-<slug>/`, then
+  `git -C <state folder> commit -m "topics: move retired rows into the state folder" -- <repo>/YYYY/MM-DD-<slug>/`,
   naming every folder you wrote. Where it is in no git repository, or
   this session has no git, the files you wrote are the record. Then drop
   the table and its `_meta` row as above.
@@ -435,22 +433,22 @@ connected folder is visible to it and not to the container's.
 
 ### 4. The ymer connection
 
-**The call.** `projects list`, a name search for `Roadmap`, asking for
-each project's id and name. The parameter shape is the server's: ask
-its `help` for the action if you do not have it.
+**The call.** `areas list`, every page of it, asking for each area's id
+and name. The parameter shape is the server's: ask its `help` for the
+action if you do not have it.
 
 **A lapsed sign-in on Claude Code.** `claude mcp get ymer` prints the
 server's status: `Needs authentication` is a lapsed sign-in; no such
 server is the absence the check's pass means.
 
-### 5. The `Meta Roadmap` project
+### 5. The Meta area
 
-Created with `projects create`, named exactly `Meta Roadmap`, its
-description this markdown, written once:
+Created with `areas create`, named exactly `Meta`, its description this
+markdown, written once:
 
 ```markdown
-# Meta Roadmap
+Improvement work about how you work — the process itself, belonging to
+no product. Its tasks are what to do next.
 
-Improvement work about how you work — the process itself, belonging to no
-product. Its tasks are what to do next.
+Repos: meta
 ```

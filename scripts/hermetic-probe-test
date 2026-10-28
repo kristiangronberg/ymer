@@ -281,7 +281,7 @@ penc=$pstate/encl/plans # the third arm's state folder: inside encl/, a reposito
 # setup's report with no state folder named, in the lines the skill's own
 # grammar gives; the second variant is the wording a denied read
 # produced, which the report check must not accept
-setup_report="Setup — ymer environment\n\n  ✔ node          reachable — 8 tables created\n  ✔ front         \`probe_front\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  ✔ ymer          no connection in this session — work tracked in the node's \`tasks\` table\n  – Meta Roadmap  not checked"
+setup_report="Setup — ymer environment\n\n  ✔ node          reachable — 8 tables created\n  ✔ front         \`probe_front\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  ✔ ymer          no connection in this session — work tracked in the node's \`tasks\` table\n  – Meta area     not checked"
 run_trace "$setup_report" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' Read "{\"file_path\":\"$live/plugins/ymer/skills/setup/SKILL.md\"}" >"$canned/run-setup1.jsonl"
 # the first run's report with no front line, and the re-run's with the
 # node's line alone: the front's own line is a fact each check reads
@@ -324,11 +324,11 @@ run_trace "  ✔ node          reachable — 8 tables created\n  ✔ front      
 # phrase the check reads — right in every fact, so the report checks must
 # pass them; the re-run's Details line says created and added, off the
 # node's line, and does not decide the node's line
-run_trace "Now compiling the full report.\n\n**Setup — ymer environment**\n\n\`\`\`\n✔ **node** — reachable — 8 tables created\n✔ **front** — \`probe_front\` added\n✘ **state_folder** — not **set** — set it with /plugin configure ymer@ymer\n✔ **ymer** — no  connection in this session (no \`ymer\` MCP server configured) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked\n\`\`\`\n\nDetails:\n- **state_folder**: the option is unset." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-decorated.jsonl"
-run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 8 tables present (fronts, kinds, pool, pool_scores, tasks, tasks_log, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed\n✔ **front** — \`probe_front\` — already registered\n✔ **state_folder** — \`$pstate\` — in no git repository, the files are the record\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-desktop\`) — work tracked in the node's \`tasks\` table\n– **Meta Roadmap** — not checked — no ymer; process work routes to \`Meta Roadmap\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
-# no coordinator line, and the Meta Roadmap line naming ymer's missing
+run_trace "Now compiling the full report.\n\n**Setup — ymer environment**\n\n\`\`\`\n✔ **node** — reachable — 8 tables created\n✔ **front** — \`probe_front\` added\n✘ **state_folder** — not **set** — set it with /plugin configure ymer@ymer\n✔ **ymer** — no  connection in this session (no \`ymer\` MCP server configured) — work tracked in the node's \`tasks\` table\n– **Meta area** — not checked\n\`\`\`\n\nDetails:\n- **state_folder**: the option is unset." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-decorated.jsonl"
+run_trace "Setup — ymer environment\n\n✔ **node** — reachable, 8 tables present (fronts, kinds, pool, pool_scores, tasks, tasks_log, tutor_subjects, tutor_engagements), all columns/indexes/triggers verified, no changes needed\n✔ **front** — \`probe_front\` — already registered\n✔ **state_folder** — \`$pstate\` — in no git repository, the files are the record\n✔ **ymer** — no connection in this session (no \`ymer\` MCP server configured; only \`ymer-desktop\`) — work tracked in the node's \`tasks\` table\n– **Meta area** — not checked — no ymer; process work carries area \`meta\` in \`tasks\`\n\nDetails:\n- nothing was created or added this run." $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-decorated.jsonl"
+# no coordinator line, and the Meta area line naming ymer's missing
 # connection and tasks in its place: the coordinator is not reported
-run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 8 tables created\n  ✔ front         \`probe_front\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  – Meta Roadmap  not checked — no connection to ymer; process work routes to \`Meta Roadmap\` in \`tasks\`" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-ymer.jsonl"
+run_trace "Setup — ymer environment\n\n  ✔ node          reachable — 8 tables created\n  ✔ front         \`probe_front\` added\n  ✘ state_folder  not set — set it with /plugin configure ymer@ymer\n  – Meta area     not checked — no connection to ymer; process work carries area \`meta\` in \`tasks\`" $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-no-ymer.jsonl"
 # the re-run's node line naming a change the re-run never made: tables
 # created, or a front row added — and the line saying created beside a
 # Details line that restates the node's facts without it
@@ -353,8 +353,8 @@ run_trace 'tasks.due_date added' $notebook '{"action":"execute","data":{"sql":"A
 # separator; and with list bullets, a nested bullet under one role line
 # and a fence nested under another, the facts that line needs after the
 # fence — right in every fact, so setup-report must pass both
-run_trace "## Setup — ymer environment\n\n\`\`\`\n✔ node          reachable — 8 tables created\n✔ front         \`probe_front\` added\n✘ state_folder  not set — set it with /plugin configure ymer@ymer, or\n                 reinstall with the install line and the option\n✔ ymer          no connection in this session\n                 — work tracked in the\n                 node's \`tasks\` table\n–  Meta Roadmap  not checked\n\`\`\`\n\nOne blocker: the state_folder option is not set." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-wrapped.jsonl"
-run_trace "**Setup — ymer environment**\n\n- ✔ node — reachable — 8 tables created\n- ✔ front — \`probe_front\` added\n- ✘ state_folder — not set — set it with \`/plugin configure ymer@ymer\`\n  - If you did set a folder and still read not set, check which plugin it is set on.\n- ✔ ymer — no connection in this session. Add it with:\n  \`\`\`\n  claude mcp add --transport http --scope user ymer <its address>\n  \`\`\`\n  until then, work is tracked in the node's \`tasks\` table\n- – Meta Roadmap — not checked\n\nNext step: set the state_folder option." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-nested.jsonl"
+run_trace "## Setup — ymer environment\n\n\`\`\`\n✔ node          reachable — 8 tables created\n✔ front         \`probe_front\` added\n✘ state_folder  not set — set it with /plugin configure ymer@ymer, or\n                 reinstall with the install line and the option\n✔ ymer          no connection in this session\n                 — work tracked in the\n                 node's \`tasks\` table\n–  Meta area     not checked\n\`\`\`\n\nOne blocker: the state_folder option is not set." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-wrapped.jsonl"
+run_trace "**Setup — ymer environment**\n\n- ✔ node — reachable — 8 tables created\n- ✔ front — \`probe_front\` added\n- ✘ state_folder — not set — set it with \`/plugin configure ymer@ymer\`\n  - If you did set a folder and still read not set, check which plugin it is set on.\n- ✔ ymer — no connection in this session. Add it with:\n  \`\`\`\n  claude mcp add --transport http --scope user ymer <its address>\n  \`\`\`\n  until then, work is tracked in the node's \`tasks\` table\n- – Meta area — not checked\n\nNext step: set the state_folder option." $notebook '{"action":"execute","data":{"sql":"CREATE TABLE fronts (slug TEXT)"}}' >"$canned/run-setup1-nested.jsonl"
 # the re-run's node line naming a count or a state that only contains the
 # right one: 18 tables, unreachable
 run_trace "  ✔ node          reachable — 18 tables\n  ✔ front         \`probe_front\`\n  ✔ state_folder  $pstate — in no git repository, the files are the record" $notebook '{"action":"query","data":{"sql":"SELECT 1"}}' >"$canned/run-setup2-18-tables.jsonl"
@@ -1284,7 +1284,7 @@ check "live: front, setup, setup-node, setup-retired, setup-tutor, setup-report,
 check "live: the front line names the probe's front" 1 "$(lines '✔ front        front set to probe_front')"
 check "live: the dispatch line reports a run that scored in-session, neither passed nor failed" 1 "$(lines '– dispatch     not run — run 6 scored in-session — 0 ymer:scorer call(s), 0 subagent transcript(s)')"
 check "live: the mint-capture line counts the mint's own drops" 1 "$(lines '✔ mint-capture 2 source mint drop(s) after /ymer:mint — its capture block ran')"
-check "live: the mint line names the drained topic and its file" 1 "$(lines "✔ mint         1 tasks row(s) at claimed in a Roadmap project, the friction drained to $drained_to, its request.md in state/ carrying source: mint")"
+check "live: the mint line names the drained topic and its file" 1 "$(lines "✔ mint         1 tasks row(s) at claimed, the friction drained to $drained_to, its request.md in state/ carrying source: mint")"
 check "live: the bug-first line names the bug's topic" 1 "$(lines "✔ bug-first    the bug drawn ahead of ten open frictions, drained to $bug_to — one request.md there in state/, quoting its title once — the ten seed frictions still open")"
 check "live: the append line reads the deltas" 1 "$(lines "✔ append       still one request.md in $bug_to, started 20260921 kept, the recurrence drained to the bug's topic, its clause in the file 0 → 1")"
 check "live: the append-keep line reads the pre-image whole" 1 "$(lines "✔ append-keep  every one of the 13 line(s) the file held before the fold still in it, in order, byte for byte — 14 line(s) now")"
@@ -1573,7 +1573,7 @@ for n in 0 2; do
 	requeue "SELECT count(*) FROM pool WHERE status = 'drained' AND kind = 'friction'" "$(node_rows $n)"
 	probe "$fx" live
 	check "live drain of $n frictions exits 1" 1 "$rc"
-	check "live drain of $n frictions: the mint line names the reads" 1 "$(lines "✘ mint         after /ymer:mint: 1 tasks at claimed in a Roadmap project, $n friction drops drained, request.md at state/$drained_to present, \`source: mint\` 1 time(s) in it (expected ≥1, 1, present, ≥1)")"
+	check "live drain of $n frictions: the mint line names the reads" 1 "$(lines "✘ mint         after /ymer:mint: 1 tasks at claimed, $n friction drops drained, request.md at state/$drained_to present, \`source: mint\` 1 time(s) in it (expected ≥1, 1, present, ≥1)")"
 done
 # the friction drained, and the file is not where drained_to says
 live_case
@@ -1588,7 +1588,7 @@ live_queue
 mint_effects ':' "$effect_drain_unmarked" "$effect_bug" "$effect_append"
 probe "$fx" live
 check "live drain with an unmarked file exits 1" 1 "$rc"
-check "live drain with an unmarked file: the mint line names the mark missing" 1 "$(lines "✘ mint         after /ymer:mint: 1 tasks at claimed in a Roadmap project, 1 friction drops drained, request.md at state/$drained_to present, \`source: mint\` 0 time(s) in it")"
+check "live drain with an unmarked file: the mint line names the mark missing" 1 "$(lines "✘ mint         after /ymer:mint: 1 tasks at claimed, 1 friction drops drained, request.md at state/$drained_to present, \`source: mint\` 0 time(s) in it")"
 check "live drain with an unmarked file: bug-first still passes" 1 "$(lines '✔ bug-first')"
 
 # ── 20b · live, the first arm's mint drained with no state folder ─────
@@ -1680,7 +1680,7 @@ check "live dressed reports: the setup-report line" 1 "$(lines '✔ setup-report
 check "live dressed reports: the converge-report line" 1 "$(lines '✔ converge-report')"
 check "live dressed reports: the setup-folder line" 1 "$(lines '✔ setup-folder')"
 
-# the Meta Roadmap line naming ymer's missing connection and tasks does
+# the Meta area line naming ymer's missing connection and tasks does
 # not stand in for the coordinator's own line
 live_case
 live_queue

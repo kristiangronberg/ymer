@@ -3,7 +3,7 @@
 #
 #   sh payload-verify <topic-dir> [--exempt <tree>]...
 #
-# <topic-dir> is a topic folder, laid out <state folder>/<area>/YYYY/MM-DD-<topic>.
+# <topic-dir> is a topic folder, laid out <state folder>/<repo>/YYYY/MM-DD-<topic>.
 # Pass one --exempt per machinery tree the front binds — none when it binds
 # none. The state folder is read off the topic directory's own shape, so it
 # is never an argument.
@@ -256,7 +256,7 @@ case $year in
 *) shape=0 ;;
 esac
 [ -n "$state" ] || shape=0
-[ "$shape" = 1 ] || die "$topic is not a topic directory — pass <state folder>/<area>/YYYY/MM-DD-<topic>, the shape the state folder is read from"
+[ "$shape" = 1 ] || die "$topic is not a topic directory — pass <state folder>/<repo>/YYYY/MM-DD-<topic>, the shape the state folder is read from"
 state=$(resolve "$state")
 printf '%s\n' "$state" >>"$tmp/exempt"
 

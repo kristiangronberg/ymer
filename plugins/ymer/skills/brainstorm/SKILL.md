@@ -65,7 +65,7 @@ operations contract whole**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the
 pre-flight, close binding, gate defaults and holds, the fallback rule,
-the report rule and the interview as a hold; and every roadmap
+the report rule and the interview as a hold; and every topic
 operation this phase calls (*look up topic*, *mint task*, *order
 topics*, *annotate task*, *retire topic*) with its postcondition and the
 failure rule, the outward-write rule for rulings, the topic's artifacts
@@ -120,7 +120,7 @@ How the session was invoked decides the first step:
 - `/ymer:brainstorm` with no topic: ask what the topic is, then resolve
   it.
 
-Look the name up in the repo's Roadmap project, where every topic in
+Look the name up in its product area's tasks, where every topic in
 flight is a task, and against the existing
 `<state folder>/<repo>/*/*-<topic>` directories (*look up topic*,
 binding: the operations contract). In a code repo, also read the
@@ -137,14 +137,17 @@ The name match has four outcomes:
 - **Near match** (a substring or slug variant of a task or directory
   name): one disambiguation question, "did you mean `<X>`, or is this
   new?"
-- **Clean miss**: one confirmation question, "`<name>` is not in the
-  roadmap: new topic?" A new topic gets a new date and its own task,
+- **Clean miss**: one confirmation question, "`<name>` is not in
+  flight: new topic?" A new topic gets a new date and its own task,
   *mint task* at `doing` at the close. A task the user hands in as the idea's text is a clean miss as well: the session mints the topic's own task, and the old one is the user's to close.
-- **Repo not onboarded** (no `<state folder>/<repo>/` subtree, or no
-  Roadmap project in the binding): every topic is new. Say so, and
-  onboard per the binding at the close.
+- **No subtree yet** (no `<state folder>/<repo>/`): every topic is new.
+  Say so; the close creates the subtree with the topic's folder.
+- **No product area** (ymer the coordinator, and no product area's
+  `Repos:` line names `<repo>`, or no Meta area for `meta`): stop before
+  any question, naming the fix *look up topic*'s binding gives (the
+  operations contract, § Binding per coordinator).
 
-A new topic announces "new (not in the roadmap)", or "new, forced via
+A new topic announces "new (not in flight)", or "new, forced via
 `new` keyword" when `new` declared it.
 
 **Hold: every topic-resolution question**: the missing topic name,
@@ -175,7 +178,7 @@ else.
 | Another phase's marker | a live marker naming another phase on top of `review.md`, or the `Interview pending —` marker at the head of `spec.md` | Stop and name that phase, its command written out: `/ymer:define <topic>` for the marker on `spec.md`. | none: the session stops |
 | Pending interview | the `Interview pending —` marker at the head of `brainstorm.md`, whatever the task's status (a close torn before its mint leaves it so, and `mechanics.md` § Commit the Artifacts, Then Reset, step 1 then mints the task as usual) | Resume the interview at the first unanswered prepared question, with no extend-or-abort question: the prepared questions are the agenda, and more may join them. The resume's rules are the interview procedure's (§ 4. Pending). Where `review.md` is topped by a marker naming brainstorm, live or consumed by this interview's own pending close (its block holds the `Consumed — … by brainstorm` line that close appended), the topic is an iteration and the iteration row's branch rule holds too. | pending interview of `<date>`, `<n>` questions |
 | In flight | a `doing` task whose folder holds more than mint's `request.md`, with no live marker and no `Interview pending —` marker at either head | Ask: extend the existing `brainstorm.md` in its directory, or abort, since the topic may want a different phase. Only the user knows whether the recorded direction is to be extended. | none: the question comes first |
-| Closed topic | a completed or cancelled task, with or without a folder, and no `Interview pending —` marker at the head of `brainstorm.md` | Treat it as a clean miss: confirm it as new, name the old folder as prior art, and give the new topic a new date and its own task. Reopening a closed task is the user's reopen, never a phase's. | new (not in the roadmap) |
+| Closed topic | a completed or cancelled task, with or without a folder, and no `Interview pending —` marker at the head of `brainstorm.md` | Treat it as a clean miss: confirm it as new, name the old folder as prior art, and give the new topic a new date and its own task. Reopening a closed task is the user's reopen, never a phase's. | new (not in flight) |
 
 Where the lookup found more than one piece for the name, a drawn topic
 and a sketch branch say, the drawn topic's announcement reads
@@ -326,7 +329,7 @@ carries only brainstorm's own rules beside these three.
   verified evidence arrives behind the framing rather than as it. A win
   the user has to ask for is the scope cut or the placement question
   nobody saw (a doctrine that ends re-litigation, a cross-repo item
-  filed in a product roadmap). A pending interview's resume speaks it
+  filed in the wrong product area). A pending interview's resume speaks it
   again before its first unanswered question: the pending close wrote
   it, but nobody heard it.
 - Check project context before asking: existing docs, the glossary if
@@ -335,11 +338,11 @@ carries only brainstorm's own rules beside these three.
   tiers, say), load that skill whole before forming a recommendation:
   grep excerpts of it mislead.
 - A **positioning topic**, one that decides what the product is or
-  refuses to be, reads the product page here, at the interview, not at
+  refuses to be, reads its product area here, at the interview, not at
   convergence: its settled sections are standing constraints, and the
-  procedure's standing-constraint rule applies to them. Fetch it through
+  procedure's standing-constraint rule applies to them. Read it through
   product-design's recipe (the product-design skill, § The product
-  page), never an ad-hoc call.
+  area), never an ad-hoc call.
 - Propose **2–3 approaches with trade-offs** before settling.
 - YAGNI ruthlessly: cutting scope is a first-class brainstorm outcome,
   and so is "not worth pursuing".
@@ -440,9 +443,9 @@ Check the candidate direction against the product-design principles,
 per the product-design skill: the gate first (who is the user: human,
 LLM, or both; which stance: instrumental or autotelic), then each
 principle's checks. The principles live in that skill alone, and so do
-the product page's fetch recipe, its miss rule and the pushback duty
-its settled sections carry: this beat restates none of them. Fetch the
-page through that recipe.
+the product area's read recipe, its miss rule and the pushback duty its
+settled sections carry: this beat restates none of them. Read the area
+through that recipe.
 
 Close with the reframe's verdict vocabulary (stay the course, adjust
 within the direction, the direction is wrong), and record in the
@@ -603,8 +606,8 @@ not findings.
    stores, the routing test, the stop-and-pick rule when nothing fits,
    and why a hand-off recorded in this doc discharges the duty. A
    principle, constraint or fact established this session that outlives
-   the topic reaches its store now (a product page only through a vision
-   drop, since the beat never writes one), or this doc's open questions
+   the topic reaches its store now (a product area only through a
+   vision drop, since the beat never writes one), or this doc's open questions
    name the store as an explicit hand-off; it is never left implicit in
    the direction prose. Calibration: only what would change behaviour in
    a future session, never what a store already records.

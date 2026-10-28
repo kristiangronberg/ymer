@@ -159,7 +159,7 @@ together, the answered questions landing in its sections; so does
 define's close on the route back to brainstorm, the interview over,
 since brainstorm would otherwise stop on the marker define left. The
 status ladder reads `brainstormed` and `specced` only off an artifact
-whose head carries no marker (the operations contract, § Roadmap).
+whose head carries no marker (the operations contract, § Topics).
 
 **The resume.** The caller closes around the pending interview as a
 pending step. Which of its own sections it still writes, and how it

@@ -65,7 +65,7 @@ operations contract whole**, unless already read this session:
 `${CLAUDE_PLUGIN_ROOT}/process-contract.md` and
 `${CLAUDE_PLUGIN_ROOT}/operations-contract.md`. They hold the
 pre-flight, close binding, gate defaults and holds, the fallback rule
-and the report rule; and every roadmap operation this phase calls
+and the report rule; and every topic operation this phase calls
 (*look up topic*, *mint task*) with its postcondition and the failure
 rule, the topic's artifacts (the `request.md` template, how the state
 folder's kind is read and what a state folder in no git repository
@@ -182,13 +182,14 @@ can check it.
    spec's glossary delta records as deferred (`cases.md` § Grounding).
 4. **The product's Forward direction**, where the topic shapes a
    surface a user operates. **Read the product-design skill's § The
-   product page now**, unless already read this session:
+   product area now**, unless already read this session:
    `${CLAUDE_PLUGIN_ROOT}/skills/product-design/SKILL.md`, for the
-   page's fetch recipe, its miss rule and the rest of its contract. Read
-   the Forward direction section alone: its entries constrain the shape
-   a feature must take when it arrives, so they bind the decomposition,
-   not only the spec. The whole-page read is brainstorm's, and no phase
-   writes the page: content enters it only through a carve topic.
+   product area's read recipe, its miss rule and the rest of its
+   contract. Read the Forward direction section alone: its entries
+   constrain the shape a feature must take when it arrives, so they bind
+   the decomposition, not only the spec. The whole read of the area is
+   brainstorm's, and no phase writes its settled sections: content
+   enters them only through a carve topic.
 
 A plan never contradicts a spec decision silently. A decision that does
 not survive planning goes back to the user. **Default: record the

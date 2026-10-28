@@ -71,7 +71,7 @@ what happens when the pick arrives fused with it. Never during divergence:
 evaluation criteria during ideation clamp the divergence a brainstorm
 exists for.
 
-**The beat writes nothing on the page.** Material worth keeping that no
+**The beat writes nothing in the product area.** Material worth keeping that no
 settled section already holds leaves the session as **vision** drops in
 the pool, through the `ymer:capture` skill, several per capture if need
 be; the drop grammar is capture's, and the drawing mint's. The drop is
@@ -80,7 +80,7 @@ direction doc also records it.
 
 A new token destined for another repo's vocabulary (a capability
 grammar, a cross-repo name) is checked against that repo's glossary
-`_Avoid_` bans before it rides a vision drop, a page write or an
+`_Avoid_` bans before it rides a vision drop, a product area write or an
 annotation: the minting moment is the last one with no gate before the
 word propagates, and a banned shape once reached two stores.
 
