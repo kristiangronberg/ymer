@@ -37,11 +37,13 @@ git -C <state folder> status --short -- <each target in the state folder>
 The second line is the one a state folder in no git repository skips
 (`SKILL.md` § Readiness Gate).
 
-Only files the plan names are targets, never the topic folder, which
-every phase writes. A plan that names no target in a tree reads that
-tree not at all: a scoped command with an empty pathspec reads the whole
-tree, and a machinery tree routinely carries other sessions' work and
-the user's own hand edits, none of it this check's business.
+Only the file targets the plan names are read here, never a record
+target, which names no tree, and never the topic folder, which every
+phase writes. A
+plan that names no target in a tree reads that tree not at all: a scoped
+command with an empty pathspec reads the whole tree, and a machinery
+tree routinely carries other sessions' work and the user's own hand
+edits, none of it this check's business.
 
 **The project-checkout pre-flight**, Claude-run, in this order; a
 pending reset stops it before the first command:

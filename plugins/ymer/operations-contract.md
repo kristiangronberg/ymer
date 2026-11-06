@@ -213,12 +213,19 @@ it. A rewriter that finds its stamp standing is resuming a torn rewrite
 and skips the copy: the slot already holds the true pre-image, and the
 artifact, half rewritten, no longer does. A failed copy stops the
 rewrite before any byte of the artifact changes. The slot is the
-no-sibling rule's one exception: it is not an artifact, and no reader
+no-sibling rule's first exception: it is not an artifact, and no reader
 takes it for the live file. Only the last rewrite is recoverable from
 it; a folder moved out of git starts with an empty slot. The rewrites
 that fill it are brainstorm's consolidation, write-plan's re-plan and
 plan-review's; the other in-place rewrites keep no pre-image where the
 files are the record.
+
+The `readback/` slot is the rule's second exception. It holds a
+plan's **read-back cards** and **before cards** (terms: the plugin
+glossary), each named after the payload whose record target it
+stands for (who writes them and what else may go there: the process
+contract, § The payload contract). It is not an artifact either, and
+no reader takes it for the record it reads back.
 
 **`sketch.md`** is read by exactly one phase, review, as the contrast
 between the user's own attempt and the shipped code ("your sketch did

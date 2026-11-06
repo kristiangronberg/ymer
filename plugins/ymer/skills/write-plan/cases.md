@@ -183,7 +183,9 @@ stamped with its count. Complete before-text is stored only where the
 target is outside git, decided mechanically at grounding: `git -C
 <target's directory> rev-parse --show-toplevel`, a non-zero exit
 meaning ungitted. Revert belongs to git, and drift shows as the
-anchor's match failure at apply time.
+anchor's match failure at apply time. A record target names no
+directory to test: where its rollback is wanted, its before card holds
+the before-text (`SKILL.md` § Payloads).
 
 ## Task Structure
 
@@ -314,8 +316,9 @@ iterations:
    where the files are the record. Letter suffixes are never version
    markers: they mean several payloads in one step, and nothing else.
 4. **Dropped work is removed, not marked.** The task leaves the plan,
-   its payloads leave `payloads/`, and the manifest states current
-   truth only: no tombstones, no superseded banners.
+   its payloads leave `payloads/`, their cards leave `readback/`, and
+   the manifest states current truth only: no tombstones, no
+   superseded banners.
 
 A re-plan's Grounding fact sheet opens a dated `### Re-plan (<date>)`
 block: the tree state the pre-flight found (the branch, its own

@@ -87,6 +87,11 @@ _Avoid_: games/art exception
 
 ## B
 
+### before card
+The ungated file beside a read-back card, `<stem>.before.<ext>`,
+holding what the record target named before the gated step's write.
+_Avoid_: pre-image (taken), snapshot, `-before` file
+
 ### binding
 The mapping from the contract's names to one environment's facts: each
 topic operation (look up topic, mint task, annotate task, order
@@ -414,6 +419,11 @@ whose `anchor_id` names it, or the drops sharing one named cause. Its
 size is how often a thing bites. Mint's *cluster* is wider: a family
 plus what a pick folds in beside it.
 _Avoid_: group; cluster (for the family alone)
+
+### file target
+A payload gate's target that is a file, named by an absolute or
+`~`-rooted path.
+_Avoid_: target path (bare)
 
 ### fitness question
 Review's closing beat: the does-it-do-the-job question(s) asked once over
@@ -804,18 +814,20 @@ _Avoid_: source topic
 
 ### payload
 The verbatim content a task's edit carries — the exact bytes a step
-delivers to its target file, distinct from the addressing around it (Edit
-anchors) and the verification around it (commands, expected output). A
-payload homes in the topic folder's `payloads/` directory, whatever its
-extent; its extent is whole physical lines of the target's final state.
+delivers to its target, a file or a record, distinct from the
+addressing around it (Edit anchors) and the verification around it
+(commands, expected output). A payload homes in the topic folder's
+`payloads/` directory, whatever its extent; its extent is whole
+physical lines of the target's final state.
 
 - _Avoid_: fragment (taken — brainstorm's mined sketch fragments), fence
 content, embedded content
 
 ### payload gate
-The gate proving one payload landed: the target file contains the
-payload file's exact bytes at the expected count (a whole-file byte
-comparison for a Create payload), joined to its step's checkbox by step ID and reported
+The gate proving one payload landed: the target, a file or a record
+target's read-back card, contains the payload file's exact bytes at
+the expected count (a whole-file byte comparison for a Create
+payload), joined to its step's checkbox by step ID and reported
 PASS / PENDING / FAIL by the payload verifier. Not one of sweep's gate
 shapes — a delta gate certifies one edit's increment; the payload gate
 certifies the bytes' presence in the target.
@@ -999,6 +1011,19 @@ the postcondition — the required outcome read back through the backend
 before the boundary closes. Client discipline, not call shape: a
 consumer keeps its read-backs written as intent.
 _Avoid_: verification call, confirm, re-read
+
+### read-back card
+The file in the topic folder's `readback/`, named like its payload,
+that holds what a record target names as read back right after the
+gated step's write: the payload verifier compares the payload against
+it.
+_Avoid_: readback file, row card, post-image
+
+### record target
+A payload gate's target that names a ymer record or a notebook row
+instead of a file, gated through its read-back card; the payload
+verifier's header gives the shape the manifest writes it in.
+_Avoid_: non-file target, record address, row target
 
 ### recurrence
 Defined in the `capture` skill, its one home — any drop carrying an

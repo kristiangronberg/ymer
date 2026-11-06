@@ -29,6 +29,7 @@ and those entries are read when the section runs.
 unless already read this session: `${CLAUDE_PLUGIN_ROOT}/glossary.md`,
 each entry by its heading: *pre-flight*, *catch-up*, *iteration*,
 *decide-forward*, *lens pass*, *change set*, *payload*, *payload gate*,
+*file target*, *record target*, *read-back card*, *before card*,
 *payload verifier*, *gated step*, *step ID*, *plan complete*, *machinery
 tree*, *shared tree*, *project checkout*, *traceability store*, *gated
 moment*, *hold*, *amendment marker*, *workflow-internal reference*,
@@ -139,8 +140,9 @@ ports, live targets, sibling trees, secrets, residue), the host's
 inventory around a dispatch, and the layers beneath it.
 
 - **The trees the plan targets are ready.** Which trees are read is
-  keyed on the plan's targets, never on the topic kind: the paths
-  `payloads/manifest` names, plus any target a step names. How each is
+  keyed on the plan's targets, never on the topic kind: the file
+  targets `payloads/manifest` names, plus any file a step names; a
+  record target names no tree and is never read here. How each is
   read is keyed on its tree option. A project checkout is read whole,
   and its dirt is stashed by the pre-flight below, never a stop. A
   shared tree is read scoped to the plan's targets in it (`mechanics.md`
@@ -190,8 +192,38 @@ plan's ticked boxes and reports PASS, PENDING and FAIL.
   fails" included. Skipping a verification and assuming its outcome is
   an implementation failure.
 - **A payload is applied from its file**: Read the file and write its
-  bytes out through the file-edit tools, never retyped from memory or
-  rebuilt from the plan's prose.
+  bytes out, through the file-edit tools to a file target and through
+  the store's tool to a record target (below), never retyped from
+  memory or rebuilt from the plan's prose.
+- **A record target is written, read back and carded in its own
+  step.** The write goes through the store's tool, keyed on the
+  target:
+  - A target that names a field takes the payload as the field's
+    value, byte for byte, or, for an append or an edit inside the
+    field, the payload's lines placed where the step states.
+  - A target that names a whole record takes the conversion its step
+    states, an `INSERT` built from a row's payload in its card's form
+    or a compact JSON object built from a workflow's, say.
+
+  Where the step asks for a before card, it reads the record and
+  writes the before card from that read first, and only then writes.
+  In every case it then reads the record back and writes the
+  read-back card from that read through the file-edit tools, one card
+  per payload file, so letter-suffixed lines that share a target each
+  get their own. The before card comes from the read ahead of the
+  write, never from the read-back. The box ticks after the card, under
+  the task-commit rule every box follows. The card is the only proof
+  the write landed, and a slip in the card is redone from a fresh
+  read, never edited to match, since an edited card greens its gate
+  vacuously. A record write outlives a stash and a torn session, so
+  every repeated write, a mismatch's redo or a step found unticked
+  with or without its card, reads the store first, by the target's key
+  or, for a `new-<label>` key, by the payload's content. A record that
+  already holds what the gate wants, the whole payload or its lines at
+  the gate's count, is carded from that read and not written again.
+  Anything else is written from the payload against that read: an
+  append or an edit inside a field is never sent on top of itself, and
+  a create is never repeated blind.
 - **The payload verifier**, where a step names `<the payload verifier>`,
   is `sh ${CLAUDE_PLUGIN_ROOT}/scripts/payload-verify` run on the topic
   folder, with one `--exempt <tree>` per machinery tree the front binds.

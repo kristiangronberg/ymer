@@ -33,7 +33,8 @@ claim*, *stamp*, *positive control*, *measured, never typed*, *vacuous
 pass*, *delta gate*, *glossary delta*, *Forward direction*, *carve
 topic*, *content-ownership map*, *assumptions block*,
 *discriminates-when line*, *amendment marker*, *payload*, *payload
-gate*, *payload verifier*, *gated step*, *step ID*, *plan complete*,
+gate*, *file target*, *record target*, *read-back card*, *before
+card*, *payload verifier*, *gated step*, *step ID*, *plan complete*,
 *frame bar*, *workflow-internal reference*, *state store*,
 *pre-image*, *parent topic*, *inherited records*.
 This file uses those terms and never defines them.
@@ -419,6 +420,7 @@ earlier one carried verbatim (the operations contract, § The pool).
 **Read the plugin glossary's entries for the plan's shapes now**,
 unless already read this session: `${CLAUDE_PLUGIN_ROOT}/glossary.md`,
 each entry by its heading: *step ID*, *payload*, *payload gate*,
+*file target*, *record target*, *read-back card*, *before card*,
 *payload verifier*, *gated step*, *plan complete*, *amendment marker*,
 *discriminates-when line*, *delta gate*, *pre-image*. A session that
 loads this skill to edit an existing plan meets them here first.
@@ -575,6 +577,35 @@ boundary and no judgement per step:
   rather than inventing a newline the target will never contain. In the
   normal case the target's lines end in newlines, and so does the
   payload.
+- **A record is a target like a file.** A step that writes a ymer
+  record or a notebook row gates it as a record target, so the
+  manifest names the record its gate stands for:
+  - **The key** is what the step finds the record by: its id, slug or
+    name, space-free and slash-free, where one exists at authoring,
+    otherwise `new-<label>`, a label the step's prose ties to the id
+    the create returns.
+  - **The payload** is what the target names, in the form its card
+    takes: a field's stored text where the target names a field, and
+    for a whole record the projection the step states, which its
+    payload and its card share. Its file takes that form's extension
+    (the process contract, § The payload contract).
+  - **An append or an edit inside a field** carries the added or
+    changed lines alone as its payload, and gates as a count against
+    the card at the count in the card's planned final state, never
+    the whole field as a `whole` gate.
+  - **N rows or N fields are N record targets**, each with its own
+    manifest line and payload.
+  - **One step writes each record target.** A card is read once, so a
+    later write would leave the earlier gate green: writes to one
+    record field merge into one step and one payload.
+  - **The step writes its cards.** It sends the payload, reads the
+    record back and writes the read-back card before its box ticks;
+    where rollback evidence is wanted, it writes a before card first,
+    from a read ahead of the write.
+  - **A change with no content**, a counter increment or a `DELETE`,
+    is a payload-less step, verified by its `Run:` and `Expected:`
+    relative to a BEFORE read taken in the same task, never against a
+    literal.
 - The plan's own fences carry only commands, expected output, Edit
   anchors and illustration: addressing and verification, never payload
   bytes.

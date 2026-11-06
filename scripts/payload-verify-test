@@ -29,9 +29,15 @@
 # symlink, or twice, a symlinked file included, a sibling that only
 # shares the prefix excluded, targets sharing a directory each given
 # their own answer — both markers, and a clean payload of near-misses.
-# A run that could loop is bounded, so a regression fails instead of
-# hanging. Last, the placeholder list in the verifier is held equal to
-# the plugin glossary's.
+# The placeholder list in the verifier is held equal to the plugin
+# glossary's. Last, record targets: the verdicts read off a read-back
+# card, the gate reported under its record target, a before card beside
+# its card, two payloads of one step sharing one target, a mixed
+# manifest, no reference scan, and each defect — a bad record target,
+# one that two steps name, a stray file or a misnamed card in readback/,
+# a card that is not a file, and a readback that is not a directory. A
+# run that could loop is bounded, so a regression fails instead of
+# hanging.
 #
 # Exit 0 = every case passed.
 
@@ -473,7 +479,7 @@ defect "no payload file for a gate" "want exactly one payloads/t1s1.<ext>, found
 
 fixture malformed
 printf 't1s1 %s/target.md 1 extra\n' "$tmp/repo/malformed" >"$(topicdir malformed)/payloads/manifest"
-defect "malformed manifest line" "expected <step-id> <target-path> [expected]" "$(topicdir malformed)"
+defect "malformed manifest line" "expected <step-id> <target> [expected]" "$(topicdir malformed)"
 
 fixture nobox
 printf '# Fixture\n\n- [x] **T2S1: another step**\n' >"$(topicdir nobox)/plan.md"
@@ -932,6 +938,140 @@ check "the verifier's spellings are the glossary's" "$g" "$s"
 grep -v -F '<phase>' "$verify" >"$tmp/verify-short"
 check "control: a spelling dropped from the verifier breaks the match" "differ" \
 	"$([ "$(script_set "$tmp/verify-short")" = "$g" ] && echo same || echo differ)"
+
+# ── 10. Record targets ───────────────────────────────────────────────
+# A target may name a ymer record or a notebook row instead of a file,
+# written <store>:<collection>/<key>[/<field>]. The verifier never reaches
+# a store: it judges the record's read-back card, readback/<payload file
+# name> in the topic folder, by the rules a file target gets, and reports
+# the gate under the record target. One topic mixes record and file
+# targets: a whole card that matches, a count card with no card yet, a
+# whole card missing under a ticked box, a count card beside its before
+# card, a file target, and two payloads of one step sharing one record
+# target.
+
+rec=$(topicdir record)
+r=$tmp/repo/record
+mkdir -p "$rec/payloads" "$rec/readback" "$r"
+cat >"$rec/plan.md" <<'PLAN'
+# Record Fixture
+
+- [x] **T1S1: a doc body, whole**
+
+- [ ] **T1S2: a notebook row, card not written yet**
+
+- [x] **T1S3: a task description, ticked but no card**
+
+- [x] **T1S4: an area field, appended**
+
+- [x] **T2S1: a file target**
+
+- [x] **T3S1: two payloads into one record field**
+PLAN
+printf 'Recorded under 2026-11-01-some-topic, see plan.md.\n' >"$rec/payloads/t1s1.md"
+printf 'step: header\n' >"$rec/payloads/t1s2.txt"
+printf 'the sibling task\n' >"$rec/payloads/t1s3.md"
+printf 'a new rule\n' >"$rec/payloads/t1s4.md"
+printf 'alpha line\n' >"$rec/payloads/t2s1.md"
+printf 'first block\n' >"$rec/payloads/t3s1a.md"
+printf 'second block\n' >"$rec/payloads/t3s1b.md"
+cp "$rec/payloads/t1s1.md" "$rec/readback/t1s1.md"
+printf 'an old rule\na new rule\n' >"$rec/readback/t1s4.md"
+printf 'an old rule\n' >"$rec/readback/t1s4.before.md"
+printf 'first block\nsecond block\n' >"$rec/readback/t3s1a.md"
+printf 'first block\nsecond block\n' >"$rec/readback/t3s1b.md"
+printf 'alpha line\n' >"$r/target.md"
+{
+	printf 't1s1 ymer:docs/user-guide/body whole\n'
+	printf 't1s2 notebook:process_steps/worker,claude_code,header\n'
+	printf 't1s3 ymer:tasks/new-sibling/description whole\n'
+	printf 't1s4 ymer:areas/ymer/rules\n'
+	printf 't2s1 %s/target.md\n' "$r"
+	printf 't3s1a ymer:docs/handbook/body\n'
+	printf 't3s1b ymer:docs/handbook/body\n'
+} >"$rec/payloads/manifest"
+
+run "$rec"
+check "record targets — exit" "1" "$code"
+check "a matching whole card → PASS" "PASS" "$(verdict "$report" t1s1)"
+check "the gate is reported under its record target" "PASS    t1s1   ymer:docs/user-guide/body — whole file matches" \
+	"$(printf '%s\n' "$report" | grep ' t1s1 ')"
+check "no card under an unticked box → PENDING" "PENDING" "$(verdict "$report" t1s2)"
+check "no card under a ticked box → FAIL" "FAIL" "$(verdict "$report" t1s3)"
+check "no card under a ticked box — note" "ticked but read-back card missing" \
+	"$(note_seen "$report" "ticked but read-back card missing")"
+check "a count against a card beside its before card → PASS" "PASS" "$(verdict "$report" t1s4)"
+check "a file target beside record targets → PASS" "PASS" "$(verdict "$report" t2s1)"
+check "two payloads of one step share a record target — a" "PASS" "$(verdict "$report" t3s1a)"
+check "two payloads of one step share a record target — b" "PASS" "$(verdict "$report" t3s1b)"
+check "record targets — summary" "payload-verify: 7 gate(s) — 5 PASS · 1 PENDING · 1 FAIL" "$(summary)"
+
+# A record payload is not scanned for workflow-internal references: t1s1
+# carries a topic ID and an artifact basename and the run above reached
+# its verdicts. The control gives the same payload a file target outside
+# the state folder, and it trips.
+reccontrol=$(topicdir record-control)
+mkdir -p "$reccontrol/payloads" "$tmp/repo/record-control"
+printf '# Fixture\n\n- [ ] **T1S1: a**\n' >"$reccontrol/plan.md"
+cp "$rec/payloads/t1s1.md" "$reccontrol/payloads/t1s1.md"
+printf 't1s1 %s/target.md\n' "$tmp/repo/record-control" >"$reccontrol/payloads/manifest"
+defect "control: the same payload bound for a file trips the scan" \
+	"t1s1.md:1: topic ID — 2026-11-01-some-topic" "$reccontrol"
+
+# recfixture <name> <target> — one ticked gate on <target>, its card landed
+recfixture() {
+	d=$(topicdir "$1")
+	mkdir -p "$d/payloads" "$d/readback"
+	printf '# Fixture\n\n- [x] **T1S1: landed**\n' >"$d/plan.md"
+	printf 'alpha line\n' >"$d/payloads/t1s1.md"
+	printf 'alpha line\n' >"$d/readback/t1s1.md"
+	printf 't1s1 %s\n' "$2" >"$d/payloads/manifest"
+}
+
+recfixture recok 'notebook:processes/development'
+run "$(topicdir recok)"
+check "control: a two-part record target is accepted — exit" "0" "$code"
+
+recfixture recstore 'sqlite:processes/development'
+defect "a store that is neither ymer nor notebook" "bad record target 'sqlite:processes/development'" "$(topicdir recstore)"
+recfixture reckey 'ymer:docs'
+defect "a record target with no key" "bad record target 'ymer:docs'" "$(topicdir reckey)"
+recfixture recempty 'ymer:docs//body'
+defect "a record target with an empty part" "bad record target 'ymer:docs//body'" "$(topicdir recempty)"
+recfixture recdeep 'ymer:docs/a/body/extra'
+defect "a record target with a part too many" "bad record target 'ymer:docs/a/body/extra'" "$(topicdir recdeep)"
+
+# One writing step per record target: two steps naming one target is a
+# defect. Two payloads of one step may share it (the mixed run above).
+recfixture recshared 'ymer:docs/guide/body'
+printf '\n- [x] **T2S1: again**\n' >>"$(topicdir recshared)/plan.md"
+printf 'beta line\n' >"$(topicdir recshared)/payloads/t2s1.md"
+printf 't2s1 ymer:docs/guide/body\n' >>"$(topicdir recshared)/payloads/manifest"
+defect "a record target written by two steps" "record target 'ymer:docs/guide/body' is also t1s1's" "$(topicdir recshared)"
+
+# readback/ holds read-back cards and before cards of record targets, and
+# nothing else: a stray file, a card whose gate has a file target, and a
+# before card with no record gate are each refused, listed in order.
+recfixture recstray 'ymer:docs/guide/body'
+printf 'note\n' >"$(topicdir recstray)/readback/notes.txt"
+printf 'old\n' >"$(topicdir recstray)/readback/t9s9.before.md"
+defect "stray files in readback/" \
+	"readback/ file(s) that are no record target's read-back card or before card: notes.txt, t9s9.before.md" \
+	"$(topicdir recstray)"
+fixture filecard
+mkdir -p "$(topicdir filecard)/readback"
+printf 'alpha line\n' >"$(topicdir filecard)/readback/t1s1.md"
+defect "a card for a file target's payload" \
+	"readback/ file(s) that are no record target's read-back card or before card: t1s1.md" \
+	"$(topicdir filecard)"
+recfixture recdir 'ymer:docs/guide/body'
+rm "$(topicdir recdir)/readback/t1s1.md"
+mkdir "$(topicdir recdir)/readback/t1s1.md"
+defect "a directory named as a card" "readback/t1s1.md is not a regular file" "$(topicdir recdir)"
+recfixture recfile 'ymer:docs/guide/body'
+rm -r "$(topicdir recfile)/readback"
+printf 'x\n' >"$(topicdir recfile)/readback"
+defect "a readback that is not a directory" "readback is not a directory" "$(topicdir recfile)"
 
 echo
 echo "payload-verify-test: $pass passed, $fail failed"

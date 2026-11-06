@@ -267,10 +267,10 @@ pre-executed fix commits stay on the fixes line, their one store.
    the state folder**: the topic folder, which every phase writes,
    **plus each file outside that folder the plan names or this session
    edited**. The plan's names are read off its `payloads/manifest` rows
-   and each task's `Files:` rows. The session's own edits matter here: a
-   lens-pass fix or a disposition's ripple can reach a state-folder file
-   with no manifest row behind it. A topic that wrote nothing outside
-   its folder commits the folder alone.
+   whose target is a file, and each task's `Files:` rows. The session's
+   own edits matter here: a lens-pass fix or a disposition's ripple can
+   reach a state-folder file with no manifest row behind it. A topic
+   that wrote nothing outside its folder commits the folder alone.
 
    ```
    git -C <state folder> add <repo>/YYYY/MM-DD-<topic>/ <each such file>

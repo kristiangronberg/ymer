@@ -41,7 +41,7 @@
 # Manifest grammar — one gate per line; `#` comments and blank lines
 # are ignored:
 #
-#   <step-id> <target-path> [expected]
+#   <step-id> <target> [expected]
 #
 #   step-id      lowercase t<task>s<step>, optional letter suffix
 #                (t4s2, t4s2a). Names the payload file
@@ -49,21 +49,43 @@
 #                must not be empty) and joins the checkbox T<task>S<step>
 #                (suffix stripped). The suffix belongs to payload files
 #                alone: a checkbox is always bare.
-#   target-path  absolute, or rooted at ~/. A ~user spelling is refused,
-#                never expanded.
+#   target       a file target: a path, absolute or rooted at ~/. A
+#                ~user spelling is refused, never expanded. Or a record
+#                target: a ymer record or a notebook row, written
+#                <store>:<collection>/<key>[/<field>], the store `ymer`
+#                or `notebook`, each part non-empty and free of `/`. The
+#                verifier never reaches a store and knows no collection
+#                or field: it checks the shape alone, and judges the
+#                record's read-back card, readback/<payload file name> in
+#                the topic directory, as it would a file target. The gate
+#                is reported under the record target.
 #   expected     positive integer occurrence count (default 1) — the
 #                count in the plan's FINAL state, so repeated-content
 #                gates read PENDING mid-plan — or the word `whole`:
 #                the payload is the target's entire intended content
 #                (a Create payload), gated by byte equality.
 #
+# One step writes a record target: lines of one step (letter-suffixed
+# step-ids) may share one, and two steps naming the same one is an
+# authoring defect. A card is a reading taken once, so a second step's
+# write would leave the first gate green over a record it no longer
+# matches.
+#
+# readback/ holds the read-back cards of record targets and their before
+# cards, readback/<step-id>.before.<ext>, which no gate reads. Any other
+# entry there — a card whose gate has a file target or no gate at all, a
+# before card with no record gate, a stray file — is an authoring defect,
+# as an orphan payload is.
+#
 # Everything is validated before any gate is judged: a malformed line,
-# a step-id with no checkbox, a suffixed checkbox, no (or several)
-# payload files, an empty or unreadable payload file, a payload file
-# with no extension, or a payload file with no manifest line is an
-# authoring defect — reported with exit 2 and the fix, never folded into
-# a gate verdict. So is a file the verifier cannot read or an awk that
-# fails on it: a scan that did not run never reads as a clean one.
+# a bad record target, a record target two steps name, a step-id with
+# no checkbox, a suffixed checkbox, no (or several) payload files, an
+# empty or unreadable payload file, a payload file with no extension, a
+# payload file with no manifest line, or a readback/ entry that is no
+# record target's card is an authoring defect — reported with exit 2
+# and the fix, never folded into a gate verdict. So is a file the
+# verifier cannot read or an awk that fails on it: a scan that did not
+# run never reads as a clean one.
 #
 # A payload bound for a **project repository** carries no
 # workflow-internal reference: a topic ID, a state-store path, an
@@ -78,6 +100,7 @@
 # on a line where `Redefinition in flight — ` stands ahead of a topic
 # ID, that topic ID is exempt and every other class still reads. Prose
 # that merely writes the same token is not a marker.
+# A record target is skipped as well: no project repository holds it.
 #
 # The state-store class keys on the state folder's own directory name:
 # `../<name>` and `<name>/<dir>/`. A state folder named with a common
@@ -301,23 +324,44 @@ awk -v plan="$plan" '
 	END { if (bad) exit 2 }' "$plan" >"$tmp/boxes" || exit 2
 
 # ── the manifest ─────────────────────────────────────────────────────
-# The payloads/ listing is read once; each gate becomes one
-# `<sid> <box> <ticked> <payload file> <target> <expected>` line, its
-# target ~-expanded.
+# The payloads/ and readback/ listings are read once; each gate becomes
+# one `<sid> <box> <ticked> <payload file> <path> <expected> <kind>
+# <target>` line: <path> is the file the gate reads — a file target
+# ~-expanded, or a record target's read-back card — and <kind> is
+# `file` or `record`.
 
 ls -A "$pay" >"$tmp/listing" || die "cannot list $pay — check its permissions"
+rb=$topic/readback
+: >"$tmp/cards"
+if [ -e "$rb" ] || [ -h "$rb" ]; then
+	[ -d "$rb" ] || die "readback is not a directory under $topic — it holds the read-back cards of record targets; move the file aside"
+	ls -A "$rb" >"$tmp/cards" || die "cannot list $rb — check its permissions"
+fi
 
-awk -v q="'" '
+PV_TOPIC=$topic awk -v q="'" '
 	function die(m) { print "payload-verify: " m | "cat 1>&2"; bad = 1; exit 2 }
+	# sorted <list> — the newline-separated names, sorted, joined by ", "
+	function sorted(o,    n, a, i, j, v, s) {
+		n = split(o, a, "\n")
+		for (i = 2; i <= n; i++) {
+			v = a[i]
+			for (j = i - 1; j >= 1 && a[j] > v; j--) a[j + 1] = a[j]
+			a[j + 1] = v
+		}
+		s = a[1]
+		for (i = 2; i <= n; i++) s = s ", " a[i]
+		return s
+	}
 	FILENAME == ARGV[1] { box[$1] = $2; next }
 	FILENAME == ARGV[2] { if ($0 != "manifest") file[$0] = 1; next }
+	FILENAME == ARGV[3] { card[$0] = 1; next }
 	{
 		line = $0
 		sub(/^[[:space:]]+/, "", line)
 		sub(/[[:space:]]+$/, "", line)
 		if (line == "" || line ~ /^#/) next
 		nf = split(line, f, /[[:space:]]+/)
-		if (nf != 2 && nf != 3) die("manifest line " FNR ": expected <step-id> <target-path> [expected]: " q line q " — one gate per line, fields separated by spaces")
+		if (nf != 2 && nf != 3) die("manifest line " FNR ": expected <step-id> <target> [expected]: " q line q " — one gate per line, fields separated by spaces")
 		sid = f[1]
 		target = f[2]
 		if (sid !~ /^t[0-9]+s[0-9]+[a-z]?$/) die("manifest line " FNR ": bad step-id " q sid q " (want t<task>s<step>[a-z]) — the lowercase form of the step ID, letter suffix optional")
@@ -328,17 +372,31 @@ awk -v q="'" '
 			if (expected !~ /^[0-9]+$/ || expected + 0 < 1) die("manifest line " FNR ": expected must be a positive integer or " q "whole" q ": " q expected q)
 			expected = expected + 0
 		}
-		if (target !~ /^\// && target != "~" && target !~ /^~\//) die("manifest line " FNR ": target must be absolute or ~-rooted: " q target q " — write the full path, or ~ and a slash for one under your home directory (~user is not expanded)")
 		b = sid
 		sub(/[a-z]$/, "", b)
 		b = toupper(b)
+		if (target ~ /^\// || target == "~" || target ~ /^~\//) kind = "file"
+		else if (target ~ /^[^\/]*:/) {
+			if (target !~ /^(ymer|notebook):[^\/]+\/[^\/]+(\/[^\/]+)?$/) die("manifest line " FNR ": bad record target " q target q " — write <store>:<collection>/<key>[/<field>], the store ymer or notebook, each part non-empty and free of slashes")
+			if ((target in owner) && owner[target] != b) die("manifest line " FNR ": record target " q target q " is also " ownsid[target] q "s — one step writes a record target; merge the writes into one step and one payload")
+			owner[target] = b
+			ownsid[target] = sid
+			kind = "record"
+		} else die("manifest line " FNR ": target must be absolute or ~-rooted, or a record target: " q target q " — write the full path, or ~ and a slash for one under your home directory (~user is not expanded), or <store>:<collection>/<key>[/<field>] for a ymer record or a notebook row")
 		if (!(b in box)) die("manifest line " FNR ": no checkbox " b " in plan.md for gate " sid " — add the step " q "- [ ] **" b ": …" q " or correct the step-id")
 		k = 0
 		for (x in file) if (index(x, sid ".") == 1) { k++; pf = x }
 		if (k != 1) die("manifest line " FNR ": want exactly one payloads/" sid ".<ext>, found " k " — one payload file per gate, named by its step-id")
-		if (target == "~") target = ENVIRON["HOME"]
-		else if (target ~ /^~\//) target = ENVIRON["HOME"] substr(target, 2)
-		print sid "\t" b "\t" box[b] "\t" pf "\t" target "\t" expected
+		shown = target
+		if (kind == "record") {
+			path = ENVIRON["PV_TOPIC"] "/readback/" pf
+			recpf[pf] = 1
+			recsid[sid] = 1
+		} else if (target == "~") path = ENVIRON["HOME"]
+		else if (target ~ /^~\//) path = ENVIRON["HOME"] substr(target, 2)
+		else path = target
+		if (kind == "file") shown = path
+		print sid "\t" b "\t" box[b] "\t" pf "\t" path "\t" expected "\t" kind "\t" shown
 	}
 	END {
 		if (bad) exit 2
@@ -349,24 +407,28 @@ awk -v q="'" '
 			sub(/\..*$/, "", p)
 			if (!(p in seen)) o = o (o == "" ? "" : "\n") x
 		}
-		if (o != "") {
-			n = split(o, a, "\n")
-			for (i = 2; i <= n; i++) {
-				v = a[i]
-				for (j = i - 1; j >= 1 && a[j] > v; j--) a[j + 1] = a[j]
-				a[j + 1] = v
-			}
-			s = a[1]
-			for (i = 2; i <= n; i++) s = s ", " a[i]
-			die("payload file(s) with no manifest gate: " s " — add a manifest line for each, or remove the file")
+		if (o != "") die("payload file(s) with no manifest gate: " sorted(o) " — add a manifest line for each, or remove the file")
+		o = ""
+		for (x in card) {
+			if (x in recpf) continue
+			p = x
+			sub(/\..*$/, "", p)
+			if ((p in recsid) && substr(x, length(p) + 1, 8) == ".before." && length(x) > length(p) + 8) continue
+			o = o (o == "" ? "" : "\n") x
 		}
-	}' "$tmp/boxes" "$tmp/listing" "$man" >"$tmp/gates" || exit 2
+		if (o != "") die("readback/ file(s) that are no record target" q "s read-back card or before card: " sorted(o) " — a read-back card is named like its payload, readback/<step-id>.<ext>, and a before card readback/<step-id>.before.<ext>, for a gate whose target is a record target; remove each, or restore its manifest line")
+	}' "$tmp/boxes" "$tmp/listing" "$tmp/cards" "$man" >"$tmp/gates" || exit 2
+
+while IFS= read -r c; do
+	[ -f "$rb/$c" ] || die "readback/$c is not a regular file — a read-back card is a file named like its payload"
+done <"$tmp/cards"
 
 # The same pass reads plan complete (used by the verdicts below) and
-# lists every count gate whose target is a file as
-# `<payload><TAB><target>`, the counts' input.
+# lists every count gate whose file is there, a file target or a record
+# target's read-back card, as `<payload><TAB><that file>`, the counts'
+# input.
 complete=1
-while IFS=$tab read -r sid box ticked pf target expected; do
+while IFS=$tab read -r sid box ticked pf target expected kind shown; do
 	[ -f "$pay/$pf" ] || die "payloads/$pf is not a regular file — a payload is a file named payloads/<step-id>.<ext>"
 	[ -r "$pay/$pf" ] || die "payloads/$pf is not readable — check its permissions"
 	[ -s "$pay/$pf" ] || die "payloads/$pf is empty — a payload carries at least one line of the target's final state"
@@ -380,14 +442,16 @@ done <"$tmp/gates" >"$tmp/countable"
 # it may not run into. A sentinel newline at both ends of the line stands
 # for the line's edges.
 
-# One awk reads every payload whose target is not exempt, in manifest
-# order, so the rows keep that order.
+# One awk reads every payload whose file target is not exempt, in
+# manifest order, so the rows keep that order; a record target is never
+# read.
 
 wir_placeholders >"$tmp/wir"
 : >"$tmp/hits"
 stem=${state##*/}
 set --
-while IFS=$tab read -r sid box ticked pf target expected; do
+while IFS=$tab read -r sid box ticked pf target expected kind shown; do
+	[ "$kind" = file ] || continue
 	real=$(resolve "$target")
 	exempt "$real" || set -- "$@" "$pay/$pf"
 done <"$tmp/gates"
@@ -548,11 +612,13 @@ pass=0
 pending=0
 fail=0
 total=0
-while IFS=$tab read -r sid box ticked pf target expected; do
+while IFS=$tab read -r sid box ticked pf target expected kind shown; do
 	payload=$pay/$pf
 	if [ "$expected" = whole ]; then
 		if [ ! -f "$target" ]; then
-			if [ "$ticked" = 1 ]; then status=FAIL note='ticked but target missing'; else status=PENDING note='target not created yet'; fi
+			if [ "$kind" = record ]; then
+				if [ "$ticked" = 1 ]; then status=FAIL note='ticked but read-back card missing'; else status=PENDING note='read-back card not written yet'; fi
+			elif [ "$ticked" = 1 ]; then status=FAIL note='ticked but target missing'; else status=PENDING note='target not created yet'; fi
 		elif [ ! -r "$target" ]; then
 			die "cannot read $target — check its permissions"
 		elif cmp -s "$target" "$payload"; then
@@ -599,7 +665,7 @@ while IFS=$tab read -r sid box ticked pf target expected; do
 	FAIL) fail=$((fail + 1)) ;;
 	esac
 	total=$((total + 1))
-	printf '%-7s %-6s %s — %s\n' "$status" "$sid" "$target" "$note"
+	printf '%-7s %-6s %s — %s\n' "$status" "$sid" "$shown" "$note"
 done <"$tmp/gates" 3<"$tmp/counts"
 
 printf 'payload-verify: %d gate(s) — %d PASS · %d PENDING · %d FAIL\n' "$total" "$pass" "$pending" "$fail"

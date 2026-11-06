@@ -607,7 +607,7 @@ deletions, commands and behaviour, has no `payloads/` directory and no
 manifest.
 
 Beside the payload files, `payloads/manifest` declares one **payload
-gate** per payload, `<step-id> <target-path> [expected]`, which the
+gate** per payload, `<step-id> <target> [expected]`, which the
 **payload verifier** the plugin ships evaluates: `scripts/payload-verify`
 under the plugin root, run through `sh` on the topic directory with one
 `--exempt <tree>` per machinery tree the front binds. The verifier's
@@ -615,14 +615,31 @@ header is the one home of how it runs: the manifest grammar, the PASS,
 PENDING and FAIL report, the exit contract, and how it reads progress
 from the plan's own ticked boxes.
 
+A gate's target is a **file target** or a **record target** (plugin
+glossary): a payload may land in a ymer record or a notebook row as
+well as in a file, under the same gate. The verifier never reaches a
+store, so a record target is gated through its **read-back card** in
+the topic folder's `readback/`, the record as the gated step read it
+back right after its write. A record target has no extension of its
+own, so its payload takes the extension of the form it is written in,
+`.md` for a field's text or `.json` or `.sql` where the step states
+that projection, and its cards carry the same. The gated step may also
+write a **before card**, from a read taken ahead of its write, which no
+gate reads. `readback/` holds those two kinds of card alone, and the
+verifier refuses any other file there. A plan that writes records
+keeps one payload contract, and its manifest names the record each
+gate stands for.
+
 Who writes what, and when. Write-plan authors the payloads and the
 manifest, plan-review rewrites both, and implement's mechanical
 corrections at its drift valve edit a payload file, whose gate then
 re-runs. The ordinary apply path reads payload files and writes
 targets, never the reverse. Write-plan emits the format (its
 § Payloads), implement applies a payload by reading its file and
-writing the bytes out again through the file-edit tools, and
-plan-review reads and writes both artifacts.
+writing the bytes out again, through the file-edit tools to a file
+target and through the store's tool to a record target, whose
+read-back card it writes from the read that follows, and plan-review
+reads and writes both artifacts.
 
 ## The traceability stores
 

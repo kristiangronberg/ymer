@@ -189,7 +189,8 @@ such anchors on nearly every step.
 Part of the frame bar is a gate, not a judgement: the payload verifier
 reports a workflow-internal reference in a payload bound for a project
 repo as an authoring defect, and skips payloads that target the state
-folder or a machinery tree, which talk about the process by right (the
+folder or a machinery tree, which talk about the process by right, and
+those whose target is a record, which no repo holds (the
 token classes and the skips: the verifier's header, read at `SKILL.md`
 § Payloads). What is left is the frame bar's own judgement: `Step 3`,
 `Task 4` and `Plan 3a` read fine in a README and are judged in context,
